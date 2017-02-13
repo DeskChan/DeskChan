@@ -65,9 +65,9 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 		} else if (SwingUtilities.isRightMouseButton(e)) {
 			JPopupMenu popupMenu = new JPopupMenu();
 			popupMenu.add(mainWindow.optionsAction);
-			popupMenu.add(mainWindow.testAction);
 			popupMenu.addSeparator();
 			popupMenu.add(mainWindow.quitAction);
+			popupMenu.setLightWeightPopupEnabled(false);
 			popupMenu.show(this, e.getX(), e.getY());
 		}
 	}

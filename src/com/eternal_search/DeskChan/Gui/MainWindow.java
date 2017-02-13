@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 
 public class MainWindow extends JFrame {
 
+	private static MainWindow instance = null;
 	private CharacterWidget characterWidget = new CharacterWidget(this);
 	private BalloonWidget balloonWidget = null;
 	private BalloonWindow balloonWindow = null;
@@ -33,17 +34,10 @@ public class MainWindow extends JFrame {
 			}
 		}
 	};
-	Action testAction = new AbstractAction("Test") {
-		@Override
-		public void actionPerformed(ActionEvent actionEvent) {
-			JLabel label = new JLabel("Hello world!");
-			label.setHorizontalAlignment(JLabel.CENTER);
-			showBalloon(label);
-		}
-	};
 	
 	private MainWindow() {
 		super("DeskChan");
+		instance = this;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setUndecorated(true);
 		setAlwaysOnTop(true);
@@ -88,7 +82,7 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	void showBalloon(JComponent component) {
+	public void showBalloon(JComponent component) {
 		if (balloonWidget != null) {
 			if (balloonWindow != null) {
 				balloonWindow.dispose();
@@ -105,6 +99,16 @@ public class MainWindow extends JFrame {
 		updateSizes();
 		if (balloonWindow != null) {
 			balloonWindow.setVisible(true);
+		}
+	}
+	
+	public void showBalloon(String text) {
+		if (text != null) {
+			JLabel label = new JLabel(text);
+			label.setHorizontalAlignment(JLabel.CENTER);
+			showBalloon(label);
+		} else {
+			showBalloon((JComponent) null);
 		}
 	}
 	
@@ -150,6 +154,10 @@ public class MainWindow extends JFrame {
 			MainWindow window = new MainWindow();
 			window.setVisible(true);
 		});
+	}
+	
+	public static MainWindow getInstance() {
+		return instance;
 	}
 
 }

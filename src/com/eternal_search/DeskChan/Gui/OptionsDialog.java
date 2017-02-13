@@ -8,12 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 
 public class OptionsDialog extends JFrame {
 	
@@ -54,6 +51,8 @@ public class OptionsDialog extends JFrame {
 		JButton button = new JButton(selectSkinAction);
 		appearanceTab.add(button, BorderLayout.PAGE_END);
 		tabbedPane.addTab("Appearance", appearanceTab);
+		JPanel debugTab = new JPanel(new BorderLayout());
+		tabbedPane.addTab("Debug", debugTab);
 		pack();
 	}
 	
