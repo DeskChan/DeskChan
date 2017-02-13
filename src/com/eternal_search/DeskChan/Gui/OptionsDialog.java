@@ -5,6 +5,8 @@ import com.eternal_search.DeskChan.Core.Utils;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -39,6 +41,14 @@ public class OptionsDialog extends JFrame {
 		JPanel appearanceTab = new JPanel(new BorderLayout());
 		skinList = new JList(loadSkinList().toArray());
 		skinList.setLayoutOrientation(JList.VERTICAL);
+		skinList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					selectSkinAction.actionPerformed(null);
+				}
+			}
+		});
 		JScrollPane skinListScrollPane = new JScrollPane(skinList);
 		appearanceTab.add(skinListScrollPane);
 		JButton button = new JButton(selectSkinAction);
