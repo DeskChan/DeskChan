@@ -12,11 +12,16 @@ public class OptionsDialog extends JFrame {
 	OptionsDialog(MainWindow mainWindow) {
 		super("DeskChan Options");
 		this.mainWindow = mainWindow;
+		setMinimumSize(new Dimension(300, 200));
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setContentPane(tabbedPane);
-		JPanel appearanceTab = new JPanel();
+		JPanel appearanceTab = new JPanel(new BorderLayout());
+		DefaultListModel skinListModel = new DefaultListModel();
+		skinList = new JList(skinListModel);
+		//skinListModel.addElement("Test");
 		skinList.setLayoutOrientation(JList.VERTICAL);
-		appearanceTab.add(skinList);
+		JScrollPane skinListScrollPane = new JScrollPane(skinList);
+		appearanceTab.add(skinListScrollPane);
 		tabbedPane.addTab("Appearance", appearanceTab);
 		pack();
 	}
