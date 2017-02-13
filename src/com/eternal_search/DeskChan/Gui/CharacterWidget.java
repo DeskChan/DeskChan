@@ -7,7 +7,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 class CharacterWidget extends JPanel implements MouseListener, MouseMotionListener {
 	
@@ -102,11 +105,11 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 	public void mouseExited(MouseEvent e) {
 	}
 	
-	boolean loadImage(String name) {
+	boolean loadImage(Path path) {
 		BufferedImage backupCharacterImage = characterImage;
 		try {
-			if (name != null) {
-				characterImage = ImageIO.read(MainWindow.class.getResourceAsStream("/characters/" + name));
+			if (path != null) {
+				characterImage = ImageIO.read(Files.newInputStream(path));
 				setPreferredSize(new Dimension(characterImage.getWidth(), characterImage.getHeight()));
 			} else {
 				characterImage = null;
