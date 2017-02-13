@@ -7,7 +7,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -113,6 +112,7 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 				setPreferredSize(new Dimension(characterImage.getWidth(), characterImage.getHeight()));
 			} else {
 				characterImage = null;
+				setPreferredSize(new Dimension(300, 300));
 			}
 			repaint();
 			mainWindow.updateSizes();

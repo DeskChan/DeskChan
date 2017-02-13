@@ -5,9 +5,6 @@ import com.eternal_search.DeskChan.Core.Utils;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Paths;
 
 public class MainWindow extends JFrame {
 
@@ -54,8 +51,8 @@ public class MainWindow extends JFrame {
 		setLayout(null);
 		setBackground(new Color(0, 0, 0, 0));
 		pack();
-		setDefaultLocation();
 		characterWidget.loadImage(Utils.getResourcePath("characters/sprite0001.png"));
+		setDefaultLocation();
 		setContentPane(characterWidget);
 	}
 	
