@@ -8,7 +8,7 @@ public class CorePlugin implements Plugin {
 	public boolean initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		pluginProxy.addMessageListener("core:quit", ((sender, tag, data) -> {
-			System.err.println("Plugin " + sender + "requested application quit");
+			System.err.println("Plugin " + sender + " requested application quit");
 			PluginManager.getInstance().quit();
 		}));
 		return true;

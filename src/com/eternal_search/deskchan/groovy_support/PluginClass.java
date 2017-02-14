@@ -4,11 +4,7 @@ import com.eternal_search.deskchan.core.Plugin;
 import com.eternal_search.deskchan.core.PluginLoader;
 import com.eternal_search.deskchan.core.PluginManager;
 import com.eternal_search.deskchan.core.PluginProxy;
-import groovy.lang.GroovyShell;
-import org.codehaus.groovy.control.CompilerConfiguration;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class PluginClass implements Plugin, PluginLoader {
@@ -31,15 +27,8 @@ public class PluginClass implements Plugin, PluginLoader {
 	
 	@Override
 	public boolean loadByPath(Path path) {
-		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
-		compilerConfiguration.setScriptBaseClass("com.eternal_search.deskchan.groovy_support.GroovyPlugin");
-		GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
-		try {
-			groovyShell.evaluate(Files.newBufferedReader(path));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return false;
+		GroovyPlugin plugin = new GroovyPlugin(path);
+		return PluginManager.getInstance().initializePlugin(path.toString(), plugin);
 	}
 	
 }
