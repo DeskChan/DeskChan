@@ -13,7 +13,7 @@ import java.nio.file.Path;
 
 class CharacterWidget extends JPanel implements MouseListener, MouseMotionListener {
 	
-	private MainWindow mainWindow;
+	private final MainWindow mainWindow;
 	private BufferedImage characterImage;
 	private Point clickPos;
 	private boolean dragging;

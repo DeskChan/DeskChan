@@ -1,14 +1,17 @@
 package com.eternal_search.DeskChan.Core;
 
-public class CorePlugin extends Plugin {
+public class CorePlugin implements Plugin {
 	
-	CorePlugin(PluginManager pluginManager) {
-		super("core", pluginManager);
-	}
+	private PluginProxy pluginProxy = null;
 	
 	@Override
-	public void handleMessage(String sender, String tag, Object data) {
-		super.handleMessage(sender, tag, data);
+	public boolean initialize(PluginProxy pluginProxy) {
+		this.pluginProxy = pluginProxy;
+		pluginProxy.addMessageListener("core:quit", ((sender, tag, data) -> {
+			System.err.println("Plugin " + sender + "requested application quit");
+			PluginManager.getInstance().quit();
+		}));
+		return true;
 	}
 	
 }

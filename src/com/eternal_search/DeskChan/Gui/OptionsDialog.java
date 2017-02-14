@@ -14,10 +14,10 @@ import java.util.Collections;
 
 public class OptionsDialog extends JFrame {
 	
-	private MainWindow mainWindow;
-	private JTabbedPane tabbedPane = new JTabbedPane();
+	private final MainWindow mainWindow;
+	private final JTabbedPane tabbedPane = new JTabbedPane();
 	private JList skinList;
-	private Action selectSkinAction = new AbstractAction("Select") {
+	private final Action selectSkinAction = new AbstractAction("Select") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			Object selectValue = skinList.getSelectedValue();
@@ -33,7 +33,7 @@ public class OptionsDialog extends JFrame {
 		super("DeskChan Options");
 		this.mainWindow = mainWindow;
 		setMinimumSize(new Dimension(300, 200));
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
 		skinList = new JList(loadSkinList().toArray());
@@ -51,7 +51,25 @@ public class OptionsDialog extends JFrame {
 		JButton button = new JButton(selectSkinAction);
 		appearanceTab.add(button, BorderLayout.PAGE_END);
 		tabbedPane.addTab("Appearance", appearanceTab);
+		JPanel pluginsTab = new JPanel(new BorderLayout());
+		DefaultListModel pluginsListModel = new DefaultListModel();
+		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
+			pluginsListModel.addElement(data.toString());
+		});
+		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
+			for (int i = 0; i < pluginsListModel.size(); ++i) {
+				if (pluginsListModel.elementAt(i).equals(data)) {
+					pluginsListModel.remove(i);
+					break;
+				}
+			}
+		});
+		JList pluginsList = new JList(pluginsListModel);
+		JScrollPane pluginsListScrollPane = new JScrollPane(pluginsList);
+		pluginsTab.add(pluginsListScrollPane);
+		tabbedPane.addTab("Plugins", pluginsTab);
 		JPanel debugTab = new JPanel(new BorderLayout());
+		//
 		tabbedPane.addTab("Debug", debugTab);
 		pack();
 	}
@@ -73,12 +91,6 @@ public class OptionsDialog extends JFrame {
 		}
 		Collections.sort(list);
 		return list;
-	}
-	
-	@Override
-	public void dispose() {
-		mainWindow.optionsDialog = null;
-		super.dispose();
 	}
 	
 	class SkinInfo implements Comparable<SkinInfo> {

@@ -1,44 +1,45 @@
 package com.eternal_search.DeskChan.Gui;
 
+import com.eternal_search.DeskChan.Core.Plugin;
+import com.eternal_search.DeskChan.Core.PluginProxy;
 import com.eternal_search.DeskChan.Core.Utils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class MainWindow extends JFrame {
-
-	private static MainWindow instance = null;
-	private CharacterWidget characterWidget = new CharacterWidget(this);
+	
+	private PluginProxy pluginProxy = null;
+	private final CharacterWidget characterWidget = new CharacterWidget(this);
 	private BalloonWidget balloonWidget = null;
 	private BalloonWindow balloonWindow = null;
 	OptionsDialog optionsDialog = null;
-	Action quitAction = new AbstractAction("Quit") {
+	final Action quitAction = new AbstractAction("Quit") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			setVisible(false);
 			dispose();
 		}
 	};
-	Action optionsAction = new AbstractAction("Options...") {
+	final Action optionsAction = new AbstractAction("Options...") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
-			if (optionsDialog == null) {
-				optionsDialog = new OptionsDialog(MainWindow.this);
-				Rectangle screenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-				optionsDialog.setLocation(
-						(screenBounds.width - optionsDialog.getWidth()) / 2 + screenBounds.x,
-						(screenBounds.height - optionsDialog.getHeight()) / 2 + screenBounds.y
-				);
-				optionsDialog.setVisible(true);
-			}
+			Rectangle screenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+			optionsDialog.setLocation(
+					(screenBounds.width - optionsDialog.getWidth()) / 2 + screenBounds.x,
+					(screenBounds.height - optionsDialog.getHeight()) / 2 + screenBounds.y
+			);
+			optionsDialog.setVisible(true);
 		}
 	};
 	
-	private MainWindow() {
-		super("DeskChan");
-		instance = this;
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	void initialize(PluginProxy pluginProxy) {
+		this.pluginProxy = pluginProxy;
+		setTitle("DeskChan");
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setUndecorated(true);
 		setAlwaysOnTop(true);
 		setFocusableWindowState(false);
@@ -48,6 +49,13 @@ public class MainWindow extends JFrame {
 		characterWidget.loadImage(Utils.getResourcePath("characters/sprite0001.png"));
 		setDefaultLocation();
 		setContentPane(characterWidget);
+		optionsDialog = new OptionsDialog(this);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent windowEvent) {
+				pluginProxy.sendMessage("core:quit", null);
+			}
+		});
 	}
 	
 	void setDefaultLocation() {
@@ -82,7 +90,7 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	public void showBalloon(JComponent component) {
+	private void showBalloon(JComponent component) {
 		if (balloonWidget != null) {
 			if (balloonWindow != null) {
 				balloonWindow.dispose();
@@ -102,7 +110,7 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	public void showBalloon(String text) {
+	void showBalloon(String text) {
 		if (text != null) {
 			JLabel label = new JLabel(text);
 			label.setHorizontalAlignment(JLabel.CENTER);
@@ -144,20 +152,8 @@ public class MainWindow extends JFrame {
 		return characterWidget;
 	}
 	
-	public static void createAndShowGUI() {
-		javax.swing.SwingUtilities.invokeLater(() -> {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			MainWindow window = new MainWindow();
-			window.setVisible(true);
-		});
+	PluginProxy getPluginProxy() {
+		return pluginProxy;
 	}
 	
-	public static MainWindow getInstance() {
-		return instance;
-	}
-
 }

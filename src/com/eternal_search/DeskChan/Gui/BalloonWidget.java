@@ -7,7 +7,7 @@ import java.awt.event.MouseListener;
 
 class BalloonWidget extends JPanel implements MouseListener {
 	
-	private MainWindow mainWindow;
+	private final MainWindow mainWindow;
 	
 	BalloonWidget(JComponent component, MainWindow mainWindow) {
 		super();

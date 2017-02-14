@@ -1,97 +1,99 @@
 package com.eternal_search.DeskChan.Core;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
 
 public class PluginManager {
 	
-	private Map<String, Plugin> plugins = new HashMap<>();
-	private Map<String, Set<Plugin>> subscriptions = new HashMap<>();
+	private static final PluginManager instance = new PluginManager();
+	private final Map<String, PluginProxy> plugins = new HashMap<>();
+	private final Map<String, Set<MessageListener>> messageListeners = new HashMap<>();
+	private final List<PluginLoader> loaders = new ArrayList<>();
 	
-	PluginManager() {
+	private PluginManager() {
+	}
+	
+	public static PluginManager getInstance() {
+		return instance;
+	}
+	
+	void initialize() {
 		loadPluginByClass(CorePlugin.class);
 	}
 	
-	String registerPlugin(Plugin plugin, String id) {
-		String realId = id;
-		int i = 0;
-		while (plugins.containsKey(realId)) {
-			realId = id + String.valueOf(i);
-			i += 1;
+	public boolean initializePlugin(String id, Plugin plugin) {
+		assert !plugins.containsKey(id);
+		PluginProxy pluginProxy = new PluginProxy(plugin);
+		if (pluginProxy.initialize(id)) {
+			plugins.put(id, pluginProxy);
+			System.err.println("Registered plugin: " + id);
+			sendMessage("core", "core-events:plugin-load", id);
+			return true;
 		}
-		plugins.put(realId, plugin);
-		System.err.println("Plugin registered: " + realId);
-		sendMessage("core", "core-events:plugin-load", realId);
-		return realId;
+		return false;
 	}
 	
-	void unregisterPlugin(Plugin plugin) {
-		ArrayList<String> emptyTags = new ArrayList<>();
-		for (Map.Entry<String, Set<Plugin>> entry: subscriptions.entrySet()) {
-			entry.getValue().remove(plugin);
-			if (entry.getValue().size() == 0) {
-				emptyTags.add(entry.getKey());
-			}
-		}
-		for (String tag: emptyTags) {
-			subscriptions.remove(tag);
-		}
-		plugins.remove(plugin.getId());
-		System.err.println("Plugin unregistered: " + plugin.getId());
-		sendMessage("core", "core-events:plugin-unload", plugin.getId());
+	void unregisterPlugin(PluginProxy pluginProxy) {
+		plugins.remove(pluginProxy.getId());
+		System.err.println("Unregistered plugin: " + pluginProxy.getId());
+		sendMessage("core", "core-events:plugin-unload", pluginProxy.getId());
 	}
 	
-	void subscribe(Plugin plugin, String tag) {
-		Set<Plugin> pluginSet = subscriptions.getOrDefault(tag, null);
-		if (pluginSet == null) {
-			pluginSet = new HashSet<>();
-			subscriptions.put(tag, pluginSet);
-		}
-		pluginSet.add(plugin);
-	}
-	
-	void unsubscribe(Plugin plugin, String tag) {
-		Set<Plugin> pluginSet = subscriptions.getOrDefault(tag, null);
-		if (pluginSet != null) {
-			pluginSet.remove(plugin);
-			if (pluginSet.size() == 0) {
-				subscriptions.remove(tag);
+	void sendMessage(String sender, String tag, Object data) {
+		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
+		if (listeners != null) {
+			for (MessageListener listener : listeners) {
+				listener.handleMessage(sender, tag, data);
 			}
 		}
 	}
 	
-	void sendMessage(Plugin sender, String tag, Object data) {
-		sendMessage(sender.getId(), tag, data);
+	void registerMessageListener(String tag, MessageListener listener) {
+		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
+		if (listeners == null) {
+			listeners = new HashSet<>();
+			messageListeners.put(tag, listeners);
+		}
+		if (tag.equals("core-events:plugin-load")) {
+			for (String id : plugins.keySet()) {
+				listener.handleMessage("core", "core-events:plugin-load", id);
+			}
+		}
+		listeners.add(listener);
 	}
 	
-	private void sendMessage(String sender, String tag, Object data) {
-		Plugin plugin = plugins.getOrDefault(tag, null);
-		if (plugin != null) {
-			plugin.handleMessage(sender, tag, data);
-		}
-		Set<Plugin> pluginSet = subscriptions.getOrDefault(tag, null);
-		if (pluginSet != null) {
-			for (Plugin plugin2: pluginSet) {
-				plugin2.handleMessage(sender, tag, data);
+	void unregisterMessageListener(String tag, MessageListener listener) {
+		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
+		if (listeners != null) {
+			listeners.remove(listener);
+			if (listeners.size() == 0) {
+				messageListeners.remove(tag);
 			}
 		}
 	}
 	
-	Plugin getPlugin(String name) {
+	public void registerPluginLoader(PluginLoader loader) {
+		loaders.add(loader);
+	}
+	
+	public void unregisterPluginLoader(PluginLoader loader) {
+		loaders.remove(loader);
+	}
+	
+	PluginProxy getPlugin(String name) {
 		return plugins.getOrDefault(name, null);
 	}
 	
 	public boolean loadPluginByClass(Class cls) {
 		try {
-			Constructor constructor = cls.getDeclaredConstructor(PluginManager.class);
-			Object object = constructor.newInstance(this);
-			return object instanceof Plugin;
-		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
+			Object plugin = cls.newInstance();
+			if (plugin instanceof Plugin) {
+				return initializePlugin(cls.getPackage().getName(), (Plugin) plugin);
+			}
+		} catch (IllegalAccessException | InstantiationException e) {
 			e.printStackTrace();
-			return false;
 		}
+		return false;
 	}
 	
 	public boolean loadPluginByClassName(String className) {
@@ -105,11 +107,31 @@ public class PluginManager {
 	}
 	
 	public boolean loadPluginByPackageName(String packageName) {
-		return loadPluginByClassName(packageName + ".Plugin");
+		return loadPluginByClassName(packageName + ".PluginClass");
 	}
 	
 	public boolean loadPluginByPath(Path path) {
+		for (PluginLoader loader : loaders) {
+			if (loader.matchPath(path)) {
+				return loader.loadByPath(path);
+			}
+		}
 		return false;
+	}
+	
+	void quit() {
+		List<PluginProxy> pluginsToUnload = new ArrayList<>();
+		for (Map.Entry<String, PluginProxy> entry : plugins.entrySet()) {
+			if (!entry.getKey().equals("com.eternal_search.DeskChan.Core")) {
+				pluginsToUnload.add(entry.getValue());
+			}
+		}
+		for (PluginProxy plugin : pluginsToUnload) {
+			plugin.unload();
+		}
+		pluginsToUnload.clear();
+		getPlugin("com.eternal_search.DeskChan.Core").unload();
+		System.exit(0);
 	}
 	
 }
