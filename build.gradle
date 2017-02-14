@@ -30,13 +30,13 @@ sourceSets {
 	}
 }
 
-mainClassName = "com.eternal_search.DeskChan.Core.Main"
+mainClassName = "com.eternal_search.deskchan.core.Main"
 
 jar {
 	baseName = 'DeskChan'
 	
 	manifest {
-		attributes 'Main-Class': 'com.eternal_search.DeskChan.Core.Main'
+		attributes 'Main-Class': 'com.eternal_search.deskchan.core.Main'
 	}
 
 	//from files(sourceSets.main.output.classesDir)

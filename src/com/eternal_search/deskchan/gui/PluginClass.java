@@ -1,7 +1,7 @@
-package com.eternal_search.DeskChan.Gui;
+package com.eternal_search.deskchan.gui;
 
-import com.eternal_search.DeskChan.Core.Plugin;
-import com.eternal_search.DeskChan.Core.PluginProxy;
+import com.eternal_search.deskchan.core.Plugin;
+import com.eternal_search.deskchan.core.PluginProxy;
 
 import javax.swing.*;
 

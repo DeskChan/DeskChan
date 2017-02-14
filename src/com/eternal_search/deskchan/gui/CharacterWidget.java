@@ -1,4 +1,4 @@
-package com.eternal_search.DeskChan.Gui;
+package com.eternal_search.deskchan.gui;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;

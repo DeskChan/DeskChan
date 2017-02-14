@@ -1,4 +1,4 @@
-package com.eternal_search.DeskChan.Core;
+package com.eternal_search.deskchan.core;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -88,7 +88,11 @@ public class PluginManager {
 		try {
 			Object plugin = cls.newInstance();
 			if (plugin instanceof Plugin) {
-				return initializePlugin(cls.getPackage().getName(), (Plugin) plugin);
+				String packageName = cls.getPackage().getName();
+				if (packageName.startsWith("com.eternal_search.deskchan.")) {
+					packageName = packageName.substring("com.eternal_search.deskchan.".length());
+				}
+				return initializePlugin(packageName, (Plugin) plugin);
 			}
 		} catch (IllegalAccessException | InstantiationException e) {
 			e.printStackTrace();
@@ -122,7 +126,7 @@ public class PluginManager {
 	void quit() {
 		List<PluginProxy> pluginsToUnload = new ArrayList<>();
 		for (Map.Entry<String, PluginProxy> entry : plugins.entrySet()) {
-			if (!entry.getKey().equals("com.eternal_search.DeskChan.Core")) {
+			if (!entry.getKey().equals("core")) {
 				pluginsToUnload.add(entry.getValue());
 			}
 		}
@@ -130,7 +134,7 @@ public class PluginManager {
 			plugin.unload();
 		}
 		pluginsToUnload.clear();
-		getPlugin("com.eternal_search.DeskChan.Core").unload();
+		getPlugin("core").unload();
 		System.exit(0);
 	}
 	

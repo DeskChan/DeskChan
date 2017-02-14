@@ -1,6 +1,6 @@
-package com.eternal_search.DeskChan.Gui;
+package com.eternal_search.deskchan.gui;
 
-import com.eternal_search.DeskChan.Core.Utils;
+import com.eternal_search.deskchan.core.Utils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,7 +12,7 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class OptionsDialog extends JFrame {
+class OptionsDialog extends JFrame {
 	
 	private final MainWindow mainWindow;
 	private final JTabbedPane tabbedPane = new JTabbedPane();
@@ -30,7 +30,7 @@ public class OptionsDialog extends JFrame {
 	};
 	
 	OptionsDialog(MainWindow mainWindow) {
-		super("DeskChan Options");
+		super("deskchan Options");
 		this.mainWindow = mainWindow;
 		setMinimumSize(new Dimension(300, 200));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

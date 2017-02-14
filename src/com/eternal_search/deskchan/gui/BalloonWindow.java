@@ -1,4 +1,4 @@
-package com.eternal_search.DeskChan.Gui;
+package com.eternal_search.deskchan.gui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,7 +8,7 @@ public class BalloonWindow extends JFrame {
 	private BalloonWidget widget;
 	
 	BalloonWindow(BalloonWidget widget) {
-		super("DeskChan Balloon");
+		super("deskchan Balloon");
 		this.widget = widget;
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setUndecorated(true);

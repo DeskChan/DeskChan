@@ -1,4 +1,4 @@
-package com.eternal_search.DeskChan.Core;
+package com.eternal_search.deskchan.core;
 
 import java.io.IOException;
 import java.net.URI;

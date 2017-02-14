@@ -1,8 +1,7 @@
-package com.eternal_search.DeskChan.Gui;
+package com.eternal_search.deskchan.gui;
 
-import com.eternal_search.DeskChan.Core.Plugin;
-import com.eternal_search.DeskChan.Core.PluginProxy;
-import com.eternal_search.DeskChan.Core.Utils;
+import com.eternal_search.deskchan.core.PluginProxy;
+import com.eternal_search.deskchan.core.Utils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +37,7 @@ public class MainWindow extends JFrame {
 	
 	void initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
-		setTitle("DeskChan");
+		setTitle("deskchan");
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setUndecorated(true);
 		setAlwaysOnTop(true);
@@ -56,6 +55,9 @@ public class MainWindow extends JFrame {
 				pluginProxy.sendMessage("core:quit", null);
 			}
 		});
+		pluginProxy.addMessageListener("gui:say", ((sender, tag, data) -> {
+			showBalloon(data.toString());
+		}));
 	}
 	
 	void setDefaultLocation() {
