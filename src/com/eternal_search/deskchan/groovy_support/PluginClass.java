@@ -38,6 +38,7 @@ public class PluginClass implements Plugin, PluginLoader {
 	
 	@Override
 	public void loadByPath(Path path) throws Exception {
+		String id = path.getFileName().toString();
 		if (Files.isDirectory(path)) {
 			path = path.resolve("Plugin.groovy");
 		}
@@ -46,7 +47,7 @@ public class PluginClass implements Plugin, PluginLoader {
 		GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
 		Script script = groovyShell.parse(path.toFile());
 		GroovyPlugin plugin = (GroovyPlugin) script;
-		PluginManager.getInstance().initializePlugin(path.toString(), plugin);
+		PluginManager.getInstance().initializePlugin(id, plugin);
 	}
 	
 }
