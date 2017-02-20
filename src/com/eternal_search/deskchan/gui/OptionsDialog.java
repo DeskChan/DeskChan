@@ -3,6 +3,8 @@ package com.eternal_search.deskchan.gui;
 import com.eternal_search.deskchan.core.Utils;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -11,6 +13,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
+import java.util.List;
 
 class OptionsDialog extends JFrame {
 	
@@ -28,11 +32,13 @@ class OptionsDialog extends JFrame {
 			}
 		}
 	};
+	private DefaultMutableTreeNode alternativesTreeRoot;
+	private JTree alternativesTree;
 	
 	OptionsDialog(MainWindow mainWindow) {
 		super("deskchan Options");
 		this.mainWindow = mainWindow;
-		setMinimumSize(new Dimension(300, 200));
+		setMinimumSize(new Dimension(400, 300));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
@@ -69,7 +75,11 @@ class OptionsDialog extends JFrame {
 		pluginsTab.add(pluginsListScrollPane);
 		tabbedPane.addTab("Plugins", pluginsTab);
 		JPanel alternativesTab = new JPanel(new BorderLayout());
-		//
+		alternativesTreeRoot = new DefaultMutableTreeNode("Alternatives");
+		alternativesTree = new JTree(alternativesTreeRoot);
+		alternativesTree.setRootVisible(false);
+		JScrollPane alternativesScrollPane = new JScrollPane(alternativesTree);
+		alternativesTab.add(alternativesScrollPane);
 		tabbedPane.addTab("Alternatives", alternativesTab);
 		JPanel debugTab = new JPanel(new BorderLayout());
 		//
@@ -94,6 +104,26 @@ class OptionsDialog extends JFrame {
 		}
 		Collections.sort(list);
 		return list;
+	}
+	
+	void updateOptions() {
+		mainWindow.getPluginProxy().sendMessage("core:query-alternatives-map", null, (sender, data) -> {
+			alternativesTreeRoot.removeAllChildren();
+			Map<String, Object> m = (Map<String, Object>) (((Map) data).get("map"));
+			for (Map.Entry<String, Object> entry : m.entrySet()) {
+				DefaultMutableTreeNode alternativeRoot = new DefaultMutableTreeNode(entry.getKey());
+				for (Map<String, Object> info : (List<Map<String, Object>>) (entry.getValue())) {
+					String tag = info.get("tag").toString();
+					String plugin = info.get("plugin").toString();
+					int priority = (int) info.get("priority");
+					String text = tag + " (plugin: " + plugin + ", priority: " + String.valueOf(priority) + ")";
+					DefaultMutableTreeNode alternativeNode = new DefaultMutableTreeNode(text);
+					alternativeRoot.add(alternativeNode);
+				}
+				alternativesTreeRoot.add(alternativeRoot);
+			}
+			alternativesTree.expandPath(new TreePath(alternativesTreeRoot.getPath()));
+		});
 	}
 	
 	class SkinInfo implements Comparable<SkinInfo> {

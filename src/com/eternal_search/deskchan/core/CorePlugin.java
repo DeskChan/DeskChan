@@ -28,6 +28,12 @@ public class CorePlugin implements Plugin, MessageListener {
 			changeAlternativePriority(m.get("srcTag").toString(), m.get("dstTag").toString(),
 					(Integer) m.get("priority"));
 		});
+		pluginProxy.addMessageListener("core:query-alternatives-map", (sender, tag, data) -> {
+			Object seq = ((Map) data).get("seq");
+			pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
+				put("seq", seq); put("map", getAlternativesMap());
+			}});
+		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			String plugin = data.toString();
 			Iterator<Map.Entry<String, List<AlternativeInfo>>> mapIterator = alternatives.entrySet().iterator();
@@ -110,6 +116,22 @@ public class CorePlugin implements Plugin, MessageListener {
 				break;
 			}
 		}
+	}
+	
+	private Map<String, Object> getAlternativesMap() {
+		Map<String, Object> m = new HashMap<>();
+		for (Map.Entry<String, List<AlternativeInfo>> entry : alternatives.entrySet()) {
+			List<Map<String, Object>> l = new ArrayList<>();
+			for (AlternativeInfo info : entry.getValue()) {
+				l.add(new HashMap<String, Object>() {{
+					put("tag", info.tag);
+					put("plugin", info.plugin);
+					put("priority", info.priority);
+				}});
+			}
+			m.put(entry.getKey(), l);
+		}
+		return m;
 	}
 	
 	@Override

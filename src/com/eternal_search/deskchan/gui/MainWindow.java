@@ -28,6 +28,7 @@ public class MainWindow extends JFrame {
 	final Action optionsAction = new AbstractAction("Options...") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
+			optionsDialog.updateOptions();
 			Rectangle screenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
 			optionsDialog.setLocation(
 					(screenBounds.width - optionsDialog.getWidth()) / 2 + screenBounds.x,
