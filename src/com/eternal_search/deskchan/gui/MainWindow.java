@@ -8,6 +8,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.*;
+import java.util.List;
 
 public class MainWindow extends JFrame {
 	
@@ -34,6 +36,7 @@ public class MainWindow extends JFrame {
 			optionsDialog.setVisible(true);
 		}
 	};
+	final List<PluginAction> extraActions = new ArrayList<>();
 	
 	void initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
@@ -55,9 +58,31 @@ public class MainWindow extends JFrame {
 				pluginProxy.sendMessage("core:quit", null);
 			}
 		});
-		pluginProxy.addMessageListener("gui:say", ((sender, tag, data) -> {
+		pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
 			showBalloon(data.toString());
-		}));
+		});
+		pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
+			Map m = (Map) data;
+			String msgTag = m.get("msgTag").toString();
+			Object msgData = m.getOrDefault("msgData", null);
+			PluginAction action = new PluginAction(m.get("name").toString(), sender) {
+				@Override
+				public void actionPerformed(ActionEvent actionEvent) {
+					pluginProxy.sendMessage(msgTag, msgData);
+				}
+			};
+			extraActions.add(action);
+		});
+		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
+			extraActions.removeIf(action -> action.getPlugin().equals(data));
+		});
+		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
+			put("srcTag", "DeskChan:say"); put("dstTag", "gui:say"); put("priority", 100);
+		}});
+		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
+			put("srcTag", "DeskChan:register-simple-action"); put("dstTag", "gui:register-extra-action");
+			put("priority", 100);
+		}});
 	}
 	
 	void setDefaultLocation() {
@@ -156,6 +181,21 @@ public class MainWindow extends JFrame {
 	
 	PluginProxy getPluginProxy() {
 		return pluginProxy;
+	}
+	
+	private abstract class PluginAction extends AbstractAction {
+		
+		private String plugin;
+		
+		PluginAction(String text, String plugin) {
+			super(text);
+			this.plugin = plugin;
+		}
+		
+		String getPlugin() {
+			return plugin;
+		}
+		
 	}
 	
 }
