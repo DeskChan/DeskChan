@@ -5,11 +5,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class PluginProxy {
+public class PluginProxy implements MessageListener {
 	
 	private final Plugin plugin;
 	private String id = null;
 	private Map<String, Set<MessageListener>> messageListeners = new HashMap<>();
+	private Map<Object, ResponseListener> responseListeners = new HashMap<>();
+	private int seq = 0;
 	
 	PluginProxy(Plugin plugin) {
 		this.plugin = plugin;
@@ -22,6 +24,7 @@ public class PluginProxy {
 	public boolean initialize(String id) {
 		assert this.id == null;
 		this.id = id;
+		addMessageListener(id, this);
 		return plugin.initialize(this);
 	}
 	
@@ -42,6 +45,19 @@ public class PluginProxy {
 		PluginManager.getInstance().sendMessage(id, tag, data);
 	}
 	
+	public void sendMessage(String tag, Object data, ResponseListener responseListener) {
+		if (!(data instanceof Map)) {
+			Map<String, Object> m = new HashMap<>();
+			m.put("data", data);
+			data = m;
+		}
+		Map m = (Map) data;
+		Integer seq = this.seq++;
+		responseListeners.put(seq, responseListener);
+		m.put("seq", seq);
+		sendMessage(tag, data);
+	}
+	
 	public void addMessageListener(String tag, MessageListener listener) {
 		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
 		if (listeners == null) {
@@ -60,6 +76,16 @@ public class PluginProxy {
 			if (listeners.size() == 0) {
 				messageListeners.remove(tag);
 			}
+		}
+	}
+	
+	@Override
+	public void handleMessage(String sender, String tag, Object data) {
+		if (data instanceof Map) {
+			Map m = (Map) data;
+			Object seq = m.getOrDefault("seq", null);
+			ResponseListener listener = responseListeners.remove(seq);
+			listener.handle(sender, data);
 		}
 	}
 	
