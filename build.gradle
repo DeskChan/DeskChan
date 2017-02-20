@@ -42,3 +42,15 @@ jar {
 	//from files(sourceSets.main.output.classesDir)
 	//from configurations.runtime.asFileTree.files.collect { zipTree(it) }
 }
+
+distZip {
+	into(project.name + '/plugins') {
+		from './plugins'
+	}
+}
+
+distTar {
+	into(project.name + '/plugins') {
+		from './plugins'
+	}
+}

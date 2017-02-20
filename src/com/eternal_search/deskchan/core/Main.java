@@ -8,6 +8,6 @@ public class Main {
 		pluginManager.initialize();
 		pluginManager.loadPluginByPackageName("com.eternal_search.deskchan.groovy_support");
 		pluginManager.loadPluginByPackageName("com.eternal_search.deskchan.gui");
-		pluginManager.loadPluginByPath(Paths.get("/home/kiv/Projects/DeskChan-v3/plugins/random_phrases/Plugin.groovy"));
+		pluginManager.tryLoadPluginByName("random_phrases");
 	}
 }

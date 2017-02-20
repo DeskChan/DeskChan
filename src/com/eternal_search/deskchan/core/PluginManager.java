@@ -1,6 +1,8 @@
 package com.eternal_search.deskchan.core;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class PluginManager {
@@ -114,11 +116,44 @@ public class PluginManager {
 		return loadPluginByClassName(packageName + ".PluginClass");
 	}
 	
-	public boolean loadPluginByPath(Path path) {
+	public boolean loadPluginByPath(Path path) throws Exception {
 		for (PluginLoader loader : loaders) {
 			if (loader.matchPath(path)) {
-				return loader.loadByPath(path);
+				loader.loadByPath(path);
+				return true;
 			}
+		}
+		return false;
+	}
+	
+	public boolean tryLoadPluginByPath(Path path) {
+		try {
+			return loadPluginByPath(path);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public boolean loadPluginByName(String name) throws Exception {
+		Path jarPath = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+		Path pluginsDirPath;
+		if (Files.isDirectory(jarPath)) {
+			pluginsDirPath = jarPath.resolve("../../../plugins");
+		} else {
+			pluginsDirPath = jarPath.getParent().resolve("../plugins");
+		}
+		if (Files.isDirectory(pluginsDirPath)) {
+			return loadPluginByPath(pluginsDirPath.resolve(name));
+		}
+		return false;
+	}
+	
+	public boolean tryLoadPluginByName(String name) {
+		try {
+			return loadPluginByName(name);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return false;
 	}

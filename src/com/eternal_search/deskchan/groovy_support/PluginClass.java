@@ -9,6 +9,7 @@ import groovy.lang.Script;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class PluginClass implements Plugin, PluginLoader {
@@ -26,23 +27,26 @@ public class PluginClass implements Plugin, PluginLoader {
 	
 	@Override
 	public boolean matchPath(Path path) {
+		if (Files.isDirectory(path)) {
+			path = path.resolve("Plugin.groovy");
+			if (Files.isReadable(path)) {
+				return true;
+			}
+		}
 		return path.getFileName().toString().endsWith(".groovy");
 	}
 	
 	@Override
-	public boolean loadByPath(Path path) {
+	public void loadByPath(Path path) throws Exception {
+		if (Files.isDirectory(path)) {
+			path = path.resolve("Plugin.groovy");
+		}
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setScriptBaseClass("com.eternal_search.deskchan.groovy_support.GroovyPlugin");
 		GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
-		try {
-			Script script = groovyShell.parse(path.toFile());
-			GroovyPlugin plugin = (GroovyPlugin) script;
-			PluginManager.getInstance().initializePlugin(path.toString(), plugin);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
+		Script script = groovyShell.parse(path.toFile());
+		GroovyPlugin plugin = (GroovyPlugin) script;
+		PluginManager.getInstance().initializePlugin(path.toString(), plugin);
 	}
 	
 }

@@ -68,6 +68,9 @@ class OptionsDialog extends JFrame {
 		JScrollPane pluginsListScrollPane = new JScrollPane(pluginsList);
 		pluginsTab.add(pluginsListScrollPane);
 		tabbedPane.addTab("Plugins", pluginsTab);
+		JPanel alternativesTab = new JPanel(new BorderLayout());
+		//
+		tabbedPane.addTab("Alternatives", alternativesTab);
 		JPanel debugTab = new JPanel(new BorderLayout());
 		//
 		tabbedPane.addTab("Debug", debugTab);
