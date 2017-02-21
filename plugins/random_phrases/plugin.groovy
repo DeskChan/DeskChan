@@ -15,6 +15,10 @@ def phrases = new ArrayList()
 def random = new Random()
 def timer = new Timer()
 
+addCleanupHandler({
+	timer.cancel()
+})
+
 sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 	def dataDirPath = Paths.get(((Map) data).get('path').toString())
 	Thread.start() {

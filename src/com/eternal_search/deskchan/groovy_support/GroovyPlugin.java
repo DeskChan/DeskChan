@@ -6,9 +6,13 @@ import com.eternal_search.deskchan.core.PluginProxy;
 import com.eternal_search.deskchan.core.ResponseListener;
 import groovy.lang.Script;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class GroovyPlugin extends Script implements Plugin {
 	
 	private PluginProxy pluginProxy = null;
+	private List<Runnable> cleanupHandlers = new ArrayList<>();
 	
 	@Override
 	public boolean initialize(PluginProxy pluginProxy) {
@@ -24,6 +28,9 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	
 	@Override
 	public void unload() {
+		for (Runnable runnable : cleanupHandlers) {
+			runnable.run();
+		}
 	}
 	
 	protected void sendMessage(String tag, Object data) {
@@ -40,6 +47,10 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	
 	protected void removeMessageListener(String tag, MessageListener listener) {
 		pluginProxy.removeMessageListener(tag, listener);
+	}
+	
+	protected void addCleanupHandler(Runnable handler) {
+		cleanupHandlers.add(handler);
 	}
 	
 }
