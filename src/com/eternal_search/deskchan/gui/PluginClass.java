@@ -13,11 +13,11 @@ public class PluginClass implements Plugin {
 	public boolean initialize(PluginProxy pluginProxy) {
 		try {
 			javax.swing.SwingUtilities.invokeAndWait(() -> {
-				try {
+				/* try {
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 				} catch (Exception e) {
 					e.printStackTrace();
-				}
+				} */
 				mainWindow = new MainWindow();
 				mainWindow.initialize(pluginProxy);
 				mainWindow.setVisible(true);
