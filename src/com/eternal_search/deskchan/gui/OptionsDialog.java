@@ -1,15 +1,20 @@
 package com.eternal_search.deskchan.gui;
 
+import com.eternal_search.deskchan.core.PluginManager;
 import com.eternal_search.deskchan.core.Utils;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +34,39 @@ class OptionsDialog extends JFrame {
 				SkinInfo skinInfo = (SkinInfo) selectValue;
 				mainWindow.getCharacterWidget().loadImage(skinInfo.path);
 				mainWindow.setDefaultLocation();
+			}
+		}
+	};
+	private JList pluginsList;
+	private final Action loadPluginAction = new AbstractAction("Load...") {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			JFileChooser chooser = new JFileChooser();
+			chooser.setCurrentDirectory(new File("."));
+			chooser.setDialogTitle("Load plugin...");
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			chooser.setAcceptAllFileFilterUsed(false);
+			if (chooser.showOpenDialog(getContentPane()) == JFileChooser.APPROVE_OPTION) {
+				Path path = chooser.getSelectedFile().toPath();
+				try {
+					PluginManager.getInstance().loadPluginByPath(path);
+				} catch (Exception e) {
+					StringWriter stringWriter = new StringWriter();
+					PrintWriter printWriter = new PrintWriter(stringWriter);
+					e.printStackTrace(printWriter);
+					String stackTraceStr = stringWriter.toString();
+					JOptionPane.showMessageDialog(getContentPane(), stackTraceStr, e.toString(),
+							JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
+	};
+	private final Action unloadPluginAction = new AbstractAction("Unload") {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			String plugin = pluginsList.getSelectedValue().toString();
+			if ((plugin != null) && !plugin.equals("core")) {
+				PluginManager.getInstance().getPlugin(plugin).unload();
 			}
 		}
 	};
@@ -54,8 +92,7 @@ class OptionsDialog extends JFrame {
 		});
 		JScrollPane skinListScrollPane = new JScrollPane(skinList);
 		appearanceTab.add(skinListScrollPane);
-		JButton button = new JButton(selectSkinAction);
-		appearanceTab.add(button, BorderLayout.PAGE_END);
+		appearanceTab.add(new JButton(selectSkinAction), BorderLayout.PAGE_END);
 		tabbedPane.addTab("Appearance", appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
 		DefaultListModel pluginsListModel = new DefaultListModel();
@@ -70,9 +107,13 @@ class OptionsDialog extends JFrame {
 				}
 			}
 		});
-		JList pluginsList = new JList(pluginsListModel);
+		pluginsList = new JList(pluginsListModel);
 		JScrollPane pluginsListScrollPane = new JScrollPane(pluginsList);
 		pluginsTab.add(pluginsListScrollPane);
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.add(new JButton(loadPluginAction));
+		buttonPanel.add(new JButton(unloadPluginAction));
+		pluginsTab.add(buttonPanel, BorderLayout.PAGE_END);
 		tabbedPane.addTab("Plugins", pluginsTab);
 		JPanel alternativesTab = new JPanel(new BorderLayout());
 		alternativesTreeRoot = new DefaultMutableTreeNode("Alternatives");

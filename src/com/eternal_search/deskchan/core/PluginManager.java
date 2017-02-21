@@ -82,7 +82,7 @@ public class PluginManager {
 		loaders.remove(loader);
 	}
 	
-	PluginProxy getPlugin(String name) {
+	public PluginProxy getPlugin(String name) {
 		return plugins.getOrDefault(name, null);
 	}
 	
@@ -116,26 +116,27 @@ public class PluginManager {
 		return loadPluginByClassName(packageName + ".PluginClass");
 	}
 	
-	public boolean loadPluginByPath(Path path) throws Exception {
+	public void loadPluginByPath(Path path) throws Exception {
 		for (PluginLoader loader : loaders) {
 			if (loader.matchPath(path)) {
 				loader.loadByPath(path);
-				return true;
+				return;
 			}
 		}
-		return false;
+		throw new Exception("Could not match loader for plugin " + path.toString());
 	}
 	
 	public boolean tryLoadPluginByPath(Path path) {
 		try {
-			return loadPluginByPath(path);
+			loadPluginByPath(path);
+			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return false;
 	}
 	
-	public boolean loadPluginByName(String name) throws Exception {
+	public void loadPluginByName(String name) throws Exception {
 		Path jarPath = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
 		Path pluginsDirPath;
 		if (Files.isDirectory(jarPath)) {
@@ -143,15 +144,13 @@ public class PluginManager {
 		} else {
 			pluginsDirPath = jarPath.getParent().resolve("../plugins");
 		}
-		if (Files.isDirectory(pluginsDirPath)) {
-			return loadPluginByPath(pluginsDirPath.resolve(name));
-		}
-		return false;
+		loadPluginByPath(pluginsDirPath.resolve(name));
 	}
 	
 	public boolean tryLoadPluginByName(String name) {
 		try {
-			return loadPluginByName(name);
+			loadPluginByName(name);
+			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
