@@ -13,6 +13,7 @@ public class BalloonWindow extends JFrame {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setUndecorated(true);
 		setAlwaysOnTop(true);
+		setFocusableWindowState(false);
 		setBackground(new Color(0, 0, 0, 0));
 		pack();
 		add(widget);
