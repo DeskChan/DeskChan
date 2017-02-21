@@ -157,6 +157,7 @@ public class MainWindow extends JFrame {
 		if (text != null) {
 			JLabel label = new JLabel("<html><center>" + text + "</center></html>");
 			label.setHorizontalAlignment(JLabel.CENTER);
+			label.setFont(label.getFont().deriveFont(15.0f));
 			showBalloon(label);
 		} else {
 			showBalloon((JComponent) null);
