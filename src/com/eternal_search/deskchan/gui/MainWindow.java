@@ -67,23 +67,29 @@ public class MainWindow extends JFrame {
 				}
 			});
 			pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
-				Map m = (Map) data;
-				showBalloon(m.get("text").toString());
+				runOnEventThread(() -> {
+					Map m = (Map) data;
+					showBalloon(m.get("text").toString());
+				});
 			});
 			pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
-				Map m = (Map) data;
-				String msgTag = m.get("msgTag").toString();
-				Object msgData = m.getOrDefault("msgData", null);
-				PluginAction action = new PluginAction(m.get("name").toString(), sender) {
-					@Override
-					public void actionPerformed(ActionEvent actionEvent) {
-						pluginProxy.sendMessage(msgTag, msgData);
-					}
-				};
-				extraActions.add(action);
+				runOnEventThread(() -> {
+					Map m = (Map) data;
+					String msgTag = m.get("msgTag").toString();
+					Object msgData = m.getOrDefault("msgData", null);
+					PluginAction action = new PluginAction(m.get("name").toString(), sender) {
+						@Override
+						public void actionPerformed(ActionEvent actionEvent) {
+							pluginProxy.sendMessage(msgTag, msgData);
+						}
+					};
+					extraActions.add(action);
+				});
 			});
 			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
-				extraActions.removeIf(action -> action.getPlugin().equals(data));
+				runOnEventThread(() -> {
+					extraActions.removeIf(action -> action.getPlugin().equals(data));
+				});
 			});
 			pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
 				put("srcTag", "DeskChan:say"); put("dstTag", "gui:say"); put("priority", 100);
@@ -211,6 +217,14 @@ public class MainWindow extends JFrame {
 	
 	private static void showLongMessage(JFrame frame, String message, String title, int type) {
 		JOptionPane.showMessageDialog(frame, new LongMessagePanel(message), title, type);
+	}
+	
+	static void runOnEventThread(Runnable runnable) {
+		if (SwingUtilities.isEventDispatchThread()) {
+			runnable.run();
+		} else {
+			SwingUtilities.invokeLater(runnable);
+		}
 	}
 	
 	private static abstract class PluginAction extends AbstractAction {

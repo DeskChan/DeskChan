@@ -145,15 +145,19 @@ class OptionsDialog extends JFrame {
 		JPanel pluginsTab = new JPanel(new BorderLayout());
 		DefaultListModel pluginsListModel = new DefaultListModel();
 		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
-			pluginsListModel.addElement(data.toString());
+			MainWindow.runOnEventThread(() -> {
+				pluginsListModel.addElement(data.toString());
+			});
 		});
 		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
-			for (int i = 0; i < pluginsListModel.size(); ++i) {
-				if (pluginsListModel.elementAt(i).equals(data)) {
-					pluginsListModel.remove(i);
-					break;
+			MainWindow.runOnEventThread(() -> {
+				for (int i = 0; i < pluginsListModel.size(); ++i) {
+					if (pluginsListModel.elementAt(i).equals(data)) {
+						pluginsListModel.remove(i);
+						break;
+					}
 				}
-			}
+			});
 		});
 		pluginsList = new JList(pluginsListModel);
 		JScrollPane pluginsListScrollPane = new JScrollPane(pluginsList);

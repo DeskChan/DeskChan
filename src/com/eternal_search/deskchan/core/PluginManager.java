@@ -75,11 +75,11 @@ public class PluginManager {
 		}
 	}
 	
-	public void registerPluginLoader(PluginLoader loader) {
+	public synchronized void registerPluginLoader(PluginLoader loader) {
 		loaders.add(loader);
 	}
 	
-	public void unregisterPluginLoader(PluginLoader loader) {
+	public synchronized void unregisterPluginLoader(PluginLoader loader) {
 		loaders.remove(loader);
 	}
 	
@@ -126,7 +126,7 @@ public class PluginManager {
 		return loadPluginByClassName(packageName + ".PluginClass");
 	}
 	
-	public void loadPluginByPath(Path path) throws Throwable {
+	public synchronized void loadPluginByPath(Path path) throws Throwable {
 		for (PluginLoader loader : loaders) {
 			if (loader.matchPath(path)) {
 				loader.loadByPath(path);
