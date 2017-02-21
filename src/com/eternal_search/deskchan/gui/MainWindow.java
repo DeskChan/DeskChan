@@ -155,7 +155,7 @@ public class MainWindow extends JFrame {
 	
 	void showBalloon(String text) {
 		if (text != null) {
-			JLabel label = new JLabel(text);
+			JLabel label = new JLabel("<html><center>" + text + "</center></html>");
 			label.setHorizontalAlignment(JLabel.CENTER);
 			showBalloon(label);
 		} else {

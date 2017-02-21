@@ -1,6 +1,7 @@
 package com.eternal_search.deskchan.gui;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -15,6 +16,7 @@ class BalloonWidget extends JPanel implements MouseListener {
 		setBackground(new Color(0, 0, 0, 0));
 		setPreferredSize(new Dimension(400, 300));
 		setLayout(new BorderLayout());
+		setBorder(new EmptyBorder(5, 5, 5, 5));
 		add(component, BorderLayout.CENTER);
 		addMouseListener(this);
 	}

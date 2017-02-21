@@ -16,6 +16,7 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 		try {
 			run();
 		} catch (Exception e) {
+			e.printStackTrace();
 			return false;
 		}
 		return true;
