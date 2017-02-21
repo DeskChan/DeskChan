@@ -8,12 +8,15 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
 public class MainWindow extends JFrame {
 	
 	private PluginProxy pluginProxy = null;
+	private Path dataDirPath = null;
 	private final CharacterWidget characterWidget = new CharacterWidget(this);
 	private BalloonWidget balloonWidget = null;
 	private BalloonWindow balloonWindow = null;
@@ -41,49 +44,52 @@ public class MainWindow extends JFrame {
 	
 	void initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
-		setTitle("DeskChan");
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		setUndecorated(true);
-		setAlwaysOnTop(true);
-		setFocusableWindowState(false);
-		setLayout(null);
-		setBackground(new Color(0, 0, 0, 0));
-		pack();
-		characterWidget.loadImage(Utils.getResourcePath("characters/sprite0001.png"));
-		setDefaultLocation();
-		setContentPane(characterWidget);
-		optionsDialog = new OptionsDialog(this);
-		addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosed(WindowEvent windowEvent) {
-				pluginProxy.sendMessage("core:quit", null);
-			}
-		});
-		pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
-			showBalloon(data.toString());
-		});
-		pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
-			Map m = (Map) data;
-			String msgTag = m.get("msgTag").toString();
-			Object msgData = m.getOrDefault("msgData", null);
-			PluginAction action = new PluginAction(m.get("name").toString(), sender) {
+		pluginProxy.sendMessage("core:get-plugin-data-dir", null, (sender_, data_) -> {
+			dataDirPath = Paths.get(data_.toString());
+			setTitle("DeskChan");
+			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			setUndecorated(true);
+			setAlwaysOnTop(true);
+			setFocusableWindowState(false);
+			setLayout(null);
+			setBackground(new Color(0, 0, 0, 0));
+			pack();
+			characterWidget.loadImage(Utils.getResourcePath("characters/sprite0001.png"));
+			setDefaultLocation();
+			setContentPane(characterWidget);
+			optionsDialog = new OptionsDialog(this);
+			addWindowListener(new WindowAdapter() {
 				@Override
-				public void actionPerformed(ActionEvent actionEvent) {
-					pluginProxy.sendMessage(msgTag, msgData);
+				public void windowClosed(WindowEvent windowEvent) {
+					pluginProxy.sendMessage("core:quit", null);
 				}
-			};
-			extraActions.add(action);
+			});
+			pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
+				showBalloon(data.toString());
+			});
+			pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
+				Map m = (Map) data;
+				String msgTag = m.get("msgTag").toString();
+				Object msgData = m.getOrDefault("msgData", null);
+				PluginAction action = new PluginAction(m.get("name").toString(), sender) {
+					@Override
+					public void actionPerformed(ActionEvent actionEvent) {
+						pluginProxy.sendMessage(msgTag, msgData);
+					}
+				};
+				extraActions.add(action);
+			});
+			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
+				extraActions.removeIf(action -> action.getPlugin().equals(data));
+			});
+			pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
+				put("srcTag", "DeskChan:say"); put("dstTag", "gui:say"); put("priority", 100);
+			}});
+			pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
+				put("srcTag", "DeskChan:register-simple-action"); put("dstTag", "gui:register-extra-action");
+				put("priority", 100);
+			}});
 		});
-		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
-			extraActions.removeIf(action -> action.getPlugin().equals(data));
-		});
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
-			put("srcTag", "DeskChan:say"); put("dstTag", "gui:say"); put("priority", 100);
-		}});
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
-			put("srcTag", "DeskChan:register-simple-action"); put("dstTag", "gui:register-extra-action");
-			put("priority", 100);
-		}});
 	}
 	
 	void setDefaultLocation() {

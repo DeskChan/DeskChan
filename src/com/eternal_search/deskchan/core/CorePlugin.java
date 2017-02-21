@@ -1,5 +1,9 @@
 package com.eternal_search.deskchan.core;
 
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class CorePlugin implements Plugin, MessageListener {
@@ -54,6 +58,28 @@ public class CorePlugin implements Plugin, MessageListener {
 					System.err.println("No more alternatives for " + srcTag);
 					mapIterator.remove();
 				}
+			}
+		});
+		pluginProxy.addMessageListener("core:get-plugin-data-dir", (sender, tag, data) -> {
+			try {
+				Path jarPath = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+				Path dataDirPath;
+				if (Files.isDirectory(jarPath)) {
+					dataDirPath = jarPath.resolve("../../data");
+				} else {
+					dataDirPath = jarPath.getParent().resolve("../data");
+				}
+				final Path pluginDataDirPath = dataDirPath.resolve(sender).toAbsolutePath();
+				if (!Files.isDirectory(pluginDataDirPath)) {
+					pluginDataDirPath.toFile().mkdirs();
+					System.err.println("Created directory: " + pluginDataDirPath.toString());
+				}
+				Object seq = ((Map) data).get("seq");
+				pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
+					put("seq", seq); put("path", pluginDataDirPath.toAbsolutePath().toString());
+				}});
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
 			}
 		});
 		return true;
