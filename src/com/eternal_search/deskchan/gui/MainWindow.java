@@ -41,7 +41,7 @@ public class MainWindow extends JFrame {
 	
 	void initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
-		setTitle("deskchan");
+		setTitle("DeskChan");
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setUndecorated(true);
 		setAlwaysOnTop(true);

@@ -24,13 +24,14 @@ public class PluginManager {
 	}
 	
 	public boolean initializePlugin(String id, Plugin plugin) {
-		assert !plugins.containsKey(id);
-		PluginProxy pluginProxy = new PluginProxy(plugin);
-		if (pluginProxy.initialize(id)) {
-			plugins.put(id, pluginProxy);
-			System.err.println("Registered plugin: " + id);
-			sendMessage("core", "core-events:plugin-load", id);
-			return true;
+		if (!plugins.containsKey(id)) {
+			PluginProxy pluginProxy = new PluginProxy(plugin);
+			if (pluginProxy.initialize(id)) {
+				plugins.put(id, pluginProxy);
+				System.err.println("Registered plugin: " + id);
+				sendMessage("core", "core-events:plugin-load", id);
+				return true;
+			}
 		}
 		return false;
 	}

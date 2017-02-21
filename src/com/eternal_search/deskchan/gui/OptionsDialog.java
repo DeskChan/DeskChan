@@ -74,7 +74,7 @@ class OptionsDialog extends JFrame {
 	private JTree alternativesTree;
 	
 	OptionsDialog(MainWindow mainWindow) {
-		super("deskchan Options");
+		super("DeskChan Options");
 		this.mainWindow = mainWindow;
 		setMinimumSize(new Dimension(400, 300));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
