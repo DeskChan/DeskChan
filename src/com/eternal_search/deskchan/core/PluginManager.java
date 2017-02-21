@@ -83,8 +83,17 @@ public class PluginManager {
 		loaders.remove(loader);
 	}
 	
-	public PluginProxy getPlugin(String name) {
+	private PluginProxy getPlugin(String name) {
 		return plugins.getOrDefault(name, null);
+	}
+	
+	public boolean unloadPlugin(String name) {
+		PluginProxy plugin = getPlugin(name);
+		if (plugin != null) {
+			plugin.unload();
+			return true;
+		}
+		return false;
 	}
 	
 	public boolean loadPluginByClass(Class cls) {

@@ -90,7 +90,7 @@ class OptionsDialog extends JFrame {
 		public void actionPerformed(ActionEvent actionEvent) {
 			String plugin = pluginsList.getSelectedValue().toString();
 			if ((plugin != null) && !plugin.equals("core")) {
-				PluginManager.getInstance().getPlugin(plugin).unload();
+				PluginManager.getInstance().unloadPlugin(plugin);
 			}
 		}
 	};
