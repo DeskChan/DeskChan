@@ -117,7 +117,7 @@ public class PluginManager {
 		return loadPluginByClassName(packageName + ".PluginClass");
 	}
 	
-	public void loadPluginByPath(Path path) throws Exception {
+	public void loadPluginByPath(Path path) throws Throwable {
 		for (PluginLoader loader : loaders) {
 			if (loader.matchPath(path)) {
 				loader.loadByPath(path);
@@ -131,13 +131,13 @@ public class PluginManager {
 		try {
 			loadPluginByPath(path);
 			return true;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 		return false;
 	}
 	
-	public void loadPluginByName(String name) throws Exception {
+	public void loadPluginByName(String name) throws Throwable {
 		Path jarPath = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
 		Path pluginsDirPath;
 		if (Files.isDirectory(jarPath)) {
@@ -152,7 +152,7 @@ public class PluginManager {
 		try {
 			loadPluginByName(name);
 			return true;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 		return false;

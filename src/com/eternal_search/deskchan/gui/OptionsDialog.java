@@ -2,6 +2,7 @@ package com.eternal_search.deskchan.gui;
 
 import com.eternal_search.deskchan.core.PluginManager;
 import com.eternal_search.deskchan.core.Utils;
+import org.json.JSONObject;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -50,13 +51,8 @@ class OptionsDialog extends JFrame {
 				Path path = chooser.getSelectedFile().toPath();
 				try {
 					PluginManager.getInstance().loadPluginByPath(path);
-				} catch (Exception e) {
-					StringWriter stringWriter = new StringWriter();
-					PrintWriter printWriter = new PrintWriter(stringWriter);
-					e.printStackTrace(printWriter);
-					String stackTraceStr = stringWriter.toString();
-					JOptionPane.showMessageDialog(getContentPane(), stackTraceStr, e.toString(),
-							JOptionPane.ERROR_MESSAGE);
+				} catch (Throwable e) {
+					MainWindow.showThrowable(OptionsDialog.this, e);
 				}
 			}
 		}
@@ -72,6 +68,22 @@ class OptionsDialog extends JFrame {
 	};
 	private DefaultMutableTreeNode alternativesTreeRoot;
 	private JTree alternativesTree;
+	private JTextField debugTagTextField;
+	private JTextArea debugDataTextArea;
+	private final Action debugSendMessageAction = new AbstractAction("Send") {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			String tag = debugTagTextField.getText();
+			String dataStr = debugDataTextArea.getText();
+			try {
+				JSONObject json = new JSONObject(dataStr);
+				Object data = json.toMap();
+				mainWindow.getPluginProxy().sendMessage(tag, data);
+			} catch (Throwable e) {
+				MainWindow.showThrowable(OptionsDialog.this, e);
+			}
+		}
+	};
 	
 	OptionsDialog(MainWindow mainWindow) {
 		super("DeskChan Options");
@@ -123,7 +135,12 @@ class OptionsDialog extends JFrame {
 		alternativesTab.add(alternativesScrollPane);
 		tabbedPane.addTab("Alternatives", alternativesTab);
 		JPanel debugTab = new JPanel(new BorderLayout());
-		//
+		debugTagTextField = new JTextField("DeskChan:say");
+		debugTab.add(debugTagTextField, BorderLayout.PAGE_START);
+		debugDataTextArea = new JTextArea("{\n\t\"text\": \"Test\"\n}\n");
+		JScrollPane debugDataTextAreaScrollPane = new JScrollPane(debugDataTextArea);
+		debugTab.add(debugDataTextAreaScrollPane);
+		debugTab.add(new JButton(debugSendMessageAction), BorderLayout.PAGE_END);
 		tabbedPane.addTab("Debug", debugTab);
 		pack();
 	}

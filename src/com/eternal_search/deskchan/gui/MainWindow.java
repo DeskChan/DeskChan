@@ -8,6 +8,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -65,7 +67,8 @@ public class MainWindow extends JFrame {
 				}
 			});
 			pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
-				showBalloon(data.toString());
+				Map m = (Map) data;
+				showBalloon(m.get("text").toString());
 			});
 			pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
 				Map m = (Map) data;
@@ -194,7 +197,23 @@ public class MainWindow extends JFrame {
 		return dataDirPath;
 	}
 	
-	private abstract class PluginAction extends AbstractAction {
+	void showThrowable(Throwable e) {
+		showThrowable(this, e);
+	}
+	
+	static void showThrowable(JFrame frame, Throwable e) {
+		StringWriter stringWriter = new StringWriter();
+		PrintWriter printWriter = new PrintWriter(stringWriter);
+		e.printStackTrace(printWriter);
+		String stackTraceStr = stringWriter.toString();
+		showLongMessage(frame, stackTraceStr, e.toString(), JOptionPane.ERROR_MESSAGE);
+	}
+	
+	private static void showLongMessage(JFrame frame, String message, String title, int type) {
+		JOptionPane.showMessageDialog(frame, new LongMessagePanel(message), title, type);
+	}
+	
+	private static abstract class PluginAction extends AbstractAction {
 		
 		private String plugin;
 		
@@ -205,6 +224,27 @@ public class MainWindow extends JFrame {
 		
 		String getPlugin() {
 			return plugin;
+		}
+		
+	}
+	
+	private static class LongMessagePanel extends JPanel {
+		
+		private final BorderLayout borderLayout = new BorderLayout();
+		private final JScrollPane scrollPane = new JScrollPane();
+		private final JTextArea textArea = new JTextArea();
+		
+		private LongMessagePanel(String message) {
+			this.setLayout(borderLayout);
+			textArea.setEnabled(true);
+			textArea.setEditable(false);
+			textArea.setLineWrap(true);
+			textArea.setText(message);
+			textArea.setSize(textArea.getPreferredSize());
+			scrollPane.getViewport().add(textArea, null);
+			scrollPane.setPreferredSize(new Dimension(400, 250));
+			scrollPane.getViewport().setViewPosition(new Point(0, 0));
+			add(scrollPane, BorderLayout.CENTER);
 		}
 		
 	}

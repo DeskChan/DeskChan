@@ -6,6 +6,6 @@ public interface PluginLoader {
 	
 	boolean matchPath(Path path);
 	
-	void loadByPath(Path path) throws Exception;
+	void loadByPath(Path path) throws Throwable;
 	
 }
