@@ -69,14 +69,14 @@ public class CorePlugin implements Plugin, MessageListener {
 				} else {
 					dataDirPath = jarPath.getParent().resolve("../data");
 				}
-				final Path pluginDataDirPath = dataDirPath.resolve(sender).toAbsolutePath();
+				final Path pluginDataDirPath = dataDirPath.resolve(sender);
 				if (!Files.isDirectory(pluginDataDirPath)) {
 					pluginDataDirPath.toFile().mkdirs();
 					System.err.println("Created directory: " + pluginDataDirPath.toString());
 				}
 				Object seq = ((Map) data).get("seq");
 				pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
-					put("seq", seq); put("path", pluginDataDirPath.toAbsolutePath().toString());
+					put("seq", seq); put("path", pluginDataDirPath.toString());
 				}});
 			} catch (URISyntaxException e) {
 				e.printStackTrace();

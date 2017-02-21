@@ -28,7 +28,7 @@ public class PluginClass implements Plugin, PluginLoader {
 	@Override
 	public boolean matchPath(Path path) {
 		if (Files.isDirectory(path)) {
-			path = path.resolve("Plugin.groovy");
+			path = path.resolve("plugin.groovy");
 			if (Files.isReadable(path)) {
 				return true;
 			}
@@ -40,7 +40,7 @@ public class PluginClass implements Plugin, PluginLoader {
 	public void loadByPath(Path path) throws Throwable {
 		String id = path.getFileName().toString();
 		if (Files.isDirectory(path)) {
-			path = path.resolve("Plugin.groovy");
+			path = path.resolve("plugin.groovy");
 		}
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setScriptBaseClass("com.eternal_search.deskchan.groovy_support.GroovyPlugin");

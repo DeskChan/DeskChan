@@ -47,7 +47,7 @@ public class MainWindow extends JFrame {
 	void initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		pluginProxy.sendMessage("core:get-plugin-data-dir", null, (sender_, data_) -> {
-			dataDirPath = Paths.get(data_.toString());
+			dataDirPath = Paths.get(((Map) data_).get("path").toString());
 			setTitle("DeskChan");
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 			setUndecorated(true);

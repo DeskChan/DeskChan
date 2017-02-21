@@ -4,18 +4,16 @@ import com.eternal_search.deskchan.core.PluginManager;
 import com.eternal_search.deskchan.core.Utils;
 import org.json.JSONObject;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,11 +28,41 @@ class OptionsDialog extends JFrame {
 	private final Action selectSkinAction = new AbstractAction("Select") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
-			Object selectValue = skinList.getSelectedValue();
-			if (selectValue != null) {
-				SkinInfo skinInfo = (SkinInfo) selectValue;
+			Object selectedValue = skinList.getSelectedValue();
+			if (selectedValue != null) {
+				SkinInfo skinInfo = (SkinInfo) selectedValue;
 				mainWindow.getCharacterWidget().loadImage(skinInfo.path);
 				mainWindow.setDefaultLocation();
+			}
+		}
+	};
+	private final Action addSkinAction = new AbstractAction("Add...") {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			JFileChooser chooser = new JFileChooser();
+			chooser.setCurrentDirectory(new File("."));
+			chooser.setDialogTitle("Add skin...");
+			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			chooser.setFileFilter(new FileNameExtensionFilter("Image files", ImageIO.getReaderFileSuffixes()));
+			if (chooser.showOpenDialog(getContentPane()) == JFileChooser.APPROVE_OPTION) {
+				Path path = chooser.getSelectedFile().toPath();
+				DefaultListModel model = (DefaultListModel) skinList.getModel();
+				model.addElement(new SkinInfo(path, false));
+				storeSkinList();
+			}
+		}
+	};
+	private final Action removeSkinAction = new AbstractAction("Remove") {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			Object selectedValue = skinList.getSelectedValue();
+			if (selectedValue != null) {
+				SkinInfo skinInfo = (SkinInfo) selectedValue;
+				if (!skinInfo.builtin) {
+					DefaultListModel model = (DefaultListModel) skinList.getModel();
+					model.removeElement(skinInfo);
+					storeSkinList();
+				}
 			}
 		}
 	};
@@ -92,7 +120,11 @@ class OptionsDialog extends JFrame {
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
-		skinList = new JList(loadSkinList().toArray());
+		DefaultListModel skinListModel = new DefaultListModel();
+		for (Object skinInfo : loadSkinList()) {
+			skinListModel.addElement(skinInfo);
+		}
+		skinList = new JList(skinListModel);
 		skinList.setLayoutOrientation(JList.VERTICAL);
 		skinList.addMouseListener(new MouseAdapter() {
 			@Override
@@ -104,7 +136,11 @@ class OptionsDialog extends JFrame {
 		});
 		JScrollPane skinListScrollPane = new JScrollPane(skinList);
 		appearanceTab.add(skinListScrollPane);
-		appearanceTab.add(new JButton(selectSkinAction), BorderLayout.PAGE_END);
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.add(new JButton(selectSkinAction));
+		buttonPanel.add(new JButton(addSkinAction));
+		buttonPanel.add(new JButton(removeSkinAction));
+		appearanceTab.add(buttonPanel, BorderLayout.PAGE_END);
 		tabbedPane.addTab("Appearance", appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
 		DefaultListModel pluginsListModel = new DefaultListModel();
@@ -122,7 +158,7 @@ class OptionsDialog extends JFrame {
 		pluginsList = new JList(pluginsListModel);
 		JScrollPane pluginsListScrollPane = new JScrollPane(pluginsList);
 		pluginsTab.add(pluginsListScrollPane);
-		JPanel buttonPanel = new JPanel();
+		buttonPanel = new JPanel();
 		buttonPanel.add(new JButton(loadPluginAction));
 		buttonPanel.add(new JButton(unloadPluginAction));
 		pluginsTab.add(buttonPanel, BorderLayout.PAGE_END);
@@ -153,15 +189,50 @@ class OptionsDialog extends JFrame {
 				DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directoryPath);
 				for (Path skinPath : directoryStream) {
 					if (!Files.isDirectory(skinPath)) {
-						list.add(new SkinInfo(skinPath));
+						list.add(new SkinInfo(skinPath, true));
 					}
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		try {
+			List<String> lines = Files.readAllLines(mainWindow.getDataDirPath().resolve("extra_skins.txt"));
+			for (String line : lines) {
+				if (line.isEmpty()) continue;
+				Path skinPath = Paths.get(line);
+				if (Files.isReadable(skinPath)) {
+					list.add(new SkinInfo(skinPath, false));
+				}
+			}
+		} catch (IOException e) {
+			// Configuration file not found
+		}
 		Collections.sort(list);
 		return list;
+	}
+	
+	private void storeSkinList() {
+		ArrayList<SkinInfo> list = new ArrayList<>();
+		for (Object skinInfo : ((DefaultListModel) skinList.getModel()).toArray()) {
+			if (skinInfo instanceof SkinInfo) {
+				list.add((SkinInfo) skinInfo);
+			}
+		}
+		storeSkinList(list);
+	}
+	
+	private void storeSkinList(ArrayList<SkinInfo> list) {
+		try {
+			PrintWriter writer = new PrintWriter(mainWindow.getDataDirPath().resolve("extra_skins.txt").toFile());
+			for (SkinInfo skinInfo : list) {
+				if (skinInfo.builtin) continue;
+				writer.println(skinInfo.path.toString());
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	void updateOptions() {
@@ -188,14 +259,16 @@ class OptionsDialog extends JFrame {
 		
 		String name;
 		Path path;
+		boolean builtin;
 		
-		SkinInfo(String name, Path path) {
+		SkinInfo(String name, Path path, boolean builtin) {
 			this.name = name;
 			this.path = path;
+			this.builtin = builtin;
 		}
 		
-		SkinInfo(Path path) {
-			this(path.getFileName().toString(), path);
+		SkinInfo(Path path, boolean builtin) {
+			this(path.getFileName().toString(), path, builtin);
 		}
 		
 		@Override
