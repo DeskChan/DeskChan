@@ -190,6 +190,10 @@ public class MainWindow extends JFrame {
 		return pluginProxy;
 	}
 	
+	Path getDataDirPath() {
+		return dataDirPath;
+	}
+	
 	private abstract class PluginAction extends AbstractAction {
 		
 		private String plugin;
