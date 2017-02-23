@@ -86,6 +86,12 @@ public class MainWindow extends JFrame {
 					extraActions.add(action);
 				});
 			});
+			pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {
+				runOnEventThread(() -> {
+					characterWidget.loadImage((Path)data);
+					setDefaultLocation();
+				});
+			});
 			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					extraActions.removeIf(action -> action.getPlugin().equals(data));
