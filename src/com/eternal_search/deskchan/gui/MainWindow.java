@@ -94,7 +94,11 @@ public class MainWindow extends JFrame {
 			});
 			pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {
 				runOnEventThread(() -> {
-					characterWidget.loadSkin(Paths.get(data.toString()));
+					if (data instanceof Path) {
+						characterWidget.loadSkin((Path) data);
+					} else {
+						characterWidget.loadSkin(Paths.get(data.toString()));
+					}
 					setDefaultLocation();
 				});
 			});
