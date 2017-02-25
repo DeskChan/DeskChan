@@ -140,9 +140,16 @@ public class MainWindow extends JFrame {
 					characterWidget.setImage(currentCharacterImage);
 				});
 			});
+			pluginProxy.addMessageListener("gui:add-options-tab", (sender, tag, data) -> {
+				runOnEventThread(() -> {
+					Map m = (Map) data;
+					optionsDialog.addTab((String) m.getOrDefault("name", tag), sender, (List) m.get("controls"));
+				});
+			});
 			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					extraActions.removeIf(action -> action.getPlugin().equals(data));
+					optionsDialog.removeTabsByPlugin(data.toString());
 				});
 			});
 			pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{

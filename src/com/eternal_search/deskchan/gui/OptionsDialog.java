@@ -8,15 +8,19 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.*;
 import java.nio.file.*;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.List;
 
-class OptionsDialog extends JFrame {
+class OptionsDialog extends JFrame implements ItemListener {
 	
 	private final MainWindow mainWindow;
-	private final JTabbedPane tabbedPane = new JTabbedPane();
+	private final JComboBox cardsComboBox = new JComboBox(new DefaultComboBoxModel());
+	private final JPanel cards = new JPanel(new CardLayout());
 	private final Action openSkinManagerAction = new AbstractAction("...") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
@@ -100,7 +104,7 @@ class OptionsDialog extends JFrame {
 		this.mainWindow = mainWindow;
 		setMinimumSize(new Dimension(600, 300));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		setContentPane(tabbedPane);
+		cardsComboBox.addItemListener(this);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
 		JPanel panel = new JPanel(new GridLayout(4, 2));
 		panel.add(new JLabel(MainWindow.getString("look_and_feel")));
@@ -117,7 +121,7 @@ class OptionsDialog extends JFrame {
 		});
 		panel.add(balloonDefaultTimeoutSpinner);
 		appearanceTab.add(panel, BorderLayout.PAGE_START);
-		tabbedPane.addTab(MainWindow.getString("appearance"), appearanceTab);
+		addTab(MainWindow.getString("appearance"), appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
 		DefaultListModel pluginsListModel = new DefaultListModel();
 		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
@@ -142,14 +146,14 @@ class OptionsDialog extends JFrame {
 		buttonPanel.add(new JButton(loadPluginAction));
 		buttonPanel.add(new JButton(unloadPluginAction));
 		pluginsTab.add(buttonPanel, BorderLayout.PAGE_END);
-		tabbedPane.addTab(MainWindow.getString("plugins"), pluginsTab);
+		addTab(MainWindow.getString("plugins"), pluginsTab);
 		JPanel alternativesTab = new JPanel(new BorderLayout());
 		alternativesTreeRoot = new DefaultMutableTreeNode("Alternatives");
 		alternativesTree = new JTree(alternativesTreeRoot);
 		alternativesTree.setRootVisible(false);
 		JScrollPane alternativesScrollPane = new JScrollPane(alternativesTree);
 		alternativesTab.add(alternativesScrollPane);
-		tabbedPane.addTab(MainWindow.getString("alternatives"), alternativesTab);
+		addTab(MainWindow.getString("alternatives"), alternativesTab);
 		JPanel debugTab = new JPanel(new BorderLayout());
 		debugTagTextField = new JTextField("DeskChan:say");
 		debugTab.add(debugTagTextField, BorderLayout.PAGE_START);
@@ -157,7 +161,9 @@ class OptionsDialog extends JFrame {
 		JScrollPane debugDataTextAreaScrollPane = new JScrollPane(debugDataTextArea);
 		debugTab.add(debugDataTextAreaScrollPane);
 		debugTab.add(new JButton(debugSendMessageAction), BorderLayout.PAGE_END);
-		tabbedPane.addTab(MainWindow.getString("debug"), debugTab);
+		addTab(MainWindow.getString("debug"), debugTab);
+		add(cardsComboBox, BorderLayout.PAGE_START);
+		add(cards, BorderLayout.CENTER);
 		pack();
 	}
 	
@@ -183,6 +189,25 @@ class OptionsDialog extends JFrame {
 			}
 			alternativesTree.expandPath(new TreePath(alternativesTreeRoot.getPath()));
 		});
+	}
+	
+	void addTab(String name, JComponent component) {
+		cards.add(component, name);
+		cardsComboBox.addItem(name);
+	}
+	
+	@Override
+	public void itemStateChanged(ItemEvent itemEvent) {
+		CardLayout cardLayout = (CardLayout) cards.getLayout();
+		cardLayout.show(cards, (String) itemEvent.getItem());
+	}
+	
+	void addTab(String name, String plugin, List controls) {
+		//
+	}
+	
+	void removeTabsByPlugin(String plugin) {
+		//
 	}
 	
 }
