@@ -26,6 +26,7 @@ class LookAndFeelComboBox extends JComboBox implements ItemListener {
 			for (Frame frame : Frame.getFrames()) {
 				SwingUtilities.updateComponentTreeUI(frame);
 			}
+			MainWindow.properties.setProperty("lookAndFeel.className", UIManager.getLookAndFeel().getClass().getName());
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}

@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 class CharacterWidget extends JPanel implements MouseListener, MouseMotionListener {
 	
@@ -139,6 +140,13 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 	void setSkin(Skin skin) {
 		currentSkin = skin;
 		setImage(currentImageName);
+		if (skin.isBuiltin()) {
+			MainWindow.properties.setProperty("skin.builtin", "true");
+			MainWindow.properties.setProperty("skin.name", skin.getName());
+		} else {
+			MainWindow.properties.setProperty("skin.builtin", "false");
+			MainWindow.properties.setProperty("skin.name", skin.getBasePath().toString());
+		}
 	}
 	
 	void loadSkin(Path path) {

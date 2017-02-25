@@ -8,8 +8,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -21,12 +23,13 @@ public class MainWindow extends JFrame {
 
 	private PluginProxy pluginProxy = null;
 	private Path dataDirPath = null;
-	private final CharacterWidget characterWidget = new CharacterWidget(this);
+	private CharacterWidget characterWidget;
 	private BalloonWidget balloonWidget = null;
 	private BalloonWindow balloonWindow = null;
 	OptionsDialog optionsDialog = null;
 	private Timer balloonTimer = null;
-	static final ResourceBundle strings = ResourceBundle.getBundle("gui-strings");
+	private static final ResourceBundle strings = ResourceBundle.getBundle("gui-strings");
+	static final Properties properties = new Properties();
 	
 	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
@@ -53,6 +56,19 @@ public class MainWindow extends JFrame {
 		this.pluginProxy = pluginProxy;
 		pluginProxy.sendMessage("core:get-plugin-data-dir", null, (sender_, data_) -> {
 			dataDirPath = Paths.get(((Map) data_).get("path").toString());
+			try {
+				properties.load(Files.newInputStream(dataDirPath.resolve("config.properties")));
+			} catch (IOException e) {
+				// Configuration file not found: do nothing
+			}
+			try {
+				String lookAndFeelClassName = properties.getProperty("lookAndFeel.className");
+				if (lookAndFeelClassName != null) {
+					UIManager.setLookAndFeel(lookAndFeelClassName);
+				}
+			} catch (Throwable e) {
+				e.printStackTrace();
+			}
 			setTitle("DeskChan");
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 			setUndecorated(true);
@@ -62,7 +78,12 @@ public class MainWindow extends JFrame {
 			setLayout(null);
 			setBackground(new Color(0, 0, 0, 0));
 			pack();
-			characterWidget.loadBuiltinSkin("variant1");
+			characterWidget = new CharacterWidget(this);
+			if (!properties.getProperty("skin.builtin", "true").equals("false")) {
+				characterWidget.loadBuiltinSkin(MainWindow.properties.getProperty("skin.name", "variant1"));
+			} else {
+				characterWidget.loadSkin(Paths.get(MainWindow.properties.getProperty("skin.name")));
+			}
 			setDefaultLocation();
 			setContentPane(characterWidget);
 			optionsDialog = new OptionsDialog(this);
@@ -221,6 +242,12 @@ public class MainWindow extends JFrame {
 			balloonWindow.dispose();
 		}
 		super.dispose();
+		try {
+			properties.store(Files.newOutputStream(dataDirPath.resolve("config.properties")),
+					"DeskChan GUI configuration");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	void setPosition(Point pos) {
