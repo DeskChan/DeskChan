@@ -22,7 +22,7 @@ class BalloonWidget extends JPanel implements MouseListener {
 	}
 	
 	private void close() {
-		mainWindow.showBalloon((String) null);
+		mainWindow.closeBalloon();
 	}
 	
 	@Override

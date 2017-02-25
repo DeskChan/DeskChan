@@ -30,6 +30,7 @@ public class MainWindow extends JFrame {
 	static final Properties properties = new Properties();
 	Font balloonTextFont = null;
 	int balloonDefaultTimeout;
+	private String currentCharacterImage = "normal";
 	
 	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
@@ -106,7 +107,7 @@ public class MainWindow extends JFrame {
 			pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					Map m = (Map) data;
-					showBalloon(m.get("text").toString(), (int) m.getOrDefault("timeout", balloonDefaultTimeout));
+					showBalloon(createBalloonTextComponent(m.get("text").toString()), m);
 				});
 			});
 			pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
@@ -135,7 +136,8 @@ public class MainWindow extends JFrame {
 			});
 			pluginProxy.addMessageListener("gui:set-image", (sender, tag, data) -> {
 				runOnEventThread(() -> {
-					characterWidget.setImage(data.toString());
+					currentCharacterImage = data.toString();
+					characterWidget.setImage(currentCharacterImage);
 				});
 			});
 			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
@@ -153,7 +155,7 @@ public class MainWindow extends JFrame {
 		});
 		balloonTimer = new Timer(balloonDefaultTimeout, e -> {
 			if (balloonWidget != null) {
-				showBalloon((JComponent) null);
+				closeBalloon();
 			}
 		});
 		balloonTimer.setRepeats(false);
@@ -192,7 +194,12 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	private void showBalloon(JComponent component, int timeout) {
+	private void showBalloon(JComponent component, Map<String, Object> params) {
+		int timeout = (int) params.getOrDefault("timeout", balloonDefaultTimeout);
+		String characterImage = (String) params.getOrDefault("characterImage", null);
+		if (characterImage != null) {
+			characterWidget.setImage(characterImage);
+		}
 		if (balloonWidget != null) {
 			if (balloonWindow != null) {
 				balloonWindow.dispose();
@@ -210,34 +217,28 @@ public class MainWindow extends JFrame {
 		if (balloonWindow != null) {
 			balloonWindow.setVisible(true);
 		}
+		if (balloonTimer.isRunning()) {
+			balloonTimer.stop();
+		}
 		if (balloonWidget != null) {
-			if (balloonTimer.isRunning()) {
-				balloonTimer.stop();
-			}
 			if (timeout > 0) {
 				balloonTimer.setInitialDelay(timeout);
 				balloonTimer.start();
 			}
-		}
-	}
-	
-	private void showBalloon(JComponent component) {
-		showBalloon(component, balloonDefaultTimeout);
-	}
-	
-	private void showBalloon(String text, int timeout) {
-		if (text != null) {
-			JLabel label = new JLabel("<html><center>" + text + "</center></html>");
-			label.setHorizontalAlignment(JLabel.CENTER);
-			label.setFont(balloonTextFont);
-			showBalloon(label, timeout);
 		} else {
-			showBalloon((JComponent) null);
+			characterWidget.setImage(currentCharacterImage);
 		}
 	}
 	
-	void showBalloon(String text) {
-		showBalloon(text, balloonDefaultTimeout);
+	void closeBalloon() {
+		showBalloon(null, new HashMap<>());
+	}
+	
+	private JComponent createBalloonTextComponent(String text) {
+		JLabel label = new JLabel("<html><center>" + text + "</center></html>");
+		label.setHorizontalAlignment(JLabel.CENTER);
+		label.setFont(balloonTextFont);
+		return label;
 	}
 	
 	@Override
