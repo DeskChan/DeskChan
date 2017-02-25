@@ -45,10 +45,7 @@ public class PluginClass implements Plugin, PluginLoader {
 		}
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setScriptBaseClass("com.eternal_search.deskchan.groovy_support.GroovyPlugin");
-		if (Files.isDirectory(Paths.get("plugins")))
-			compilerConfiguration.setClasspath("plugins");
-		else if (Files.isDirectory(Paths.get("../plugins")))
-			compilerConfiguration.setClasspath("../plugins");
+		compilerConfiguration.setClasspath(path.getParent().toString());
 		GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
 		Script script = groovyShell.parse(path.toFile());
 		GroovyPlugin plugin = (GroovyPlugin) script;

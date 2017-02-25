@@ -17,15 +17,15 @@ import java.util.*;
 import java.util.List;
 
 public class MainWindow extends JFrame {
-	
+
+	private final int BALLOON_DEFAULT_TIMEOUT = 5000;
+
 	private PluginProxy pluginProxy = null;
 	private Path dataDirPath = null;
 	private final CharacterWidget characterWidget = new CharacterWidget(this);
 	private BalloonWidget balloonWidget = null;
 	private BalloonWindow balloonWindow = null;
 	OptionsDialog optionsDialog = null;
-
-	private final int balloonDelay = 5000;
 	private Timer balloonTimer = null;
 
 	final Action quitAction = new AbstractAction("Quit") {
@@ -57,6 +57,7 @@ public class MainWindow extends JFrame {
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 			setUndecorated(true);
 			setAlwaysOnTop(true);
+			setType(Type.POPUP);
 			setFocusableWindowState(false);
 			setLayout(null);
 			setBackground(new Color(0, 0, 0, 0));
@@ -74,7 +75,7 @@ public class MainWindow extends JFrame {
 			pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					Map m = (Map) data;
-					showBalloon(m.get("text").toString());
+					showBalloon(m.get("text").toString(), (int) m.getOrDefault("timeout", BALLOON_DEFAULT_TIMEOUT));
 				});
 			});
 			pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
@@ -110,9 +111,8 @@ public class MainWindow extends JFrame {
 				put("priority", 100);
 			}});
 		});
-
-		balloonTimer = new Timer(balloonDelay, e -> {
-			if(balloonWidget != null) {
+		balloonTimer = new Timer(BALLOON_DEFAULT_TIMEOUT, e -> {
+			if (balloonWidget != null) {
 				showBalloon((JComponent) null);
 			}
 		});
@@ -152,7 +152,7 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	private void showBalloon(JComponent component) {
+	private void showBalloon(JComponent component, int timeout) {
 		if (balloonWidget != null) {
 			if (balloonWindow != null) {
 				balloonWindow.dispose();
@@ -174,20 +174,30 @@ public class MainWindow extends JFrame {
 			if (balloonTimer.isRunning()) {
 				balloonTimer.stop();
 			}
-			balloonTimer.setInitialDelay(balloonDelay);
-			balloonTimer.start();	
+			if (timeout > 0) {
+				balloonTimer.setInitialDelay(timeout);
+				balloonTimer.start();
+			}
 		}
 	}
 	
-	void showBalloon(String text) {
+	private void showBalloon(JComponent component) {
+		showBalloon(component, BALLOON_DEFAULT_TIMEOUT);
+	}
+	
+	private void showBalloon(String text, int timeout) {
 		if (text != null) {
 			JLabel label = new JLabel("<html><center>" + text + "</center></html>");
 			label.setHorizontalAlignment(JLabel.CENTER);
 			label.setFont(label.getFont().deriveFont(15.0f));
-			showBalloon(label);
+			showBalloon(label, timeout);
 		} else {
 			showBalloon((JComponent) null);
 		}
+	}
+	
+	void showBalloon(String text) {
+		showBalloon(text, BALLOON_DEFAULT_TIMEOUT);
 	}
 	
 	@Override

@@ -56,7 +56,6 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		String event = "gui-events:character-left-click";
-
 		if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
 			event = "gui-events:character-double-click";
 		} else if (SwingUtilities.isRightMouseButton(e)) {
