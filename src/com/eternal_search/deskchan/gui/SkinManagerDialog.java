@@ -67,7 +67,7 @@ public class SkinManagerDialog extends JDialog {
 	};
 	
 	SkinManagerDialog(MainWindow mainWindow, JFrame frame) {
-		super(frame, "DeskChan Skin manager", ModalityType.DOCUMENT_MODAL);
+		super(frame, "Skin manager", ModalityType.DOCUMENT_MODAL);
 		this.mainWindow = mainWindow;
 		setLocationByPlatform(true);
 		DefaultListModel skinListModel = new DefaultListModel();
