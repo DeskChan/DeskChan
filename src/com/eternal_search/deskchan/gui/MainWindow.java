@@ -4,6 +4,7 @@ import com.eternal_search.deskchan.core.PluginProxy;
 import com.eternal_search.deskchan.core.Utils;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
@@ -23,6 +24,10 @@ public class MainWindow extends JFrame {
 	private BalloonWidget balloonWidget = null;
 	private BalloonWindow balloonWindow = null;
 	OptionsDialog optionsDialog = null;
+
+	private final int balloonDelay = 5000;
+	private Timer balloonTimer = null;
+
 	final Action quitAction = new AbstractAction("Quit") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
@@ -86,6 +91,12 @@ public class MainWindow extends JFrame {
 					extraActions.add(action);
 				});
 			});
+			pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {
+				runOnEventThread(() -> {
+					characterWidget.loadImage(Paths.get(data.toString()));
+					setDefaultLocation();
+				});
+			});
 			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					extraActions.removeIf(action -> action.getPlugin().equals(data));
@@ -99,6 +110,13 @@ public class MainWindow extends JFrame {
 				put("priority", 100);
 			}});
 		});
+
+		balloonTimer = new Timer(balloonDelay, e -> {
+			if(balloonWidget != null) {
+				showBalloon((JComponent) null);
+			}
+		});
+		balloonTimer.setRepeats(false);
 	}
 	
 	void setDefaultLocation() {
@@ -152,6 +170,13 @@ public class MainWindow extends JFrame {
 		if (balloonWindow != null) {
 			balloonWindow.setVisible(true);
 		}
+		if (balloonWidget != null) {
+			if (balloonTimer.isRunning()) {
+				balloonTimer.stop();
+			}
+			balloonTimer.setInitialDelay(balloonDelay);
+			balloonTimer.start();	
+		}
 	}
 	
 	void showBalloon(String text) {
@@ -167,6 +192,9 @@ public class MainWindow extends JFrame {
 	
 	@Override
 	public void dispose() {
+		if (balloonTimer.isRunning()) {
+			balloonTimer.stop();
+		}
 		if (optionsDialog != null) {
 			optionsDialog.dispose();
 		}

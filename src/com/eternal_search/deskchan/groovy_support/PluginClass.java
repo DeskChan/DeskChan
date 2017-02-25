@@ -11,6 +11,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class PluginClass implements Plugin, PluginLoader {
 	
@@ -44,6 +45,10 @@ public class PluginClass implements Plugin, PluginLoader {
 		}
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setScriptBaseClass("com.eternal_search.deskchan.groovy_support.GroovyPlugin");
+		if (Files.isDirectory(Paths.get("plugins")))
+			compilerConfiguration.setClasspath("plugins");
+		else if (Files.isDirectory(Paths.get("../plugins")))
+			compilerConfiguration.setClasspath("../plugins");
 		GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
 		Script script = groovyShell.parse(path.toFile());
 		GroovyPlugin plugin = (GroovyPlugin) script;
