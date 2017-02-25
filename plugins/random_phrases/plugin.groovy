@@ -9,7 +9,7 @@ addMessageListener("random_phrases:test", { sender, tag, data ->
 })
 sendMessage('DeskChan:register-simple-action', [name: 'Test', 'msgTag': 'random_phrases:test'])
 
-def dataUrl = new URL('https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/A2:A105?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI')
+def dataUrl = new URL('https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/A2:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI')
 def phrases = new ArrayList()
 
 def random = new Random()
