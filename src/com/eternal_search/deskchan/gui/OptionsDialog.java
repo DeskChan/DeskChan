@@ -1,22 +1,15 @@
 package com.eternal_search.deskchan.gui;
 
 import com.eternal_search.deskchan.core.PluginManager;
-import com.eternal_search.deskchan.core.Utils;
 import org.json.JSONObject;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
 import java.util.List;
 
@@ -24,46 +17,12 @@ class OptionsDialog extends JFrame {
 	
 	private final MainWindow mainWindow;
 	private final JTabbedPane tabbedPane = new JTabbedPane();
-	private JList skinList;
-	private final Action selectSkinAction = new AbstractAction("Select") {
+	private final Action openSkinManagerAction = new AbstractAction("...") {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
-			Object selectedValue = skinList.getSelectedValue();
-			if (selectedValue != null) {
-				Skin skin = (Skin) selectedValue;
-				mainWindow.getCharacterWidget().setSkin(skin);
-				mainWindow.setDefaultLocation();
-			}
-		}
-	};
-	private final Action addSkinAction = new AbstractAction("Add...") {
-		@Override
-		public void actionPerformed(ActionEvent actionEvent) {
-			JFileChooser chooser = new JFileChooser();
-			chooser.setCurrentDirectory(new File("."));
-			chooser.setDialogTitle("Add skin...");
-			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			chooser.setFileFilter(new FileNameExtensionFilter("Image files", ImageIO.getReaderFileSuffixes()));
-			if (chooser.showOpenDialog(getContentPane()) == JFileChooser.APPROVE_OPTION) {
-				Path path = chooser.getSelectedFile().toPath();
-				DefaultListModel model = (DefaultListModel) skinList.getModel();
-				model.addElement(new Skin(path, false));
-				storeSkinList();
-			}
-		}
-	};
-	private final Action removeSkinAction = new AbstractAction("Remove") {
-		@Override
-		public void actionPerformed(ActionEvent actionEvent) {
-			Object selectedValue = skinList.getSelectedValue();
-			if (selectedValue != null) {
-				Skin skin = (Skin) selectedValue;
-				if (!skin.isBuiltin()) {
-					DefaultListModel model = (DefaultListModel) skinList.getModel();
-					model.removeElement(skin);
-					storeSkinList();
-				}
-			}
+			SkinManagerDialog dialog = new SkinManagerDialog(mainWindow, OptionsDialog.this);
+			dialog.setVisible(true);
+			openSkinManagerAction.putValue(Action.NAME, mainWindow.getCharacterWidget().getCurrentSkin().getName());
 		}
 	};
 	private JList pluginsList;
@@ -120,27 +79,12 @@ class OptionsDialog extends JFrame {
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
-		DefaultListModel skinListModel = new DefaultListModel();
-		for (Object skin : loadSkinList()) {
-			skinListModel.addElement(skin);
-		}
-		skinList = new JList(skinListModel);
-		skinList.setLayoutOrientation(JList.VERTICAL);
-		skinList.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-					selectSkinAction.actionPerformed(null);
-				}
-			}
-		});
-		JScrollPane skinListScrollPane = new JScrollPane(skinList);
-		appearanceTab.add(skinListScrollPane);
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(new JButton(selectSkinAction));
-		buttonPanel.add(new JButton(addSkinAction));
-		buttonPanel.add(new JButton(removeSkinAction));
-		appearanceTab.add(buttonPanel, BorderLayout.PAGE_END);
+		JPanel panel = new JPanel(new GridLayout(2, 2));
+		panel.add(new JLabel("Look and feel:"));
+		panel.add(new LookAndFeelComboBox());
+		panel.add(new JLabel("Skin:"));
+		panel.add(new JButton(openSkinManagerAction));
+		appearanceTab.add(panel, BorderLayout.PAGE_START);
 		tabbedPane.addTab("Appearance", appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
 		DefaultListModel pluginsListModel = new DefaultListModel();
@@ -162,7 +106,7 @@ class OptionsDialog extends JFrame {
 		pluginsList = new JList(pluginsListModel);
 		JScrollPane pluginsListScrollPane = new JScrollPane(pluginsList);
 		pluginsTab.add(pluginsListScrollPane);
-		buttonPanel = new JPanel();
+		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(new JButton(loadPluginAction));
 		buttonPanel.add(new JButton(unloadPluginAction));
 		pluginsTab.add(buttonPanel, BorderLayout.PAGE_END);
@@ -185,57 +129,8 @@ class OptionsDialog extends JFrame {
 		pack();
 	}
 	
-	private ArrayList<Skin> loadSkinList() {
-		ArrayList<Skin> list = new ArrayList<>();
-		Path directoryPath = Utils.getResourcePath("characters");
-		if (directoryPath != null) {
-			try {
-				DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directoryPath);
-				for (Path skinPath : directoryStream) {
-					list.add(new Skin(skinPath, true));
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		try {
-			List<String> lines = Files.readAllLines(mainWindow.getDataDirPath().resolve("extra_skins.txt"));
-			for (String line : lines) {
-				if (line.isEmpty()) continue;
-				Path skinPath = Paths.get(line);
-				list.add(new Skin(skinPath, false));
-			}
-		} catch (IOException e) {
-			// Configuration file not found
-		}
-		Collections.sort(list);
-		return list;
-	}
-	
-	private void storeSkinList() {
-		ArrayList<Skin> list = new ArrayList<>();
-		for (Object skinInfo : ((DefaultListModel) skinList.getModel()).toArray()) {
-			if (skinInfo instanceof Skin) {
-				list.add((Skin) skinInfo);
-			}
-		}
-		storeSkinList(list);
-	}
-	
-	private void storeSkinList(ArrayList<Skin> list) {
-		try {
-			PrintWriter writer = new PrintWriter(mainWindow.getDataDirPath().resolve("extra_skins.txt").toFile());
-			for (Skin skin : list) {
-				if (skin.isBuiltin()) continue;
-				writer.println(skin.getBasePath().toString());
-			}
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
 	void updateOptions() {
+		openSkinManagerAction.putValue(Action.NAME, mainWindow.getCharacterWidget().getCurrentSkin().getName());
 		mainWindow.getPluginProxy().sendMessage("core:query-alternatives-map", null, (sender, data) -> {
 			alternativesTreeRoot.removeAllChildren();
 			Map<String, Object> m = (Map<String, Object>) (((Map) data).get("map"));

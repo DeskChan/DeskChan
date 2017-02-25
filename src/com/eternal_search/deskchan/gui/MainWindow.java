@@ -18,7 +18,7 @@ import java.util.List;
 
 public class MainWindow extends JFrame {
 
-	private static final int BALLOON_DEFAULT_TIMEOUT = 5000;
+	private static final int BALLOON_DEFAULT_TIMEOUT = 10000;
 
 	private PluginProxy pluginProxy = null;
 	private Path dataDirPath = null;
