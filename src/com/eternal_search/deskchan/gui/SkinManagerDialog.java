@@ -24,7 +24,7 @@ public class SkinManagerDialog extends JDialog {
 	
 	private final MainWindow mainWindow;
 	private final JList skinList;
-	private final Action selectSkinAction = new AbstractAction("Select") {
+	private final Action selectSkinAction = new AbstractAction(MainWindow.getString("select")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			Object selectedValue = skinList.getSelectedValue();
@@ -35,14 +35,15 @@ public class SkinManagerDialog extends JDialog {
 			}
 		}
 	};
-	private final Action addSkinAction = new AbstractAction("Add...") {
+	private final Action addSkinAction = new AbstractAction(MainWindow.getString("add")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setCurrentDirectory(new File("."));
-			chooser.setDialogTitle("Add skin...");
+			chooser.setDialogTitle(MainWindow.getString("add_skin"));
 			chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-			chooser.setFileFilter(new FileNameExtensionFilter("Image files", ImageIO.getReaderFileSuffixes()));
+			chooser.setFileFilter(new FileNameExtensionFilter(MainWindow.getString("image_files"),
+					ImageIO.getReaderFileSuffixes()));
 			if (chooser.showOpenDialog(getContentPane()) == JFileChooser.APPROVE_OPTION) {
 				Path path = chooser.getSelectedFile().toPath();
 				DefaultListModel model = (DefaultListModel) skinList.getModel();
@@ -51,7 +52,7 @@ public class SkinManagerDialog extends JDialog {
 			}
 		}
 	};
-	private final Action removeSkinAction = new AbstractAction("Remove") {
+	private final Action removeSkinAction = new AbstractAction(MainWindow.getString("remove")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			Object selectedValue = skinList.getSelectedValue();
@@ -67,7 +68,7 @@ public class SkinManagerDialog extends JDialog {
 	};
 	
 	SkinManagerDialog(MainWindow mainWindow, JFrame frame) {
-		super(frame, "Skin manager", ModalityType.DOCUMENT_MODAL);
+		super(frame, MainWindow.getString("skin_manager"), ModalityType.DOCUMENT_MODAL);
 		this.mainWindow = mainWindow;
 		setLocationByPlatform(true);
 		DefaultListModel skinListModel = new DefaultListModel();

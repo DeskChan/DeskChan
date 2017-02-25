@@ -26,12 +26,12 @@ class OptionsDialog extends JFrame {
 		}
 	};
 	private JList pluginsList;
-	private final Action loadPluginAction = new AbstractAction("Load...") {
+	private final Action loadPluginAction = new AbstractAction(MainWindow.getString("load")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setCurrentDirectory(new File("."));
-			chooser.setDialogTitle("Load plugin...");
+			chooser.setDialogTitle(MainWindow.getString("load_plugin"));
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(false);
 			if (chooser.showOpenDialog(getContentPane()) == JFileChooser.APPROVE_OPTION) {
@@ -44,7 +44,7 @@ class OptionsDialog extends JFrame {
 			}
 		}
 	};
-	private final Action unloadPluginAction = new AbstractAction("Unload") {
+	private final Action unloadPluginAction = new AbstractAction(MainWindow.getString("unload")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			String plugin = pluginsList.getSelectedValue().toString();
@@ -57,7 +57,7 @@ class OptionsDialog extends JFrame {
 	private JTree alternativesTree;
 	private JTextField debugTagTextField;
 	private JTextArea debugDataTextArea;
-	private final Action debugSendMessageAction = new AbstractAction("Send") {
+	private final Action debugSendMessageAction = new AbstractAction(MainWindow.getString("send")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			String tag = debugTagTextField.getText();
@@ -73,19 +73,19 @@ class OptionsDialog extends JFrame {
 	};
 	
 	OptionsDialog(MainWindow mainWindow) {
-		super("DeskChan Options");
+		super(MainWindow.getString("deskchan_options"));
 		this.mainWindow = mainWindow;
-		setMinimumSize(new Dimension(400, 300));
+		setMinimumSize(new Dimension(600, 300));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
 		JPanel panel = new JPanel(new GridLayout(2, 2));
-		panel.add(new JLabel("Look and feel:"));
+		panel.add(new JLabel(MainWindow.getString("look_and_feel")));
 		panel.add(new LookAndFeelComboBox());
-		panel.add(new JLabel("Skin:"));
+		panel.add(new JLabel(MainWindow.getString("skin")));
 		panel.add(new JButton(openSkinManagerAction));
 		appearanceTab.add(panel, BorderLayout.PAGE_START);
-		tabbedPane.addTab("Appearance", appearanceTab);
+		tabbedPane.addTab(MainWindow.getString("appearance"), appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
 		DefaultListModel pluginsListModel = new DefaultListModel();
 		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
@@ -110,14 +110,14 @@ class OptionsDialog extends JFrame {
 		buttonPanel.add(new JButton(loadPluginAction));
 		buttonPanel.add(new JButton(unloadPluginAction));
 		pluginsTab.add(buttonPanel, BorderLayout.PAGE_END);
-		tabbedPane.addTab("Plugins", pluginsTab);
+		tabbedPane.addTab(MainWindow.getString("plugins"), pluginsTab);
 		JPanel alternativesTab = new JPanel(new BorderLayout());
 		alternativesTreeRoot = new DefaultMutableTreeNode("Alternatives");
 		alternativesTree = new JTree(alternativesTreeRoot);
 		alternativesTree.setRootVisible(false);
 		JScrollPane alternativesScrollPane = new JScrollPane(alternativesTree);
 		alternativesTab.add(alternativesScrollPane);
-		tabbedPane.addTab("Alternatives", alternativesTab);
+		tabbedPane.addTab(MainWindow.getString("alternatives"), alternativesTab);
 		JPanel debugTab = new JPanel(new BorderLayout());
 		debugTagTextField = new JTextField("DeskChan:say");
 		debugTab.add(debugTagTextField, BorderLayout.PAGE_START);
@@ -125,7 +125,7 @@ class OptionsDialog extends JFrame {
 		JScrollPane debugDataTextAreaScrollPane = new JScrollPane(debugDataTextArea);
 		debugTab.add(debugDataTextAreaScrollPane);
 		debugTab.add(new JButton(debugSendMessageAction), BorderLayout.PAGE_END);
-		tabbedPane.addTab("Debug", debugTab);
+		tabbedPane.addTab(MainWindow.getString("debug"), debugTab);
 		pack();
 	}
 	

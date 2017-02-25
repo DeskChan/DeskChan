@@ -1,7 +1,6 @@
 package com.eternal_search.deskchan.gui;
 
 import com.eternal_search.deskchan.core.PluginProxy;
-import com.eternal_search.deskchan.core.Utils;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -27,15 +26,16 @@ public class MainWindow extends JFrame {
 	private BalloonWindow balloonWindow = null;
 	OptionsDialog optionsDialog = null;
 	private Timer balloonTimer = null;
-
-	final Action quitAction = new AbstractAction("Quit") {
+	static final ResourceBundle strings = ResourceBundle.getBundle("gui-strings");
+	
+	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			setVisible(false);
 			dispose();
 		}
 	};
-	final Action optionsAction = new AbstractAction("Options...") {
+	final Action optionsAction = new AbstractAction(getString("options")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
 			optionsDialog.updateOptions();
@@ -289,6 +289,15 @@ public class MainWindow extends JFrame {
 			return plugin;
 		}
 		
+	}
+	
+	static String getString(String key) {
+		try {
+			String s = strings.getString(key);
+			return new String(s.getBytes("ISO-8859-1"), "UTF-8");
+		} catch (Throwable e) {
+			return key;
+		}
 	}
 	
 	private static class LongMessagePanel extends JPanel {
