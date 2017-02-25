@@ -1,5 +1,7 @@
 package com.eternal_search.deskchan.gui;
 
+import com.eternal_search.deskchan.core.Utils;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -14,10 +16,12 @@ import java.nio.file.Path;
 class CharacterWidget extends JPanel implements MouseListener, MouseMotionListener {
 	
 	private final MainWindow mainWindow;
-	private BufferedImage characterImage;
+	private Image characterImage;
 	private Point clickPos;
 	private boolean dragging;
 	private boolean flip;
+	private Skin currentSkin;
+	private String currentImageName = "normal";
 	
 	CharacterWidget(MainWindow mainWindow) {
 		super();
@@ -119,27 +123,34 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 	public void mouseExited(MouseEvent e) {
 	}
 	
-	boolean loadImage(Path path) {
-		BufferedImage backupCharacterImage = characterImage;
-		try {
-			if (path != null) {
-				characterImage = ImageIO.read(Files.newInputStream(path));
-				setPreferredSize(new Dimension(characterImage.getWidth(), characterImage.getHeight()));
-			} else {
-				characterImage = null;
-				setPreferredSize(new Dimension(300, 300));
-			}
-			repaint();
-			mainWindow.updateSizes();
-		} catch (IOException ex) {
-			characterImage = backupCharacterImage;
-			return false;
+	void setImage(String name) {
+		currentImageName = name;
+		characterImage = (currentSkin != null) ? currentSkin.getImage(name) : null;
+		if (characterImage != null) {
+			setPreferredSize(new Dimension(characterImage.getWidth(this),
+					characterImage.getHeight(this)));
+		} else {
+			setPreferredSize(new Dimension(300, 300));
 		}
-		return true;
+		repaint();
+		mainWindow.updateSizes();
 	}
 	
-	boolean isImageLoaded() {
-		return characterImage != null;
+	void setSkin(Skin skin) {
+		currentSkin = skin;
+		setImage(currentImageName);
+	}
+	
+	void loadSkin(Path path) {
+		setSkin(new Skin(path));
+	}
+	
+	void loadBuiltinSkin(String name) {
+		setSkin(new Skin(Utils.getResourcePath("characters/" + name), true));
+	}
+	
+	Skin getCurrentSkin() {
+		return currentSkin;
 	}
 	
 }

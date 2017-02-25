@@ -18,7 +18,7 @@ import java.util.List;
 
 public class MainWindow extends JFrame {
 
-	private final int BALLOON_DEFAULT_TIMEOUT = 5000;
+	private static final int BALLOON_DEFAULT_TIMEOUT = 5000;
 
 	private PluginProxy pluginProxy = null;
 	private Path dataDirPath = null;
@@ -62,7 +62,7 @@ public class MainWindow extends JFrame {
 			setLayout(null);
 			setBackground(new Color(0, 0, 0, 0));
 			pack();
-			characterWidget.loadImage(Utils.getResourcePath("characters/sprite0001.png"));
+			characterWidget.loadBuiltinSkin("variant1");
 			setDefaultLocation();
 			setContentPane(characterWidget);
 			optionsDialog = new OptionsDialog(this);
@@ -94,8 +94,13 @@ public class MainWindow extends JFrame {
 			});
 			pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {
 				runOnEventThread(() -> {
-					characterWidget.loadImage(Paths.get(data.toString()));
+					characterWidget.loadSkin(Paths.get(data.toString()));
 					setDefaultLocation();
+				});
+			});
+			pluginProxy.addMessageListener("gui:set-image", (sender, tag, data) -> {
+				runOnEventThread(() -> {
+					characterWidget.setImage(data.toString());
 				});
 			});
 			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {

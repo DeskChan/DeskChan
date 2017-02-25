@@ -30,8 +30,8 @@ class OptionsDialog extends JFrame {
 		public void actionPerformed(ActionEvent actionEvent) {
 			Object selectedValue = skinList.getSelectedValue();
 			if (selectedValue != null) {
-				SkinInfo skinInfo = (SkinInfo) selectedValue;
-				mainWindow.getCharacterWidget().loadImage(skinInfo.path);
+				Skin skin = (Skin) selectedValue;
+				mainWindow.getCharacterWidget().setSkin(skin);
 				mainWindow.setDefaultLocation();
 			}
 		}
@@ -47,7 +47,7 @@ class OptionsDialog extends JFrame {
 			if (chooser.showOpenDialog(getContentPane()) == JFileChooser.APPROVE_OPTION) {
 				Path path = chooser.getSelectedFile().toPath();
 				DefaultListModel model = (DefaultListModel) skinList.getModel();
-				model.addElement(new SkinInfo(path, false));
+				model.addElement(new Skin(path, false));
 				storeSkinList();
 			}
 		}
@@ -57,10 +57,10 @@ class OptionsDialog extends JFrame {
 		public void actionPerformed(ActionEvent actionEvent) {
 			Object selectedValue = skinList.getSelectedValue();
 			if (selectedValue != null) {
-				SkinInfo skinInfo = (SkinInfo) selectedValue;
-				if (!skinInfo.builtin) {
+				Skin skin = (Skin) selectedValue;
+				if (!skin.isBuiltin()) {
 					DefaultListModel model = (DefaultListModel) skinList.getModel();
-					model.removeElement(skinInfo);
+					model.removeElement(skin);
 					storeSkinList();
 				}
 			}
@@ -121,8 +121,8 @@ class OptionsDialog extends JFrame {
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
 		DefaultListModel skinListModel = new DefaultListModel();
-		for (Object skinInfo : loadSkinList()) {
-			skinListModel.addElement(skinInfo);
+		for (Object skin : loadSkinList()) {
+			skinListModel.addElement(skin);
 		}
 		skinList = new JList(skinListModel);
 		skinList.setLayoutOrientation(JList.VERTICAL);
@@ -185,16 +185,14 @@ class OptionsDialog extends JFrame {
 		pack();
 	}
 	
-	private ArrayList<SkinInfo> loadSkinList() {
-		ArrayList<SkinInfo> list = new ArrayList<>();
+	private ArrayList<Skin> loadSkinList() {
+		ArrayList<Skin> list = new ArrayList<>();
 		Path directoryPath = Utils.getResourcePath("characters");
 		if (directoryPath != null) {
 			try {
 				DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directoryPath);
 				for (Path skinPath : directoryStream) {
-					if (!Files.isDirectory(skinPath)) {
-						list.add(new SkinInfo(skinPath, true));
-					}
+					list.add(new Skin(skinPath, true));
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -205,9 +203,7 @@ class OptionsDialog extends JFrame {
 			for (String line : lines) {
 				if (line.isEmpty()) continue;
 				Path skinPath = Paths.get(line);
-				if (Files.isReadable(skinPath)) {
-					list.add(new SkinInfo(skinPath, false));
-				}
+				list.add(new Skin(skinPath, false));
 			}
 		} catch (IOException e) {
 			// Configuration file not found
@@ -217,21 +213,21 @@ class OptionsDialog extends JFrame {
 	}
 	
 	private void storeSkinList() {
-		ArrayList<SkinInfo> list = new ArrayList<>();
+		ArrayList<Skin> list = new ArrayList<>();
 		for (Object skinInfo : ((DefaultListModel) skinList.getModel()).toArray()) {
-			if (skinInfo instanceof SkinInfo) {
-				list.add((SkinInfo) skinInfo);
+			if (skinInfo instanceof Skin) {
+				list.add((Skin) skinInfo);
 			}
 		}
 		storeSkinList(list);
 	}
 	
-	private void storeSkinList(ArrayList<SkinInfo> list) {
+	private void storeSkinList(ArrayList<Skin> list) {
 		try {
 			PrintWriter writer = new PrintWriter(mainWindow.getDataDirPath().resolve("extra_skins.txt").toFile());
-			for (SkinInfo skinInfo : list) {
-				if (skinInfo.builtin) continue;
-				writer.println(skinInfo.path.toString());
+			for (Skin skin : list) {
+				if (skin.isBuiltin()) continue;
+				writer.println(skin.getBasePath().toString());
 			}
 			writer.close();
 		} catch (IOException e) {
@@ -257,34 +253,6 @@ class OptionsDialog extends JFrame {
 			}
 			alternativesTree.expandPath(new TreePath(alternativesTreeRoot.getPath()));
 		});
-	}
-	
-	class SkinInfo implements Comparable<SkinInfo> {
-		
-		String name;
-		Path path;
-		boolean builtin;
-		
-		SkinInfo(String name, Path path, boolean builtin) {
-			this.name = name;
-			this.path = path;
-			this.builtin = builtin;
-		}
-		
-		SkinInfo(Path path, boolean builtin) {
-			this(path.getFileName().toString(), path, builtin);
-		}
-		
-		@Override
-		public int compareTo(SkinInfo o) {
-			return name.compareTo(o.name);
-		}
-		
-		@Override
-		public String toString() {
-			return name;
-		}
-		
 	}
 	
 }
