@@ -19,8 +19,6 @@ import java.util.List;
 
 public class MainWindow extends JFrame {
 
-	private static final int BALLOON_DEFAULT_TIMEOUT = 10000;
-
 	private PluginProxy pluginProxy = null;
 	private Path dataDirPath = null;
 	private CharacterWidget characterWidget;
@@ -31,6 +29,7 @@ public class MainWindow extends JFrame {
 	private static final ResourceBundle strings = ResourceBundle.getBundle("gui-strings");
 	static final Properties properties = new Properties();
 	Font balloonTextFont = null;
+	int balloonDefaultTimeout;
 	
 	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
@@ -77,6 +76,8 @@ public class MainWindow extends JFrame {
 				int fontSize = Integer.parseInt(fontSizeStr);
 				int fontStyle = Integer.parseInt(fontStyleStr);
 				balloonTextFont = new Font(fontFamily, fontStyle, fontSize);
+				balloonDefaultTimeout = Integer.parseInt(properties.getProperty("balloon.defaultTimeout",
+						"10000"));
 			}
 			setTitle("DeskChan");
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -105,7 +106,7 @@ public class MainWindow extends JFrame {
 			pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					Map m = (Map) data;
-					showBalloon(m.get("text").toString(), (int) m.getOrDefault("timeout", BALLOON_DEFAULT_TIMEOUT));
+					showBalloon(m.get("text").toString(), (int) m.getOrDefault("timeout", balloonDefaultTimeout));
 				});
 			});
 			pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
@@ -150,7 +151,7 @@ public class MainWindow extends JFrame {
 				put("priority", 100);
 			}});
 		});
-		balloonTimer = new Timer(BALLOON_DEFAULT_TIMEOUT, e -> {
+		balloonTimer = new Timer(balloonDefaultTimeout, e -> {
 			if (balloonWidget != null) {
 				showBalloon((JComponent) null);
 			}
@@ -221,7 +222,7 @@ public class MainWindow extends JFrame {
 	}
 	
 	private void showBalloon(JComponent component) {
-		showBalloon(component, BALLOON_DEFAULT_TIMEOUT);
+		showBalloon(component, balloonDefaultTimeout);
 	}
 	
 	private void showBalloon(String text, int timeout) {
@@ -236,7 +237,7 @@ public class MainWindow extends JFrame {
 	}
 	
 	void showBalloon(String text) {
-		showBalloon(text, BALLOON_DEFAULT_TIMEOUT);
+		showBalloon(text, balloonDefaultTimeout);
 	}
 	
 	@Override

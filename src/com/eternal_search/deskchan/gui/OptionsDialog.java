@@ -46,6 +46,8 @@ class OptionsDialog extends JFrame {
 					String.valueOf(mainWindow.balloonTextFont.getStyle()));
 		}
 	};
+	private final JSpinner balloonDefaultTimeoutSpinner = new JSpinner(new SpinnerNumberModel(0,
+			0, 600000, 500));
 	private JList pluginsList;
 	private final Action loadPluginAction = new AbstractAction(MainWindow.getString("load")) {
 		@Override
@@ -100,13 +102,20 @@ class OptionsDialog extends JFrame {
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
-		JPanel panel = new JPanel(new GridLayout(3, 2));
+		JPanel panel = new JPanel(new GridLayout(4, 2));
 		panel.add(new JLabel(MainWindow.getString("look_and_feel")));
 		panel.add(new LookAndFeelComboBox());
 		panel.add(new JLabel(MainWindow.getString("skin")));
 		panel.add(new JButton(openSkinManagerAction));
 		panel.add(new JLabel(MainWindow.getString("balloon_font")));
 		panel.add(new JButton(changeBalloonFontAction));
+		panel.add(new JLabel(MainWindow.getString("balloon_default_timeout")));
+		balloonDefaultTimeoutSpinner.addChangeListener((event) -> {
+			mainWindow.balloonDefaultTimeout = (int) balloonDefaultTimeoutSpinner.getValue();
+			MainWindow.properties.setProperty("balloon.defaultTimeout",
+					String.valueOf(mainWindow.balloonDefaultTimeout));
+		});
+		panel.add(balloonDefaultTimeoutSpinner);
 		appearanceTab.add(panel, BorderLayout.PAGE_START);
 		tabbedPane.addTab(MainWindow.getString("appearance"), appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
@@ -156,6 +165,7 @@ class OptionsDialog extends JFrame {
 		openSkinManagerAction.putValue(Action.NAME, mainWindow.getCharacterWidget().getCurrentSkin().getName());
 		changeBalloonFontAction.putValue(Action.NAME, mainWindow.balloonTextFont.getName() + ", " +
 				String.valueOf(mainWindow.balloonTextFont.getSize()));
+		balloonDefaultTimeoutSpinner.setValue(mainWindow.balloonDefaultTimeout);
 		mainWindow.getPluginProxy().sendMessage("core:query-alternatives-map", null, (sender, data) -> {
 			alternativesTreeRoot.removeAllChildren();
 			Map<String, Object> m = (Map<String, Object>) (((Map) data).get("map"));

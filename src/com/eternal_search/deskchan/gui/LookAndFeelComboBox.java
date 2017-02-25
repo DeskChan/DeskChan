@@ -12,7 +12,7 @@ class LookAndFeelComboBox extends JComboBox implements ItemListener {
 		for (UIManager.LookAndFeelInfo look : UIManager.getInstalledLookAndFeels()) {
 			ItemInfo item = new ItemInfo(look);
 			addItem(item);
-			if (UIManager.getLookAndFeel().getName().equals(look.getName())) {
+			if (UIManager.getLookAndFeel().getClass().getName().equals(look.getClassName())) {
 				setSelectedItem(item);
 			}
 			addItemListener(this);
