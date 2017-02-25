@@ -4,9 +4,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -71,8 +69,8 @@ public class Skin implements Comparable<Skin> {
 				Path imagePath = basePath.resolve(name + ".png");
 				if (Files.isReadable(imagePath)) {
 					try {
-						return ImageIO.read(imagePath.toFile());
-					} catch (IOException e) {
+						return ImageIO.read(Files.newInputStream(imagePath));
+					} catch (Throwable e) {
 						e.printStackTrace();
 					}
 				} else if (!name.equals("normal")) {
