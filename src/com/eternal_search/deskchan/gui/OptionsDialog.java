@@ -25,6 +25,27 @@ class OptionsDialog extends JFrame {
 			openSkinManagerAction.putValue(Action.NAME, mainWindow.getCharacterWidget().getCurrentSkin().getName());
 		}
 	};
+	private final Action changeBalloonFontAction = new AbstractAction("...") {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			JDialog dialog = new JDialog(OptionsDialog.this, MainWindow.getString("select_font"),
+					JDialog.ModalityType.DOCUMENT_MODAL);
+			JFontChooser chooser = new JFontChooser();
+			chooser.setSelectedFont(mainWindow.balloonTextFont);
+			dialog.add(chooser);
+			dialog.setLocationByPlatform(true);
+			dialog.pack();
+			dialog.setVisible(true);
+			mainWindow.balloonTextFont = chooser.getSelectedFont();
+			changeBalloonFontAction.putValue(Action.NAME, mainWindow.balloonTextFont.getName() + ", " +
+					String.valueOf(mainWindow.balloonTextFont.getSize()));
+			MainWindow.properties.setProperty("balloon.font.family", mainWindow.balloonTextFont.getFamily());
+			MainWindow.properties.setProperty("balloon.font.size",
+					String.valueOf(mainWindow.balloonTextFont.getSize()));
+			MainWindow.properties.setProperty("balloon.font.style",
+					String.valueOf(mainWindow.balloonTextFont.getStyle()));
+		}
+	};
 	private JList pluginsList;
 	private final Action loadPluginAction = new AbstractAction(MainWindow.getString("load")) {
 		@Override
@@ -79,11 +100,13 @@ class OptionsDialog extends JFrame {
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setContentPane(tabbedPane);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
-		JPanel panel = new JPanel(new GridLayout(2, 2));
+		JPanel panel = new JPanel(new GridLayout(3, 2));
 		panel.add(new JLabel(MainWindow.getString("look_and_feel")));
 		panel.add(new LookAndFeelComboBox());
 		panel.add(new JLabel(MainWindow.getString("skin")));
 		panel.add(new JButton(openSkinManagerAction));
+		panel.add(new JLabel(MainWindow.getString("balloon_font")));
+		panel.add(new JButton(changeBalloonFontAction));
 		appearanceTab.add(panel, BorderLayout.PAGE_START);
 		tabbedPane.addTab(MainWindow.getString("appearance"), appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
@@ -131,6 +154,8 @@ class OptionsDialog extends JFrame {
 	
 	void updateOptions() {
 		openSkinManagerAction.putValue(Action.NAME, mainWindow.getCharacterWidget().getCurrentSkin().getName());
+		changeBalloonFontAction.putValue(Action.NAME, mainWindow.balloonTextFont.getName() + ", " +
+				String.valueOf(mainWindow.balloonTextFont.getSize()));
 		mainWindow.getPluginProxy().sendMessage("core:query-alternatives-map", null, (sender, data) -> {
 			alternativesTreeRoot.removeAllChildren();
 			Map<String, Object> m = (Map<String, Object>) (((Map) data).get("map"));

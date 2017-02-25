@@ -30,6 +30,7 @@ public class MainWindow extends JFrame {
 	private Timer balloonTimer = null;
 	private static final ResourceBundle strings = ResourceBundle.getBundle("gui-strings");
 	static final Properties properties = new Properties();
+	Font balloonTextFont = null;
 	
 	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
@@ -68,6 +69,14 @@ public class MainWindow extends JFrame {
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
+			}
+			{
+				String fontFamily = properties.getProperty("balloon.font.family", "Times New Roman");
+				String fontSizeStr = properties.getProperty("balloon.font.size", "18");
+				String fontStyleStr = properties.getProperty("balloon.font.style", "1");
+				int fontSize = Integer.parseInt(fontSizeStr);
+				int fontStyle = Integer.parseInt(fontStyleStr);
+				balloonTextFont = new Font(fontFamily, fontStyle, fontSize);
 			}
 			setTitle("DeskChan");
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -219,7 +228,7 @@ public class MainWindow extends JFrame {
 		if (text != null) {
 			JLabel label = new JLabel("<html><center>" + text + "</center></html>");
 			label.setHorizontalAlignment(JLabel.CENTER);
-			label.setFont(label.getFont().deriveFont(15.0f));
+			label.setFont(balloonTextFont);
 			showBalloon(label, timeout);
 		} else {
 			showBalloon((JComponent) null);
