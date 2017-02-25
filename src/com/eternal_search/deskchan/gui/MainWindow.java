@@ -93,7 +93,7 @@ public class MainWindow extends JFrame {
 			});
 			pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {
 				runOnEventThread(() -> {
-					characterWidget.loadImage((Path)data);
+					characterWidget.loadImage(Paths.get(data.toString()));
 					setDefaultLocation();
 				});
 			});
@@ -113,14 +113,7 @@ public class MainWindow extends JFrame {
 
 		balloonTimer = new Timer(balloonDelay, e -> {
 			if(balloonWidget != null) {
-				if(balloonWindow != null) {
-					balloonWindow.dispose();
-				} else {
-					remove(balloonWidget);
-				}
-
-				balloonWindow = null;
-				balloonWidget = null;
+				showBalloon((JComponent) null);
 			}
 		});
 		balloonTimer.setRepeats(false);
@@ -177,14 +170,13 @@ public class MainWindow extends JFrame {
 		if (balloonWindow != null) {
 			balloonWindow.setVisible(true);
 		}
-
-		if (balloonTimer.isRunning()) {
-			balloonTimer.stop();
-			balloonTimer.restart();
+		if (balloonWidget != null) {
+			if (balloonTimer.isRunning()) {
+				balloonTimer.stop();
+			}
+			balloonTimer.setInitialDelay(balloonDelay);
+			balloonTimer.start();	
 		}
-
-		balloonTimer.setInitialDelay(balloonDelay);
-		balloonTimer.start();
 	}
 	
 	void showBalloon(String text) {
@@ -200,9 +192,9 @@ public class MainWindow extends JFrame {
 	
 	@Override
 	public void dispose() {
-		if (balloonTimer.isRunning())
+		if (balloonTimer.isRunning()) {
 			balloonTimer.stop();
-
+		}
 		if (optionsDialog != null) {
 			optionsDialog.dispose();
 		}
