@@ -4,13 +4,23 @@ import org.json.JSONObject
 import java.nio.file.Files
 import java.nio.file.Paths
 
+class PhraseInfo {
+	String text
+	String emotion
+	
+	PhraseInfo(String text, String emotion) {
+		this.text = text
+		this.emotion = emotion
+	}
+}
+
 addMessageListener("random_phrases:test", { sender, tag, data ->
 	sendMessage('DeskChan:say', [text: 'Hello world!', timeout: 0])
 })
 sendMessage('DeskChan:register-simple-action', [name: 'Test', 'msgTag': 'random_phrases:test'])
 
-def dataUrl = new URL('https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/A2:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI')
-def phrases = new ArrayList()
+def dataUrl = new URL('https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/A2:B800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI')
+def phrases = new ArrayList<PhraseInfo>()
 
 def random = new Random()
 def timer = new Timer()
@@ -60,7 +70,9 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 			def values = json.get("values")
 			phrases.clear()
 			for (def value : values) {
-				phrases.add(value[0])
+				String text = value[0]
+				String emotion = value[1]
+				phrases.add(new PhraseInfo(text, emotion))
 			}
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -70,7 +82,7 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 		sayRandomPhrase = {
 			def i = random.nextInt(phrases.size())
 			def phrase = phrases.get(i)
-			sendMessage('DeskChan:say', [text: phrase, priority: 0])
+			sendMessage('DeskChan:say', [text: phrase.text, characterImage: phrase.emotion, priority: 0])
 			timer.runAfter(interval * 1000, sayRandomPhrase)
 		}
 		sayRandomPhrase()
