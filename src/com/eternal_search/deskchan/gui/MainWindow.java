@@ -19,6 +19,9 @@ import java.util.List;
 
 public class MainWindow extends JFrame {
 
+	static final int WINDOW_MODE_NORMAL = 0;
+	static final int WINDOW_MODE_TOP_MOST = 1;
+	
 	private PluginProxy pluginProxy = null;
 	private Path dataDirPath = null;
 	private CharacterWidget characterWidget;
@@ -32,6 +35,7 @@ public class MainWindow extends JFrame {
 	int balloonDefaultTimeout;
 	private String currentCharacterImage = "normal";
 	private PriorityQueue<BalloonMessage> balloonQueue = new PriorityQueue<>();
+	private int windowMode = WINDOW_MODE_NORMAL;
 	
 	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
@@ -80,12 +84,13 @@ public class MainWindow extends JFrame {
 				balloonTextFont = new Font(fontFamily, fontStyle, fontSize);
 				balloonDefaultTimeout = Integer.parseInt(properties.getProperty("balloon.defaultTimeout",
 						"10000"));
+				windowMode = Integer.parseInt(properties.getProperty("window_mode", "0"));
 			}
 			setTitle("DeskChan");
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 			setUndecorated(true);
-			setAlwaysOnTop(true);
-			setType(Type.POPUP);
+			setType(Type.UTILITY);
+			setAlwaysOnTop(windowMode == WINDOW_MODE_TOP_MOST);
 			setFocusableWindowState(false);
 			setLayout(null);
 			setBackground(new Color(0, 0, 0, 0));
@@ -261,6 +266,11 @@ public class MainWindow extends JFrame {
 		} else {
 			characterWidget.setImage(currentCharacterImage);
 		}
+		if (balloonWidget != null) {
+			setAlwaysOnTop(true);
+		} else {
+			setAlwaysOnTop(windowMode == WINDOW_MODE_TOP_MOST);
+		}
 	}
 	
 	void closeBalloon() {
@@ -321,6 +331,16 @@ public class MainWindow extends JFrame {
 	
 	Path getDataDirPath() {
 		return dataDirPath;
+	}
+	
+	int getWindowMode() {
+		return windowMode;
+	}
+	
+	void setWindowMode(int mode) {
+		windowMode = mode;
+		properties.setProperty("window_mode", String.valueOf(windowMode));
+		setAlwaysOnTop((windowMode == WINDOW_MODE_TOP_MOST) || (balloonWidget != null));
 	}
 	
 	void showThrowable(Throwable e) {

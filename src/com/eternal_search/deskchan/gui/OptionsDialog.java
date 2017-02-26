@@ -51,6 +51,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 	};
 	private final JSpinner balloonDefaultTimeoutSpinner = new JSpinner(new SpinnerNumberModel(0,
 			0, 600000, 500));
+	private JComboBox windowModeComboBox;
 	private JList pluginsList;
 	private final Action loadPluginAction = new AbstractAction(MainWindow.getString("load")) {
 		@Override
@@ -106,7 +107,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		cardsComboBox.addItemListener(this);
 		JPanel appearanceTab = new JPanel(new BorderLayout());
-		JPanel panel = new JPanel(new GridLayout(4, 2));
+		JPanel panel = new JPanel(new GridLayout(5, 2));
 		panel.add(new JLabel(MainWindow.getString("look_and_feel")));
 		panel.add(new LookAndFeelComboBox());
 		panel.add(new JLabel(MainWindow.getString("skin")));
@@ -120,6 +121,16 @@ class OptionsDialog extends JFrame implements ItemListener {
 					String.valueOf(mainWindow.balloonDefaultTimeout));
 		});
 		panel.add(balloonDefaultTimeoutSpinner);
+		panel.add(new JLabel(MainWindow.getString("window_mode")));
+		windowModeComboBox = new JComboBox<String>(new String[] {
+				MainWindow.getString("window_mode.normal"),
+				MainWindow.getString("window_mode.top_most")
+		});
+		windowModeComboBox.setSelectedIndex(mainWindow.getWindowMode());
+		windowModeComboBox.addItemListener(itemEvent -> {
+			mainWindow.setWindowMode(windowModeComboBox.getSelectedIndex());
+		});
+		panel.add(windowModeComboBox);
 		appearanceTab.add(panel, BorderLayout.PAGE_START);
 		addTab(MainWindow.getString("appearance"), appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
