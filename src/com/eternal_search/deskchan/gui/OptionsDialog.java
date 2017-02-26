@@ -222,16 +222,10 @@ class OptionsDialog extends JFrame implements ItemListener {
 				@Override
 				public void actionPerformed(ActionEvent actionEvent) {
 					Map<String, Object> data = new HashMap<>();
-					for (Map.Entry<String, JComponent> entry : tab.inputs.entrySet()) {
+					for (Map.Entry<String, PluginOptionsControlItem> entry : tab.inputs.entrySet()) {
 						String id = entry.getKey();
-						JComponent component = entry.getValue();
-						if (component instanceof JTextField) {
-							data.put(id, ((JTextField) component).getText());
-						} else if (component instanceof JSpinner) {
-							data.put(id, ((JSpinner) component).getValue());
-						} else if (component instanceof JComboBox) {
-							data.put(id, ((JComboBox) component).getSelectedIndex());
-						}
+						PluginOptionsControlItem control = entry.getValue();
+						data.put(id, control.getValue());
 					}
 					mainWindow.getPluginProxy().sendMessage(msgTag, data);
 				}
@@ -254,7 +248,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 		pluginsOptionsTabs.removeAll(tabsToRemove);
 	}
 	
-	static JPanel createControlsFromList(List controls, Map<String, JComponent> inputs) {
+	static JPanel createControlsFromList(List controls, Map<String, PluginOptionsControlItem> inputs) {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 		for (Object control : controls) {
@@ -264,52 +258,47 @@ class OptionsDialog extends JFrame implements ItemListener {
 		return panel;
 	}
 	
-	static JComponent createControlFromMap(Map<String, Object> m, Map<String, JComponent> inputs) {
+	static JComponent createControlFromMap(Map<String, Object> m, Map<String, PluginOptionsControlItem> inputs) {
 		String type = (String) m.getOrDefault("type", "invalid");
-		JComponent component = null;
+		PluginOptionsControlItem control = null;
 		switch (type) {
 			case "Label":
-				component = new JLabel((String) m.get("value"));
+				control = new PluginOptionsControlItem.Label();
 				break;
 			case "TextField":
-				component = new JTextField((String) m.getOrDefault("value", ""));
+				control = new PluginOptionsControlItem.TextField();
 				break;
 			case "Spinner":
-				component = new JSpinner(new SpinnerNumberModel(
-						(int) m.getOrDefault("value", 0),
-						(int) m.getOrDefault("min", 0),
-						(int) m.getOrDefault("max", 100),
-						(int) m.getOrDefault("step", 1)
-				));
+				control = new PluginOptionsControlItem.Spinner();
 				break;
 			case "ComboBox":
-				List<String> values = (List<String>) m.get("values");
-				component = new JComboBox<String>((String[]) values.toArray());
-				Integer index = (Integer) m.getOrDefault("value", null);
-				if (index != null) {
-					((JComboBox) component).setSelectedIndex(index);
-				}
+				control = new PluginOptionsControlItem.ComboBox();
 				break;
+			default:
+				return null;
 		}
+		control.setOptions(m);
+		Object value = m.getOrDefault("value", null);
+		control.setValue(value);
 		String id = (String) m.getOrDefault("id", null);
 		if (id != null) {
-			inputs.put(id, component);
+			inputs.put(id, control);
 		}
 		String labelStr = (String) m.getOrDefault("label", null);
 		if (labelStr != null) {
 			JPanel container = new JPanel(new FlowLayout());
 			container.add(new JLabel(labelStr + ":"));
-			container.add(component);
-			component = container;
+			container.add(control.getComponent());
+			return container;
 		}
-		return component;
+		return control.getComponent();
 	}
 	
 	static class PluginOptionsTab extends JPanel {
 		
 		private final String name;
 		private final String plugin;
-		private final Map<String, JComponent> inputs = new HashMap<>();
+		private final Map<String, PluginOptionsControlItem> inputs = new HashMap<>();
 		
 		PluginOptionsTab(String name, String plugin) {
 			super();
