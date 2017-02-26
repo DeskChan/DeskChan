@@ -216,6 +216,7 @@ public class MainWindow extends JFrame {
 				}
 				return;
 			}
+			balloonQueue.removeIf((msg) -> ((msg != message) && (msg.priority <= 0)));
 		}
 		if (balloonWidget != null) {
 			if (balloonWindow != null) {
