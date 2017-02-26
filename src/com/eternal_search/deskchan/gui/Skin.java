@@ -5,9 +5,12 @@ import org.apache.commons.io.FilenameUtils;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Skin implements Comparable<Skin> {
 	
@@ -40,6 +43,7 @@ public class Skin implements Comparable<Skin> {
 		this(path, false);
 	}
 	
+	@Override
 	public String toString() {
 		return basePath.getFileName().toString() + " [" + typeToString(type) + "]";
 	}
@@ -67,7 +71,20 @@ public class Skin implements Comparable<Skin> {
 				break;
 			case IMAGE_SET:
 				Path imagePath = basePath.resolve(name + ".png");
-				if (Files.isReadable(imagePath)) {
+				if (Files.isDirectory(imagePath)) {
+					try {
+						DirectoryStream<Path> directoryStream = Files.newDirectoryStream(imagePath, "*.png");
+						List<Path> variants = new ArrayList<>();
+						for (Path path : directoryStream) {
+							variants.add(path);
+						}
+						int i = (int) Math.floor(Math.random() * variants.size());
+						imagePath = variants.get(i);
+						return ImageIO.read(Files.newInputStream(imagePath));
+					} catch (Throwable e) {
+						e.printStackTrace();
+					}
+				} else if (Files.isReadable(imagePath)) {
 					try {
 						return ImageIO.read(Files.newInputStream(imagePath));
 					} catch (Throwable e) {
