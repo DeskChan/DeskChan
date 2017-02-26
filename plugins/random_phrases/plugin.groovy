@@ -48,6 +48,7 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 			        ]
 			]
 	])
+	sendMessage('gui:set-image', 'waiting')
 	Thread.start() {
 		def dataStr = "";
 		try {
