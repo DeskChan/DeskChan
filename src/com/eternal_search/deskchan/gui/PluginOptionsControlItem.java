@@ -1,6 +1,8 @@
 package com.eternal_search.deskchan.gui;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +13,8 @@ public interface PluginOptionsControlItem {
 	void setValue(Object value);
 	Object getValue();
 	JComponent getComponent();
+	default void setMainWindow(MainWindow mainWindow) {
+	}
 	
 	class Label extends JLabel implements PluginOptionsControlItem {
 		
@@ -92,6 +96,47 @@ public interface PluginOptionsControlItem {
 			return this;
 		}
 		
+	}
+	
+	class Button extends JButton implements PluginOptionsControlItem, ActionListener {
+		
+		private MainWindow mainWindow;
+		private String msgTag;
+		private Object msgData;
+		
+		@Override
+		public void setMainWindow(MainWindow mainWindow) {
+			this.mainWindow = mainWindow;
+			addActionListener(this);
+		}
+		
+		@Override
+		public void setOptions(Map<String, Object> options) {
+			msgTag = (String) options.getOrDefault("msgTag", null);
+			msgData = options.getOrDefault("msgData", null);
+		}
+		
+		@Override
+		public void setValue(Object value) {
+			setText(value.toString());
+		}
+		
+		@Override
+		public String getValue() {
+			return getText();
+		}
+		
+		@Override
+		public JComponent getComponent() {
+			return this;
+		}
+		
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			if (msgTag != null) {
+				mainWindow.getPluginProxy().sendMessage(msgTag, msgData);
+			}
+		}
 	}
 	
 }

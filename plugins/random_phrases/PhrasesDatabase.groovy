@@ -30,11 +30,13 @@ class PhrasesDatabase {
 		try {
 			def json = new JSONObject(dataStr)
 			def values = json.get("values")
-			phrases.clear()
-			for (def value : values) {
-				String text = value[0]
-				String emotion = value[1]
-				phrases.add(new PhraseInfo(text, emotion))
+			synchronized (this) {
+				phrases.clear()
+				for (def value : values) {
+					String text = value[0]
+					String emotion = value[1]
+					phrases.add(new PhraseInfo(text, emotion))
+				}
 			}
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -45,7 +47,7 @@ class PhrasesDatabase {
 		}
 	}
 	
-	PhraseInfo getRandomPhrase() {
+	synchronized PhraseInfo getRandomPhrase() {
 		int count = phrases.size()
 		if (count == 0) return null
 		int i = Math.floor(Math.random() * count)

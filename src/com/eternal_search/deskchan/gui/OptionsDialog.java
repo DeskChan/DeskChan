@@ -248,7 +248,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 		pluginsOptionsTabs.removeAll(tabsToRemove);
 	}
 	
-	static JPanel createControlsFromList(List controls, Map<String, PluginOptionsControlItem> inputs) {
+	JPanel createControlsFromList(List controls, Map<String, PluginOptionsControlItem> inputs) {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 		for (Object control : controls) {
@@ -258,7 +258,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 		return panel;
 	}
 	
-	static JComponent createControlFromMap(Map<String, Object> m, Map<String, PluginOptionsControlItem> inputs) {
+	JComponent createControlFromMap(Map<String, Object> m, Map<String, PluginOptionsControlItem> inputs) {
 		String type = (String) m.getOrDefault("type", "invalid");
 		PluginOptionsControlItem control = null;
 		switch (type) {
@@ -274,9 +274,13 @@ class OptionsDialog extends JFrame implements ItemListener {
 			case "ComboBox":
 				control = new PluginOptionsControlItem.ComboBox();
 				break;
+			case "Button":
+				control = new PluginOptionsControlItem.Button();
+				break;
 			default:
 				return null;
 		}
+		control.setMainWindow(mainWindow);
 		control.setOptions(m);
 		Object value = m.getOrDefault("value", null);
 		control.setValue(value);

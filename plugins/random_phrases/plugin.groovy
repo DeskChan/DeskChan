@@ -2,11 +2,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.Path
 
-addMessageListener("random_phrases:test", { sender, tag, data ->
-	sendMessage('DeskChan:say', [text: 'Hello world!', timeout: 0])
-})
-sendMessage('DeskChan:register-simple-action', [name: 'Test', 'msgTag': 'random_phrases:test'])
-
 Localization.load()
 phrasesDatabase = new PhrasesDatabase()
 
@@ -15,6 +10,15 @@ def timer = new Timer()
 Path dataDirPath = null
 def properties = new Properties()
 def interval = 30
+
+addMessageListener("random_phrases:say", { sender, tag, data ->
+	def phrase = phrasesDatabase.getRandomPhrase()
+	if (phrase != null) {
+		sendMessage('DeskChan:say', [text: phrase.text, characterImage: phrase.emotion])
+	}
+})
+sendMessage('DeskChan:register-simple-action', [name: Localization.getString('say_random_phrase'),
+												msgTag: 'random_phrases:say'])
 
 sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 	dataDirPath = Paths.get(((Map) data).get('path').toString())
@@ -36,7 +40,12 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 							step: 1,
 							value: interval,
 							label: Localization.getString('interval')
-			        ]
+			        ],
+					[
+					        type: 'Button',
+							value: Localization.getString('update_phrases'),
+							msgTag: 'random_phrases:update'
+					]
 			]
 	])
 	sendMessage('gui:set-image', 'waiting')
@@ -58,6 +67,12 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 addMessageListener('random_phrases:options-saved', { sender, tag, data ->
 	interval = data['interval']
 	properties.setProperty('interval', String.valueOf(interval))
+})
+
+addMessageListener('random_phrases:update', { sender, tag, data ->
+	Thread.start() {
+		phrasesDatabase.load(dataDirPath, {})
+	}
 })
 
 addCleanupHandler({
