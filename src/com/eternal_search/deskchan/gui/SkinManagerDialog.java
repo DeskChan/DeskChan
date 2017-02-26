@@ -35,6 +35,17 @@ public class SkinManagerDialog extends JDialog {
 			}
 		}
 	};
+	private final Action showSkinInfoAction = new AbstractAction(MainWindow.getString("info")) {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			Object selectedValue = skinList.getSelectedValue();
+			if (selectedValue != null) {
+				Skin skin = (Skin) selectedValue;
+				MainWindow.showLongMessage(SkinManagerDialog.this, skin.getDescription(), skin.getName(),
+						JOptionPane.INFORMATION_MESSAGE);
+			}
+		}
+	};
 	private final Action addSkinAction = new AbstractAction(MainWindow.getString("add")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
@@ -89,6 +100,7 @@ public class SkinManagerDialog extends JDialog {
 		add(skinListScrollPane);
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(new JButton(selectSkinAction));
+		buttonPanel.add(new JButton(showSkinInfoAction));
 		buttonPanel.add(new JButton(addSkinAction));
 		buttonPanel.add(new JButton(removeSkinAction));
 		add(buttonPanel, BorderLayout.PAGE_END);

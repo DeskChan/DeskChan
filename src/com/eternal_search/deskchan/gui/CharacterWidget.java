@@ -133,7 +133,7 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 		} else {
 			setPreferredSize(new Dimension(300, 300));
 		}
-		repaint();
+		mainWindow.repaint();
 		mainWindow.updateSizes();
 	}
 	

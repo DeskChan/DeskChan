@@ -21,10 +21,12 @@ public class Skin implements Comparable<Skin> {
 	private final Path basePath;
 	private final int type;
 	private final boolean builtin;
+	private String description;
 	
 	Skin(Path path, boolean builtin) {
 		this.builtin = builtin;
 		basePath = path;
+		description = "N/A";
 		if (basePath == null) {
 			type = INVALID;
 			return;
@@ -32,6 +34,11 @@ public class Skin implements Comparable<Skin> {
 		final String extension = FilenameUtils.getExtension(basePath.getFileName().toString());
 		if (Files.isDirectory(basePath)) {
 			type = IMAGE_SET;
+			try {
+				description = new String(Files.readAllBytes(basePath.resolve("info.txt")), "UTF-8");
+			} catch (IOException e) {
+				// info.txt not found: do nothing
+			}
 		} else if (Files.isReadable(basePath) && Arrays.asList(ImageIO.getReaderFileSuffixes()).contains(extension)) {
 			type = SINGLE_IMAGE;
 		} else {
@@ -58,6 +65,10 @@ public class Skin implements Comparable<Skin> {
 	
 	int getType() {
 		return type;
+	}
+	
+	String getDescription() {
+		return description;
 	}
 	
 	Image getImage(String name) {

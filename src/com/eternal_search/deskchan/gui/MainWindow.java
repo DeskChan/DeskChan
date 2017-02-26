@@ -327,7 +327,7 @@ public class MainWindow extends JFrame {
 		showThrowable(this, e);
 	}
 	
-	static void showThrowable(JFrame frame, Throwable e) {
+	static void showThrowable(Component frame, Throwable e) {
 		StringWriter stringWriter = new StringWriter();
 		PrintWriter printWriter = new PrintWriter(stringWriter);
 		e.printStackTrace(printWriter);
@@ -335,7 +335,7 @@ public class MainWindow extends JFrame {
 		showLongMessage(frame, stackTraceStr, e.toString(), JOptionPane.ERROR_MESSAGE);
 	}
 	
-	private static void showLongMessage(JFrame frame, String message, String title, int type) {
+	static void showLongMessage(Component frame, String message, String title, int type) {
 		JOptionPane.showMessageDialog(frame, new LongMessagePanel(message), title, type);
 	}
 	
