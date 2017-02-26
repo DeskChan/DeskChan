@@ -7,6 +7,7 @@ addMessageListener("random_phrases:test", { sender, tag, data ->
 })
 sendMessage('DeskChan:register-simple-action', [name: 'Test', 'msgTag': 'random_phrases:test'])
 
+Localization.load()
 phrasesDatabase = new PhrasesDatabase()
 
 def timer = new Timer()
@@ -24,7 +25,7 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 	}
 	interval = Integer.parseInt(properties.getProperty('interval', '30'))
 	sendMessage('gui:add-options-tab', [
-	        name: 'Random phrases',
+	        name: Localization.getString('random_phrases'),
 			msgTag: 'random_phrases:options-saved',
 			controls: [
 			        [
@@ -34,7 +35,7 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 							max: 600,
 							step: 1,
 							value: interval,
-							label: 'Interval'
+							label: Localization.getString('interval')
 			        ]
 			]
 	])
