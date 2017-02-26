@@ -31,6 +31,7 @@ public class MainWindow extends JFrame {
 	Font balloonTextFont = null;
 	int balloonDefaultTimeout;
 	private String currentCharacterImage = "normal";
+	private PriorityQueue<BalloonMessage> balloonQueue = new PriorityQueue<>();
 	
 	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
@@ -205,10 +206,16 @@ public class MainWindow extends JFrame {
 	}
 	
 	private void showBalloon(JComponent component, Map<String, Object> params) {
-		int timeout = (int) params.getOrDefault("timeout", balloonDefaultTimeout);
-		String characterImage = (String) params.getOrDefault("characterImage", null);
-		if (characterImage != null) {
-			characterWidget.setImage(characterImage);
+		if (component != null) {
+			int priority = (int) params.getOrDefault("priority", 1000);
+			BalloonMessage message = new BalloonMessage(component, params, priority);
+			balloonQueue.add(message);
+			if (balloonQueue.peek() != message) {
+				if (priority <= 0) {
+					balloonQueue.remove(message);
+				}
+				return;
+			}
 		}
 		if (balloonWidget != null) {
 			if (balloonWindow != null) {
@@ -218,6 +225,21 @@ public class MainWindow extends JFrame {
 			}
 			balloonWindow = null;
 			balloonWidget = null;
+			if (component == null) {
+				balloonQueue.poll();
+			}
+		}
+		BalloonMessage message = balloonQueue.peek();
+		if (message != null) {
+			component = message.getComponent();
+			params = message.getParams();
+		} else {
+			component = null;
+		}
+		int timeout = (int) params.getOrDefault("timeout", balloonDefaultTimeout);
+		String characterImage = (String) params.getOrDefault("characterImage", null);
+		if (characterImage != null) {
+			characterWidget.setImage(characterImage);
 		}
 		if (component != null) {
 			balloonWidget = new BalloonWidget(component, this);
@@ -365,6 +387,37 @@ public class MainWindow extends JFrame {
 			scrollPane.setPreferredSize(new Dimension(400, 250));
 			scrollPane.getViewport().setViewPosition(new Point(0, 0));
 			add(scrollPane, BorderLayout.CENTER);
+		}
+		
+	}
+	
+	private static class BalloonMessage implements Comparable<BalloonMessage> {
+		
+		private int priority;
+		private JComponent component;
+		private Map<String, Object> params;
+		
+		BalloonMessage(JComponent component, Map<String, Object> params, int priority) {
+			this.component = component;
+			this.priority = priority;
+			this.params = params;
+		}
+		
+		int getPriority() {
+			return priority;
+		}
+		
+		JComponent getComponent() {
+			return component;
+		}
+		
+		Map<String, Object> getParams() {
+			return params;
+		}
+		
+		@Override
+		public int compareTo(BalloonMessage balloonMessage) {
+			return balloonMessage.priority - priority;
 		}
 		
 	}

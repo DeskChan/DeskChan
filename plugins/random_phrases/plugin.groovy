@@ -70,7 +70,7 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 		sayRandomPhrase = {
 			def i = random.nextInt(phrases.size())
 			def phrase = phrases.get(i)
-			sendMessage('DeskChan:say', [text: phrase])
+			sendMessage('DeskChan:say', [text: phrase, priority: 0])
 			timer.runAfter(interval * 1000, sayRandomPhrase)
 		}
 		sayRandomPhrase()
