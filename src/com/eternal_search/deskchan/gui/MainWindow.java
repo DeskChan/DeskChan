@@ -143,7 +143,10 @@ public class MainWindow extends JFrame {
 			pluginProxy.addMessageListener("gui:add-options-tab", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					Map m = (Map) data;
-					optionsDialog.addTab((String) m.getOrDefault("name", tag), sender, (List) m.get("controls"));
+					String name = (String) m.getOrDefault("name", tag);
+					String msgTag = (String) m.getOrDefault("msgTag", null);
+					List controls = (List) m.get("controls");
+					optionsDialog.addTab(name, sender, msgTag, controls);
 				});
 			});
 			pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {

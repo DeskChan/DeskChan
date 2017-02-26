@@ -12,8 +12,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.*;
 import java.nio.file.*;
-import java.util.Calendar;
-import java.util.Map;
+import java.util.*;
 import java.util.List;
 
 class OptionsDialog extends JFrame implements ItemListener {
@@ -98,6 +97,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 			}
 		}
 	};
+	private List<PluginOptionsTab> pluginsOptionsTabs = new ArrayList<>();
 	
 	OptionsDialog(MainWindow mainWindow) {
 		super(MainWindow.getString("deskchan_options"));
@@ -202,12 +202,117 @@ class OptionsDialog extends JFrame implements ItemListener {
 		cardLayout.show(cards, (String) itemEvent.getItem());
 	}
 	
-	void addTab(String name, String plugin, List controls) {
-		//
+	void addTab(String name, String plugin, String msgTag, List controls) {
+		PluginOptionsTab tab = new PluginOptionsTab(name, plugin);
+		tab.setLayout(new BorderLayout());
+		JPanel panel = createControlsFromList(controls, tab.inputs);
+		if (msgTag != null) {
+			panel.add(new JButton(new AbstractAction(MainWindow.getString("save")) {
+				@Override
+				public void actionPerformed(ActionEvent actionEvent) {
+					Map<String, Object> data = new HashMap<>();
+					for (Map.Entry<String, JComponent> entry : tab.inputs.entrySet()) {
+						String id = entry.getKey();
+						JComponent component = entry.getValue();
+						if (component instanceof JTextField) {
+							data.put(id, ((JTextField) component).getText());
+						} else if (component instanceof JSpinner) {
+							data.put(id, ((JSpinner) component).getValue());
+						} else if (component instanceof JComboBox) {
+							data.put(id, ((JComboBox) component).getSelectedIndex());
+						}
+					}
+					mainWindow.getPluginProxy().sendMessage(msgTag, data);
+				}
+			}));
+		}
+		tab.add(panel, BorderLayout.PAGE_START);
+		addTab(name, tab);
 	}
 	
 	void removeTabsByPlugin(String plugin) {
-		//
+		List<PluginOptionsTab> tabsToRemove = new ArrayList<>();
+		for (PluginOptionsTab tab : pluginsOptionsTabs) {
+			if (tab.getPlugin().equals(plugin)) {
+				tabsToRemove.add(tab);
+				cards.remove(tab);
+				cardsComboBox.removeItem(tab.getTabName());
+			}
+		}
+		pluginsOptionsTabs.removeAll(tabsToRemove);
+	}
+	
+	static JPanel createControlsFromList(List controls, Map<String, JComponent> inputs) {
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+		for (Object control : controls) {
+			Map<String, Object> m = (Map<String, Object>) control;
+			panel.add(createControlFromMap(m, inputs));
+		}
+		return panel;
+	}
+	
+	static JComponent createControlFromMap(Map<String, Object> m, Map<String, JComponent> inputs) {
+		String type = (String) m.getOrDefault("type", "invalid");
+		JComponent component = null;
+		switch (type) {
+			case "Label":
+				component = new JLabel((String) m.get("value"));
+				break;
+			case "TextField":
+				component = new JTextField((String) m.getOrDefault("value", ""));
+				break;
+			case "Spinner":
+				component = new JSpinner(new SpinnerNumberModel(
+						(int) m.getOrDefault("value", 0),
+						(int) m.getOrDefault("min", 0),
+						(int) m.getOrDefault("max", 100),
+						(int) m.getOrDefault("step", 1)
+				));
+				break;
+			case "ComboBox":
+				List<String> values = (List<String>) m.get("values");
+				component = new JComboBox<String>((String[]) values.toArray());
+				Integer index = (Integer) m.getOrDefault("value", null);
+				if (index != null) {
+					((JComboBox) component).setSelectedIndex(index);
+				}
+				break;
+		}
+		String id = (String) m.getOrDefault("id", null);
+		if (id != null) {
+			inputs.put(id, component);
+		}
+		String labelStr = (String) m.getOrDefault("label", null);
+		if (labelStr != null) {
+			JPanel container = new JPanel(new FlowLayout());
+			container.add(new JLabel(labelStr + ":"));
+			container.add(component);
+			component = container;
+		}
+		return component;
+	}
+	
+	static class PluginOptionsTab extends JPanel {
+		
+		private final String name;
+		private final String plugin;
+		private final Map<String, JComponent> inputs = new HashMap<>();
+		
+		PluginOptionsTab(String name, String plugin) {
+			super();
+			this.name = name;
+			this.plugin = plugin;
+		}
+		
+		String getTabName() {
+			return name;
+		}
+		
+		String getPlugin() {
+			return plugin;
+		}
+		
 	}
 	
 }

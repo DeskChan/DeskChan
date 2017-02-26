@@ -19,8 +19,25 @@ addCleanupHandler({
 	timer.cancel()
 })
 
+def interval = 30
+
 sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 	def dataDirPath = Paths.get(((Map) data).get('path').toString())
+	sendMessage('gui:add-options-tab', [
+	        name: 'Random phrases',
+			msgTag: 'random_phrases:options-saved',
+			controls: [
+			        [
+							id: 'interval',
+			                type: 'Spinner',
+							min: 5,
+							max: 600,
+							step: 1,
+							value: interval,
+							label: 'Interval'
+			        ]
+			]
+	])
 	Thread.start() {
 		def dataStr = "";
 		try {
@@ -54,8 +71,12 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 			def i = random.nextInt(phrases.size())
 			def phrase = phrases.get(i)
 			sendMessage('DeskChan:say', [text: phrase])
-			timer.runAfter(30000, sayRandomPhrase)
+			timer.runAfter(interval * 1000, sayRandomPhrase)
 		}
 		sayRandomPhrase()
 	}
+})
+
+addMessageListener('random_phrases:options-saved', { sender, tag, data ->
+	interval = data['interval']
 })
