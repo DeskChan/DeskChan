@@ -228,6 +228,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 		}
 		tab.add(panel, BorderLayout.PAGE_START);
 		addTab(name, tab);
+		pluginsOptionsTabs.add(tab);
 	}
 	
 	void removeTabsByPlugin(String plugin) {
