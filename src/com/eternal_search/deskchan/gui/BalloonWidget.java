@@ -14,9 +14,11 @@ class BalloonWidget extends JPanel implements MouseListener {
 		super();
 		this.mainWindow = mainWindow;
 		setBackground(new Color(0, 0, 0, 0));
-		setPreferredSize(new Dimension(400, 300));
 		setLayout(new BorderLayout());
-		setBorder(new EmptyBorder(5, 5, 5, 5));
+		setBorder(new EmptyBorder(10, 10, 10, 10));
+		setMinimumSize(new Dimension(400, 200));
+		setMaximumSize(new Dimension(400, 600));
+		setPreferredSize(new Dimension(400, 300));
 		add(component, BorderLayout.CENTER);
 		addMouseListener(this);
 	}

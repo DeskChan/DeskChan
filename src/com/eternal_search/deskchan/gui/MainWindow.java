@@ -116,6 +116,14 @@ public class MainWindow extends JFrame {
 					showBalloon(createBalloonTextComponent(m.get("text").toString()), m);
 				});
 			});
+			pluginProxy.addMessageListener("gui:ask", (sender, tag, data) -> {
+				runOnEventThread(() -> {
+					Map m = (Map) data;
+					InputWidget widget = new InputWidget(MainWindow.this);
+					widget.setMessage((String) m.getOrDefault("text", null));
+					showBalloon(widget, m);
+				});
+			});
 			pluginProxy.addMessageListener("gui:register-extra-action", (sender, tag, data) -> {
 				runOnEventThread(() -> {
 					Map m = (Map) data;
@@ -165,6 +173,9 @@ public class MainWindow extends JFrame {
 				put("srcTag", "DeskChan:say"); put("dstTag", "gui:say"); put("priority", 100);
 			}});
 			pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
+				put("srcTag", "DeskChan:ask"); put("dstTag", "gui:ask"); put("priority", 100);
+			}});
+			pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
 				put("srcTag", "DeskChan:register-simple-action"); put("dstTag", "gui:register-extra-action");
 				put("priority", 100);
 			}});
@@ -191,7 +202,7 @@ public class MainWindow extends JFrame {
 		Rectangle characterBounds = new Rectangle(new Point(0, 0), characterSize);
 		Dimension frameSize = new Dimension(characterSize);
 		if (balloonWidget != null) {
-			Dimension balloonSize = balloonWidget.getPreferredSize();
+			Dimension balloonSize = balloonWindow.getSize();
 			Rectangle balloonBounds = new Rectangle(
 					new Point(getX() - balloonSize.width, getY()),
 					balloonSize
@@ -210,7 +221,8 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	private void showBalloon(JComponent component, Map<String, Object> params) {
+	void showBalloon(JComponent component, Map<String, Object> params) {
+		boolean prevBalloonIsFocused = (balloonWindow != null) && balloonWindow.isFocused();
 		if (component != null) {
 			int priority = (int) params.getOrDefault("priority", 1000);
 			BalloonMessage message = new BalloonMessage(component, params, priority);
@@ -254,6 +266,16 @@ public class MainWindow extends JFrame {
 		updateSizes();
 		if (balloonWindow != null) {
 			balloonWindow.setVisible(true);
+			if (prevBalloonIsFocused) {
+				balloonWindow.setFocusableWindowState(true);
+				balloonWindow.requestFocus();
+			} else {
+				Timer timer = new Timer(100, (actionEvent) -> {
+					balloonWindow.setFocusableWindowState(true);
+				});
+				timer.setRepeats(false);
+				timer.start();
+			}
 		}
 		if (balloonTimer.isRunning()) {
 			balloonTimer.stop();
