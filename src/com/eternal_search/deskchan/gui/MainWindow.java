@@ -305,16 +305,29 @@ public class MainWindow extends JFrame {
 	}
 	
 	void setPosition(Point pos) {
-		Rectangle screenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		Rectangle desktopBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
 		Rectangle frameBounds = new Rectangle(pos, getSize());
-		if (frameBounds.getMaxX() > screenBounds.getMaxX()) {
-			frameBounds.x = (int) screenBounds.getMaxX() - frameBounds.width;
+		if (Math.abs(frameBounds.getMaxX() - desktopBounds.getMaxX()) < 5) {
+			frameBounds.x = (int) desktopBounds.getMaxX() - frameBounds.width;
 		}
-		if (frameBounds.getMaxY() > screenBounds.getMaxY()) {
-			frameBounds.y = (int)screenBounds.getMaxY() - frameBounds.height;
+		if (Math.abs(frameBounds.getMaxY() - desktopBounds.getMaxY()) < 5) {
+			frameBounds.y = (int) desktopBounds.getMaxY() - frameBounds.height;
 		}
-		frameBounds.x = Math.max(screenBounds.x, frameBounds.x);
-		frameBounds.y = Math.max(screenBounds.y, frameBounds.y);
+		if (Math.abs(desktopBounds.getMinX() - frameBounds.getMinX()) < 5) {
+			frameBounds.x = Math.max(desktopBounds.x, frameBounds.x);
+		}
+		if (Math.abs(desktopBounds.getMinY() - frameBounds.getMinY()) < 5) {
+			frameBounds.y = Math.max(desktopBounds.y, frameBounds.y);
+		}
+		if (frameBounds.getMaxX() > screenSize.width) {
+			frameBounds.x = screenSize.width - frameBounds.width;
+		}
+		if (frameBounds.getMaxY() > screenSize.height) {
+			frameBounds.y = screenSize.height - frameBounds.height;
+		}
+		frameBounds.y = Math.max(frameBounds.y, 0);
+		frameBounds.y = Math.max(frameBounds.y, 0);
 		setLocation(frameBounds.x, frameBounds.y);
 		if (balloonWindow != null) {
 			updateSizes();

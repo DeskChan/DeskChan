@@ -21,6 +21,7 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 	private Point clickPos;
 	private boolean dragging;
 	private boolean flip;
+	private Point virtualPos;
 	private Skin currentSkin;
 	private String currentImageName = "normal";
 	
@@ -76,6 +77,7 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 		clickPos = e.getLocationOnScreen();
 		if (SwingUtilities.isLeftMouseButton(e)) {
 			dragging = true;
+			virtualPos = mainWindow.getLocation();
 		} else if (SwingUtilities.isRightMouseButton(e)) {
 			JPopupMenu popupMenu = new JPopupMenu();
 			popupMenu.add(mainWindow.optionsAction);
@@ -96,6 +98,7 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 	public void mouseReleased(MouseEvent e) {
 		if (SwingUtilities.isLeftMouseButton(e)) {
 			dragging = false;
+			virtualPos = null;
 		}
 	}
 	
@@ -108,10 +111,9 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 		int dx = e.getXOnScreen() - clickPos.x;
 		int dy = e.getYOnScreen() - clickPos.y;
 		if (dragging) {
-			mainWindow.setPosition(new Point(
-					mainWindow.getX() + dx,
-					mainWindow.getY() + dy
-			));
+			virtualPos.x += dx;
+			virtualPos.y += dy;
+			mainWindow.setPosition(virtualPos);
 		}
 		clickPos = e.getLocationOnScreen();
 	}
