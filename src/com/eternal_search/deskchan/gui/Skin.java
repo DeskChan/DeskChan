@@ -75,7 +75,7 @@ public class Skin implements Comparable<Skin> {
 		switch (type) {
 			case SINGLE_IMAGE:
 				try {
-					return ImageIO.read(Files.newInputStream(basePath));
+					return loadImageByPath(basePath);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -91,18 +91,20 @@ public class Skin implements Comparable<Skin> {
 						}
 						int i = (int) Math.floor(Math.random() * variants.size());
 						imagePath = variants.get(i);
-						return ImageIO.read(Files.newInputStream(imagePath));
+						return loadImageByPath(imagePath);
 					} catch (Throwable e) {
 						e.printStackTrace();
 					}
 				} else if (Files.isReadable(imagePath)) {
 					try {
-						return ImageIO.read(Files.newInputStream(imagePath));
+						return loadImageByPath(imagePath);
 					} catch (Throwable e) {
 						e.printStackTrace();
 					}
 				} else if (!name.equals("normal")) {
 					return getImage("normal");
+				} else {
+					System.err.println("Skin " + getName() + " does not have normal.png");
 				}
 		}
 		return null;
@@ -125,6 +127,14 @@ public class Skin implements Comparable<Skin> {
 				return "IMAGE SET";
 		}
 		return "INVALID";
+	}
+	
+	static Image loadImageByPath(Path path) throws IOException {
+		Image image = ImageIO.read(path.toUri().toURL());
+		if (image == null) {
+			System.err.println("Could not find suitable image reader for " + path.toString());
+		}
+		return image;
 	}
 	
 }

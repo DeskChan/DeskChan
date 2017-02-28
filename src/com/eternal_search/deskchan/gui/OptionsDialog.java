@@ -102,6 +102,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 	
 	OptionsDialog(MainWindow mainWindow) {
 		super(MainWindow.getString("deskchan_options"));
+		setIconImage(MainWindow.getApplicationIcon());
 		this.mainWindow = mainWindow;
 		setMinimumSize(new Dimension(600, 300));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

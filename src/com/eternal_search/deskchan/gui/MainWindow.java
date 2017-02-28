@@ -1,6 +1,7 @@
 package com.eternal_search.deskchan.gui;
 
 import com.eternal_search.deskchan.core.PluginProxy;
+import com.eternal_search.deskchan.core.Utils;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -36,6 +37,7 @@ public class MainWindow extends JFrame {
 	private String currentCharacterImage = "normal";
 	private PriorityQueue<BalloonMessage> balloonQueue = new PriorityQueue<>();
 	private int windowMode = WINDOW_MODE_NORMAL;
+	private static Image applicationIcon = null;
 	
 	final Action quitAction = new AbstractAction(getString("quit")) {
 		@Override
@@ -60,6 +62,7 @@ public class MainWindow extends JFrame {
 	
 	void initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
+		setIconImage(applicationIcon);
 		pluginProxy.sendMessage("core:get-plugin-data-dir", null, (sender_, data_) -> {
 			dataDirPath = Paths.get(((Map) data_).get("path").toString());
 			try {
@@ -97,7 +100,7 @@ public class MainWindow extends JFrame {
 			pack();
 			characterWidget = new CharacterWidget(this);
 			if (!properties.getProperty("skin.builtin", "true").equals("false")) {
-				characterWidget.loadBuiltinSkin(MainWindow.properties.getProperty("skin.name", "variant1"));
+				characterWidget.loadBuiltinSkin(MainWindow.properties.getProperty("skin.name", "variant1.png"));
 			} else {
 				characterWidget.loadSkin(Paths.get(MainWindow.properties.getProperty("skin.name")));
 			}
@@ -378,6 +381,10 @@ public class MainWindow extends JFrame {
 		setAlwaysOnTop((windowMode == WINDOW_MODE_TOP_MOST) || (balloonWidget != null));
 	}
 	
+	static Image getApplicationIcon() {
+		return applicationIcon;
+	}
+	
 	void showThrowable(Throwable e) {
 		showThrowable(this, e);
 	}
@@ -402,6 +409,15 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
+	static String getString(String key) {
+		try {
+			String s = strings.getString(key);
+			return new String(s.getBytes("ISO-8859-1"), "UTF-8");
+		} catch (Throwable e) {
+			return key;
+		}
+	}
+	
 	private static abstract class PluginAction extends AbstractAction {
 		
 		private String plugin;
@@ -415,15 +431,6 @@ public class MainWindow extends JFrame {
 			return plugin;
 		}
 		
-	}
-	
-	static String getString(String key) {
-		try {
-			String s = strings.getString(key);
-			return new String(s.getBytes("ISO-8859-1"), "UTF-8");
-		} catch (Throwable e) {
-			return key;
-		}
 	}
 	
 	private static class LongMessagePanel extends JPanel {
@@ -476,6 +483,14 @@ public class MainWindow extends JFrame {
 			return balloonMessage.priority - priority;
 		}
 		
+	}
+	
+	static {
+		try {
+			applicationIcon = Skin.loadImageByPath(Utils.getResourcePath("icon.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }

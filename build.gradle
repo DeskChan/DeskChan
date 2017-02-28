@@ -1,9 +1,22 @@
-apply plugin: 'java'
-apply plugin: 'application'
+buildscript {
+	repositories {
+		jcenter()
+	}
+	dependencies {
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+		classpath group: 'edu.sc.seis.gradle', name: 'launch4j', version: '2.3.0+'
+	}
+}
 
 repositories {
+	jcenter()
 	mavenCentral()
 }
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'edu.sc.seis.launch4j'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -11,6 +24,7 @@ targetCompatibility = 1.8
 dependencies {
 	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.4.7+'
 	compile group: 'org.json', name: 'json', version: '20160810+'
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5+'
 	compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2+'
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 }
@@ -32,27 +46,67 @@ sourceSets {
 	}
 }
 
-mainClassName = "com.eternal_search.deskchan.core.Main"
+mainClassName = 'com.eternal_search.deskchan.core.Main'
 
 jar {
 	baseName = 'DeskChan'
 	
 	manifest {
-		attributes 'Main-Class': 'com.eternal_search.deskchan.core.Main'
+		attributes 'Main-Class': mainClassName
 	}
+}
 
-	//from files(sourceSets.main.output.classesDir)
-	//from configurations.runtime.asFileTree.files.collect { zipTree(it) }
+shadowJar {
+	baseName = 'DeskChan-full'
+	classifier = null
+	version = null
 }
 
 distZip {
 	into(project.name + '/plugins') {
-		from './plugins'
+		from "${projectDir}/plugins"
+	}
+	into(project.name + '/bin') {
+		from "${buildDir}/launch4j/bin/DeskChan.exe"
 	}
 }
 
 distTar {
 	into(project.name + '/plugins') {
-		from './plugins'
+		from "${projectDir}/plugins"
+	}
+	into(project.name + '/bin') {
+		from "${buildDir}/launch4j/bin/DeskChan.exe"
 	}
 }
+
+createExe {
+	outfile = 'bin/DeskChan.exe'
+	mainClassName = 'com.eternal_search.deskchan.core.Main'
+	copyConfigurable = project.tasks.shadowJar.outputs.files
+	jar = "lib/${project.tasks.shadowJar.archiveName}"
+	cmdLine = '--use-log-files'
+	icon = 'appicon.ico'
+	
+	copy {
+		from "${projectDir}/plugins"
+		into "${buildDir}/launch4j/plugins"
+	}
+}
+
+task createStartScriptsForExe(type: CreateStartScripts) {
+	outputDir = file("${buildDir}/launch4j/bin")
+	mainClassName = 'com.eternal_search.deskchan.core.Main'
+	applicationName = 'DeskChan'
+	classpath = files('lib/DeskChan-full.jar')
+}
+
+task copyIconForExe(type: Copy) {
+	from "${projectDir}/misc/appicon.ico"
+	into "${buildDir}/launch4j"
+}
+
+createExe.dependsOn createStartScriptsForExe
+createExe.dependsOn copyIconForExe
+distZip.dependsOn createExe
+distTar.dependsOn createExe

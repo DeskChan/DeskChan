@@ -10,6 +10,7 @@ public class BalloonWindow extends JFrame {
 	BalloonWindow(BalloonWidget widget) {
 		super("DeskChan Balloon");
 		this.widget = widget;
+		setIconImage(MainWindow.getApplicationIcon());
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setUndecorated(true);
 		setAlwaysOnTop(true);
