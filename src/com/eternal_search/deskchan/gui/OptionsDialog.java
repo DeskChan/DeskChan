@@ -275,6 +275,9 @@ class OptionsDialog extends JFrame implements ItemListener {
 			case "ComboBox":
 				control = new PluginOptionsControlItem.ComboBox();
 				break;
+			case "ListBox":
+				control = new PluginOptionsControlItem.ListBox();
+				break;
 			case "Button":
 				control = new PluginOptionsControlItem.Button();
 				break;

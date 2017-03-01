@@ -10,6 +10,7 @@ def timer = new Timer()
 Path dataDirPath = null
 def properties = new Properties()
 def interval = 30
+def selectedCharacters = new HashSet<String>()
 
 addMessageListener("random_phrases:say", { sender, tag, data ->
 	def phrase = phrasesDatabase.getRandomPhrase()
@@ -27,11 +28,25 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 	} catch (IOException e) {
 		// Do nothing
 	}
+	selectedCharacters = new HashSet<String>(Arrays.asList(
+			properties.getProperty("characters", "moe;genki;yandere").split(";")
+	))
 	interval = Integer.parseInt(properties.getProperty('interval', '30'))
 	sendMessage('gui:add-options-tab', [
 	        name: Localization.getString('random_phrases'),
 			msgTag: 'random_phrases:options-saved',
 			controls: [
+					[
+					        id: 'characters',
+							type: 'ListBox',
+							values: [
+							        Localization.getString('character.moe'),
+									Localization.getString('character.genki'),
+									Localization.getString('character.yandere')
+							],
+							value: selectedCharacters.collect { [moe: 0, genki: 1, yandere: 2].get(it) },
+							label: Localization.getString('character')
+					],
 			        [
 							id: 'interval',
 			                type: 'Spinner',
@@ -51,6 +66,7 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 	sendMessage('gui:set-image', 'waiting')
 	Thread.start() {
 		phrasesDatabase.load(dataDirPath, {
+			phrasesDatabase.selectPhrases(selectedCharacters)
 			Closure sayRandomPhrase = null
 			sayRandomPhrase = {
 				def phrase = phrasesDatabase.getRandomPhrase()
@@ -66,12 +82,19 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 
 addMessageListener('random_phrases:options-saved', { sender, tag, data ->
 	interval = data['interval']
+	selectedCharacters = new HashSet<>(
+			data['characters'].collect { [0: 'moe', 1: 'genki', 2: 'yandere'].get(it) }
+	)
+	properties.setProperty('characters', String.join(';', selectedCharacters))
 	properties.setProperty('interval', String.valueOf(interval))
+	phrasesDatabase.selectPhrases(selectedCharacters)
 })
 
 addMessageListener('random_phrases:update', { sender, tag, data ->
 	Thread.start() {
-		phrasesDatabase.load(dataDirPath, {})
+		phrasesDatabase.load(dataDirPath, {
+			phrasesDatabase.selectPhrases(selectedCharacters)
+		})
 	}
 })
 

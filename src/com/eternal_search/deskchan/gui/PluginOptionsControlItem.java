@@ -1,10 +1,13 @@
 package com.eternal_search.deskchan.gui;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public interface PluginOptionsControlItem {
 	
@@ -76,6 +79,44 @@ public interface PluginOptionsControlItem {
 		@Override
 		public JComponent getComponent() {
 			return this;
+		}
+	}
+	
+	class ListBox implements PluginOptionsControlItem {
+		
+		private final JList<String> list = new JList<String>();
+		private final JScrollPane scrollPane = new JScrollPane(list);
+		
+		ListBox() {
+			super();
+			list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+			scrollPane.setPreferredSize(new Dimension(200, 75));
+		}
+		
+		@Override
+		public void setOptions(Map<String, Object> options) {
+			List<String> values = (List<String>) options.get("values");
+			DefaultListModel<String> model = new DefaultListModel<>();
+			for (String value : values) {
+				model.addElement(value);
+			}
+			list.setModel(model);
+		}
+		
+		@Override
+		public void setValue(Object value) {
+			List<Integer> selection = (List<Integer>) value;
+			list.setSelectedIndices(selection.stream().mapToInt(i->i).toArray());
+		}
+		
+		@Override
+		public Object getValue() {
+			return IntStream.of(list.getSelectedIndices()).boxed().collect(Collectors.toList());
+		}
+		
+		@Override
+		public JComponent getComponent() {
+			return scrollPane;
 		}
 	}
 	
