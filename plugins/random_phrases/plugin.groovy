@@ -42,9 +42,12 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 							values: [
 							        Localization.getString('character.moe'),
 									Localization.getString('character.genki'),
-									Localization.getString('character.yandere')
+									Localization.getString('character.yandere'),
+									Localization.getString('character.tsundere')
 							],
-							value: selectedCharacters.collect { [moe: 0, genki: 1, yandere: 2].get(it) },
+							value: selectedCharacters.collect {
+								[moe: 0, genki: 1, yandere: 2, tsundere: 3].get(it)
+							},
 							label: Localization.getString('character')
 					],
 			        [
@@ -83,7 +86,7 @@ sendMessage('core:get-plugin-data-dir', null, { sender, data ->
 addMessageListener('random_phrases:options-saved', { sender, tag, data ->
 	interval = data['interval']
 	selectedCharacters = new HashSet<>(
-			data['characters'].collect { [0: 'moe', 1: 'genki', 2: 'yandere'].get(it) }
+			data['characters'].collect { [0: 'moe', 1: 'genki', 2: 'yandere', 3: 'tsundere'].get(it) }
 	)
 	properties.setProperty('characters', String.join(';', selectedCharacters))
 	properties.setProperty('interval', String.valueOf(interval))
