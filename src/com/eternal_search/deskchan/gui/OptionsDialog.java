@@ -4,6 +4,7 @@ import com.eternal_search.deskchan.core.PluginManager;
 import org.json.JSONObject;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -52,7 +53,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 	private final JSpinner balloonDefaultTimeoutSpinner = new JSpinner(new SpinnerNumberModel(0,
 			0, 600000, 500));
 	private JComboBox windowModeComboBox;
-	private JList pluginsList;
+	private JList<PluginListItem> pluginsList;
 	private final Action loadPluginAction = new AbstractAction(MainWindow.getString("load")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
@@ -74,10 +75,38 @@ class OptionsDialog extends JFrame implements ItemListener {
 	private final Action unloadPluginAction = new AbstractAction(MainWindow.getString("unload")) {
 		@Override
 		public void actionPerformed(ActionEvent actionEvent) {
-			String plugin = pluginsList.getSelectedValue().toString();
+			PluginListItem item = pluginsList.getSelectedValue();
+			if ((item == null) || item.blacklisted) {
+				return;
+			}
+			String plugin = item.id;
 			if ((plugin != null) && !plugin.equals("core")) {
 				PluginManager.getInstance().unloadPlugin(plugin);
 			}
+		}
+	};
+	private final Action blackListPluginAction = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			PluginListItem item = pluginsList.getSelectedValue();
+			if (item == null) return;
+			if (item.blacklisted) {
+				PluginManager.getInstance().getBlacklistedPlugins().remove(item.id);
+				item.blacklisted = false;
+				try {
+					PluginManager.getInstance().loadPluginByName(item.id);
+				} catch (Throwable e) {
+					((DefaultListModel<PluginListItem>) pluginsList.getModel()).removeElement(item);
+					return;
+				}
+			} else {
+				PluginManager.getInstance().getBlacklistedPlugins().add(item.id);
+				item.blacklisted = true;
+				PluginManager.getInstance().unloadPlugin(item.id);
+			}
+			((DefaultListModel<PluginListItem>) pluginsList.getModel()).setElementAt(item,
+					pluginsList.getSelectedIndex());
+			updatePluginsListActions();
 		}
 	};
 	private DefaultMutableTreeNode alternativesTreeRoot;
@@ -102,8 +131,9 @@ class OptionsDialog extends JFrame implements ItemListener {
 	
 	OptionsDialog(MainWindow mainWindow) {
 		super(MainWindow.getString("deskchan_options"));
-		setIconImage(MainWindow.getApplicationIcon());
 		this.mainWindow = mainWindow;
+		setIconImage(MainWindow.getApplicationIcon());
+		setAlwaysOnTop(true);
 		setMinimumSize(new Dimension(600, 300));
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		cardsComboBox.addItemListener(this);
@@ -135,28 +165,44 @@ class OptionsDialog extends JFrame implements ItemListener {
 		appearanceTab.add(panel, BorderLayout.PAGE_START);
 		addTab(MainWindow.getString("appearance"), appearanceTab);
 		JPanel pluginsTab = new JPanel(new BorderLayout());
-		DefaultListModel pluginsListModel = new DefaultListModel();
+		DefaultListModel<PluginListItem> pluginsListModel = new DefaultListModel<PluginListItem>();
 		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
 			MainWindow.runOnEventThread(() -> {
-				pluginsListModel.addElement(data.toString());
+				String id = data.toString();
+				for (int i = 0; i < pluginsListModel.size(); ++i) {
+					if (pluginsListModel.elementAt(i).id.equals(id)) {
+						return;
+					}
+				}
+				pluginsListModel.addElement(new PluginListItem(id, false));
 			});
 		});
 		mainWindow.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			MainWindow.runOnEventThread(() -> {
 				for (int i = 0; i < pluginsListModel.size(); ++i) {
-					if (pluginsListModel.elementAt(i).equals(data)) {
-						pluginsListModel.remove(i);
+					PluginListItem item = pluginsListModel.elementAt(i);
+					if (item.id.equals(data.toString())) {
+						if (!item.blacklisted) {
+							pluginsListModel.remove(i);
+						}
 						break;
 					}
 				}
 			});
 		});
-		pluginsList = new JList(pluginsListModel);
+		for (String blacklistedId : PluginManager.getInstance().getBlacklistedPlugins()) {
+			pluginsListModel.addElement(new PluginListItem(blacklistedId, true));
+		}
+		pluginsList = new JList<PluginListItem>(pluginsListModel);
+		pluginsList.addListSelectionListener((event) -> {
+			updatePluginsListActions();
+		});
 		JScrollPane pluginsListScrollPane = new JScrollPane(pluginsList);
 		pluginsTab.add(pluginsListScrollPane);
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(new JButton(loadPluginAction));
 		buttonPanel.add(new JButton(unloadPluginAction));
+		buttonPanel.add(new JButton(blackListPluginAction));
 		pluginsTab.add(buttonPanel, BorderLayout.PAGE_END);
 		addTab(MainWindow.getString("plugins"), pluginsTab);
 		JPanel alternativesTab = new JPanel(new BorderLayout());
@@ -177,6 +223,16 @@ class OptionsDialog extends JFrame implements ItemListener {
 		add(cardsComboBox, BorderLayout.PAGE_START);
 		add(cards, BorderLayout.CENTER);
 		pack();
+	}
+	
+	private void updatePluginsListActions() {
+		unloadPluginAction.setEnabled(((pluginsList.getSelectedValue() != null) &&
+				!pluginsList.getSelectedValue().blacklisted));
+		blackListPluginAction.setEnabled(pluginsList.getSelectedValue() != null);
+		blackListPluginAction.putValue(Action.NAME, ((pluginsList.getSelectedValue() != null) &&
+				pluginsList.getSelectedValue().blacklisted) ?
+				MainWindow.getString("plugin_list.unblacklist") :
+				MainWindow.getString("plugin_list.blacklist"));
 	}
 	
 	void updateOptions() {
@@ -201,6 +257,7 @@ class OptionsDialog extends JFrame implements ItemListener {
 			}
 			alternativesTree.expandPath(new TreePath(alternativesTreeRoot.getPath()));
 		});
+		updatePluginsListActions();
 	}
 	
 	void addTab(String name, JComponent component) {
@@ -320,6 +377,23 @@ class OptionsDialog extends JFrame implements ItemListener {
 		
 		String getPlugin() {
 			return plugin;
+		}
+		
+	}
+	
+	static class PluginListItem {
+		
+		String id;
+		boolean blacklisted;
+		
+		PluginListItem(String id, boolean blacklisted) {
+			this.id = id;
+			this.blacklisted = blacklisted;
+		}
+		
+		@Override
+		public String toString() {
+			return blacklisted ? ("<html><strike>" + id + "</strike></html>") : id;
 		}
 		
 	}

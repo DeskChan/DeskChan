@@ -29,12 +29,10 @@ public class PluginClass implements Plugin, PluginLoader {
 	@Override
 	public boolean matchPath(Path path) {
 		if (Files.isDirectory(path)) {
-			path = path.resolve("plugin.groovy");
-			if (Files.isReadable(path)) {
-				return true;
-			}
+			return Files.isReadable(path.resolve("plugin.groovy"));
+		} else {
+			return path.getFileName().toString().endsWith(".groovy");
 		}
-		return path.getFileName().toString().endsWith(".groovy");
 	}
 	
 	@Override
@@ -49,6 +47,7 @@ public class PluginClass implements Plugin, PluginLoader {
 		GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
 		Script script = groovyShell.parse(path.toFile());
 		GroovyPlugin plugin = (GroovyPlugin) script;
+		plugin.setPluginDir(path.getParent());
 		PluginManager.getInstance().initializePlugin(id, plugin);
 	}
 	

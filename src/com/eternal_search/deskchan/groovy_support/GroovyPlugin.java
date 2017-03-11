@@ -6,6 +6,7 @@ import com.eternal_search.deskchan.core.PluginProxy;
 import com.eternal_search.deskchan.core.ResponseListener;
 import groovy.lang.Script;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,7 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	
 	private PluginProxy pluginProxy = null;
 	private List<Runnable> cleanupHandlers = new ArrayList<>();
+	private Path pluginDir;
 	
 	@Override
 	public boolean initialize(PluginProxy pluginProxy) {
@@ -51,6 +53,18 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	
 	protected void addCleanupHandler(Runnable handler) {
 		cleanupHandlers.add(handler);
+	}
+	
+	protected Path getDataDir() {
+		return pluginProxy.getDataDir();
+	}
+	
+	protected Path getPluginDir() {
+		return pluginDir;
+	}
+	
+	void setPluginDir(Path path) {
+		pluginDir = path;
 	}
 	
 }

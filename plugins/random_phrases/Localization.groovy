@@ -18,17 +18,8 @@ final class Localization {
 		}
 	}
 	
-	static void load() {
-		String codeLocation = Localization.class.protectionDomain.codeSource.location.path
-		if (SystemUtils.IS_OS_WINDOWS) {
-			if (codeLocation.size() >= 3) {
-				if ((codeLocation.charAt(0) == '/') && (codeLocation.charAt(2) == ':')) {
-					codeLocation = codeLocation.substring(1);
-				}
-			}
-		}
-		Path resourcesPath = Paths.get(codeLocation)
-				.getParent().resolve("resources");
+	static void load(Path basePath) {
+		Path resourcesPath = basePath.resolve("resources")
 		Path stringsPath = resourcesPath.resolve("strings_" + userLanguage + "_" + userCountry + ".properties")
 		if (!Files.isReadable(stringsPath)) {
 			stringsPath = resourcesPath.resolve("strings_" + userLanguage + ".properties")

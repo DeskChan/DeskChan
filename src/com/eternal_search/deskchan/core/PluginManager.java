@@ -1,5 +1,10 @@
 package com.eternal_search.deskchan.core;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,6 +16,7 @@ public class PluginManager {
 	private final Map<String, PluginProxy> plugins = new HashMap<>();
 	private final Map<String, Set<MessageListener>> messageListeners = new HashMap<>();
 	private final List<PluginLoader> loaders = new ArrayList<>();
+	private final Set<String> blacklistedPlugins = new HashSet<>();
 	
 	private PluginManager() {
 	}
@@ -21,9 +27,24 @@ public class PluginManager {
 	
 	void initialize() {
 		loadPluginByClass(CorePlugin.class);
+		try {
+			BufferedReader reader = Files.newBufferedReader(getDataDir().resolve("blacklisted-plugins.txt"),
+					Charset.forName("UTF-8"));
+			String line;
+			while ((line = reader.readLine()) != null) {
+				if (line.length() == 0) continue;
+				blacklistedPlugins.add(line);
+			}
+			reader.close();
+		} catch (IOException e) {
+			// Do nothing
+		}
 	}
 	
 	public boolean initializePlugin(String id, Plugin plugin) {
+		if (blacklistedPlugins.contains(id)) {
+			return false;
+		}
 		if (!plugins.containsKey(id)) {
 			PluginProxy pluginProxy = new PluginProxy(plugin);
 			if (pluginProxy.initialize(id)) {
@@ -179,7 +200,48 @@ public class PluginManager {
 		}
 		pluginsToUnload.clear();
 		getPlugin("core").unload();
+		try {
+			BufferedWriter writer = Files.newBufferedWriter(getDataDir().resolve("blacklisted-plugins.txt"),
+					Charset.forName("UTF-8"));
+			for (String id : blacklistedPlugins) {
+				writer.write(id);
+				writer.newLine();
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		System.exit(0);
+	}
+	
+	public Set<String> getBlacklistedPlugins() {
+		return blacklistedPlugins;
+	}
+	
+	static Path getDataDir() {
+		try {
+			Path jarPath = Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			Path path;
+			if (Files.isDirectory(jarPath)) {
+				path = jarPath.resolve("../../data");
+			} else {
+				path = jarPath.getParent().resolve("../data");
+			}
+			return path;
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	static Path getDataDir(String id) {
+		final Path baseDir = getDataDir();
+		final Path dataDir = baseDir.resolve(id);
+		if (!Files.isDirectory(dataDir)) {
+			dataDir.toFile().mkdirs();
+			System.err.println("Created directory: " + dataDir.toString());
+		}
+		return dataDir;
 	}
 	
 }

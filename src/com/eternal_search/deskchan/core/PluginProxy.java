@@ -1,5 +1,6 @@
 package com.eternal_search.deskchan.core;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -87,6 +88,10 @@ public class PluginProxy implements MessageListener {
 			ResponseListener listener = responseListeners.remove(seq);
 			listener.handle(sender, data);
 		}
+	}
+	
+	public Path getDataDir() {
+		return PluginManager.getDataDir(id);
 	}
 	
 }

@@ -11,6 +11,7 @@ public class CorePlugin implements Plugin, MessageListener {
 	private PluginProxy pluginProxy = null;
 	private final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
 	
+	
 	@Override
 	public boolean initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
@@ -61,26 +62,11 @@ public class CorePlugin implements Plugin, MessageListener {
 			}
 		});
 		pluginProxy.addMessageListener("core:get-plugin-data-dir", (sender, tag, data) -> {
-			try {
-				Path jarPath = Paths.get(getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
-				Path dataDirPath;
-				if (Files.isDirectory(jarPath)) {
-					dataDirPath = jarPath.resolve("../../data");
-				} else {
-					dataDirPath = jarPath.getParent().resolve("../data");
-				}
-				final Path pluginDataDirPath = dataDirPath.resolve(sender);
-				if (!Files.isDirectory(pluginDataDirPath)) {
-					pluginDataDirPath.toFile().mkdirs();
-					System.err.println("Created directory: " + pluginDataDirPath.toString());
-				}
-				Object seq = ((Map) data).get("seq");
-				pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
-					put("seq", seq); put("path", pluginDataDirPath.toString());
-				}});
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
+			Path pluginDataDirPath = PluginManager.getDataDir(sender);
+			Object seq = ((Map) data).get("seq");
+			pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
+				put("seq", seq); put("path", pluginDataDirPath.toString());
+			}});
 		});
 		return true;
 	}
