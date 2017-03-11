@@ -90,6 +90,8 @@ class OptionsDialog extends JFrame implements ItemListener {
 		public void actionPerformed(ActionEvent actionEvent) {
 			PluginListItem item = pluginsList.getSelectedValue();
 			if (item == null) return;
+			if (item.id.equals("core")) return;
+			if (item.id.equals("gui")) return;
 			if (item.blacklisted) {
 				PluginManager.getInstance().getBlacklistedPlugins().remove(item.id);
 				item.blacklisted = false;
@@ -228,7 +230,8 @@ class OptionsDialog extends JFrame implements ItemListener {
 	private void updatePluginsListActions() {
 		unloadPluginAction.setEnabled(((pluginsList.getSelectedValue() != null) &&
 				!pluginsList.getSelectedValue().blacklisted));
-		blackListPluginAction.setEnabled(pluginsList.getSelectedValue() != null);
+		blackListPluginAction.setEnabled((pluginsList.getSelectedValue() != null) &&
+				!pluginsList.getSelectedValue().id.equals("core") && !pluginsList.getSelectedValue().id.equals("gui"));
 		blackListPluginAction.putValue(Action.NAME, ((pluginsList.getSelectedValue() != null) &&
 				pluginsList.getSelectedValue().blacklisted) ?
 				MainWindow.getString("plugin_list.unblacklist") :
