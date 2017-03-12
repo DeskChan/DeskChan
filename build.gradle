@@ -27,6 +27,7 @@ dependencies {
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5+'
 	compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2+'
 	compile group: 'com.dorkbox', name: 'SystemTray', version: '3.1+'
+	compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0+'
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
