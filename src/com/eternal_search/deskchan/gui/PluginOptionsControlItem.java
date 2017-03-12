@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -178,6 +180,60 @@ public interface PluginOptionsControlItem {
 				mainWindow.getPluginProxy().sendMessage(msgTag, msgData);
 			}
 		}
+	}
+	
+	class FileField extends JPanel implements PluginOptionsControlItem {
+		
+		private JTextField textField = new JTextField();
+		private JButton selectButton = new JButton("...");
+		private JButton clearButton = new JButton("X");
+		private boolean empty = true;
+		
+		FileField() {
+			textField.setEditable(false);
+			add(textField);
+			add(selectButton, BorderLayout.LINE_START);
+			add(clearButton, BorderLayout.LINE_END);
+			selectButton.addActionListener((event) -> {
+				JFileChooser chooser = new JFileChooser();
+				chooser.setCurrentDirectory(new File("."));
+				chooser.setDialogTitle(MainWindow.getString("file_field.dialog_title"));
+				if (chooser.showOpenDialog(FileField.this) == JFileChooser.APPROVE_OPTION) {
+					Path path = chooser.getSelectedFile().toPath();
+					setValue(path.toString());
+				}
+			});
+			clearButton.addActionListener((event) -> {
+				setValue(null);
+			});
+		}
+		
+		@Override
+		public void setOptions(Map<String, Object> options) {
+			
+		}
+		
+		@Override
+		public void setValue(Object value) {
+			if (value != null) {
+				textField.setText(value.toString());
+				empty = false;
+			} else {
+				textField.setText(MainWindow.getString("file_field.empty"));
+				empty = true;
+			}
+		}
+		
+		@Override
+		public String getValue() {
+			return empty ? null : textField.getText();
+		}
+		
+		@Override
+		public JComponent getComponent() {
+			return this;
+		}
+		
 	}
 	
 }

@@ -341,6 +341,9 @@ class OptionsDialog extends JFrame implements ItemListener {
 			case "Button":
 				control = new PluginOptionsControlItem.Button();
 				break;
+			case "FileField":
+				control = new PluginOptionsControlItem.FileField();
+				break;
 			default:
 				return null;
 		}

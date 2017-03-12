@@ -24,12 +24,25 @@ class PhrasesDatabase {
 			e.printStackTrace()
 		}
 		if (dataStr.isEmpty()) {
-			def stream = Files.newInputStream(dataDirPath.resolve('phrases.json'))
-			dataStr = IOUtils.toString(stream, "UTF-8")
-			stream.close()
+			load(dataDirPath.resolve('phrases.json'))
+		} else {
+			load(dataStr)
 		}
+		if (callback != null) {
+			callback.run()
+		}
+	}
+	
+	void load(Path dataFilePath) {
+		def stream = Files.newInputStream(dataFilePath)
+		def dataStr = IOUtils.toString(stream, "UTF-8")
+		stream.close()
+		load(dataStr)
+	}
+	
+	synchronized void load(String data) {
 		try {
-			def json = new JSONObject(dataStr)
+			def json = new JSONObject(data)
 			def values = json.get("values")
 			synchronized (this) {
 				phrases.clear()
@@ -43,12 +56,9 @@ class PhrasesDatabase {
 				}
 			}
 		} catch (Throwable e) {
-			e.printStackTrace();
+			e.printStackTrace()
 		}
 		System.err.println("${phrases.size()} random phrases loaded")
-		if (callback != null) {
-			callback.run()
-		}
 	}
 	
 	synchronized void selectPhrases(Set<String> characters) {

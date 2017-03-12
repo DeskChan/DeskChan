@@ -20,7 +20,6 @@ class CharacterWidget extends JPanel implements MouseListener, MouseMotionListen
 	private Image characterImage;
 	private Point clickPos;
 	private boolean dragging;
-	private boolean flip;
 	private Point virtualPos;
 	private Skin currentSkin;
 	private String currentImageName = "normal";

@@ -5,7 +5,6 @@ import com.eternal_search.deskchan.core.Utils;
 import dorkbox.systemTray.*;
 import dorkbox.systemTray.MenuItem;
 import dorkbox.systemTray.SystemTray;
-import org.apache.commons.lang3.SystemUtils;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -174,6 +173,7 @@ public class MainWindow extends JFrame {
 			runOnEventThread(() -> {
 				extraActions.removeIf(action -> action.getPlugin().equals(data));
 				optionsDialog.removeTabsByPlugin(data.toString());
+				rebuildPopupMenu();
 			});
 		});
 		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
@@ -201,6 +201,7 @@ public class MainWindow extends JFrame {
 			System.err.println("Failed to create system tray icon");
 		}
 		rebuildPopupMenu();
+		popupMenu.setLightWeightPopupEnabled(false);
 	}
 	
 	void setDefaultLocation() {

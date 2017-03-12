@@ -1,9 +1,6 @@
 package com.eternal_search.deskchan.core;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -15,12 +12,10 @@ public class Main {
 	public static void main(String[] args) {
 		if (Arrays.asList(args).contains("--use-log-files")) {
 			try {
-				File errFile = new File("err.txt");
-				FileOutputStream errOutputStream = new FileOutputStream(errFile);
+				OutputStream errOutputStream = Files.newOutputStream(PluginManager.getDataDir().resolve("stderr.txt"));
 				PrintStream errPrintStream = new PrintStream(errOutputStream);
 				System.setErr(errPrintStream);
-				File outFile = new File("out.txt");
-				FileOutputStream outOutputStream = new FileOutputStream(outFile);
+				OutputStream outOutputStream = Files.newOutputStream(PluginManager.getDataDir().resolve("stdout.txt"));
 				PrintStream outPrintStream = new PrintStream(outOutputStream);
 				System.setOut(outPrintStream);
 			} catch (IOException e) {
