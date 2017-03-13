@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -235,6 +236,7 @@ public class MainWindow extends JFrame {
 		if (!frameBounds.equals(getBounds())) {
 			setBounds(frameBounds);
 		}
+		//setShape(new Ellipse2D.Double(0, 0, getWidth(), getHeight()));
 	}
 	
 	void showBalloon(JComponent component, Map<String, Object> params) {
@@ -306,7 +308,6 @@ public class MainWindow extends JFrame {
 		}
 		if (balloonWidget != null) {
 			setAlwaysOnTop(true);
-			requestFocus();
 		} else {
 			setAlwaysOnTop(windowMode == WINDOW_MODE_TOP_MOST);
 		}
