@@ -58,7 +58,7 @@ class PhrasesDatabase {
 		} catch (Throwable e) {
 			e.printStackTrace()
 		}
-		System.err.println("${phrases.size()} random phrases loaded")
+		MyLogger.log("${phrases.size()} random phrases loaded")
 	}
 	
 	synchronized void selectPhrases(Set<String> characters) {

@@ -3,12 +3,14 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import groovy.transform.Field
 
-Localization.load(getPluginDir())
+MyLogger.setImplementation({ text -> log(text) })
+
+Localization.load(getPluginDirPath())
 phrasesDatabase = new PhrasesDatabase()
 
 def timer = new Timer()
 
-Path dataDirPath = getDataDir()
+Path dataDirPath = getDataDirPath()
 properties = new Properties()
 def interval = 30
 @Field selectedCharacters = new HashSet<String>()
@@ -77,7 +79,7 @@ sendMessage('gui:set-image', 'waiting')
 void updatePhrasesDatabase(Runnable callback) {
 	if (phrasesFileName.length() == 0) {
 		Thread.start() {
-			phrasesDatabase.load(getDataDir(), {
+			phrasesDatabase.load(getDataDirPath(), {
 				phrasesDatabase.selectPhrases(selectedCharacters)
 				if (callback != null) {
 					callback.run()

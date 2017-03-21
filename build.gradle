@@ -22,36 +22,20 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.4.7+'
 	compile group: 'org.json', name: 'json', version: '20160810+'
+	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.4.7+'
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5+'
 	compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2+'
-	compile group: 'com.dorkbox', name: 'SystemTray', version: '3.1+'
 	compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0+'
+	compile group: 'com.dorkbox', name: 'SystemTray', version: '3.1+'
+	compile group: 'org.javassist', name: 'javassist', version: '3.22+'
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
-sourceSets {
-	main {
-		java {
-			srcDir 'src'
-		}
-		resources {
-			srcDir 'resources'
-		}
-	}
-	
-	test {
-		java {
-			srcDir 'test'
-		}
-	}
-}
-
-mainClassName = 'com.eternal_search.deskchan.core.Main'
+mainClassName = 'info.deskchan.core.Main'
 
 jar {
-	baseName = 'DeskChan'
+	baseName = project.name
 	
 	manifest {
 		attributes 'Main-Class': mainClassName
@@ -59,7 +43,7 @@ jar {
 }
 
 shadowJar {
-	baseName = 'DeskChan-full'
+	baseName = "${project.name}-full"
 	classifier = null
 	version = null
 }
@@ -68,24 +52,33 @@ distZip {
 	into(project.name + '/plugins') {
 		from "${projectDir}/plugins"
 	}
+	into(project.name + '/skins') {
+		from "${projectDir}/skins"
+	}
 }
 
 distTar {
 	into(project.name + '/plugins') {
 		from "${projectDir}/plugins"
 	}
+	into(project.name + '/skins') {
+		from "${projectDir}/skins"
+	}
 }
 
 createExe {
-	outfile = 'bin/DeskChan.exe'
-	mainClassName = 'com.eternal_search.deskchan.core.Main'
+	outfile = "bin/${project.name}.exe"
+	mainClassName = project.mainClassName
 	copyConfigurable = files()
 	jar = "${buildDir}/libs/${project.tasks.shadowJar.archiveName}"
-	cmdLine = '--use-log-files'
 	icon = 'appicon.ico'
 	copy {
 		from "${projectDir}/plugins"
 		into "${buildDir}/launch4j/plugins"
+	}
+	copy {
+		from "${projectDir}/skins"
+		into "${buildDir}/launch4j/skins"
 	}
 	doLast {
 		delete "${buildDir}/launch4j/appicon.ico"
@@ -94,14 +87,14 @@ createExe {
 
 task createStartScriptsForExe(type: CreateStartScripts) {
 	outputDir = file("${buildDir}/launch4j/bin")
-	mainClassName = 'com.eternal_search.deskchan.core.Main'
-	applicationName = 'DeskChan'
-	classpath = files('bin/DeskChan.exe')
+	mainClassName = createExe.mainClassName
+	applicationName = project.name
+	classpath = files(createExe.outfile)
 	doLast {
 		def windowsScriptFile = file getWindowsScript()
 		def unixScriptFile = file getUnixScript()
-		windowsScriptFile.text = windowsScriptFile.text.replace('lib\\DeskChan.exe', 'bin\\DeskChan.exe')
-		unixScriptFile.text = unixScriptFile.text.replace('lib/DeskChan.exe', 'bin/DeskChan.exe')
+		windowsScriptFile.text = windowsScriptFile.text.replace("lib\\${project.name}.exe", "bin\\${project.name}.exe")
+		unixScriptFile.text = unixScriptFile.text.replace("lib/${project.name}.exe", "bin/${project.name}.exe")
 	}
 }
 
@@ -120,7 +113,7 @@ task createExeDistZip(type: Zip) {
 	include '*/*/*/*/*/*'
 	include '*/*/*/*/*/*/*'
 	exclude 'data'
-	archiveName 'DeskChan-full.zip'
+	archiveName "${project.name}-full.zip"
 	destinationDir file("${buildDir}/distributions")
 }
 
