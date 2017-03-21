@@ -71,11 +71,11 @@ class Balloon extends StackPane {
 	
 	@Override
 	public void layoutChildren() {
-		bubbleShape.setScaleX(0);
-		bubbleShape.setScaleY(0);
 		super.layoutChildren();
-		bubbleShape.setScaleX(getWidth() / bubbleShape.getBoundsInLocal().getWidth());
-		bubbleShape.setScaleY(getHeight() / bubbleShape.getBoundsInLocal().getHeight());
+		if ((bubbleShape.getScaleX() == 0) && (bubbleShape.getScaleY() == 0)) {
+			bubbleShape.setScaleX(getWidth() / bubbleShape.getBoundsInLocal().getWidth());
+			bubbleShape.setScaleY(getHeight() / bubbleShape.getBoundsInLocal().getHeight());
+		}
 	}
 	
 }
