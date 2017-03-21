@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import com.sun.javafx.stage.StageHelper;
 import dorkbox.systemTray.Menu;
 import dorkbox.systemTray.MenuItem;
 import dorkbox.systemTray.Separator;
@@ -7,17 +8,22 @@ import dorkbox.systemTray.SystemTray;
 import info.deskchan.core.PluginProxy;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
+import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
@@ -36,6 +42,8 @@ public class App extends Application {
 	public void start(Stage primaryStage) {
 		instance = this;
 		HackJavaFX.process();
+		loadFonts();
+		initStylesheetOverride();
 		initSystemTray();
 		OverlayStage normalStage = new OverlayStage("normal");
 		normalStage.show();
@@ -168,6 +176,30 @@ public class App extends Application {
 			optionsDialog = new OptionsDialog();
 			optionsDialog.show();
 		}
+	}
+	
+	private void loadFonts() {
+		try (DirectoryStream<Path> directoryStream =
+					 Files.newDirectoryStream(Skin.getSkinsPath().getParent().resolve("fonts"))) {
+			for (Path fontPath : directoryStream) {
+				if (fontPath.getFileName().toString().endsWith(".ttf")) {
+					Font.loadFont(Files.newInputStream(fontPath), 10);
+					Main.log("Loaded font " + fontPath.getFileName().toString());
+				}
+			}
+		} catch (IOException e) {
+			Main.log(e);
+		}
+	}
+	
+	private void initStylesheetOverride() {
+		StageHelper.getStages().addListener((ListChangeListener<Stage>) change -> {
+			while (change.next()) {
+				for (Stage stage : change.getAddedSubList()) {
+					stage.getScene().getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+				}
+			}
+		});
 	}
 	
 	static void showThrowable(Window parent, Throwable e) {
