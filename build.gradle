@@ -55,6 +55,9 @@ distZip {
 	into(project.name + '/skins') {
 		from "${projectDir}/skins"
 	}
+	into(project.name + '/fonts') {
+		from "${projectDir}/fonts"
+	}
 }
 
 distTar {
@@ -63,6 +66,9 @@ distTar {
 	}
 	into(project.name + '/skins') {
 		from "${projectDir}/skins"
+	}
+	into(project.name + '/fonts') {
+		from "${projectDir}/fonts"
 	}
 }
 
@@ -79,6 +85,10 @@ createExe {
 	copy {
 		from "${projectDir}/skins"
 		into "${buildDir}/launch4j/skins"
+	}
+	copy {
+		from "${projectDir}/fonts"
+		into "${buildDir}/launch4j/fonts"
 	}
 	doLast {
 		delete "${buildDir}/launch4j/appicon.ico"
