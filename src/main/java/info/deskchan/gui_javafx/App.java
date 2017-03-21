@@ -136,7 +136,9 @@ public class App extends Application {
 	private void rebuildMenu() {
 		Menu mainMenu = systemTray.getMenu();
 		mainMenu.clear();
-		mainMenu.add(new MenuItem(Main.getString("options"), event -> showOptionsDialog()));
+		mainMenu.add(new MenuItem(Main.getString("options"), event -> {
+			Platform.runLater(this::showOptionsDialog);
+		}));
 		mainMenu.add(new Separator());
 		if (pluginsActions.size() > 0) {
 			for (Map.Entry<String, List<PluginActionInfo>> entry : pluginsActions.entrySet()) {
