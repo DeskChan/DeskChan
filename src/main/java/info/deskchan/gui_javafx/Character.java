@@ -47,7 +47,7 @@ class Character extends Pane {
 	}
 	
 	void setImageName(String name) {
-		imageName = name;
+		imageName = ((name != null) && (name.length() > 0)) ? name : "normal";
 		updateImage();
 	}
 	

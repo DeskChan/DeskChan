@@ -157,10 +157,10 @@ public class App extends Application {
 					mainMenu.add(actions.get(0).createMenuItem());
 				} else {
 					Menu pluginMenu = new Menu(pluginId);
+					mainMenu.add(pluginMenu);
 					for (PluginActionInfo action : actions) {
 						pluginMenu.add(action.createMenuItem());
 					}
-					mainMenu.add(pluginMenu);
 				}
 			}
 			mainMenu.add(new Separator());
