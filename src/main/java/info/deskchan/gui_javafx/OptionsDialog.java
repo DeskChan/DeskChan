@@ -38,13 +38,13 @@ class OptionsDialog extends Dialog<Void> {
 		Stage stage = (Stage) getDialogPane().getScene().getWindow();
 		stage.setAlwaysOnTop(true);
 		stage.getIcons().add(new Image(App.ICON_URL.toString()));
-		stage.setOnCloseRequest(event -> {
-			instance = null;
-		});
 		tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 		initTabs();
 		getDialogPane().setContent(tabPane);
 		getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+		setOnHidden(event -> {
+			instance = null;
+		});
 	}
 	
 	static OptionsDialog getInstance() {
