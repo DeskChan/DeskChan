@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-interface Skin {
+public interface Skin {
 	
 	String getName();
 	
@@ -25,15 +25,25 @@ interface Skin {
 	}
 	
 	static Skin load(Path path) {
-		if (Files.isDirectory(path)) {
-			return new ImageSetSkin(path);
-		} else if (Files.isReadable(path) && path.getFileName().toString().endsWith(".png")) {
-			return new SingleImageSkin(path);
+		synchronized (App.skinLoaders) {
+			for (SkinLoader loader : App.skinLoaders) {
+				if (loader.matchByPath(path)) {
+					return loader.loadByPath(path);
+				}
+			}
 		}
 		return null;
 	}
 	
 	static Skin load(String name) {
+		synchronized (App.skinLoaders) {
+			for (SkinLoader loader : App.skinLoaders) {
+				Skin skin = loader.loadByName(name);
+				if (skin != null) {
+					return skin;
+				}
+			}
+		}
 		return load(getSkinPath(name));
 	}
 	
@@ -41,12 +51,36 @@ interface Skin {
 		List<String> list = new ArrayList<>();
 		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(getSkinsPath())) {
 			for (Path skinPath : directoryStream) {
-				list.add(skinPath.getFileName().toString());
+				synchronized (App.skinLoaders) {
+					for (SkinLoader loader : App.skinLoaders) {
+						if (loader.matchByPath(skinPath)) {
+							list.add(skinPath.getFileName().toString());
+							break;
+						}
+					}
+				}
+			}
+			synchronized (App.skinLoaders) {
+				for (SkinLoader loader : App.skinLoaders) {
+					list.addAll(loader.getNames());
+				}
 			}
 		} catch (IOException e) {
 			Main.log(e);
 		}
 		return list;
+	}
+	
+	static void registerSkinLoader(SkinLoader loader) {
+		synchronized (App.skinLoaders) {
+			App.skinLoaders.add(loader);
+		}
+	}
+	
+	static void unregisterSkinLoader(SkinLoader loader) {
+		synchronized (App.skinLoaders) {
+			App.skinLoaders.remove(loader);
+		}
 	}
 	
 }

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ImageSetSkin implements Skin {
+class ImageSetSkin implements Skin {
 	
 	private final Path path;
 	private final Map<String, List<Image>> images = new HashMap<>();
@@ -71,6 +71,20 @@ public class ImageSetSkin implements Skin {
 	@Override
 	public String toString() {
 		return path.getFileName().toString() + " [IMAGE SET]";
+	}
+	
+	static class Loader implements SkinLoader {
+		
+		@Override
+		public boolean matchByPath(Path path) {
+			return Files.isDirectory(path);
+		}
+		
+		@Override
+		public Skin loadByPath(Path path) {
+			return new ImageSetSkin(path);
+		}
+		
 	}
 	
 }

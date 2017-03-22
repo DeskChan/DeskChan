@@ -34,6 +34,9 @@ public class App extends Application {
 	static final URL ICON_URL = App.class.getResource("icon.png");
 	
 	private static App instance = null;
+	static final List<SkinLoader> skinLoaders = Arrays.asList(
+			new SingleImageSkin.Loader(), new ImageSetSkin.Loader()
+	);
 	private SystemTray systemTray = null;
 	private SortedMap<String, List<PluginActionInfo>> pluginsActions = new TreeMap<>();
 	private Character character = new Character(Skin.load(Main.getProperty("skin.name", "illia")));

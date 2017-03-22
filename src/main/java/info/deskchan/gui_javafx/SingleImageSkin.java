@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class SingleImageSkin implements Skin {
+class SingleImageSkin implements Skin {
 	
 	private final Path path;
 	private final Image image;
@@ -36,6 +36,20 @@ public class SingleImageSkin implements Skin {
 	@Override
 	public String toString() {
 		return path.getFileName().toString() + " [SINGLE IMAGE]";
+	}
+	
+	static class Loader implements SkinLoader {
+		
+		@Override
+		public boolean matchByPath(Path path) {
+			return Files.isReadable(path) && path.getFileName().toString().endsWith(".png");
+		}
+		
+		@Override
+		public Skin loadByPath(Path path) {
+			return new SingleImageSkin(path);
+		}
+		
 	}
 	
 }
