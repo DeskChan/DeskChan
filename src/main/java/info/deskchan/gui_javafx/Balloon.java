@@ -2,12 +2,13 @@ package info.deskchan.gui_javafx;
 
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Font;
 
 class Balloon extends StackPane {
 	
@@ -16,6 +17,8 @@ class Balloon extends StackPane {
 			"238.667342,-25.3559002 336.593752,-69.3438 69.80799,78.7043 181.84985,84.1354 378.90625,5.3126 " +
 			"-149.2328,-8.9191 -166.3627,-41.22 -200.6562,-124.031305 80.6876,-78.49713 128.5,-176.04496 " +
 			"128.5,-281.75 0,-259.46468 -288.0205,-469.78125 -643.343802,-469.78125 z";
+	
+	private static Font defaultFont = null;
 	
 	private final Character character;
 	private String layer;
@@ -32,9 +35,12 @@ class Balloon extends StackPane {
 		bubbleShape.setScaleY(0);
 		Label label = new Label(text);
 		label.setWrapText(true);
+		if (defaultFont != null) {
+			label.setFont(defaultFont);
+		}
 		StackPane labelPane = new StackPane();
 		labelPane.getChildren().add(label);
-		StackPane.setMargin(label, new Insets(20));
+		StackPane.setMargin(label, new Insets(40, 20, 40, 20));
 		getChildren().add(new Group(bubbleShape));
 		getChildren().add(labelPane);
 		if (character != null) {
@@ -76,6 +82,14 @@ class Balloon extends StackPane {
 			bubbleShape.setScaleX(getWidth() / bubbleShape.getBoundsInLocal().getWidth());
 			bubbleShape.setScaleY(getHeight() / bubbleShape.getBoundsInLocal().getHeight());
 		}
+	}
+	
+	static Font getDefaultFont() {
+		return defaultFont;
+	}
+	
+	static void setDefaultFont(Font font) {
+		defaultFont = font;
 	}
 	
 }

@@ -13,14 +13,13 @@ import javafx.scene.layout.HBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.scene.text.Font;
+import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class OptionsDialog extends Dialog<Void> {
 	
@@ -59,6 +58,23 @@ class OptionsDialog extends Dialog<Void> {
 		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
 		skinManagerButton.setOnAction(event -> openSkinManager());
 		gridPane.add(skinManagerButton, 1, 0);
+		gridPane.add(new Label(Main.getString("balloon_font")), 0, 1);
+		Button balloonFontButton = new Button(
+				Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize()
+		);
+		balloonFontButton.setOnAction(event -> {
+			FontSelectorDialog dialog = new FontSelectorDialog(Balloon.getDefaultFont());
+			dialog.initOwner(getDialogPane().getScene().getWindow());
+			Optional<Font> selectedFontOpt = dialog.showAndWait();
+			if (selectedFontOpt.isPresent()) {
+				Font selectedFont = selectedFontOpt.get();
+				Balloon.setDefaultFont(selectedFont);
+				Main.setProperty("balloon.font.family", selectedFont.getFamily());
+				Main.setProperty("balloon.font.size", String.valueOf(selectedFont.getSize()));
+				balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
+			}
+		});
+		gridPane.add(balloonFontButton, 1, 1);
 		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();

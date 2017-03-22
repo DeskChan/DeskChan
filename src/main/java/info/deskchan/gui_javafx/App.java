@@ -193,6 +193,10 @@ public class App extends Application {
 		} catch (IOException e) {
 			Main.log(e);
 		}
+		Balloon.setDefaultFont(Font.font(
+				Main.getProperty("balloon.font.family", "PT Sans"),
+				Double.parseDouble(Main.getProperty("balloon.font.size", "16.0"))
+		));
 	}
 	
 	private void initStylesheetOverride() {
