@@ -14,6 +14,12 @@ import java.util.PriorityQueue;
 
 class Character extends Pane {
 	
+	enum LayerMode {
+		ALWAYS_NORMAL,
+		TOP_IF_MESSAGE,
+		ALWAYS_TOP
+	}
+	
 	private static final int SNAP_DISTANCE = 10;
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
 	
@@ -25,6 +31,8 @@ class Character extends Pane {
 	private String idleImageName = "normal";
 	private PriorityQueue<MessageInfo> messageQueue = new PriorityQueue<>();
 	private Balloon balloon = null;
+	private String layerName = "top";
+	private LayerMode layerMode = LayerMode.ALWAYS_TOP;
 	
 	Character(Skin skin) {
 		getChildren().add(imageView);
@@ -144,11 +152,38 @@ class Character extends Pane {
 		messageInfo = messageQueue.peek();
 		if (messageInfo == null) {
 			setImageName(idleImageName);
-			return;
+		} else {
+			setImageName(messageInfo.characterImage);
+			balloon = new Balloon(this, messageInfo.text);
+			balloon.setTimeout(messageInfo.timeout);
 		}
-		setImageName(messageInfo.characterImage);
-		balloon = new Balloon(this, messageInfo.text);
-		balloon.show("top");
+		setLayerMode(layerMode);
+	}
+	
+	LayerMode getLayerMode() {
+		return layerMode;
+	}
+	
+	void setLayerMode(LayerMode mode) {
+		layerMode = mode;
+		String newLayerName;
+		if (mode.equals(LayerMode.ALWAYS_TOP)) {
+			newLayerName = "top";
+		} else if (mode.equals(LayerMode.TOP_IF_MESSAGE)) {
+			newLayerName = (balloon != null) ? "top" : "normal";
+		} else {
+			newLayerName = "normal";
+		}
+		if (!layerName.equals(newLayerName)) {
+			OverlayStage.getInstance(layerName).getRoot().getChildren().remove(this);
+			layerName = newLayerName;
+		}
+		if (getParent() == null) {
+			OverlayStage.getInstance(layerName).getRoot().getChildren().add(this);
+		}
+		if (balloon != null) {
+			balloon.show(layerName);
+		}
 	}
 	
 	private static class MessageInfo implements Comparable<MessageInfo> {
@@ -156,11 +191,14 @@ class Character extends Pane {
 		private final String text;
 		private final String characterImage;
 		private final int priority;
+		private final int timeout;
 		
 		MessageInfo(Map<String, Object> data) {
 			text = (String) data.getOrDefault("text", null);
 			characterImage = (String) data.getOrDefault("characterImage", null);
 			priority = (Integer) data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
+			timeout = (Integer) data.getOrDefault("timeout",
+					Integer.parseInt(Main.getProperty("balloon.default_timeout", "15000")));
 		}
 		
 		@Override

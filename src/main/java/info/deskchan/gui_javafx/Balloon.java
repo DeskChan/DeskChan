@@ -1,14 +1,16 @@
 package info.deskchan.gui_javafx;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
+import javafx.util.Duration;
 
 class Balloon extends StackPane {
 	
@@ -23,6 +25,7 @@ class Balloon extends StackPane {
 	private final Character character;
 	private String layer;
 	private SVGPath bubbleShape = new SVGPath();
+	private Timeline timeoutTimeline = null;
 	
 	Balloon(Character character, String text) {
 		this.character = character;
@@ -67,12 +70,37 @@ class Balloon extends StackPane {
 	}
 	
 	void show(String layer) {
+		if (this.layer != null) {
+			hide();
+		}
 		this.layer = layer;
 		OverlayStage.getInstance(layer).getRoot().getChildren().add(this);
 	}
 	
+	void hide() {
+		if (layer != null) {
+			OverlayStage.getInstance(layer).getRoot().getChildren().remove(this);
+			layer = null;
+		}
+	}
+	
 	void close() {
-		OverlayStage.getInstance(layer).getRoot().getChildren().remove(this);
+		setTimeout(0);
+		hide();
+	}
+	
+	void setTimeout(int timeout) {
+		if (timeoutTimeline != null) {
+			timeoutTimeline.stop();
+			timeoutTimeline = null;
+		}
+		if (timeout > 0) {
+			timeoutTimeline = new Timeline(new KeyFrame(
+					Duration.millis(timeout),
+					event -> character.say(null)
+			));
+			timeoutTimeline.play();
+		}
 	}
 	
 	@Override

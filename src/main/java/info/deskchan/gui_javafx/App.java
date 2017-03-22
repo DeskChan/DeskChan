@@ -53,7 +53,7 @@ public class App extends Application {
 		OverlayStage topStage = new OverlayStage("top");
 		topStage.setAlwaysOnTop(true);
 		topStage.show();
-		OverlayStage.getInstance("top").getRoot().getChildren().add(character);
+		character.setLayerMode(Character.LayerMode.valueOf(Main.getProperty("character.layer_mode", "ALWAYS_TOP")));
 		initMessageListeners();
 		Main.getInstance().getAppInitSem().release();
 	}

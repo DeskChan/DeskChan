@@ -4,6 +4,7 @@ import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -75,6 +76,24 @@ class OptionsDialog extends Dialog<Void> {
 			}
 		});
 		gridPane.add(balloonFontButton, 1, 1);
+		gridPane.add(new Label(Main.getString("character.layer_mode")), 0, 2);
+		ComboBox<Character.LayerMode> characterLayerModeComboBox = new ComboBox<>();
+		characterLayerModeComboBox.setItems(FXCollections.observableList(Arrays.asList(Character.LayerMode.values())));
+		characterLayerModeComboBox.getSelectionModel().select(App.getInstance().getCharacter().getLayerMode());
+		characterLayerModeComboBox.getSelectionModel().selectedItemProperty().addListener(
+				(property, oldValue, value) -> {
+					App.getInstance().getCharacter().setLayerMode(value);
+					Main.setProperty("character.layer_mode", value.toString());
+				}
+		);
+		gridPane.add(characterLayerModeComboBox, 1, 2);
+		gridPane.add(new Label(Main.getString("balloon_default_timeout")), 0, 3);
+		Spinner<Integer> balloonDefaultTimeoutSpinner = new Spinner<>(0, 120000,
+				Integer.parseInt(Main.getProperty("balloon.default_timeout", "15000")), 1000);
+		balloonDefaultTimeoutSpinner.valueProperty().addListener((property, oldValue, value) -> {
+			Main.setProperty("balloon.default_timeout", value.toString());
+		});
+		gridPane.add(balloonDefaultTimeoutSpinner, 1, 3);
 		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
