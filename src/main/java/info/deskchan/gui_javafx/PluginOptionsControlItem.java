@@ -139,7 +139,7 @@ interface PluginOptionsControlItem {
 		
 		@Override
 		public void setValue(Object value) {
-			comboBox.getSelectionModel().select((Integer) value);
+			comboBox.getSelectionModel().select((int) value);
 		}
 		
 		@Override
