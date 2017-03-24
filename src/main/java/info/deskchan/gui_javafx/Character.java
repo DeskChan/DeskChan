@@ -14,6 +14,8 @@ import java.util.PriorityQueue;
 
 class Character extends Pane {
 	
+	private static final String DEFAULT_SKIN_NAME = "illia";
+	
 	enum LayerMode {
 		ALWAYS_NORMAL,
 		TOP_IF_MESSAGE,
@@ -46,6 +48,9 @@ class Character extends Pane {
 	}
 	
 	void setSkin(Skin skin) {
+		if (skin == null) {
+			skin = Skin.load(DEFAULT_SKIN_NAME);
+		}
 		this.skin = skin;
 		setImageName(imageName);
 	}

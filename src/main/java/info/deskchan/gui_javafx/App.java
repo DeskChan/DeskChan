@@ -39,7 +39,7 @@ public class App extends Application {
 	);
 	private SystemTray systemTray = null;
 	private SortedMap<String, List<PluginActionInfo>> pluginsActions = new TreeMap<>();
-	private Character character = new Character(Skin.load(Main.getProperty("skin.name", "illia")));
+	private Character character = new Character(Skin.load(Main.getProperty("skin.name", null)));
 	
 	@Override
 	public void start(Stage primaryStage) {

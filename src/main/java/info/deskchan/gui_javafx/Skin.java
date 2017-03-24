@@ -36,6 +36,9 @@ public interface Skin {
 	}
 	
 	static Skin load(String name) {
+		if (name == null) {
+			return null;
+		}
 		synchronized (App.skinLoaders) {
 			for (SkinLoader loader : App.skinLoaders) {
 				Skin skin = loader.loadByName(name);
