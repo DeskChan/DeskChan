@@ -21,6 +21,13 @@ public class CorePlugin implements Plugin, MessageListener {
 			registerAlternative(m.get("srcTag").toString(), m.get("dstTag").toString(),
 					sender, (Integer) m.get("priority"));
 		});
+		pluginProxy.addMessageListener("core:register-alternatives", (sender, tag, data) -> {
+			List<Map> alternativeList = (List<Map>) data;
+			for (Map m : alternativeList) {
+				registerAlternative(m.get("srcTag").toString(), m.get("dstTag").toString(),
+						sender, (Integer) m.get("priority"));
+			}
+		});
 		pluginProxy.addMessageListener("core:unregister-alternative", (sender, tag, data) -> {
 			Map m = (Map) data;
 			unregisterAlternative(m.get("srcTag").toString(), m.get("dstTag").toString(), sender);

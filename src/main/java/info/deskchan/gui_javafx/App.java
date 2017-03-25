@@ -150,21 +150,23 @@ public class App extends Application {
 				OptionsDialog.unregisterPluginTabs(pluginId);
 			});
 		});
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
-			put("srcTag", "DeskChan:register-simple-action");
-			put("dstTag", "gui:register-simple-action");
-			put("priority", 100);
-		}});
-        pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
-            put("srcTag", "DeskChan:register-menu-actions");
-            put("dstTag", "gui:register-menu-actions");
-            put("priority", 100);
-        }});
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
-			put("srcTag", "DeskChan:say");
-			put("dstTag", "gui:say");
-			put("priority", 100);
-		}});
+		pluginProxy.sendMessage("core:register-alternatives", Arrays.asList(
+            new HashMap<String, Object>() {{
+                put("srcTag", "DeskChan:register-simple-action");
+                put("dstTag", "gui:register-simple-action");
+                put("priority", 100);
+            }},
+            new HashMap<String, Object>() {{
+                put("srcTag", "DeskChan:register-menu-actions");
+                put("dstTag", "gui:register-menu-actions");
+                put("priority", 100);
+            }},
+            new HashMap<String, Object>() {{
+                put("srcTag", "DeskChan:say");
+                put("dstTag", "gui:say");
+                put("priority", 100);
+            }}
+        ));
 	}
 	
 	private void rebuildMenu() {
