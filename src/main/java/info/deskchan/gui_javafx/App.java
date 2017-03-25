@@ -98,6 +98,24 @@ public class App extends Application {
 				rebuildMenu();
 			});
 		});
+		pluginProxy.addMessageListener("gui:register-menu-actions", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				List< Map < String, Object > > actionList = (List<Map<String, Object>>) data;
+
+				List<PluginActionInfo> actions = pluginsActions.getOrDefault(sender, null);
+				if (actions == null) {
+					actions = new ArrayList<>();
+					pluginsActions.put(sender, actions);
+				}
+
+				for (Map<String, Object> m : actionList) {
+					PluginActionInfo pluginActionInfo = new PluginActionInfo((String) m.get("name"),
+							(String) m.get("msgTag"), m.get("msgData"));
+					actions.add(pluginActionInfo);
+				}
+				rebuildMenu();
+			});
+		});
 		pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				character.say((Map<String, Object>) data);
@@ -137,6 +155,11 @@ public class App extends Application {
 			put("dstTag", "gui:register-simple-action");
 			put("priority", 100);
 		}});
+        pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
+            put("srcTag", "DeskChan:register-menu-actions");
+            put("dstTag", "gui:register-menu-actions");
+            put("priority", 100);
+        }});
 		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
 			put("srcTag", "DeskChan:say");
 			put("dstTag", "gui:say");
