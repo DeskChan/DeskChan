@@ -16,6 +16,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import javax.swing.SwingUtilities;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -78,7 +79,6 @@ public class App extends Application {
 		}
 		systemTray.setTooltip(NAME);
 		systemTray.setImage(ICON_URL);
-		systemTray.setStatus(NAME);
 		rebuildMenu();
 	}
 	
@@ -170,30 +170,33 @@ public class App extends Application {
 	}
 	
 	private void rebuildMenu() {
-		Menu mainMenu = systemTray.getMenu();
-		mainMenu.clear();
-		mainMenu.add(new MenuItem(Main.getString("options"), event -> {
-			Platform.runLater(this::showOptionsDialog);
-		}));
-		mainMenu.add(new Separator());
-		if (pluginsActions.size() > 0) {
-			for (Map.Entry<String, List<PluginActionInfo>> entry : pluginsActions.entrySet()) {
-				String pluginId = entry.getKey();
-				List<PluginActionInfo> actions = entry.getValue();
-				if (actions.size() <= 0) continue;
-				if (actions.size() == 1) {
-					mainMenu.add(actions.get(0).createMenuItem());
-				} else {
-					Menu pluginMenu = new Menu(pluginId);
-					mainMenu.add(pluginMenu);
-					for (PluginActionInfo action : actions) {
-						pluginMenu.add(action.createMenuItem());
+		SwingUtilities.invokeLater(() -> {
+			Menu mainMenu = systemTray.getMenu();
+			mainMenu.clear();
+			systemTray.setStatus(NAME);
+			mainMenu.add(new MenuItem(Main.getString("options"), event -> {
+				Platform.runLater(this::showOptionsDialog);
+			}));
+			mainMenu.add(new Separator());
+			if (pluginsActions.size() > 0) {
+				for (Map.Entry<String, List<PluginActionInfo>> entry : pluginsActions.entrySet()) {
+					String pluginId = entry.getKey();
+					List<PluginActionInfo> actions = entry.getValue();
+					if (actions.size() <= 0) continue;
+					if (actions.size() == 1) {
+						mainMenu.add(actions.get(0).createMenuItem());
+					} else {
+						Menu pluginMenu = new Menu(pluginId);
+						mainMenu.add(pluginMenu);
+						for (PluginActionInfo action : actions) {
+							pluginMenu.add(action.createMenuItem());
+						}
 					}
 				}
+				mainMenu.add(new Separator());
 			}
-			mainMenu.add(new Separator());
-		}
-		mainMenu.add(new MenuItem(Main.getString("quit"), event -> Main.getInstance().quit()));
+			mainMenu.add(new MenuItem(Main.getString("quit"), event -> Main.getInstance().quit()));
+		});
 	}
 	
 	private void showOptionsDialog() {
