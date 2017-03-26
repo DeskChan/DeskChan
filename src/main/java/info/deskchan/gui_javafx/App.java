@@ -98,7 +98,7 @@ public class App extends Application {
 				rebuildMenu();
 			});
 		});
-		pluginProxy.addMessageListener("gui:register-menu-actions", (sender, tag, data) -> {
+		pluginProxy.addMessageListener("gui:register-simple-actions", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				List< Map < String, Object > > actionList = (List<Map<String, Object>>) data;
 
@@ -157,8 +157,8 @@ public class App extends Application {
                 put("priority", 100);
             }},
             new HashMap<String, Object>() {{
-                put("srcTag", "DeskChan:register-menu-actions");
-                put("dstTag", "gui:register-menu-actions");
+                put("srcTag", "DeskChan:register-simple-actions");
+                put("dstTag", "gui:register-simple-actions");
                 put("priority", 100);
             }},
             new HashMap<String, Object>() {{
