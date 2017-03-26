@@ -154,6 +154,7 @@ public class App extends Application {
 			}
 		}
 		mainMenu.clear();
+		systemTray.setStatus(NAME);
 		mainMenu.add(new MenuItem(Main.getString("options"), event -> {
 			Platform.runLater(this::showOptionsDialog);
 		}));
