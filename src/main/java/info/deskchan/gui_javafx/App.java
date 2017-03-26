@@ -16,6 +16,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -146,6 +147,12 @@ public class App extends Application {
 	
 	private void rebuildMenu() {
 		Menu mainMenu = systemTray.getMenu();
+		if (mainMenu instanceof dorkbox.systemTray.swingUI.SwingUI) {
+			if (!SwingUtilities.isEventDispatchThread()) {
+				SwingUtilities.invokeLater(this::rebuildMenu);
+				return;
+			}
+		}
 		mainMenu.clear();
 		mainMenu.add(new MenuItem(Main.getString("options"), event -> {
 			Platform.runLater(this::showOptionsDialog);
