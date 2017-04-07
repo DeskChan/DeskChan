@@ -72,6 +72,7 @@ public class CorePlugin implements Plugin, MessageListener {
 					Map.Entry<String, PipeInfo> entry = mapIterator.next();
 					PipeInfo pipeInfo = entry.getValue();
 					if (pipeInfo.plugin.equals(plugin)) {
+						pluginProxy.removeMessageListener(entry.getKey(), pipeInfo.messageListener);
 						pluginProxy.log("Destroyed pipe " + entry.getKey());
 						mapIterator.remove();
 						continue;
@@ -90,8 +91,10 @@ public class CorePlugin implements Plugin, MessageListener {
 		pluginProxy.addMessageListener("core:create-pipe", (sender, tag, data) -> {
 			String name = data.toString();
 			if (!pipes.containsKey(name)) {
-				pipes.put(name, new PipeInfo(sender));
+				PipeInfo pipeInfo = new PipeInfo(sender);
+				pipes.put(name, pipeInfo);
 				pluginProxy.log("Created pipe " + name);
+				pluginProxy.addMessageListener(name, pipeInfo.messageListener);
 			}
 		});
 		pluginProxy.addMessageListener("core:destroy-pipe", (sender, tag, data) -> {
@@ -100,6 +103,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			if (pipeInfo != null) {
 				if (pipeInfo.plugin.equals(sender)) {
 					pipes.remove(name);
+					pluginProxy.removeMessageListener(name, pipeInfo.messageListener);
 					pluginProxy.log("Destroyed pipe " + name);
 				}
 			}
@@ -237,11 +241,28 @@ public class CorePlugin implements Plugin, MessageListener {
 		
 	}
 	
-	private static class PipeInfo {
+	private class PipeInfo {
 		String plugin;
 		final List<PipeStageInfo> stages = new ArrayList<>();
 		MessageListener messageListener = (sender, tag, data) -> {
-			
+			if (!(data instanceof Map)) {
+				Map<String, Object> m = new HashMap<String, Object>();
+				m.put("data", data);
+				data = m;
+			}
+			Map<String, Object> m = (Map<String, Object>) data;
+			Integer seq = (Integer) m.getOrDefault("seq", 0);
+			synchronized (stages) {
+				if (seq >= stages.size()) {
+					String replyToTag = (String) m.getOrDefault("pipeReplyTo", null);
+					if (replyToTag != null) {
+						pluginProxy.sendMessage(replyToTag, m);
+					}
+				} else {
+					m.put("seq", seq + 1);
+					pluginProxy.sendMessage(stages.get(seq).tag, m);
+				}
+			}
 		};
 		
 		PipeInfo(String plugin) {
@@ -249,19 +270,27 @@ public class CorePlugin implements Plugin, MessageListener {
 		}
 		
 		void append(String plugin, String tag) {
-			stages.add(new PipeStageInfo(plugin, tag));
+			synchronized (stages) {
+				stages.add(new PipeStageInfo(plugin, tag));
+			}
 		}
 		
 		void prepend(String plugin, String tag) {
-			stages.add(0, new PipeStageInfo(plugin, tag));
+			synchronized (stages) {
+				stages.add(0, new PipeStageInfo(plugin, tag));
+			}
 		}
 		
 		void remove(String plugin, String tag) {
-			stages.removeIf(stageInfo -> stageInfo.plugin.equals(plugin) && stageInfo.tag.equals(tag));
+			synchronized (stages) {
+				stages.removeIf(stageInfo -> stageInfo.plugin.equals(plugin) && stageInfo.tag.equals(tag));
+			}
 		}
 		
 		void remove(String plugin) {
-			stages.removeIf(stageInfo -> stageInfo.plugin.equals(plugin));
+			synchronized (stages) {
+				stages.removeIf(stageInfo -> stageInfo.plugin.equals(plugin));
+			}
 		}
 	}
 	
