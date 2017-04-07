@@ -7,7 +7,7 @@ public class CorePlugin implements Plugin, MessageListener {
 	
 	private PluginProxy pluginProxy = null;
 	private final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
-	
+	private final Map<String, PipeInfo> pipes = new HashMap<>();
 	
 	@Override
 	public boolean initialize(PluginProxy pluginProxy) {
@@ -45,23 +45,38 @@ public class CorePlugin implements Plugin, MessageListener {
 		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			String plugin = data.toString();
-			Iterator<Map.Entry<String, List<AlternativeInfo>>> mapIterator = alternatives.entrySet().iterator();
-			while (mapIterator.hasNext()) {
-				Map.Entry<String, List<AlternativeInfo>> entry = mapIterator.next();
-				List<AlternativeInfo> l = entry.getValue();
-				Iterator<AlternativeInfo> iterator = l.iterator();
-				while (iterator.hasNext()) {
-					AlternativeInfo info = iterator.next();
-					if (info.plugin.equals(plugin)) {
-						iterator.remove();
-						pluginProxy.log("Unregistered alternative " + info.tag + " for tag " + entry.getKey());
+			synchronized (this) {
+				Iterator<Map.Entry<String, List<AlternativeInfo>>> mapIterator = alternatives.entrySet().iterator();
+				while (mapIterator.hasNext()) {
+					Map.Entry<String, List<AlternativeInfo>> entry = mapIterator.next();
+					List<AlternativeInfo> l = entry.getValue();
+					Iterator<AlternativeInfo> iterator = l.iterator();
+					while (iterator.hasNext()) {
+						AlternativeInfo info = iterator.next();
+						if (info.plugin.equals(plugin)) {
+							iterator.remove();
+							pluginProxy.log("Unregistered alternative " + info.tag + " for tag " + entry.getKey());
+						}
+					}
+					if (l.isEmpty()) {
+						String srcTag = entry.getKey();
+						pluginProxy.removeMessageListener(srcTag, this);
+						pluginProxy.log("No more alternatives for " + srcTag);
+						mapIterator.remove();
 					}
 				}
-				if (l.isEmpty()) {
-					String srcTag = entry.getKey();
-					pluginProxy.removeMessageListener(srcTag, this);
-					pluginProxy.log("No more alternatives for " + srcTag);
-					mapIterator.remove();
+			}
+			synchronized (this) {
+				Iterator<Map.Entry<String, PipeInfo>> mapIterator = pipes.entrySet().iterator();
+				while (mapIterator.hasNext()) {
+					Map.Entry<String, PipeInfo> entry = mapIterator.next();
+					PipeInfo pipeInfo = entry.getValue();
+					if (pipeInfo.plugin.equals(plugin)) {
+						pluginProxy.log("Destroyed pipe " + entry.getKey());
+						mapIterator.remove();
+						continue;
+					}
+					pipeInfo.remove(plugin);
 				}
 			}
 		});
@@ -71,6 +86,56 @@ public class CorePlugin implements Plugin, MessageListener {
 			pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
 				put("seq", seq); put("path", pluginDataDirPath.toString());
 			}});
+		});
+		pluginProxy.addMessageListener("core:create-pipe", (sender, tag, data) -> {
+			String name = data.toString();
+			if (!pipes.containsKey(name)) {
+				pipes.put(name, new PipeInfo(sender));
+				pluginProxy.log("Created pipe " + name);
+			}
+		});
+		pluginProxy.addMessageListener("core:destroy-pipe", (sender, tag, data) -> {
+			String name = data.toString();
+			PipeInfo pipeInfo = pipes.getOrDefault(name, null);
+			if (pipeInfo != null) {
+				if (pipeInfo.plugin.equals(sender)) {
+					pipes.remove(name);
+					pluginProxy.log("Destroyed pipe " + name);
+				}
+			}
+		});
+		pluginProxy.addMessageListener("core:append-pipe-stage", (sender, tag, data) -> {
+			Map<String, Object> m = (Map<String, Object>) data;
+			String pipeName = (String) m.get("pipe");
+			String stageTag = (String) m.get("tag");
+			synchronized (this) {
+				PipeInfo pipeInfo = pipes.getOrDefault(pipeName, null);
+				if (pipeInfo != null) {
+					pipeInfo.append(sender, stageTag);
+				}
+			}
+		});
+		pluginProxy.addMessageListener("core:prepend-pipe-stage", (sender, tag, data) -> {
+			Map<String, Object> m = (Map<String, Object>) data;
+			String pipeName = (String) m.get("pipe");
+			String stageTag = (String) m.get("tag");
+			synchronized (this) {
+				PipeInfo pipeInfo = pipes.getOrDefault(pipeName, null);
+				if (pipeInfo != null) {
+					pipeInfo.prepend(sender, stageTag);
+				}
+			}
+		});
+		pluginProxy.addMessageListener("core:remove-pipe-stage", (sender, tag, data) -> {
+			Map<String, Object> m = (Map<String, Object>) data;
+			String pipeName = (String) m.get("pipe");
+			String stageTag = (String) m.get("tag");
+			synchronized (this) {
+				PipeInfo pipeInfo = pipes.getOrDefault(pipeName, null);
+				if (pipeInfo != null) {
+					pipeInfo.remove(sender, stageTag);
+				}
+			}
 		});
 		return true;
 	}
@@ -170,6 +235,44 @@ public class CorePlugin implements Plugin, MessageListener {
 			this.priority = priority;
 		}
 		
+	}
+	
+	private static class PipeInfo {
+		String plugin;
+		final List<PipeStageInfo> stages = new ArrayList<>();
+		MessageListener messageListener = (sender, tag, data) -> {
+			
+		};
+		
+		PipeInfo(String plugin) {
+			this.plugin = plugin;
+		}
+		
+		void append(String plugin, String tag) {
+			stages.add(new PipeStageInfo(plugin, tag));
+		}
+		
+		void prepend(String plugin, String tag) {
+			stages.add(0, new PipeStageInfo(plugin, tag));
+		}
+		
+		void remove(String plugin, String tag) {
+			stages.removeIf(stageInfo -> stageInfo.plugin.equals(plugin) && stageInfo.tag.equals(tag));
+		}
+		
+		void remove(String plugin) {
+			stages.removeIf(stageInfo -> stageInfo.plugin.equals(plugin));
+		}
+	}
+	
+	private static class PipeStageInfo {
+		String plugin;
+		String tag;
+		
+		PipeStageInfo(String plugin, String tag) {
+			this.plugin = plugin;
+			this.tag = tag;
+		}
 	}
 	
 }
