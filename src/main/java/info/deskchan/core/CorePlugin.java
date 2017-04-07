@@ -251,16 +251,21 @@ public class CorePlugin implements Plugin, MessageListener {
 				data = m;
 			}
 			Map<String, Object> m = (Map<String, Object>) data;
-			Integer seq = (Integer) m.getOrDefault("seq", 0);
+			Object seq = m.getOrDefault("seq", null);
+			PipeState state = null;
+			if (seq instanceof PipeState) {
+				state = (PipeState) seq;
+			} else {
+				state = new PipeState(sender, seq);
+				m.put("seq", state);
+			}
 			synchronized (stages) {
-				if (seq >= stages.size()) {
-					String replyToTag = (String) m.getOrDefault("pipeReplyTo", null);
-					if (replyToTag != null) {
-						pluginProxy.sendMessage(replyToTag, m);
-					}
+				if (state.offset >= stages.size()) {
+					m.put("seq", state.seq);
+					pluginProxy.sendMessage(state.replyTo, m);
 				} else {
-					m.put("seq", seq + 1);
-					pluginProxy.sendMessage(stages.get(seq).tag, m);
+					state.offset++;
+					pluginProxy.sendMessage(stages.get(state.offset).tag, m);
 				}
 			}
 		};
@@ -301,6 +306,17 @@ public class CorePlugin implements Plugin, MessageListener {
 		PipeStageInfo(String plugin, String tag) {
 			this.plugin = plugin;
 			this.tag = tag;
+		}
+	}
+	
+	private static class PipeState {
+		int offset = 0;
+		final String replyTo;
+		final Object seq;
+		
+		PipeState(String replyTo, Object seq) {
+			this.replyTo = replyTo;
+			this.seq = seq;
 		}
 	}
 	
