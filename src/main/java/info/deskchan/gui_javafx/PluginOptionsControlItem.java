@@ -79,21 +79,29 @@ interface PluginOptionsControlItem {
 		
 	}
 	
-	class TextFieldItem extends TextField implements PluginOptionsControlItem {
+	class TextFieldItem implements PluginOptionsControlItem {
+
+		TextField textField;
+
+		@Override
+		public void init(Map<String, Object> options) {
+			Boolean isPasswordField = (Boolean) options.getOrDefault("hideText", false);
+			textField = (isPasswordField) ? new PasswordField() : new TextField();
+		}
 		
 		@Override
 		public void setValue(Object value) {
-			setText(value.toString());
+			textField.setText(value.toString());
 		}
 		
 		@Override
 		public Object getValue() {
-			return getText();
+			return textField.getText();
 		}
 		
 		@Override
 		public Node getNode() {
-			return this;
+			return textField;
 		}
 		
 	}
