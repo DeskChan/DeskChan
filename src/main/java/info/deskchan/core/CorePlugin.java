@@ -91,7 +91,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		pluginProxy.addMessageListener("core:create-pipe", (sender, tag, data) -> {
 			String name = data.toString();
 			if (!pipes.containsKey(name)) {
-				PipeInfo pipeInfo = new PipeInfo(sender);
+				PipeInfo pipeInfo = new PipeInfo(name, sender);
 				pipes.put(name, pipeInfo);
 				pluginProxy.log("Created pipe " + name);
 				pluginProxy.addMessageListener(name, pipeInfo.messageListener);
@@ -242,7 +242,8 @@ public class CorePlugin implements Plugin, MessageListener {
 	}
 	
 	private class PipeInfo {
-		String plugin;
+		String name;
+		final String plugin;
 		final List<PipeStageInfo> stages = new ArrayList<>();
 		MessageListener messageListener = (sender, tag, data) -> {
 			if (!(data instanceof Map)) {
@@ -262,15 +263,16 @@ public class CorePlugin implements Plugin, MessageListener {
 			synchronized (stages) {
 				if (state.offset >= stages.size()) {
 					m.put("seq", state.seq);
-					pluginProxy.sendMessage(state.replyTo, m);
+					PluginManager.getInstance().sendMessage(name, state.replyTo, m);
 				} else {
 					state.offset++;
-					pluginProxy.sendMessage(stages.get(state.offset).tag, m);
+					PluginManager.getInstance().sendMessage(name, stages.get(state.offset).tag, m);
 				}
 			}
 		};
 		
-		PipeInfo(String plugin) {
+		PipeInfo(String name, String plugin) {
+			this.name = name;
 			this.plugin = plugin;
 		}
 		
@@ -300,8 +302,8 @@ public class CorePlugin implements Plugin, MessageListener {
 	}
 	
 	private static class PipeStageInfo {
-		String plugin;
-		String tag;
+		final String plugin;
+		final String tag;
 		
 		PipeStageInfo(String plugin, String tag) {
 			this.plugin = plugin;
