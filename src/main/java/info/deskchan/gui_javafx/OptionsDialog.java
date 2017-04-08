@@ -323,6 +323,15 @@ class OptionsDialog extends Dialog<Void> {
 					Map<String, Object> data = new HashMap<>();
 					for (Map.Entry<String, PluginOptionsControlItem> entry : namedControls.entrySet()) {
 						data.put(entry.getKey(), entry.getValue().getValue());
+						for (Map<String, Object> control : controls) {
+							String id = (String) control.getOrDefault("id", null);
+							if (id != null) {
+								if (id.equals(entry.getKey())) {
+									control.put("value", entry.getValue().getValue());
+									break;
+								}
+							}
+						}
 					}
 					Main.getInstance().getPluginProxy().sendMessage(msgTag, data);
 				});
