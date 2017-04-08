@@ -247,13 +247,13 @@ public class CorePlugin implements Plugin, MessageListener {
 		final List<PipeStageInfo> stages = new ArrayList<>();
 		MessageListener messageListener = (sender, tag, data) -> {
 			if (!(data instanceof Map)) {
-				Map<String, Object> m = new HashMap<String, Object>();
+				Map<String, Object> m = new HashMap<>();
 				m.put("data", data);
 				data = m;
 			}
 			Map<String, Object> m = (Map<String, Object>) data;
 			Object seq = m.getOrDefault("seq", null);
-			PipeState state = null;
+			PipeState state;
 			if (seq instanceof PipeState) {
 				state = (PipeState) seq;
 			} else {
