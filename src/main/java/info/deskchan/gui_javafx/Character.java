@@ -208,7 +208,7 @@ class Character extends Pane {
 		
 		@Override
 		public int compareTo(MessageInfo messageInfo) {
-			return priority - messageInfo.priority;
+			return -(priority - messageInfo.priority);
 		}
 		
 	}
