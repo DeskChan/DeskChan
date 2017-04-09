@@ -7,6 +7,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,9 @@ interface PluginOptionsControlItem {
 				break;
 			case "FileField":
 				item = new FileFieldItem();
+				break;
+			case "DatePicker":
+				item = new DatePickerItem();
 				break;
 		}
 		if (item == null) return null;
@@ -259,6 +265,44 @@ interface PluginOptionsControlItem {
 			return this;
 		}
 		
+	}
+
+	class DatePickerItem implements PluginOptionsControlItem {
+
+		DatePicker picker = new DatePicker();
+		DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+
+        @Override
+        public void init(Map<String, Object> options) {
+            String format = (String) options.getOrDefault("format", null);
+            if (format != null) {
+                formatter = DateTimeFormatter.ofPattern(format);
+            }
+        }
+
+        @Override
+		public Object getValue() {
+			return picker.getValue().format(formatter);
+		}
+
+		@Override
+		public void setValue(Object value) {
+            LocalDate date;
+            try {
+                date = LocalDate.parse(value.toString(), formatter);
+            } catch (DateTimeParseException e) {
+                e.printStackTrace();
+                return;
+            }
+
+			picker.setValue(date);
+		}
+
+		@Override
+		public Node getNode() {
+			return picker;
+		}
+
 	}
 	
 }
