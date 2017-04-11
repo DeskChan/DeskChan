@@ -21,6 +21,8 @@ apply plugin: 'edu.sc.seis.launch4j'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+compileJava.options.encoding = 'UTF-8'
+
 dependencies {
 	compile group: 'org.json', name: 'json', version: '20160810+'
 	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.4.7+'
