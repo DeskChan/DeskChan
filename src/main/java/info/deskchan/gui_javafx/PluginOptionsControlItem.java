@@ -282,7 +282,8 @@ interface PluginOptionsControlItem {
 
         @Override
 		public Object getValue() {
-			return picker.getValue().format(formatter);
+			LocalDate value = picker.getValue();
+			return (value != null) ? value.format(formatter) : null;
 		}
 
 		@Override
