@@ -1,6 +1,6 @@
 package info.deskchan.core;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +11,7 @@ public class Main {
 		pluginManager.initialize(args);
 		pluginManager.tryLoadPluginByPackageName("info.deskchan.groovy_support");
 		pluginManager.tryLoadPluginByPackageName("info.deskchan.gui_javafx");
+		pluginManager.tryLoadPluginByPackageName("info.deskchan.talking_system");
 		try {
 			Path pluginsDirPath = PluginManager.getPluginsDirPath();
 			DirectoryStream<Path> directoryStream = Files.newDirectoryStream(pluginsDirPath);

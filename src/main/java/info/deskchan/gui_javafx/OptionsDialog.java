@@ -11,10 +11,10 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.scene.text.Font;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
 
@@ -141,9 +141,15 @@ class OptionsDialog extends Dialog<Void> {
 		};
 		unloadPluginButton.setOnAction(event -> {
 			PluginListItem item = pluginsList.getSelectionModel().getSelectedItem();
-			if (item.blacklisted) return;
-			if (item.id.equals("core")) return;
-			if (item.id.equals(Main.getInstance().getPluginProxy().getId())) return;
+			if (item.blacklisted) {
+				return;
+			}
+			if (item.id.equals("core")) {
+				return;
+			}
+			if (item.id.equals(Main.getInstance().getPluginProxy().getId())) {
+				return;
+			}
 			PluginManager.getInstance().unloadPlugin(item.id);
 		});
 		hbox.getChildren().add(unloadPluginButton);
@@ -201,7 +207,7 @@ class OptionsDialog extends Dialog<Void> {
 				root.getChildren().add(group);
 			}
 			alternativesTable.setRoot(root);
- 		});
+		});
 		tabPane.getTabs().add(new Tab(Main.getString("alternatives"), alternativesTab));
 		BorderPane debugTab = new BorderPane();
 		TextField debugMsgTag = new TextField("DeskChan:say");
@@ -241,6 +247,14 @@ class OptionsDialog extends Dialog<Void> {
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			pluginsTabs.put(plugin, tabs);
+			tabs.add(new PluginOptionsTab(name, controls, msgTag));
+			return;
+		}
+		for (int i = 0; i < tabs.size(); i++) {
+			if (tabs.get(i).name.equals(name)) {
+				tabs.set(i, new PluginOptionsTab(name, controls, msgTag));
+				return;
+			}
 		}
 		tabs.add(new PluginOptionsTab(name, controls, msgTag));
 	}
@@ -305,7 +319,9 @@ class OptionsDialog extends Dialog<Void> {
 				String id = (String) controlInfo.getOrDefault("id", null);
 				String label = (String) controlInfo.getOrDefault("label", null);
 				PluginOptionsControlItem item = PluginOptionsControlItem.create(controlInfo);
-				if (item == null) continue;
+				if (item == null) {
+					continue;
+				}
 				if (id != null) {
 					namedControls.put(id, item);
 				}

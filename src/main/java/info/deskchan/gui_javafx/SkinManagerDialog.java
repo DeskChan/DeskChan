@@ -1,7 +1,6 @@
 package info.deskchan.gui_javafx;
 
 import javafx.event.ActionEvent;
-import javafx.event.EventType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;

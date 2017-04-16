@@ -17,8 +17,8 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -27,7 +27,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.List;
 
 public class App extends Application {
 	
@@ -87,7 +86,7 @@ public class App extends Application {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
 		pluginProxy.addMessageListener("gui:register-simple-action", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map < String, Object > m = (Map<String, Object>) data;
+				Map<String, Object> m = (Map<String, Object>) data;
 				PluginActionInfo pluginActionInfo = new PluginActionInfo((String) m.get("name"),
 						(String) m.get("msgTag"), m.get("msgData"));
 				List<PluginActionInfo> actions = pluginsActions.getOrDefault(sender, null);
@@ -101,14 +100,14 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:register-simple-actions", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				List< Map < String, Object > > actionList = (List<Map<String, Object>>) data;
-
+				List<Map<String, Object>> actionList = (List<Map<String, Object>>) data;
+				
 				List<PluginActionInfo> actions = pluginsActions.getOrDefault(sender, null);
 				if (actions == null) {
 					actions = new ArrayList<>();
 					pluginsActions.put(sender, actions);
 				}
-
+				
 				for (Map<String, Object> m : actionList) {
 					PluginActionInfo pluginActionInfo = new PluginActionInfo((String) m.get("name"),
 							(String) m.get("msgTag"), m.get("msgData"));
@@ -152,22 +151,22 @@ public class App extends Application {
 			});
 		});
 		pluginProxy.sendMessage("core:register-alternatives", Arrays.asList(
-            new HashMap<String, Object>() {{
-                put("srcTag", "DeskChan:register-simple-action");
-                put("dstTag", "gui:register-simple-action");
-                put("priority", 100);
-            }},
-            new HashMap<String, Object>() {{
-                put("srcTag", "DeskChan:register-simple-actions");
-                put("dstTag", "gui:register-simple-actions");
-                put("priority", 100);
-            }},
-            new HashMap<String, Object>() {{
-                put("srcTag", "DeskChan:say");
-                put("dstTag", "gui:say");
-                put("priority", 100);
-            }}
-        ));
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:register-simple-action");
+					put("dstTag", "gui:register-simple-action");
+					put("priority", 100);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:register-simple-actions");
+					put("dstTag", "gui:register-simple-actions");
+					put("priority", 100);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:say");
+					put("dstTag", "gui:say");
+					put("priority", 100);
+				}}
+		));
 	}
 	
 	private void rebuildMenu() {
@@ -188,7 +187,9 @@ public class App extends Application {
 			for (Map.Entry<String, List<PluginActionInfo>> entry : pluginsActions.entrySet()) {
 				String pluginId = entry.getKey();
 				List<PluginActionInfo> actions = entry.getValue();
-				if (actions.size() <= 0) continue;
+				if (actions.size() <= 0) {
+					continue;
+				}
 				if (actions.size() == 1) {
 					mainMenu.add(actions.get(0).createMenuItem());
 				} else {

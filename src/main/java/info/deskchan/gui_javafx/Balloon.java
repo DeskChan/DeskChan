@@ -51,6 +51,8 @@ class Balloon extends StackPane {
 				double x = character.getLayoutX() - getWidth();
 				setLayoutX((x >= 0) ? x : character.getLayoutX() + character.getWidth());
 				bubbleShape.getParent().setScaleX((x >= 0) ? 1 : -1);
+				StackPane.setMargin(label, new Insets(40, (x >= 0) ? 40 : 20,
+						40, (x >= 0) ? 20 : 40));
 			};
 			character.layoutXProperty().addListener(updateBalloonLayoutX);
 			widthProperty().addListener(updateBalloonLayoutX);

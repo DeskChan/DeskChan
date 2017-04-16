@@ -32,23 +32,30 @@ try {
 selectedCharacters = new HashSet<String>(Arrays.asList(
 		properties.getProperty("characters", "moe;genki;yandere").split(";")
 ))
-interval = Integer.parseInt(properties.getProperty('interval', '30'))
+try{
+	interval = Integer.parseInt(properties.getProperty('interval', '30'))
+	if(interval == null) {
+		interval=30
+	}
+} catch (Exception e){
+	interval = 30;
+}
 phrasesFileName = properties.getProperty('phrases_file', '')
 sendMessage('gui:add-options-tab', [
-        name: Localization.getString('random_phrases'),
+		name: Localization.getString('random_phrases'),
 		msgTag: 'random_phrases:options-saved',
 		controls: [
 				[
-				        id: 'phrases_file',
+						id: 'phrases_file',
 						type: 'FileField',
 						label: Localization.getString('phrases_file'),
 						value: ((phrasesFileName.length() > 0) ? phrasesFileName : null)
 				],
 				[
-				        id: 'characters',
+						id: 'characters',
 						type: 'ListBox',
 						values: [
-						        Localization.getString('character.moe'),
+								Localization.getString('character.moe'),
 								Localization.getString('character.genki'),
 								Localization.getString('character.yandere'),
 								Localization.getString('character.tsundere')
@@ -58,17 +65,17 @@ sendMessage('gui:add-options-tab', [
 						},
 						label: Localization.getString('character')
 				],
-		        [
+				[
 						id: 'interval',
-		                type: 'Spinner',
+						type: 'Spinner',
 						min: 5,
 						max: 600,
 						step: 1,
 						value: interval,
 						label: Localization.getString('interval')
-		        ],
+				],
 				[
-				        type: 'Button',
+						type: 'Button',
 						value: Localization.getString('update_phrases'),
 						msgTag: 'random_phrases:update'
 				]
@@ -102,7 +109,11 @@ updatePhrasesDatabase({
 		if (phrase != null) {
 			sendMessage('DeskChan:say', [text: phrase.text, characterImage: phrase.emotion, priority: 0])
 		}
-		timer.runAfter(interval * 1000, sayRandomPhrase)
+		try{
+			timer.runAfter(interval * 1000, sayRandomPhrase)
+		} catch(Exception e){
+			timer.runAfter(30000, sayRandomPhrase)
+		}
 	}
 	sayRandomPhrase()
 })
@@ -114,10 +125,16 @@ addMessageListener('random_phrases:options-saved', { sender, tag, data ->
 	)
 	prevPhrasesFileName = phrasesFileName
 	phrasesFileName = data['phrases_file']
-	if (phrasesFileName == null) phrasesFileName = ''
+	if (phrasesFileName == null) {
+		phrasesFileName = ''
+	}
 	properties.setProperty('characters', String.join(';', selectedCharacters))
-	properties.setProperty('interval', String.valueOf(interval))
-	properties.setProperty('phrases_file', phrasesFileName)
+	if(interval != null){
+		properties.setProperty('interval', String.valueOf(interval))
+	}
+	if(phrasesFileName != null) {
+		properties.setProperty('phrases_file', phrasesFileName)
+	}
 	if (phrasesFileName != prevPhrasesFileName) {
 		updatePhrasesDatabase(null)
 		return

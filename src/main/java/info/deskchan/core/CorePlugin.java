@@ -40,7 +40,8 @@ public class CorePlugin implements Plugin, MessageListener {
 		pluginProxy.addMessageListener("core:query-alternatives-map", (sender, tag, data) -> {
 			Object seq = ((Map) data).get("seq");
 			pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
-				put("seq", seq); put("map", getAlternativesMap());
+				put("seq", seq);
+				put("map", getAlternativesMap());
 			}});
 		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
@@ -85,7 +86,8 @@ public class CorePlugin implements Plugin, MessageListener {
 			Path pluginDataDirPath = PluginManager.getPluginDataDirPath(sender);
 			Object seq = ((Map) data).get("seq");
 			pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
-				put("seq", seq); put("path", pluginDataDirPath.toString());
+				put("seq", seq);
+				put("path", pluginDataDirPath.toString());
 			}});
 		});
 		pluginProxy.addMessageListener("core:create-pipe", (sender, tag, data) -> {
@@ -157,7 +159,9 @@ public class CorePlugin implements Plugin, MessageListener {
 				changeAlternativePriority(srcTag, dstTag, priority);
 				return;
 			}
-			if (info.priority < priority) break;
+			if (info.priority < priority) {
+				break;
+			}
 		}
 		iterator.add(new AlternativeInfo(dstTag, plugin, priority));
 		if (l.size() == 1) {
@@ -194,7 +198,9 @@ public class CorePlugin implements Plugin, MessageListener {
 				iterator = l.listIterator();
 				while (iterator.hasNext()) {
 					AlternativeInfo info2 = iterator.next();
-					if (info2.priority < priority) break;
+					if (info2.priority < priority) {
+						break;
+					}
 				}
 				info.priority = priority;
 				iterator.add(info);
@@ -222,8 +228,12 @@ public class CorePlugin implements Plugin, MessageListener {
 	@Override
 	public void handleMessage(String sender, String tag, Object data) {
 		List<AlternativeInfo> l = alternatives.getOrDefault(tag, null);
-		if (l == null) return;
-		if (l.isEmpty()) return;
+		if (l == null) {
+			return;
+		}
+		if (l.isEmpty()) {
+			return;
+		}
 		AlternativeInfo info = l.get(0);
 		PluginManager.getInstance().sendMessage(sender, info.tag, data);
 	}

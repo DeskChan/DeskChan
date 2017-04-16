@@ -81,14 +81,18 @@ class HackJavaFX {
 		realClassField.setModifiers(Modifier.FINAL | Modifier.PRIVATE);
 		cc.addField(realClassField);
 		CtConstructor constructor = new CtConstructor(
-				new CtClass[] { realObjectField.getType(), realClassField.getType() }, cc
+				new CtClass[]{realObjectField.getType(), realClassField.getType()}, cc
 		);
 		constructor.setModifiers(Modifier.PUBLIC);
 		constructor.setBody("{ realObject = $1; realClass = $2; }");
 		cc.addConstructor(constructor);
 		for (CtMethod method : cc.getSuperclass().getDeclaredMethods()) {
-			if ((method.getModifiers() & Modifier.FINAL) != 0) continue;
-			if ((method.getModifiers() & Modifier.STATIC) != 0) continue;
+			if ((method.getModifiers() & Modifier.FINAL) != 0) {
+				continue;
+			}
+			if ((method.getModifiers() & Modifier.STATIC) != 0) {
+				continue;
+			}
 			CtMethod newMethod = new CtMethod(method.getReturnType(), method.getName(),
 					method.getParameterTypes(), cc);
 			newMethod.setModifiers(method.getModifiers() & ~(Modifier.NATIVE | Modifier.SYNCHRONIZED));
@@ -120,8 +124,12 @@ class HackJavaFX {
 		Constructor c = cls.getDeclaredConstructor(cls.getSuperclass(), Class.class);
 		Object proxy = c.newInstance(realObject, realClass);
 		for (Field field : realClass.getDeclaredFields()) {
-			if ((field.getModifiers() & Modifier.STATIC) != 0) continue;
-			if ((field.getModifiers() & Modifier.FINAL) != 0) continue;
+			if ((field.getModifiers() & Modifier.STATIC) != 0) {
+				continue;
+			}
+			if ((field.getModifiers() & Modifier.FINAL) != 0) {
+				continue;
+			}
 			field.setAccessible(true);
 			field.set(proxy, field.get(realObject));
 		}

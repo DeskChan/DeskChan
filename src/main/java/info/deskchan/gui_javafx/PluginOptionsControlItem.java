@@ -58,7 +58,9 @@ interface PluginOptionsControlItem {
 				item = new DatePickerItem();
 				break;
 		}
-		if (item == null) return null;
+		if (item == null) {
+			return null;
+		}
 		item.init(options);
 		if (value != null) {
 			item.setValue(value);
@@ -86,9 +88,9 @@ interface PluginOptionsControlItem {
 	}
 	
 	class TextFieldItem implements PluginOptionsControlItem {
-
+		
 		TextField textField;
-
+		
 		@Override
 		public void init(Map<String, Object> options) {
 			Boolean isPasswordField = (Boolean) options.getOrDefault("hideText", false);
@@ -185,6 +187,9 @@ interface PluginOptionsControlItem {
 			List<Integer> l = (List<Integer>) value;
 			listView.getSelectionModel().clearSelection();
 			for (Integer i : l) {
+				if (i == null) {
+					continue;
+				}
 				listView.getSelectionModel().select((int) i);
 			}
 		}
@@ -251,6 +256,14 @@ interface PluginOptionsControlItem {
 		}
 		
 		@Override
+		public void init(Map<String, Object> options) {
+			String path = (String) options.getOrDefault("initialDirectory", null);
+			if (path != null) {
+				chooser.setInitialDirectory(new File(path));
+			}
+		}
+		
+		@Override
 		public void setValue(Object value) {
 			textField.setText(value.toString());
 		}
@@ -266,44 +279,43 @@ interface PluginOptionsControlItem {
 		}
 		
 	}
-
+	
 	class DatePickerItem implements PluginOptionsControlItem {
-
+		
 		DatePicker picker = new DatePicker();
 		DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
-
-        @Override
-        public void init(Map<String, Object> options) {
-            String format = (String) options.getOrDefault("format", null);
-            if (format != null) {
-                formatter = DateTimeFormatter.ofPattern(format);
-            }
-        }
-
-        @Override
-		public Object getValue() {
-			LocalDate value = picker.getValue();
-			return (value != null) ? value.format(formatter) : null;
+		
+		@Override
+		public void init(Map<String, Object> options) {
+			String format = (String) options.getOrDefault("format", null);
+			if (format != null) {
+				formatter = DateTimeFormatter.ofPattern(format);
+			}
 		}
-
+		
+		@Override
+		public Object getValue() {
+			return picker.getValue().format(formatter);
+		}
+		
 		@Override
 		public void setValue(Object value) {
-            LocalDate date;
-            try {
-                date = LocalDate.parse(value.toString(), formatter);
-            } catch (DateTimeParseException e) {
-                e.printStackTrace();
-                return;
-            }
-
+			LocalDate date;
+			try {
+				date = LocalDate.parse(value.toString(), formatter);
+			} catch (DateTimeParseException e) {
+				e.printStackTrace();
+				return;
+			}
+			
 			picker.setValue(date);
 		}
-
+		
 		@Override
 		public Node getNode() {
 			return picker;
 		}
-
+		
 	}
 	
 }

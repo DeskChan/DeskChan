@@ -14,7 +14,16 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 class ImageSetSkin implements Skin {
-	
+	private final String[][] replacing = {
+			{"smile", "happy", "laugh", "love", "bounty"},
+			{"vulgar", "confident", "excitement", "laugh", "grin"},
+			{"sad", "thoughtful", "cry"},
+			{"angry", "serious", "rage"},
+			{"sceptic", "facepalm", "disgusted"},
+			{"shy", "sorry", "tired"},
+			{"scared", "shocked", "tired"},
+			{"waiting", "normal"}
+	};
 	private final Path path;
 	private final Map<String, List<Image>> images = new HashMap<>();
 	
@@ -27,37 +36,58 @@ class ImageSetSkin implements Skin {
 		return path.getFileName().toString();
 	}
 	
-	@Override
-	public Image getImage(String name) {
+	private List<Image> getImageArray(String name) {
 		List<Image> l = images.getOrDefault(name, null);
-		if (l == null) {
-			l = new ArrayList<>();
-			Path imagePath = path.resolve(name);
-			if (Files.isDirectory(imagePath)) {
-				try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(imagePath)) {
-					for (Path imgPath : directoryStream) {
-						try (InputStream inputStream = Files.newInputStream(imgPath)) {
-							l.add(new Image(inputStream));
-						} catch (IOException e) {
-							Main.getInstance().getPluginProxy().log(e);
-						}
-					}
-				} catch (IOException e) {
-					Main.getInstance().getPluginProxy().log(e);
-				}
-			} else {
-				imagePath = imagePath.resolveSibling(imagePath.getFileName() + ".png");
-				if (Files.isReadable(imagePath)) {
-					try (InputStream inputStream = Files.newInputStream(imagePath)) {
+		if (l != null) {
+			return l;
+		}
+		l = new ArrayList<>();
+		Path imagePath = path.resolve(name);
+		if (Files.isDirectory(imagePath)) {
+			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(imagePath)) {
+				for (Path imgPath : directoryStream) {
+					try (InputStream inputStream = Files.newInputStream(imgPath)) {
 						l.add(new Image(inputStream));
 					} catch (IOException e) {
 						Main.getInstance().getPluginProxy().log(e);
 					}
 				}
+			} catch (IOException e) {
+				Main.getInstance().getPluginProxy().log(e);
 			}
-			images.put(name, l);
+		} else {
+			imagePath = imagePath.resolveSibling(imagePath.getFileName() + ".png");
+			if (Files.isReadable(imagePath)) {
+				try (InputStream inputStream = Files.newInputStream(imagePath)) {
+					l.add(new Image(inputStream));
+				} catch (IOException e) {
+					Main.getInstance().getPluginProxy().log(e);
+				}
+			}
 		}
+		images.put(name, l);
+		return l;
+	}
+	
+	@Override
+	public Image getImage(String name) {
+		List<Image> l = getImageArray(name);
 		if (l.size() == 0) {
+			for (int i = 0; i < replacing.length; i++) {
+				for (int j = 0; j < replacing[i].length; j++) {
+					if (replacing[i][j].equals(name)) {
+						for (int k = 0; k < replacing[i].length; k++) {
+							if (k == j) {
+								continue;
+							}
+							l = getImageArray(replacing[i][k]);
+							if (l.size() != 0) {
+								return l.get(ThreadLocalRandom.current().nextInt(0, l.size()));
+							}
+						}
+					}
+				}
+			}
 			if (name.equals("normal")) {
 				return null;
 			} else {

@@ -1,10 +1,10 @@
 package info.deskchan.groovy_support;
 
+import groovy.lang.Script;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxy;
 import info.deskchan.core.ResponseListener;
-import groovy.lang.Script;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

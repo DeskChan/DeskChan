@@ -9,6 +9,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,10 +45,18 @@ class OverlayStage extends Stage {
 		double maxX = rect.getMaxX(), maxY = rect.getMaxY();
 		for (Screen screen : Screen.getScreens()) {
 			Rectangle2D screenRect = screen.getBounds();
-			if (minX > screenRect.getMinX()) minX = screenRect.getMinX();
-			if (minY > screenRect.getMinY()) minY = screenRect.getMinY();
-			if (maxX < screenRect.getMaxX()) maxX = screenRect.getMaxX();
-			if (maxY < screenRect.getMaxY()) maxY = screenRect.getMaxY();
+			if (minX > screenRect.getMinX()) {
+				minX = screenRect.getMinX();
+			}
+			if (minY > screenRect.getMinY()) {
+				minY = screenRect.getMinY();
+			}
+			if (maxX < screenRect.getMaxX()) {
+				maxX = screenRect.getMaxX();
+			}
+			if (maxY < screenRect.getMaxY()) {
+				maxY = screenRect.getMaxY();
+			}
 		}
 		return new Rectangle2D(minX, minY, maxX - minX, maxY - minY);
 	}

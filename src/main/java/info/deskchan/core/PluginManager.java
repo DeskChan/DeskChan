@@ -238,7 +238,9 @@ public class PluginManager {
 			);
 			String line;
 			while ((line = reader.readLine()) != null) {
-				if (line.length() == 0) continue;
+				if (line.length() == 0) {
+					continue;
+				}
 				blacklistedPlugins.add(line);
 			}
 			reader.close();

@@ -1,11 +1,11 @@
 package info.deskchan.groovy_support;
 
+import groovy.lang.GroovyShell;
+import groovy.lang.Script;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginLoader;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
-import groovy.lang.GroovyShell;
-import groovy.lang.Script;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import java.nio.file.Files;
