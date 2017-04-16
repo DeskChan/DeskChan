@@ -166,7 +166,7 @@ public class Main implements Plugin {
 	
 	void operatePhraseRequest(String purpose) {
 		CharacterDefinite cd = currentPreset.getCharacter(emotionsController);
-		quotes.Update(cd);
+		quotes.update(cd);
 		HashMap<String, Object> ret = quotes.getRandomQuote(purpose).toMap();
 		if (ret.get("characterImage").equals("AUTO")) {
 			String ci = emotionsController.getSpriteType();

@@ -14,7 +14,6 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -45,15 +44,15 @@ public class Quotes {
 		}
 	}
 	
-	public void Update(CharacterDefinite newCharacter) {
+	public void update(CharacterDefinite newCharacter) {
 		if (current.equal(newCharacter)) {
 			return;
 		}
 		current = newCharacter;
-		Update();
+		update();
 	}
 	
-	public void Update() {
+	public void update() {
 		suitable_quotes = new ArrayList();
 		for (int i = 0, l = quotes.size(); i < l; i++) {
 			if (quotes.get(i).MatchToCharacter(current)) {
@@ -144,11 +143,11 @@ public class Quotes {
 		
 		for (String file : files) {
 			try {
-				Document doc = builder.parse(new File(path.toString() + "\\" + file + ".quotes"));
+				Document doc = builder.parse(Files.newInputStream(path.resolve(file + ".quotes")));
 				Node mainNode = doc.getChildNodes().item(0);
 				NodeList list = mainNode.getChildNodes();
 				for (int i = 0; i < list.getLength(); i++) {
-					if (list.item(i).getNodeName() != "quote") {
+					if (list.item(i).getNodeName().equals("quote")) {
 						continue;
 					}
 					try {
@@ -162,7 +161,7 @@ public class Quotes {
 			}
 		}
 		Main.log("Loaded quotes: " + quotes.size() + " " + suitable_quotes.size());
-		Update();
+		update();
 	}
 	
 	public static void saveTo(String URL, String filename) {
@@ -252,14 +251,14 @@ public class Quotes {
 				}
 			}
 			doc.appendChild(mainNode);
-			String address = Main.getDataDirPath().toString() + "\\" + filename + ".quotes";
+			Path address = Main.getDataDirPath().resolve(filename + ".quotes");
 			try {
 				Transformer tr = TransformerFactory.newInstance().newTransformer();
 				tr.setOutputProperty(OutputKeys.INDENT, "yes");
 				tr.setOutputProperty(OutputKeys.METHOD, "xml");
 				tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 				tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-				tr.transform(new DOMSource(doc), new StreamResult(new FileOutputStream(address)));
+				tr.transform(new DOMSource(doc), new StreamResult(Files.newOutputStream(address)));
 			} catch (Exception er) {
 				Main.log("Error while rewriting file " + filename + ".quotes" + ": " + er);
 			}
