@@ -142,7 +142,9 @@ public class Quotes {
 		
 		for (String file : files) {
 			try {
-				Document doc = builder.parse(Files.newInputStream(path.resolve(file + ".quotes")));
+				InputStream inputStream = Files.newInputStream(path.resolve(file + ".quotes"));
+				Document doc = builder.parse(inputStream);
+				inputStream.close();
 				Node mainNode = doc.getChildNodes().item(0);
 				NodeList list = mainNode.getChildNodes();
 				for (int i = 0; i < list.getLength(); i++) {
