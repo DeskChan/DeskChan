@@ -14,7 +14,6 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -23,13 +22,13 @@ import java.util.*;
 
 public class Quotes {
 	CharacterDefinite current = new CharacterDefinite();
-	int queue_length = 2;
+	int queueLength = 2;
 	int curPos = 0;
-	Quote[] last_used = new Quote[queue_length];
+	Quote[] lastUsed = new Quote[queueLength];
 	ArrayList<Quote> quotes = new ArrayList();
-	ArrayList<Quote> suitable_quotes = new ArrayList();
+	ArrayList<Quote> suitableQuotes = new ArrayList();
 	
-	public void Add(Quote quote) {
+	public void add(Quote quote) {
 		if (quote == null) {
 			return;
 		}
@@ -39,8 +38,8 @@ public class Quotes {
 			}
 		}
 		quotes.add(quote);
-		if (quote.MatchToCharacter(current)) {
-			suitable_quotes.add(quote);
+		if (quote.matchToCharacter(current)) {
+			suitableQuotes.add(quote);
 		}
 	}
 	
@@ -53,10 +52,10 @@ public class Quotes {
 	}
 	
 	public void update() {
-		suitable_quotes = new ArrayList();
+		suitableQuotes = new ArrayList();
 		for (int i = 0, l = quotes.size(); i < l; i++) {
-			if (quotes.get(i).MatchToCharacter(current)) {
-				suitable_quotes.add(quotes.get(i));
+			if (quotes.get(i).matchToCharacter(current)) {
+				suitableQuotes.add(quotes.get(i));
 			}
 		}
 		
@@ -65,7 +64,7 @@ public class Quotes {
 	public ArrayList<Quote> GetMatching(CharacterDefinite target) {
 		ArrayList<Quote> sq = new ArrayList();
 		for (int i = 0, l = quotes.size(); i < l; i++) {
-			if (quotes.get(i).MatchToCharacter(target)) {
+			if (quotes.get(i).matchToCharacter(target)) {
 				sq.add(quotes.get(i));
 			}
 		}
@@ -74,7 +73,7 @@ public class Quotes {
 	
 	public Quote getRandomQuote(String purpose) {
 		purpose = purpose.toUpperCase();
-		if (suitable_quotes.size() == 0) {
+		if (suitableQuotes.size() == 0) {
 			return new Quote("Я не знаю, что сказать.");
 		}
 		int r;
@@ -82,8 +81,8 @@ public class Quotes {
 		LinkedList<Quote> sq = new LinkedList<>();
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
-		for (int i = 0; i < suitable_quotes.size(); i++) {
-			q = suitable_quotes.get(i);
+		for (int i = 0; i < suitableQuotes.size(); i++) {
+			q = suitableQuotes.get(i);
 			int dow = cal.get(Calendar.DAY_OF_WEEK);
 			if (dow == 1) {
 				dow = 7;
@@ -98,36 +97,36 @@ public class Quotes {
 		if (sq.size() == 0) {
 			return new Quote("Я не знаю, что сказать.");
 		}
-		int counter = queue_length + 1;
+		int counter = queueLength + 1;
 		do {
 			counter--;
 			r = new Random().nextInt(sq.size());
 			q = sq.get(r);
 			for (int i = 0; i < counter; i++) {
-				if (last_used[i] == q) {
+				if (lastUsed[i] == q) {
 					continue;
 				}
 			}
 			break;
 		} while (counter > 0);
-		last_used[curPos] = q;
-		curPos = (curPos + 1) % queue_length;
+		lastUsed[curPos] = q;
+		curPos = (curPos + 1) % queueLength;
 		q.UpdateLastUsage();
 		return q;
 	}
 	
 	public Quote get(int index) {
-		return suitable_quotes.get(index);
+		return suitableQuotes.get(index);
 	}
 	
-	public int Size() {
-		return suitable_quotes.size();
+	public int size() {
+		return suitableQuotes.size();
 	}
 	
 	public void clear() {
 		quotes = new ArrayList();
-		suitable_quotes = new ArrayList();
-		last_used = new Quote[queue_length];
+		suitableQuotes = new ArrayList();
+		lastUsed = new Quote[queueLength];
 	}
 	
 	public void load(Path path, ArrayList<String> files) {
@@ -151,7 +150,7 @@ public class Quotes {
 						continue;
 					}
 					try {
-						Add(Quote.Create(list.item(i)));
+						add(Quote.create(list.item(i)));
 					} catch (Exception e2) {
 						Main.log(e2);
 					}
@@ -160,7 +159,7 @@ public class Quotes {
 				Main.log("Error while loading file " + file + ".quotes" + ": " + e);
 			}
 		}
-		Main.log("Loaded quotes: " + quotes.size() + " " + suitable_quotes.size());
+		Main.log("Loaded quotes: " + quotes.size() + " " + suitableQuotes.size());
 		update();
 	}
 	

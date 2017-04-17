@@ -70,7 +70,7 @@ public class Quote {
 		return map;
 	}
 	
-	public static Quote Create(Node node) {
+	public static Quote create(Node node) {
 		NodeList list = node.getChildNodes();
 		String p;
 		Node n;
@@ -179,7 +179,7 @@ public class Quote {
 		return mainNode;
 	}
 	
-	public boolean MatchToCharacter(CharacterDefinite target) {
+	public boolean matchToCharacter(CharacterDefinite target) {
 		for (int i = 0, l = CharacterSystem.getFeatureCount(); i < l; i++) {
 			if (!character.range[i].Match(target.getValue(i))) {
 				return false;
