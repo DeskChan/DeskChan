@@ -148,7 +148,7 @@ public class Quotes {
 				Node mainNode = doc.getChildNodes().item(0);
 				NodeList list = mainNode.getChildNodes();
 				for (int i = 0; i < list.getLength(); i++) {
-					if (list.item(i).getNodeName().equals("quote")) {
+					if (!list.item(i).getNodeName().equals("quote")) {
 						continue;
 					}
 					try {
