@@ -199,11 +199,19 @@ class Character extends Pane {
 		private final int timeout;
 		
 		MessageInfo(Map<String, Object> data) {
-			text = (String) data.getOrDefault("text", null);
-			characterImage = (String) data.getOrDefault("characterImage", null);
+			text = (String) data.getOrDefault("text", "");
+			String characterImage = (String) data.getOrDefault("characterImage", null);
+			if (characterImage != null) {
+				characterImage = characterImage.toLowerCase();
+			} else {
+				characterImage = "normal";
+			}
+			this.characterImage = characterImage;
 			priority = (Integer) data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-			timeout = (Integer) data.getOrDefault("timeout",
-					Integer.parseInt(Main.getProperty("balloon.default_timeout", "15000")));
+			//timeout = (Integer) data.getOrDefault("timeout",
+			//		Integer.parseInt(Main.getProperty("balloon.default_timeout", "15000")));
+			timeout = (Integer) data.getOrDefault("timeout", Math.max(6000,
+					text.length() * Integer.parseInt(Main.getProperty("balloon.default_timeout", "300"))));
 		}
 		
 		@Override

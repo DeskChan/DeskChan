@@ -42,12 +42,12 @@ public abstract class CharacterPreset {
 	
 	protected ArrayList<String> fillListFromJSON(JSONObject obj, String arrayname) {
 		ArrayList<String> list = new ArrayList<>();
-		if (obj == null) {
+		if (obj == null || !obj.has(arrayname)) {
 			return list;
 		}
-		
-		JSONArray ar;
-		try {
+
+		JSONArray ar=null;
+		if(obj.get(arrayname) instanceof String){
 			String sa = obj.getString(arrayname);
 			if (sa.charAt(0) != '[') {
 				sa = "[" + sa;
@@ -55,12 +55,12 @@ public abstract class CharacterPreset {
 			if (sa.charAt(sa.length() - 1) != '[') {
 				sa = sa + "]";
 			}
-			ar = new JSONArray();
-		} catch (Exception e) {
-			//Main.log(e);
-			return list;
+			ar = new JSONArray(sa);
 		}
-		
+		if(obj.get(arrayname) instanceof JSONArray){
+			ar=obj.getJSONArray(arrayname);
+		}
+		if(ar==null) return list;
 		for (int i = 0; i < ar.length(); i++) {
 			list.add(ar.getString(i));
 		}
@@ -204,7 +204,7 @@ public abstract class CharacterPreset {
 		} catch (Exception e) {
 			cp = new SimpleCharacterPreset();
 		}
-		
+
 		cp.fillFromJSON(obj);
 		return cp;
 	}

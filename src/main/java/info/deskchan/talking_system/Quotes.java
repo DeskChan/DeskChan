@@ -193,12 +193,12 @@ public class Quotes {
 								break;
 							case 1:
 								if (phrase.getString(k).length() > 0) {
-									next.spriteType = phrase.getString(k);
+									next.spriteType = phrase.getString(k).replace("\n","");
 								}
 								break;
 							case 2:
 								if (phrase.getString(k).length() > 0) {
-									next.purposeType = phrase.getString(k);
+									next.purposeType = phrase.getString(k).replace("\n","");
 								}
 								break;
 							case 3:

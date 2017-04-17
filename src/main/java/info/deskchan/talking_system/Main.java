@@ -58,20 +58,16 @@ public class Main implements Plugin {
 		if (properties != null) {
 			try {
 				applyInfluence = properties.getProperty("applyInfluence").equals("1");
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 			try {
 				currentPreset = CharacterPreset.getFromJSON(new JSONObject(properties.getProperty("characterPreset")));
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 			try {
 				Influence.globalMultiplier = Float.valueOf(properties.getProperty("influenceMultiplier"));
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 			try {
 				messageTimeout = Integer.valueOf(properties.getProperty("messageTimeout"));
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 		}
 		log("Loaded options");
 		chatTimer = new Timer();
