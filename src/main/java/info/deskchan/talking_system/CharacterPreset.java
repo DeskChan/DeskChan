@@ -6,6 +6,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -45,9 +48,9 @@ public abstract class CharacterPreset {
 		if (obj == null || !obj.has(arrayname)) {
 			return list;
 		}
-
-		JSONArray ar=null;
-		if(obj.get(arrayname) instanceof String){
+		
+		JSONArray ar = null;
+		if (obj.get(arrayname) instanceof String) {
 			String sa = obj.getString(arrayname);
 			if (sa.charAt(0) != '[') {
 				sa = "[" + sa;
@@ -57,10 +60,12 @@ public abstract class CharacterPreset {
 			}
 			ar = new JSONArray(sa);
 		}
-		if(obj.get(arrayname) instanceof JSONArray){
-			ar=obj.getJSONArray(arrayname);
+		if (obj.get(arrayname) instanceof JSONArray) {
+			ar = obj.getJSONArray(arrayname);
 		}
-		if(ar==null) return list;
+		if (ar == null) {
+			return list;
+		}
 		for (int i = 0; i < ar.length(); i++) {
 			list.add(ar.getString(i));
 		}
@@ -187,8 +192,13 @@ public abstract class CharacterPreset {
 	public static CharacterPreset getFromFileUnsafe(Path path) {
 		CharacterPreset cp = null;
 		try {
-			String str = new String(Files.readAllBytes(path));
-			cp = getFromJSON(XML.toJSONObject(str).getJSONObject("preset"));
+			BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(path.toFile()), "UTF-8"));
+			String str = "", str2;
+			while ((str2 = in.readLine()) != null) {
+				str += str2 + "\n";
+			}
+			JSONObject obj = XML.toJSONObject(str);
+			cp = getFromJSON(obj.getJSONObject("preset"));
 		} catch (Exception e) {
 			Main.log(e);
 		}
@@ -204,7 +214,7 @@ public abstract class CharacterPreset {
 		} catch (Exception e) {
 			cp = new SimpleCharacterPreset();
 		}
-
+		
 		cp.fillFromJSON(obj);
 		return cp;
 	}

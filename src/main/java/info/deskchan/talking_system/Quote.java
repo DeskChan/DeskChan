@@ -39,6 +39,7 @@ public class Quote {
 		}
 		return null;
 	}
+	
 	public String toString() {
 		String s = "{" + quote + "} / Purpose: " + purposeType + " / Range: { " + character.toString() + " }";
 		if (!spriteType.equals("AUTO")) {
@@ -86,14 +87,14 @@ public class Quote {
 		
 		try {
 			q.purposeType = findInNode(list, "purpose").getTextContent();
-			q.purposeType=q.purposeType.replace("\n","");
+			q.purposeType = q.purposeType.replace("\n", "");
 		} catch (Exception e) {
 			q.purposeType = "CHAT";
 		}
 		
 		try {
 			q.spriteType = findInNode(list, "sprite").getTextContent();
-			q.spriteType=q.spriteType.replace("\n","");
+			q.spriteType = q.spriteType.replace("\n", "");
 		} catch (Exception e) {
 			q.spriteType = "AUTO";
 		}
@@ -141,7 +142,6 @@ public class Quote {
 			}
 		} catch (Exception e) {
 		}
-
 		return q;
 	}
 	

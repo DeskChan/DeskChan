@@ -89,7 +89,7 @@ public class Quotes {
 			} else {
 				dow--;
 			}
-			if (q.noTimeout() && q.purposeType.equals(purpose) && q.possibleMonth.get(cal.get(Calendar.MONTH)) && q.possibleHour.get(cal.get(Calendar.HOUR)) && q.possibleWeekDay.get(dow)) {
+			if (q.noTimeout() && q.purposeType.equals(purpose) && q.possibleMonth.get(1 + cal.get(Calendar.MONTH)) && q.possibleHour.get(cal.get(Calendar.HOUR_OF_DAY)) && q.possibleWeekDay.get(dow)) {
 				sq.add(q);
 			}
 		}
@@ -193,12 +193,12 @@ public class Quotes {
 								break;
 							case 1:
 								if (phrase.getString(k).length() > 0) {
-									next.spriteType = phrase.getString(k).replace("\n","");
+									next.spriteType = phrase.getString(k).replace("\n", "");
 								}
 								break;
 							case 2:
 								if (phrase.getString(k).length() > 0) {
-									next.purposeType = phrase.getString(k).replace("\n","");
+									next.purposeType = phrase.getString(k).replace("\n", "");
 								}
 								break;
 							case 3:

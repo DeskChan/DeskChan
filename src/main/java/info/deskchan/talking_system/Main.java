@@ -58,16 +58,20 @@ public class Main implements Plugin {
 		if (properties != null) {
 			try {
 				applyInfluence = properties.getProperty("applyInfluence").equals("1");
-			} catch (Exception e) { }
+			} catch (Exception e) {
+			}
 			try {
 				currentPreset = CharacterPreset.getFromJSON(new JSONObject(properties.getProperty("characterPreset")));
-			} catch (Exception e) { }
+			} catch (Exception e) {
+			}
 			try {
 				Influence.globalMultiplier = Float.valueOf(properties.getProperty("influenceMultiplier"));
-			} catch (Exception e) { }
+			} catch (Exception e) {
+			}
 			try {
 				messageTimeout = Integer.valueOf(properties.getProperty("messageTimeout"));
-			} catch (Exception e) { }
+			} catch (Exception e) {
+			}
 		}
 		log("Loaded options");
 		chatTimer = new Timer();
@@ -187,7 +191,7 @@ public class Main implements Plugin {
 	
 	void updateOptionsTab() {
 		pluginProxy.sendMessage("gui:add-options-tab", new HashMap<String, Object>() {{
-			put("name", "Character");
+			put("name", getString("character"));
 			put("msgTag", "random_phrases:options-saved");
 			List<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
 			list.add(new HashMap<String, Object>() {{
