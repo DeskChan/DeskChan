@@ -15,7 +15,7 @@ public class EmotionalCharacterPreset extends CharacterPreset {
 	}
 	
 	public CharacterDefinite getCharacter(EmotionsController emo) {
-		if (emo.getEmotionName() == targetEmotion) {
+		if (emo.getEmotionName().equals(targetEmotion)) {
 			return emo.Construct(Sub);
 		}
 		return emo.Construct(MainCharacter);
