@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -100,15 +101,19 @@ class OptionsDialog extends Dialog<Void> {
 		pluginsTab.setCenter(pluginsList);
 		pluginsList.setPrefSize(400, 300);
 		pluginProxy.addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
-			for (PluginListItem item : pluginsList.getItems()) {
-				if (item.id.equals(data)) {
-					return;
+			Platform.runLater(() -> {
+				for (PluginListItem item : pluginsList.getItems()) {
+					if (item.id.equals(data)) {
+						return;
+					}
 				}
-			}
-			pluginsList.getItems().add(new PluginListItem(data.toString(), false));
+				pluginsList.getItems().add(new PluginListItem(data.toString(), false));
+			});
 		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
-			pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
+			Platform.runLater(() -> {
+				pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
+			});
 		});
 		for (String id : PluginManager.getInstance().getBlacklistedPlugins()) {
 			pluginsList.getItems().add(new PluginListItem(id, true));

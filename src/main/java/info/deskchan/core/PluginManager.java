@@ -245,7 +245,7 @@ public class PluginManager {
 			}
 			reader.close();
 		} catch (IOException e) {
-			// Do nothing
+			blacklistedPlugins.add("random_phrases");
 		}
 	}
 	

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<preset>
+    <name>Цундере (классическая неуверенная)</name>
+	<usernames>"Бака"</usernames>
+	<main>
+		<confidence>3</confidence>
+		<activity>5</activity>
+		<optimism>4</optimism>
+		<kindness>2</kindness>
+		<elegance>0</elegance>
+		<sympathy>2</sympathy>
+	</main>
+	<type>TTriggerEmotionalCharacterPreset</type>
+	<targetEmotion>confusion</targetEmotion>
+	<targetFeature>sympathy</targetFeature>
+	<featureBarrier>6</featureBarrier>
+	<left>
+		<confidence>-5</confidence>
+		<activity>2</activity>
+		<optimism>-2</optimism>
+		<kindness>-5</kindness>
+		<elegance>-3</elegance>
+		<sympathy>-6</sympathy>
+	</left>
+	<right>
+		<confidence>-3</confidence>
+		<activity>0</activity>
+		<optimism>2</optimism>
+		<kindness>2</kindness>
+		<elegance>0</elegance>
+		<sympathy>-2</sympathy>
+	</right>
+</preset>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<preset>
+    <name>Яндере тихая</name>
+	<main>
+		<confidence>-6</confidence>
+		<activity>-3</activity>
+		<optimism>-4</optimism>
+		<kindness>0</kindness>
+		<elegance>0</elegance>
+		<sympathy>9</sympathy>
+	</main>
+	<type>SimpleCharacterType</type>
+</preset>

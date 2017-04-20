@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<preset>
+    <name>Генки</name>
+	<usernames>"Юзер"</usernames>
+	<main>
+		<confidence>6</confidence>
+		<activity>8</activity>
+		<optimism>5</optimism>
+		<kindness>2</kindness>
+		<elegance>-3</elegance>
+		<sympathy>3</sympathy>
+	</main>
+	<type>SimpleCharacterPreset</type>
+</preset>

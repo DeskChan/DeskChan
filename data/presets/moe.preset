@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<preset>
+    <name>Моэ</name>
+	<main>
+		<confidence>-2</confidence>
+		<activity>5</activity>
+		<optimism>7</optimism>
+		<kindness>5</kindness>
+		<elegance>2</elegance>
+		<sympathy>5</sympathy>
+	</main>
+	<type>SimpleCharacterPreset</type>
+</preset>

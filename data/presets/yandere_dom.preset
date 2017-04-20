@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<preset>
+    <name>Яндере доминирующая</name>
+	<usernames>Любимый</usernames>
+	<main>
+		<confidence>7</confidence>
+		<activity>5</activity>
+		<optimism>3</optimism>
+		<kindness>-4</kindness>
+		<elegance>-3</elegance>
+		<sympathy>8</sympathy>
+	</main>
+</preset>

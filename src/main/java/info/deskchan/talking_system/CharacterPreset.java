@@ -6,9 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -192,12 +190,16 @@ public abstract class CharacterPreset {
 	public static CharacterPreset getFromFileUnsafe(Path path) {
 		CharacterPreset cp = null;
 		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(path.toFile()), "UTF-8"));
-			String str = "", str2;
+			BufferedReader in = new BufferedReader(
+					new InputStreamReader(new FileInputStream(path.toFile()), "UTF-8")
+			);
+			final StringBuilder str = new StringBuilder();
+			String str2;
 			while ((str2 = in.readLine()) != null) {
-				str += str2 + "\n";
+				str.append(str2);
+				str.append("\n");
 			}
-			JSONObject obj = XML.toJSONObject(str);
+			JSONObject obj = XML.toJSONObject(str.toString());
 			cp = getFromJSON(obj.getJSONObject("preset"));
 		} catch (Exception e) {
 			Main.log(e);

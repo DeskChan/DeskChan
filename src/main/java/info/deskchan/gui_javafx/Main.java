@@ -15,7 +15,7 @@ public class Main implements Plugin {
 	private static Main instance;
 	private PluginProxy pluginProxy;
 	private Semaphore appInitSem = new Semaphore(0);
-	private static final ResourceBundle strings = ResourceBundle.getBundle("gui-strings");
+	private static final ResourceBundle strings = ResourceBundle.getBundle("info/deskchan/gui_javafx/gui-strings");
 	private static final Properties properties = new Properties();
 	
 	@Override

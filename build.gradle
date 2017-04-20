@@ -52,26 +52,20 @@ shadowJar {
 }
 
 distZip {
+	into(project.name) {
+		from "${projectDir}/data"
+	}
 	into(project.name + '/plugins') {
 		from "${projectDir}/plugins"
-	}
-	into(project.name + '/skins') {
-		from "${projectDir}/skins"
-	}
-	into(project.name + '/fonts') {
-		from "${projectDir}/fonts"
 	}
 }
 
 distTar {
+	into(project.name) {
+		from "${projectDir}/data"
+	}
 	into(project.name + '/plugins') {
 		from "${projectDir}/plugins"
-	}
-	into(project.name + '/skins') {
-		from "${projectDir}/skins"
-	}
-	into(project.name + '/fonts') {
-		from "${projectDir}/fonts"
 	}
 }
 
@@ -82,16 +76,12 @@ createExe {
 	jar = "${buildDir}/libs/${project.tasks.shadowJar.archiveName}"
 	icon = 'appicon.ico'
 	copy {
+		from "${projectDir}/data"
+		into "${buildDir}/launch4j"
+	}
+	copy {
 		from "${projectDir}/plugins"
 		into "${buildDir}/launch4j/plugins"
-	}
-	copy {
-		from "${projectDir}/skins"
-		into "${buildDir}/launch4j/skins"
-	}
-	copy {
-		from "${projectDir}/fonts"
-		into "${buildDir}/launch4j/fonts"
 	}
 	doLast {
 		delete "${buildDir}/launch4j/appicon.ico"

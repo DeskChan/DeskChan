@@ -46,6 +46,7 @@ public class Main implements Plugin {
 		currentPreset = new SimpleCharacterPreset();
 		Influence.globalMultiplier = 0.05f;
 		messageTimeout = 40000;
+		unpackPresets();
 		try {
 			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.load(ip);
@@ -106,7 +107,7 @@ public class Main implements Plugin {
 				);
 			}
 		});
-		pluginProxy.addMessageListener("random_phrases:options-saved", (sender, tag, data) -> {
+		pluginProxy.addMessageListener("talk:options-saved", (sender, tag, data) -> {
 			saveOptions((Map<String, Object>) data);
 		});
 		pluginProxy.addMessageListener("talk:register-perk",
@@ -192,7 +193,7 @@ public class Main implements Plugin {
 	void updateOptionsTab() {
 		pluginProxy.sendMessage("gui:add-options-tab", new HashMap<String, Object>() {{
 			put("name", getString("character"));
-			put("msgTag", "random_phrases:options-saved");
+			put("msgTag", "talk:options-saved");
 			List<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
 			list.add(new HashMap<String, Object>() {{
 				put("id", "name");
@@ -329,7 +330,8 @@ public class Main implements Plugin {
 		}
 	}
 	
-	private static final ResourceBundle strings = ResourceBundle.getBundle("talk-strings");
+	private static final ResourceBundle strings =
+			ResourceBundle.getBundle("info/deskchan/talking_system/talk-strings");
 	
 	static synchronized String getString(String key) {
 		try {
@@ -354,6 +356,12 @@ public class Main implements Plugin {
 	
 	public static Path getDataDirPath() {
 		return pluginProxy.getDataDirPath();
+	}
+	
+	private void unpackPresets() {
+		final String[] presets = {
+		
+		};
 	}
 	
 	@Override

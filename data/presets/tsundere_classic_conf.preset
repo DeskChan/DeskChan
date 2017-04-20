@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<preset>
+    <name>Цундере (классическая уверенная)</name>
+	<usernames>"Юзверь"</usernames>
+	<main>
+		<confidence>5</confidence>
+		<activity>5</activity>
+		<optimism>4</optimism>
+		<kindness>2</kindness>
+		<elegance>0</elegance>
+		<sympathy>2</sympathy>
+	</main>
+	<type>TTriggerEmotionalCharacterPreset</type>
+	<targetEmotion>confusion</targetEmotion>
+	<targetFeature>sympathy</targetFeature>
+	<featureBarrier>6</featureBarrier>
+	<left>
+		<confidence>0</confidence>
+		<activity>2</activity>
+		<optimism>-2</optimism>
+		<kindness>-5</kindness>
+		<elegance>-5</elegance>
+		<sympathy>-4</sympathy>
+	</left>
+	<right>
+		<confidence>0</confidence>
+		<activity>0</activity>
+		<optimism>3</optimism>
+		<kindness>2</kindness>
+		<elegance>0</elegance>
+		<sympathy>3</sympathy>
+	</right>
+</preset>

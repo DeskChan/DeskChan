@@ -65,6 +65,16 @@ class Balloon extends StackPane {
 				close();
 			}
 		});
+		setOnMouseEntered(event -> {
+			if (timeoutTimeline != null) {
+				timeoutTimeline.stop();
+			}
+		});
+		setOnMouseExited(event -> {
+			if (timeoutTimeline != null) {
+				timeoutTimeline.play();
+			}
+		});
 	}
 	
 	Character getCharacter() {
