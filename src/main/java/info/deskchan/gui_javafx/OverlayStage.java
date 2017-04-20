@@ -39,7 +39,7 @@ class OverlayStage extends Stage {
 		return root;
 	}
 	
-	private static Rectangle2D getDesktopSize() {
+	static Rectangle2D getDesktopSize() {
 		Rectangle2D rect = Screen.getPrimary().getBounds();
 		double minX = rect.getMinX(), minY = rect.getMinY();
 		double maxX = rect.getMaxX(), maxY = rect.getMaxY();

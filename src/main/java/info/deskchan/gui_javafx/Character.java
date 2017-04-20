@@ -1,18 +1,16 @@
 package info.deskchan.gui_javafx;
 
-import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 
 import java.util.Map;
 import java.util.PriorityQueue;
 
-class Character extends Pane {
+class Character extends MovablePane {
 	
 	private static final String DEFAULT_SKIN_NAME = "illia";
 	
@@ -22,25 +20,22 @@ class Character extends Pane {
 		ALWAYS_TOP
 	}
 	
-	private static final int SNAP_DISTANCE = 10;
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
 	
 	private ImageView imageView = new ImageView();
 	private Skin skin = null;
 	private String imageName = "normal";
-	private Point2D clickPos = null;
-	private Point2D dragPos = null;
 	private String idleImageName = "normal";
 	private PriorityQueue<MessageInfo> messageQueue = new PriorityQueue<>();
 	private Balloon balloon = null;
 	private String layerName = "top";
 	private LayerMode layerMode = LayerMode.ALWAYS_TOP;
 	
-	Character(Skin skin) {
+	Character(String id, Skin skin) {
 		getChildren().add(imageView);
 		setSkin(skin);
-		initEventFilters();
-		setDefaultPosition();
+		setPositionStorageID("character." + id);
+		addEventFilter(MouseEvent.MOUSE_PRESSED, this::startDrag);
 	}
 	
 	Skin getSkin() {
@@ -68,35 +63,7 @@ class Character extends Pane {
 		return (skin != null) ? skin.getImage(imageName) : null;
 	}
 	
-	private Rectangle2D snapRect(Rectangle2D bounds, Rectangle2D screenBounds) {
-		double x1 = bounds.getMinX(), y1 = bounds.getMinY();
-		double x2 = bounds.getMaxX(), y2 = bounds.getMaxY();
-		if (Math.abs(x1 - screenBounds.getMinX()) < SNAP_DISTANCE) {
-			x1 = screenBounds.getMinX();
-		}
-		if (Math.abs(y1 - screenBounds.getMinY()) < SNAP_DISTANCE) {
-			y1 = screenBounds.getMinY();
-		}
-		if (Math.abs(x2 - screenBounds.getMaxX()) < SNAP_DISTANCE) {
-			x1 = screenBounds.getMaxX() - bounds.getWidth();
-		}
-		if (Math.abs(y2 - screenBounds.getMaxY()) < SNAP_DISTANCE) {
-			y1 = screenBounds.getMaxY() - bounds.getHeight();
-		}
-		return new Rectangle2D(x1, y1, bounds.getWidth(), bounds.getHeight());
-	}
-	
-	void setPosition(Point2D topLeft) {
-		Bounds bounds = getLayoutBounds();
-		Rectangle2D rect = new Rectangle2D(topLeft.getX(), topLeft.getY(),
-				bounds.getWidth(), bounds.getHeight());
-		for (Screen screen : Screen.getScreens()) {
-			rect = snapRect(rect, screen.getBounds());
-			rect = snapRect(rect, screen.getVisualBounds());
-		}
-		relocate(rect.getMinX(), rect.getMinY());
-	}
-	
+	@Override
 	void setDefaultPosition() {
 		Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
 		setPosition(new Point2D(screenBounds.getMaxX() - getWidth(),
@@ -109,26 +76,6 @@ class Character extends Pane {
 		if (image != null) {
 			resize(image.getWidth(), image.getHeight());
 		}
-	}
-	
-	private void initEventFilters() {
-		addEventFilter(MouseEvent.MOUSE_PRESSED, (event) -> {
-			clickPos = new Point2D(event.getSceneX(), event.getSceneY());
-			dragPos = new Point2D(getLayoutX(), getLayoutY());
-		});
-		addEventFilter(MouseEvent.MOUSE_RELEASED, (event) -> {
-			dragPos = null;
-			clickPos = null;
-		});
-		addEventFilter(MouseEvent.MOUSE_DRAGGED, (event) -> {
-			Point2D newClickPos = new Point2D(event.getSceneX(), event.getSceneY());
-			Point2D delta = newClickPos.subtract(clickPos);
-			if (dragPos != null) {
-				dragPos = dragPos.add(delta);
-				setPosition(dragPos);
-			}
-			clickPos = newClickPos;
-		});
 	}
 	
 	void setIdleImageName(String name) {
