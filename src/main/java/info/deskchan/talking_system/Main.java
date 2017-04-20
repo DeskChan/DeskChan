@@ -46,7 +46,6 @@ public class Main implements Plugin {
 		currentPreset = new SimpleCharacterPreset();
 		Influence.globalMultiplier = 0.05f;
 		messageTimeout = 40000;
-		unpackPresets();
 		try {
 			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.load(ip);
@@ -356,12 +355,6 @@ public class Main implements Plugin {
 	
 	public static Path getDataDirPath() {
 		return pluginProxy.getDataDirPath();
-	}
-	
-	private void unpackPresets() {
-		final String[] presets = {
-		
-		};
 	}
 	
 	@Override
