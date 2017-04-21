@@ -1,8 +1,15 @@
 package info.deskchan.core;
 
+import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONString;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -164,6 +171,30 @@ public class PluginManager {
 	}
 	
 	public synchronized boolean loadPluginByPath(Path path) throws Throwable {
+		if (Files.isDirectory(path)) {
+			Path manifestPath = path.resolve("manifest.json");
+			if (Files.isReadable(manifestPath)) {
+				try (final InputStream manifestInputStream = Files.newInputStream(manifestPath)) {
+					final String manifestStr = IOUtils.toString(manifestInputStream, "UTF-8");
+					manifestInputStream.close();
+					final JSONObject manifest = new JSONObject(manifestStr);
+					if (manifest.has("deps")) {
+						final JSONArray deps = manifest.getJSONArray("deps");
+						for (Object dep : deps) {
+							if (dep instanceof JSONString) {
+								String depID = dep.toString();
+								if (!tryLoadPluginByName(depID)) {
+									throw new Exception("Failed to load dependency " + depID +
+											" of plugin " + path.toString());
+								}
+							}
+						}
+					}
+				} catch (IOException | JSONException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 		for (PluginLoader loader : loaders) {
 			if (loader.matchPath(path)) {
 				loader.loadByPath(path);
