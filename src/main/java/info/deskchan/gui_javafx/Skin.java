@@ -17,7 +17,11 @@ public interface Skin {
 	Image getImage(String name);
 	
 	static Path getSkinsPath() {
-		return PluginManager.getPluginsDirPath().getParent().resolve("skins");
+		Path path = PluginManager.getPluginsDirPath().getParent().resolve("skins");
+		if (!Files.isDirectory(path)) {
+			path = PluginManager.getPluginsDirPath().getParent().resolve("data").resolve("skins");
+		}
+		return path;
 	}
 	
 	static Path getSkinPath(String name) {

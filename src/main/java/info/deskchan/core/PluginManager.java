@@ -181,7 +181,7 @@ public class PluginManager {
 					if (manifest.has("deps")) {
 						final JSONArray deps = manifest.getJSONArray("deps");
 						for (Object dep : deps) {
-							if (dep instanceof JSONString) {
+							if (dep instanceof String) {
 								String depID = dep.toString();
 								if (!tryLoadPluginByName(depID)) {
 									throw new Exception("Failed to load dependency " + depID +
