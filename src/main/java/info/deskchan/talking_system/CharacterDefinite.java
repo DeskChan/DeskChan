@@ -23,6 +23,7 @@ public class CharacterDefinite extends CharacterSystem {
 			}
 		}
 	}
+	
 	public CharacterDefinite(JSONObject json) {
 		value = new float[featureCount][3];
 		if (json == null) {
@@ -36,7 +37,7 @@ public class CharacterDefinite extends CharacterSystem {
 				Object o = json.get(getFeatureName(i));
 				int val1 = -10, val2 = 0, val3 = 10;
 				if (o instanceof String) {
-					setValues(i,(String)o);
+					setValues(i, (String) o);
 					continue;
 				}
 				if (o instanceof JSONArray) {
@@ -49,7 +50,8 @@ public class CharacterDefinite extends CharacterSystem {
 					val2 = (Integer) o;
 				}
 				setValues(i, val1, val2, val3);
-			} catch (Exception o) { }
+			} catch (Exception o) {
+			}
 		}
 	}
 	
@@ -68,12 +70,14 @@ public class CharacterDefinite extends CharacterSystem {
 		}
 		float val1 = -10, val2 = 0, val3 = 10;
 		String[] ar = values.split(";");
-		Float[] far=new Float[ar.length];
-		for(int i=0;i<ar.length;i++)
+		Float[] far = new Float[ar.length];
+		for (int i = 0; i < ar.length; i++) {
 			try {
-				far[i]=Float.valueOf(ar[i].trim());
-			} catch (Exception e) { }
-
+				far[i] = Float.valueOf(ar[i].trim());
+			} catch (Exception e) {
+			}
+		}
+		
 		if (ar.length == 1) {
 			val2 = far[0];
 		}
@@ -167,8 +171,9 @@ public class CharacterDefinite extends CharacterSystem {
 	
 	public JSONObject toJSON() {
 		JSONObject save = new JSONObject();
-		for (int i = 0; i < featureCount; i++)
-			save.put(features[i][2],getValueString(i));
+		for (int i = 0; i < featureCount; i++) {
+			save.put(features[i][2], getValueString(i));
+		}
 		/*JSONArray ar;
 		for (int i = 0; i < featureCount; i++) {
 			ar = new JSONArray();

@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -185,10 +186,11 @@ public abstract class CharacterPreset {
 		}
 		return cp;
 	}
-	public void saveInFile(Path path) throws IOException{
+	
+	public void saveInFile(Path path) throws IOException {
 		String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<preset>"
 				+ XML.toString(toJSON()) + "</preset>";
-		xml=xml.replace("><",">\n<");
+		xml = xml.replace("><", ">\n<");
 		Writer out = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(path.resolve("saved.preset").toFile()), "UTF-8"));
 		try {
@@ -197,6 +199,7 @@ public abstract class CharacterPreset {
 			out.close();
 		}
 	}
+	
 	public static CharacterPreset getFromFileUnsafe(Path path) {
 		CharacterPreset cp = null;
 		try {

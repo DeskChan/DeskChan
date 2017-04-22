@@ -12,7 +12,7 @@ import javafx.stage.Screen;
 class MovablePane extends Pane {
 	
 	private static final int SNAP_DISTANCE = 10;
-
+	
 	private String positionStorageID = null;
 	private Point2D clickPos = null;
 	private Point2D dragPos = null;

@@ -82,7 +82,7 @@ class Character extends MovablePane {
 		idleImageName = name;
 		setImageName(name);
 	}
-
+	
 	void say(Map<String, Object> data) {
 		MessageInfo messageInfo = null;
 		if (data != null) {

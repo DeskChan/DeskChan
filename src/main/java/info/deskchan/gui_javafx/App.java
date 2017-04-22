@@ -10,7 +10,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.TextArea;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
@@ -146,7 +145,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				MessageBox dialog=new MessageBox((String) m.getOrDefault("name",Main.getString("default_messagebox_name")),(String) m.get("text"));
+				MessageBox dialog = new MessageBox((String) m.getOrDefault("name", Main.getString("default_messagebox_name")), (String) m.get("text"));
 				dialog.show();
 			});
 		});

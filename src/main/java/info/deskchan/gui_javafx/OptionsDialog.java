@@ -6,9 +6,6 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.scene.AccessibleAttribute;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -252,7 +249,7 @@ class OptionsDialog extends Dialog<Void> {
 	
 	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag) {
 		List<PluginOptionsTab> tabs = pluginsTabs.getOrDefault(plugin, null);
-		PluginOptionsTab poTab=new PluginOptionsTab(name, controls, msgTag);
+		PluginOptionsTab poTab = new PluginOptionsTab(name, controls, msgTag);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			pluginsTabs.put(plugin, tabs);
@@ -262,17 +259,19 @@ class OptionsDialog extends Dialog<Void> {
 			boolean found = false;
 			for (int i = 0; i < tabs.size(); i++) {
 				if (tabs.get(i).name.equals(name)) {
-					tabs.set(i,poTab);
+					tabs.set(i, poTab);
 					found = true;
 					break;
 				}
 			}
-			if (!found) tabs.add(poTab);
+			if (!found) {
+				tabs.add(poTab);
+			}
 		}
-
-		if(instance!=null){
-			for(Tab tab : instance.tabPane.getTabs()){
-				if(tab.getText().equals(name)) {
+		
+		if (instance != null) {
+			for (Tab tab : instance.tabPane.getTabs()) {
+				if (tab.getText().equals(name)) {
 					tab.setContent(poTab.createControlsPane());
 					break;
 				}
@@ -319,7 +318,7 @@ class OptionsDialog extends Dialog<Void> {
 		
 	}
 	
-	private static class PluginOptionsTab{
+	private static class PluginOptionsTab {
 		
 		final String name;
 		List<Map<String, Object>> controls;
@@ -330,10 +329,12 @@ class OptionsDialog extends Dialog<Void> {
 			this.controls = controls;
 			this.msgTag = msgTag;
 		}
-		void update(List<Map<String, Object>> controls, String msgTag){
+		
+		void update(List<Map<String, Object>> controls, String msgTag) {
 			this.controls = controls;
 			this.msgTag = msgTag;
 		}
+		
 		Node createControlsPane() {
 			final Map<String, PluginOptionsControlItem> namedControls = new HashMap<>();
 			BorderPane borderPane = new BorderPane();
