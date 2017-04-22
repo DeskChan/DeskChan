@@ -23,7 +23,6 @@ public class CharacterDefinite extends CharacterSystem {
 			}
 		}
 	}
-	
 	public CharacterDefinite(JSONObject json) {
 		value = new float[featureCount][3];
 		if (json == null) {
@@ -36,6 +35,10 @@ public class CharacterDefinite extends CharacterSystem {
 			try {
 				Object o = json.get(getFeatureName(i));
 				int val1 = -10, val2 = 0, val3 = 10;
+				if (o instanceof String) {
+					setValues(i,(String)o);
+					continue;
+				}
 				if (o instanceof JSONArray) {
 					JSONArray ar = (JSONArray) o;
 					val1 = ar.getInt(0);
@@ -45,12 +48,8 @@ public class CharacterDefinite extends CharacterSystem {
 				if (o instanceof Integer) {
 					val2 = (Integer) o;
 				}
-				if (o instanceof String) {
-					val2 = Integer.valueOf((String) o);
-				}
 				setValues(i, val1, val2, val3);
-			} catch (Exception o) {
-			}
+			} catch (Exception o) { }
 		}
 	}
 	
@@ -67,37 +66,25 @@ public class CharacterDefinite extends CharacterSystem {
 		if (values.isEmpty()) {
 			return;
 		}
-		int val1 = -10, val2 = 0, val3 = 10;
-		String[] ar = values.split(" // ");
-		if (ar.length == 1) {
+		float val1 = -10, val2 = 0, val3 = 10;
+		String[] ar = values.split(";");
+		Float[] far=new Float[ar.length];
+		for(int i=0;i<ar.length;i++)
 			try {
-				val2 = Integer.valueOf(ar[0]);
-			} catch (Exception e) {
-			}
+				far[i]=Float.valueOf(ar[i].trim());
+			} catch (Exception e) { }
+
+		if (ar.length == 1) {
+			val2 = far[0];
 		}
 		if (ar.length == 2) {
-			try {
-				val1 = Integer.valueOf(ar[0]);
-			} catch (Exception e) {
-			}
-			try {
-				val3 = Integer.valueOf(ar[1]);
-			} catch (Exception e) {
-			}
+			val1 = far[0];
+			val3 = far[1];
 		}
 		if (ar.length == 3) {
-			try {
-				val1 = Integer.valueOf(ar[0]);
-			} catch (Exception e) {
-			}
-			try {
-				val2 = Integer.valueOf(ar[1]);
-			} catch (Exception e) {
-			}
-			try {
-				val3 = Integer.valueOf(ar[2]);
-			} catch (Exception e) {
-			}
+			val1 = far[0];
+			val2 = far[1];
+			val3 = far[2];
 		}
 		setValues(index, val1, val2, val3);
 	}
@@ -156,12 +143,12 @@ public class CharacterDefinite extends CharacterSystem {
 	}
 	
 	public String getValueString(int index) {
-		return value[index][0] + " / " + value[index][1] + " / " + value[index][2];
+		return value[index][0] + " ; " + value[index][1] + " ; " + value[index][2];
 	}
 	
 	public void Print() {
 		for (int i = 0; i < featureCount; i++) {
-			System.out.println(features[i][1] + " <" + value[i][0] + " / " + value[i][1] + " / " + value[i][2] + "> " + features[i][2]);
+			System.out.println(features[i][1] + " <" + value[i][0] + " ; " + value[i][1] + " ; " + value[i][2] + "> " + features[i][2]);
 		}
 	}
 	
@@ -180,14 +167,16 @@ public class CharacterDefinite extends CharacterSystem {
 	
 	public JSONObject toJSON() {
 		JSONObject save = new JSONObject();
-		JSONArray ar;
+		for (int i = 0; i < featureCount; i++)
+			save.put(features[i][2],getValueString(i));
+		/*JSONArray ar;
 		for (int i = 0; i < featureCount; i++) {
 			ar = new JSONArray();
 			ar.put(0, value[i][0]);
 			ar.put(1, value[i][1]);
 			ar.put(2, value[i][2]);
 			save.put(features[i][2], ar);
-		}
+		}*/
 		return save;
 	}
 	
