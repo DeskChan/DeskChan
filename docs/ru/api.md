@@ -404,7 +404,16 @@ DeskChan:register-simple-action.
 качестве данных оно принимает список таких же наборов
 параметров (List<Map<String, Object>>).
 
-### gui:add-options-tab
+### gui:show-notification
+
+#### Данные: Map<String, Object>
+
+    name: String
+    text: String
+
+Показывает окно сообщения с названием name и текстом text.
+
+### gui:setup-options-tab
 
 #### Данные: Map<String, Object>
 
