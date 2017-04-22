@@ -93,7 +93,10 @@ public class PluginProxy implements MessageListener {
 			listener.handle(sender, data);
 		}
 	}
-	
+	public Path getStartPath() {
+		return PluginManager.getStartPath();
+	}
+
 	public Path getDataDirPath() {
 		return PluginManager.getPluginDataDirPath(id);
 	}
