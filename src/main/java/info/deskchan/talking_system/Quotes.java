@@ -22,8 +22,8 @@ import java.util.*;
 
 public class Quotes {
 	CharacterDefinite current = new CharacterDefinite();
-	int queueLength = 2;
-	int curPos = 0;
+	private int queueLength = 30;
+	private int curPos = 0;
 	Quote[] lastUsed = new Quote[queueLength];
 	ArrayList<Quote> quotes = new ArrayList();
 	ArrayList<Quote> suitableQuotes = new ArrayList();
@@ -102,12 +102,14 @@ public class Quotes {
 			counter--;
 			r = new Random().nextInt(sq.size());
 			q = sq.get(r);
-			for (int i = 0; i < counter; i++) {
-				if (lastUsed[i] == q) {
-					continue;
-				}
+			int i,j=curPos-1;
+			for (i = 0; i < counter; i++,j--) {
+				if(j<0)
+					j=j+queueLength;
+				if (lastUsed[j] == q)
+					break;
 			}
-			break;
+			if(i==counter) break;
 		} while (counter > 0);
 		lastUsed[curPos] = q;
 		curPos = (curPos + 1) % queueLength;
