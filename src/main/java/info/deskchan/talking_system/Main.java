@@ -415,6 +415,8 @@ public class Main implements Plugin {
 	
 	@Override
 	public void unload() {
+		chatTimer.cancel();
+		chatTimer.purge();
 		saveSettings();
 		operatePhraseRequest("BYE");
 	}
