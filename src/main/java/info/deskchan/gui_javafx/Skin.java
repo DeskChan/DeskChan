@@ -1,6 +1,7 @@
 package info.deskchan.gui_javafx;
 
 import info.deskchan.core.PluginManager;
+import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 
 import java.io.IOException;
@@ -15,6 +16,10 @@ public interface Skin {
 	String getName();
 	
 	Image getImage(String name);
+	
+	Point2D getPreferredBalloonPosition(String imageName);
+	
+	void overridePreferredBalloonPosition(String imageName, Point2D position);
 	
 	static Path getSkinsPath() {
 		Path path = PluginManager.getPluginsDirPath().getParent().resolve("skins");

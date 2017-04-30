@@ -102,14 +102,18 @@ public class Quotes {
 			counter--;
 			r = new Random().nextInt(sq.size());
 			q = sq.get(r);
-			int i,j=curPos-1;
-			for (i = 0; i < counter; i++,j--) {
-				if(j<0)
-					j=j+queueLength;
-				if (lastUsed[j] == q)
+			int i, j = curPos - 1;
+			for (i = 0; i < counter; i++, j--) {
+				if (j < 0) {
+					j = j + queueLength;
+				}
+				if (lastUsed[j] == q) {
 					break;
+				}
 			}
-			if(i==counter) break;
+			if (i == counter) {
+				break;
+			}
 		} while (counter > 0);
 		lastUsed[curPos] = q;
 		curPos = (curPos + 1) % queueLength;

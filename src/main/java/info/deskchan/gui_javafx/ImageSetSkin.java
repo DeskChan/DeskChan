@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 
 import java.io.IOException;
@@ -7,10 +8,7 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 class ImageSetSkin implements Skin {
@@ -26,9 +24,23 @@ class ImageSetSkin implements Skin {
 	};
 	private final Path path;
 	private final Map<String, List<Image>> images = new HashMap<>();
+	private final Path propertiesPath;
+	private final Properties properties = new Properties();
 	
 	ImageSetSkin(Path path) {
 		this.path = path;
+		propertiesPath = Main.getInstance().getPluginProxy().getDataDirPath().resolve(
+				"skin_" + getName() + ".properties"
+		);
+		try {
+			properties.load(Files.newBufferedReader(propertiesPath));
+		} catch (Throwable e) {
+			try {
+				properties.load(Files.newBufferedReader(path.resolve("properties.txt")));
+			} catch (Throwable e2) {
+				// Do nothing
+			}
+		}
 	}
 	
 	@Override
@@ -73,14 +85,14 @@ class ImageSetSkin implements Skin {
 	public Image getImage(String name) {
 		List<Image> l = getImageArray(name);
 		if (l.size() == 0) {
-			for (int i = 0; i < replacing.length; i++) {
-				for (int j = 0; j < replacing[i].length; j++) {
-					if (replacing[i][j].equals(name)) {
-						for (int k = 0; k < replacing[i].length; k++) {
+			for (String[] aReplacing : replacing) {
+				for (int j = 0; j < aReplacing.length; j++) {
+					if (aReplacing[j].equals(name)) {
+						for (int k = 0; k < aReplacing.length; k++) {
 							if (k == j) {
 								continue;
 							}
-							l = getImageArray(replacing[i][k]);
+							l = getImageArray(aReplacing[k]);
 							if (l.size() != 0) {
 								return l.get(ThreadLocalRandom.current().nextInt(0, l.size()));
 							}
@@ -96,6 +108,38 @@ class ImageSetSkin implements Skin {
 		}
 		int i = ThreadLocalRandom.current().nextInt(0, l.size());
 		return l.get(i);
+	}
+	
+	@Override
+	public Point2D getPreferredBalloonPosition(String imageName) {
+		try {
+			String key = "balloon_offset." + imageName;
+			String value = properties.getProperty(key, null);
+			if (value == null) {
+				return null;
+			}
+			String[] coords = value.split(";");
+			return new Point2D(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+		} catch (Throwable e) {
+			return null;
+		}
+	}
+	
+	@Override
+	public void overridePreferredBalloonPosition(String imageName, Point2D position) {
+		try {
+			String key = "balloon_offset." + imageName;
+			String value = String.valueOf(position.getX()) + ";" +
+					String.valueOf(position.getY());
+			String oldValue = properties.getProperty(key);
+			if ((oldValue != null) && oldValue.equals(value)) {
+				return;
+			}
+			properties.setProperty(key, value);
+			properties.store(Files.newBufferedWriter(propertiesPath), "Skin properties");
+		} catch (Throwable e) {
+			Main.log(e);
+		}
 	}
 	
 	@Override

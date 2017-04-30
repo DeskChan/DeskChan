@@ -22,6 +22,7 @@ class Character extends MovablePane {
 	
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
 	
+	private final String id;
 	private ImageView imageView = new ImageView();
 	private Skin skin = null;
 	private String imageName = "normal";
@@ -30,11 +31,17 @@ class Character extends MovablePane {
 	private Balloon balloon = null;
 	private String layerName = "top";
 	private LayerMode layerMode = LayerMode.ALWAYS_TOP;
+	private Balloon.PositionMode balloonPositionMode;
 	
 	Character(String id, Skin skin) {
+		this.id = id;
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
+		balloonPositionMode = Balloon.PositionMode.valueOf(
+				Main.getProperty("character." + id + ".balloon_position_mode",
+						Balloon.PositionMode.AUTO.toString())
+		);
 		addEventFilter(MouseEvent.MOUSE_PRESSED, this::startDrag);
 	}
 	
@@ -83,6 +90,15 @@ class Character extends MovablePane {
 		setImageName(name);
 	}
 	
+	Balloon.PositionMode getBalloonPositionMode() {
+		return balloonPositionMode;
+	}
+	
+	void setBalloonPositionMode(Balloon.PositionMode mode) {
+		balloonPositionMode = mode;
+		Main.setProperty("character." + id + ".balloon_position_mode", mode.toString());
+	}
+	
 	void say(Map<String, Object> data) {
 		MessageInfo messageInfo = null;
 		if (data != null) {
@@ -106,7 +122,7 @@ class Character extends MovablePane {
 			setImageName(idleImageName);
 		} else {
 			setImageName(messageInfo.characterImage);
-			balloon = new Balloon(this, messageInfo.text);
+			balloon = new Balloon(this, balloonPositionMode, messageInfo.text);
 			balloon.setTimeout(messageInfo.timeout);
 		}
 		setLayerMode(layerMode);

@@ -79,7 +79,8 @@ class OptionsDialog extends Dialog<Void> {
 		gridPane.add(balloonFontButton, 1, 1);
 		gridPane.add(new Label(Main.getString("character.layer_mode")), 0, 2);
 		ComboBox<Character.LayerMode> characterLayerModeComboBox = new ComboBox<>();
-		characterLayerModeComboBox.setItems(FXCollections.observableList(Arrays.asList(Character.LayerMode.values())));
+		characterLayerModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
+				Character.LayerMode.values())));
 		characterLayerModeComboBox.getSelectionModel().select(App.getInstance().getCharacter().getLayerMode());
 		characterLayerModeComboBox.getSelectionModel().selectedItemProperty().addListener(
 				(property, oldValue, value) -> {
@@ -95,6 +96,18 @@ class OptionsDialog extends Dialog<Void> {
 			Main.setProperty("balloon.default_timeout", value.toString());
 		});
 		gridPane.add(balloonDefaultTimeoutSpinner, 1, 3);
+		gridPane.add(new Label(Main.getString("balloon_position_mode")), 0, 4);
+		ComboBox<Balloon.PositionMode> balloonPositionModeComboBox = new ComboBox<>();
+		balloonPositionModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
+				Balloon.PositionMode.values())));
+		balloonPositionModeComboBox.getSelectionModel().select(
+				App.getInstance().getCharacter().getBalloonPositionMode());
+		balloonPositionModeComboBox.getSelectionModel().selectedItemProperty().addListener(
+				(property, oldValue, value) -> {
+					App.getInstance().getCharacter().setBalloonPositionMode(value);
+				}
+		);
+		gridPane.add(balloonPositionModeComboBox, 1, 4);
 		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
