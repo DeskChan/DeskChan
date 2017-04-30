@@ -5,10 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -24,6 +21,7 @@ public class PluginManager {
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Set<String> blacklistedPlugins = new HashSet<>();
 	private String[] args;
+	private static OutputStream logStream = null;
 	
 	/* Singleton */
 	
@@ -38,6 +36,16 @@ public class PluginManager {
 	
 	void initialize(String[] args) {
 		this.args = args;
+		try {
+			logStream = Files.newOutputStream(getDataDirPath().resolve("DeskChan.log"));
+		} catch (IOException e) {
+			log(e);
+		}
+		log(BuildConfig.NAME + " " + BuildConfig.VERSION);
+		log("Go to http://deskchan.info/ for more information");
+		log("Git branch: " + BuildConfig.GIT_BRANCH_NAME);
+		log("Git commit hash: " + BuildConfig.GIT_COMMIT_HASH);
+		log("Build date and time: " + BuildConfig.BUILD_DATETIME);
 		tryLoadPluginByClass(CorePlugin.class);
 		loadPluginsBlacklist();
 	}
@@ -240,6 +248,12 @@ public class PluginManager {
 		pluginsToUnload.clear();
 		plugins.get("core").unload();
 		savePluginsBlacklist();
+		try {
+			logStream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		logStream = null;
 		System.exit(0);
 	}
 	
@@ -355,11 +369,26 @@ public class PluginManager {
 	/* Logging */
 	
 	static void log(String id, String message) {
-		System.err.println(id + ": " + message);
+		String text = id + ": " + message;
+		System.err.println(text);
+		if (logStream != null) {
+			try {
+				logStream.write((text + "\n").getBytes("UTF-8"));
+			} catch (IOException e) {
+				logStream = null;
+				log(e);
+			}
+		}
 	}
 	
 	static void log(String id, Throwable e) {
-		e.printStackTrace();
+		StringWriter stringWriter = new StringWriter();
+		PrintWriter printWriter = new PrintWriter(stringWriter);
+		e.printStackTrace(printWriter);
+		String[] lines = stringWriter.toString().split("\n");
+		for (String line : lines) {
+			log(id, line);
+		}
 	}
 	
 	static void log(String message) {
