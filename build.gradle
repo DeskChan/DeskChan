@@ -40,6 +40,8 @@ dependencies {
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
+project.version = '0.1.5'
+
 mainClassName = 'info.deskchan.core.Main'
 
 def gitQueries = [
@@ -65,7 +67,7 @@ buildConfig {
 	packageName = 'info.deskchan.core'
 	clsName = 'BuildConfig'
 	appName = project.name
-	version = "r${gitCommitCount}"
+	version = "${project.version}-r${gitCommitCount}"
 	buildConfigField 'String', 'GIT_COMMIT_HASH', gitCommitHash
 	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
 	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd\'T\'HH:mm:ssZ')
