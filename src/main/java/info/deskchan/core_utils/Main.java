@@ -28,7 +28,7 @@ public class Main implements Plugin {
 							}
 						}
 					}
-					long delay = (Long) m.get("delay");
+					long delay = (Long) m.getOrDefault("delay", -1);
 					if (delay > 0) {
 						MyTimerTask task = new MyTimerTask(sender, seq);
 						timer.schedule(task, delay);
