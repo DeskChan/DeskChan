@@ -42,7 +42,7 @@ public class PluginManager {
 			log(e);
 		}
 		log(BuildConfig.NAME + " " + BuildConfig.VERSION);
-		log("Go to http://deskchan.info/ for more information");
+		log("Go to " + BuildConfig.PROJECT_SITE_URL + " for more information");
 		log("Git branch: " + BuildConfig.GIT_BRANCH_NAME);
 		log("Git commit hash: " + BuildConfig.GIT_COMMIT_HASH);
 		log("Build date and time: " + BuildConfig.BUILD_DATETIME);

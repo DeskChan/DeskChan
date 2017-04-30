@@ -71,6 +71,7 @@ buildConfig {
 	buildConfigField 'String', 'GIT_COMMIT_HASH', gitCommitHash
 	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
 	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd\'T\'HH:mm:ssZ')
+	buildConfigField 'String', 'PROJECT_SITE_URL', 'http://deskchan.info/'
 }
 
 jar {
