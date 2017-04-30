@@ -160,6 +160,7 @@ public class CorePlugin implements Plugin, MessageListener {
 				return;
 			}
 			if (info.priority < priority) {
+				iterator.previous();
 				break;
 			}
 		}

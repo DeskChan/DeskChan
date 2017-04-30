@@ -1,22 +1,23 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core.ResponseListener;
+
 import java.util.*;
 
 public class EmotionsController {
 	private int emotionValue;
 	private int emotionIndex;
 	private static int emotion_limit = 3;
-	Timer raisingTimer;
 	
-	public EmotionsController() {
+	EmotionsController() {
 		Reset();
-		raisingTimer = new Timer();
-		raisingTimer.schedule(new raiseNewEmotion(), 100000, 100000);
+		(new RaiseNewEmotion()).start();
 	}
 	
-	class raiseNewEmotion extends TimerTask {
+	class RaiseNewEmotion implements ResponseListener {
+		
 		@Override
-		public void run() {
+		public void handle(String sender, Object data) {
 			if (new Random().nextFloat() > 0.8) {
 				if (emotionValue > 0) {
 					emotionValue += (new Random().nextFloat() > 0.5 ? 1 : -1);
@@ -37,10 +38,19 @@ public class EmotionsController {
 			} else {
 				Reset();
 			}
+			start();
 		}
+		
+		void start() {
+			Main.getPluginProxy().sendMessage("core-utils:notify-after-delay",
+					new HashMap<String, Object>() {{
+						put("delay", (long) 100000);
+					}}, this);
+		}
+		
 	}
 	
-	public void Reset() {
+	void Reset() {
 		emotionValue = 0;
 		emotionIndex = -1;
 	}

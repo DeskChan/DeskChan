@@ -50,7 +50,7 @@ public class PluginProxy implements MessageListener {
 		PluginManager.getInstance().sendMessage(id, tag, data);
 	}
 	
-	public void sendMessage(String tag, Object data, ResponseListener responseListener) {
+	public Object sendMessage(String tag, Object data, ResponseListener responseListener) {
 		if (!(data instanceof Map)) {
 			Map<String, Object> m = new HashMap<>();
 			m.put("data", data);
@@ -61,6 +61,7 @@ public class PluginProxy implements MessageListener {
 		responseListeners.put(seq, responseListener);
 		m.put("seq", seq);
 		sendMessage(tag, data);
+		return seq;
 	}
 	
 	public void addMessageListener(String tag, MessageListener listener) {

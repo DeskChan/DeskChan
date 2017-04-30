@@ -41,11 +41,11 @@ public class PluginManager {
 		} catch (IOException e) {
 			log(e);
 		}
-		log(BuildConfig.NAME + " " + BuildConfig.VERSION);
-		log("Go to " + BuildConfig.PROJECT_SITE_URL + " for more information");
-		log("Git branch: " + BuildConfig.GIT_BRANCH_NAME);
-		log("Git commit hash: " + BuildConfig.GIT_COMMIT_HASH);
-		log("Build date and time: " + BuildConfig.BUILD_DATETIME);
+		log(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
+		log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
+		log("Git branch: " + CoreInfo.get("GIT_BRANCH_NAME"));
+		log("Git commit hash: " + CoreInfo.get("GIT_COMMIT_HASH"));
+		log("Build date and time: " + CoreInfo.get("BUILD_DATETIME"));
 		tryLoadPluginByClass(CorePlugin.class);
 		loadPluginsBlacklist();
 	}
