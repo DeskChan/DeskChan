@@ -344,6 +344,9 @@ public class PluginManager {
 		} else {
 			path = corePath.getParent().resolve("../data");
 		}
+		if (!Files.isDirectory(path)) {
+			path.toFile().mkdir();
+		}
 		return path;
 	}
 	
