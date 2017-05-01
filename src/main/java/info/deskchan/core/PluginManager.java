@@ -248,12 +248,14 @@ public class PluginManager {
 		pluginsToUnload.clear();
 		plugins.get("core").unload();
 		savePluginsBlacklist();
-		try {
-			logStream.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (logStream != null) {
+			try {
+				logStream.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			logStream = null;
 		}
-		logStream = null;
 		System.exit(0);
 	}
 	
