@@ -346,6 +346,7 @@ public class PluginManager {
 		}
 		if (!Files.isDirectory(path)) {
 			path.toFile().mkdir();
+			log("Created directory: " + path);
 		}
 		return path;
 	}
