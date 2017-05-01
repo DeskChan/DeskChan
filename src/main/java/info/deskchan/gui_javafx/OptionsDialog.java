@@ -1,7 +1,9 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core.CoreInfo;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
+import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
@@ -251,6 +253,26 @@ class OptionsDialog extends Dialog<Void> {
 				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane()));
 			}
 		}
+		gridPane = new GridPane();
+		gridPane.setHgap(6);
+		gridPane.setVgap(6);
+		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
+		label.setFont(Font.font(20));
+		gridPane.add(label, 0, 0, 2, 1);
+		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
+		Hyperlink hyperlink = new Hyperlink();
+		hyperlink.setText(CoreInfo.get("PROJECT_SITE_URL"));
+		hyperlink.setOnAction(event -> {
+			App.getInstance().getHostServices().showDocument(hyperlink.getText());
+		});
+		gridPane.add(hyperlink, 1, 1);
+		gridPane.add(new Label(Main.getString("about.git_branch")), 0, 2);
+		gridPane.add(new Label(CoreInfo.get("GIT_BRANCH_NAME")), 1, 2);
+		gridPane.add(new Label(Main.getString("about.git_commit_hash")), 0, 3);
+		gridPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 1, 3);
+		gridPane.add(new Label(Main.getString("about.build_datetime")), 0, 4);
+		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
+		tabPane.getTabs().add(new Tab(Main.getString("about"), gridPane));
 	}
 	
 	private void openSkinManager() {
