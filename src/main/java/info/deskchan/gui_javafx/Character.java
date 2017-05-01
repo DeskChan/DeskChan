@@ -32,9 +32,11 @@ class Character extends MovablePane {
 	private String layerName = "top";
 	private LayerMode layerMode = LayerMode.ALWAYS_TOP;
 	private Balloon.PositionMode balloonPositionMode;
+	private float scaleFactor = 1.0f;
 	
 	Character(String id, Skin skin) {
 		this.id = id;
+		scaleFactor = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
@@ -81,8 +83,15 @@ class Character extends MovablePane {
 		Image image = getImage();
 		imageView.setImage(image);
 		if (image != null) {
-			resize(image.getWidth(), image.getHeight());
+			imageView.setFitWidth(image.getWidth() * scaleFactor);
+			imageView.setFitHeight(image.getHeight() * scaleFactor);
+			resize(imageView.getFitWidth(), imageView.getFitHeight());
 		}
+	}
+
+	void resize(float scaleFactor) {
+		this.scaleFactor = scaleFactor;
+		updateImage();
 	}
 	
 	void setIdleImageName(String name) {

@@ -54,7 +54,15 @@ class OptionsDialog extends TemplateBox {
 		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
 		skinManagerButton.setOnAction(event -> openSkinManager());
 		gridPane.add(skinManagerButton, 1, 0);
-		gridPane.add(new Label(Main.getString("balloon_font")), 0, 1);
+		gridPane.add(new Label(Main.getString("scale_factor")), 0, 1);
+		Spinner<Double> scaleFactorSpinner = new Spinner<>(0.1, 10.0,
+				Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0")), 0.05);
+		scaleFactorSpinner.valueProperty().addListener((property, oldValue, value) -> {
+			Main.setProperty("skin.scale_factor", value.toString());
+			App.getInstance().getCharacter().resize(value.floatValue());
+		});
+		gridPane.add(scaleFactorSpinner, 1, 1);
+		gridPane.add(new Label(Main.getString("balloon_font")), 0, 2);
 		Button balloonFontButton = new Button(
 				Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize()
 		);
@@ -70,8 +78,8 @@ class OptionsDialog extends TemplateBox {
 				balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
 			}
 		});
-		gridPane.add(balloonFontButton, 1, 1);
-		gridPane.add(new Label(Main.getString("character.layer_mode")), 0, 2);
+		gridPane.add(balloonFontButton, 1, 2);
+		gridPane.add(new Label(Main.getString("character.layer_mode")), 0, 3);
 		ComboBox<Character.LayerMode> characterLayerModeComboBox = new ComboBox<>();
 		characterLayerModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
 				Character.LayerMode.values())));
@@ -82,15 +90,15 @@ class OptionsDialog extends TemplateBox {
 					Main.setProperty("character.layer_mode", value.toString());
 				}
 		);
-		gridPane.add(characterLayerModeComboBox, 1, 2);
-		gridPane.add(new Label(Main.getString("balloon_default_timeout")), 0, 3);
+		gridPane.add(characterLayerModeComboBox, 1, 3);
+		gridPane.add(new Label(Main.getString("balloon_default_timeout")), 0, 4);
 		Spinner<Integer> balloonDefaultTimeoutSpinner = new Spinner<>(0, 120000,
 				Integer.parseInt(Main.getProperty("balloon.default_timeout", "15000")), 1000);
 		balloonDefaultTimeoutSpinner.valueProperty().addListener((property, oldValue, value) -> {
 			Main.setProperty("balloon.default_timeout", value.toString());
 		});
-		gridPane.add(balloonDefaultTimeoutSpinner, 1, 3);
-		gridPane.add(new Label(Main.getString("balloon_position_mode")), 0, 4);
+		gridPane.add(balloonDefaultTimeoutSpinner, 1, 4);
+		gridPane.add(new Label(Main.getString("balloon_position_mode")), 0, 5);
 		ComboBox<Balloon.PositionMode> balloonPositionModeComboBox = new ComboBox<>();
 		balloonPositionModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
 				Balloon.PositionMode.values())));
@@ -101,7 +109,7 @@ class OptionsDialog extends TemplateBox {
 					App.getInstance().getCharacter().setBalloonPositionMode(value);
 				}
 		);
-		gridPane.add(balloonPositionModeComboBox, 1, 4);
+		gridPane.add(balloonPositionModeComboBox, 1, 5);
 		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
