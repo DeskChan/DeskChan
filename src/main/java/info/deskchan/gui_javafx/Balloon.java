@@ -8,6 +8,8 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
@@ -90,6 +92,10 @@ class Balloon extends MovablePane {
 				timeoutTimeline.play();
 			}
 		});
+
+		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator("balloon");
+		addEventFilter(MouseEvent.MOUSE_CLICKED, mouseEventNotificator::notifyMouseEvent);
+		addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
 	}
 	
 	Balloon(Character character, PositionMode positionMode, String text) {

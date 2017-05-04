@@ -5,6 +5,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.stage.Screen;
 
 import java.util.Map;
@@ -45,6 +46,10 @@ class Character extends MovablePane {
 						Balloon.PositionMode.AUTO.toString())
 		);
 		addEventFilter(MouseEvent.MOUSE_PRESSED, this::startDrag);
+
+		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator("character");
+		addEventFilter(MouseEvent.MOUSE_CLICKED, mouseEventNotificator::notifyMouseEvent);
+		addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
 	}
 	
 	Skin getSkin() {
