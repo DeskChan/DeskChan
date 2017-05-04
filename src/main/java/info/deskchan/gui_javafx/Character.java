@@ -89,9 +89,13 @@ class Character extends MovablePane {
 		}
 	}
 
-	void resize(float scaleFactor) {
+	void resizeSprite(float scaleFactor) {
 		this.scaleFactor = scaleFactor;
 		updateImage();
+	}
+
+	void resizeSpriteRelatively(float scaleFactorIncrement) {
+		resizeSprite(scaleFactor + scaleFactorIncrement);
 	}
 	
 	void setIdleImageName(String name) {

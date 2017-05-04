@@ -59,7 +59,7 @@ class OptionsDialog extends TemplateBox {
 				Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0")), 0.05);
 		scaleFactorSpinner.valueProperty().addListener((property, oldValue, value) -> {
 			Main.setProperty("skin.scale_factor", value.toString());
-			App.getInstance().getCharacter().resize(value.floatValue());
+			App.getInstance().getCharacter().resizeSprite(value.floatValue());
 		});
 		gridPane.add(scaleFactorSpinner, 1, 1);
 		gridPane.add(new Label(Main.getString("balloon_font")), 0, 2);
