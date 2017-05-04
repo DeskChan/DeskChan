@@ -140,6 +140,18 @@ public class App extends Application {
 				}
 			});
 		});
+		pluginProxy.addMessageListener("gui:resize-character", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Map<String, Object> m = (Map<String, Object>) data;
+				if (m.containsKey("scaleFactor")) {
+					Double scaleFactor = (double) m.get("scaleFactor");
+					character.resizeSprite(scaleFactor.floatValue());
+				} else if (m.containsKey("zoom")) {
+					Double zoom = (double) m.get("zoom");
+					character.resizeSpriteRelatively(zoom.floatValue());
+				}
+			});
+		});
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
