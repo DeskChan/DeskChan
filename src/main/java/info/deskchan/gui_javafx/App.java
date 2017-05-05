@@ -149,6 +149,14 @@ public class App extends Application {
 				} else if (m.containsKey("zoom")) {
 					Double zoom = (double) m.get("zoom");
 					character.resizeSpriteRelatively(zoom.floatValue());
+				} else if (m.containsKey("width") || m.containsKey("height")) {
+					character.resizeSprite((Integer) m.get("width"), (Integer) m.get("height"));
+				}
+
+				boolean save = (boolean) m.getOrDefault("save", false);
+				if (save) {
+					Float scaleFactor = character.getScaleFactor();
+					Main.setProperty("skin.scale_factor", scaleFactor.toString());
 				}
 			});
 		});

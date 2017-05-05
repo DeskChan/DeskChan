@@ -119,6 +119,18 @@ class Character extends MovablePane {
 		updateImage();
 	}
 
+	void resizeSprite(Integer width, Integer height) {
+	    Double scaleFactor = null;
+	    if (width != null) {
+	        scaleFactor = width / imageView.getImage().getWidth();
+        } else if (height != null) {
+            scaleFactor = height / imageView.getImage().getHeight();
+        } else {
+	        return;
+        }
+        resizeSprite(scaleFactor.floatValue());
+    }
+
 	void resizeSpriteRelatively(float scaleFactorIncrement) {
 		resizeSprite(scaleFactor + scaleFactorIncrement);
 	}
@@ -191,6 +203,10 @@ class Character extends MovablePane {
 			balloon.show(layerName);
 		}
 	}
+
+	float getScaleFactor() {
+	    return scaleFactor;
+    }
 	
 	private static class MessageInfo implements Comparable<MessageInfo> {
 		
