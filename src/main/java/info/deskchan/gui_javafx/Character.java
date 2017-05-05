@@ -7,9 +7,14 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.stage.Screen;
+import org.apache.commons.lang3.SystemUtils;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
 
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class Character extends MovablePane {
 	
@@ -49,7 +54,22 @@ class Character extends MovablePane {
 
 		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator("character");
 		addEventFilter(MouseEvent.MOUSE_CLICKED, mouseEventNotificator::notifyMouseEvent);
-		addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
+
+		if (SystemUtils.IS_OS_WINDOWS) {
+			Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+			logger.setLevel(Level.OFF);
+			try {
+				GlobalScreen.registerNativeHook();
+			} catch (NativeHookException | UnsatisfiedLinkError e) {
+				e.printStackTrace();
+				Main.log("Failed to initialize the native hooking. Rolling back to using JavaFX events...");
+				addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
+				return;
+			}
+			GlobalScreen.addNativeMouseWheelListener(mouseEventNotificator::notifyScrollEvent);
+		} else {
+			addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
+		}
 	}
 	
 	Skin getSkin() {
@@ -73,7 +93,7 @@ class Character extends MovablePane {
 		updateImage();
 	}
 	
-	private Image getImage() {
+	Image getImage() {
 		return (skin != null) ? skin.getImage(imageName) : null;
 	}
 	
