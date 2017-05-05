@@ -1,24 +1,38 @@
 package info.deskchan.gui_javafx;
 
-import javafx.geometry.Point2D;
-import javafx.scene.image.PixelReader;
+import javafx.scene.Node;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
-import javafx.scene.paint.Color;
+import org.apache.commons.lang3.SystemUtils;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
 import org.jnativehook.mouse.NativeMouseWheelEvent;
+import org.jnativehook.mouse.NativeMouseWheelListener;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class MouseEventNotificator {
-    private String sender;
+    private Node sender;
+    private String senderName;
 
-    MouseEventNotificator(String sender) {
-        this.sender = sender;
+    private NativeMouseWheelListener mouseWheelListener;
+
+    static {
+        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+        logger.setLevel(Level.OFF);
     }
 
-    void notifyMouseEvent(MouseEvent event) {
+    MouseEventNotificator(Node sender, String senderName) {
+        this.sender = sender;
+        this.senderName = senderName;
+    }
+
+    void notifyClickEvent(MouseEvent event) {
         if (!event.isStillSincePress()) {
             return;
         }
@@ -27,7 +41,7 @@ class MouseEventNotificator {
         m.put("x", event.getScreenX());
         m.put("y", event.getScreenY());
 
-        StringBuilder eventMessage = new StringBuilder("gui-events:").append(sender).append("-");
+        StringBuilder eventMessage = new StringBuilder("gui-events:").append(senderName).append("-");
         if (event.getButton() == MouseButton.PRIMARY) {
             if (event.getClickCount() == 2) {
                 eventMessage.append("double");
@@ -51,20 +65,15 @@ class MouseEventNotificator {
         impl_notifyScrollEvent(delta);
     }
 
-    void notifyScrollEvent(NativeMouseWheelEvent event) {
-        Character character = App.getInstance().getCharacter();
-        Point2D characterPosition = character.getPosition();
-        double charX1 = characterPosition.getX();
-        double charX2 = charX1 + character.getWidth();
-        double charY1 = characterPosition.getY();
-        double charY2 = charY1 + character.getHeight();
+    void notifyScrollEvent(NativeMouseWheelEvent event, Function<NativeMouseWheelEvent, Boolean> intersectionTestFunc) {
+        double senderX = sender.getLayoutX();
+        double senderY = sender.getLayoutY();
         double x = event.getX();
         double y = event.getY();
 
-        if (x > charX1 && x < charX2 && y > charY1 && y < charY2) {
-            PixelReader imagePixels = character.getImage().getPixelReader();
-            Color pixelColor = imagePixels.getColor((int) (x - charX1), (int) (y - charY1));
-            if (!pixelColor.equals(Color.TRANSPARENT)) {
+        Main.log(String.format("X: %f, Y: %f, senderX: %f, senderY: %f.", x, y, senderX, senderY));
+        if (sender.contains(x - senderX, y - senderY)) {
+            if (intersectionTestFunc.apply(event)) {
                 impl_notifyScrollEvent(event.getWheelRotation());
             }
         }
@@ -74,7 +83,40 @@ class MouseEventNotificator {
         Map<String, Object> m = new HashMap<>();
         m.put("delta", delta);
 
-        String eventMessage = "gui-events:" + sender + "-scroll";
+        String eventMessage = "gui-events:" + senderName + "-scroll";
         Main.getInstance().getPluginProxy().sendMessage(eventMessage, m);
+    }
+
+    MouseEventNotificator setOnClickListener() {
+        sender.addEventFilter(MouseEvent.MOUSE_CLICKED, this::notifyClickEvent);
+        return this;
+    }
+
+    MouseEventNotificator setOnScrollListener(Function<NativeMouseWheelEvent, Boolean> intersectionTestFunc) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            if (!GlobalScreen.isNativeHookRegistered()) {
+                try {
+                    GlobalScreen.registerNativeHook();
+                } catch (NativeHookException | UnsatisfiedLinkError e) {
+                    e.printStackTrace();
+                    Main.log("Failed to initialize the native hooking. Rolling back to using JavaFX events...");
+                    sender.addEventFilter(ScrollEvent.SCROLL, this::notifyScrollEvent);
+                    return this;
+                }
+            }
+            mouseWheelListener = event -> this.notifyScrollEvent(event, intersectionTestFunc);
+            GlobalScreen.addNativeMouseWheelListener(mouseWheelListener);
+        } else {
+            sender.addEventFilter(ScrollEvent.SCROLL, this::notifyScrollEvent);
+        }
+
+        return this;
+    }
+
+    void cleanListeners() {
+        // All methods have their own internal checks for the case when a filter is not set and equals null.
+        sender.removeEventFilter(MouseEvent.MOUSE_CLICKED, this::notifyClickEvent);
+        sender.removeEventFilter(ScrollEvent.SCROLL, this::notifyScrollEvent);
+        GlobalScreen.removeNativeMouseWheelListener(mouseWheelListener);
     }
 }

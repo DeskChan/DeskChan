@@ -8,8 +8,6 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
@@ -40,6 +38,8 @@ class Balloon extends MovablePane {
 	private final StackPane stackPane = new StackPane();
 	private final Node content;
 	private PositionMode positionMode = PositionMode.ABSOLUTE;
+
+	private final MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "balloon");
 	
 	Balloon(String id, String text) {
 		stackPane.setPrefWidth(400);
@@ -93,9 +93,8 @@ class Balloon extends MovablePane {
 			}
 		});
 
-		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator("balloon");
-		addEventFilter(MouseEvent.MOUSE_CLICKED, mouseEventNotificator::notifyMouseEvent);
-		addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
+		// TODO: Figure out how to write more precise check.
+		mouseEventNotificator.setOnClickListener().setOnScrollListener(event -> true);
 	}
 	
 	Balloon(Character character, PositionMode positionMode, String text) {
@@ -185,6 +184,7 @@ class Balloon extends MovablePane {
 	void close() {
 		setTimeout(0);
 		hide();
+		mouseEventNotificator.cleanListeners();
 	}
 	
 	void setTimeout(int timeout) {

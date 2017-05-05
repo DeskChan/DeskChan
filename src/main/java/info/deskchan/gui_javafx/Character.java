@@ -4,17 +4,13 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
+import javafx.scene.paint.Color;
 import javafx.stage.Screen;
-import org.apache.commons.lang3.SystemUtils;
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
 
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 class Character extends MovablePane {
 	
@@ -52,24 +48,21 @@ class Character extends MovablePane {
 		);
 		addEventFilter(MouseEvent.MOUSE_PRESSED, this::startDrag);
 
-		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator("character");
-		addEventFilter(MouseEvent.MOUSE_CLICKED, mouseEventNotificator::notifyMouseEvent);
+		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "character");
+		mouseEventNotificator
+				.setOnClickListener()
+				.setOnScrollListener(event -> {
+					Point2D characterPosition = getPosition();
+					int charX = (int) characterPosition.getX();
+					int charY = (int) characterPosition.getY();
+					int x = event.getX();
+					int y = event.getY();
 
-		if (SystemUtils.IS_OS_WINDOWS) {
-			Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-			logger.setLevel(Level.OFF);
-			try {
-				GlobalScreen.registerNativeHook();
-			} catch (NativeHookException | UnsatisfiedLinkError e) {
-				e.printStackTrace();
-				Main.log("Failed to initialize the native hooking. Rolling back to using JavaFX events...");
-				addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
-				return;
-			}
-			GlobalScreen.addNativeMouseWheelListener(mouseEventNotificator::notifyScrollEvent);
-		} else {
-			addEventFilter(ScrollEvent.SCROLL, mouseEventNotificator::notifyScrollEvent);
-		}
+					PixelReader imagePixels = getImage().getPixelReader();
+					Color pixelColor = imagePixels.getColor(x - charX, y - charY);
+
+					return !pixelColor.equals(Color.TRANSPARENT);
+				});
 	}
 	
 	Skin getSkin() {
@@ -115,7 +108,10 @@ class Character extends MovablePane {
 	}
 
 	void resizeSprite(float scaleFactor) {
-		this.scaleFactor = scaleFactor;
+		if (scaleFactor == 0) {
+			return;
+		}
+		this.scaleFactor = Math.abs(scaleFactor);
 		updateImage();
 	}
 
