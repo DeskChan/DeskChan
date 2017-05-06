@@ -107,6 +107,12 @@ class Character extends MovablePane {
 		}
 	}
 
+    /**
+     * Scales the image to a given scale factor.
+     * If it's greater than 1.0f, the image will be bigger.
+     * Use a number in the range of (0.0; 1.0) to make the image smaller.
+     * @param scaleFactor a positive float-point number
+     */
 	void resizeSprite(float scaleFactor) {
 		if (scaleFactor == 0) {
 			return;
@@ -115,6 +121,12 @@ class Character extends MovablePane {
 		updateImage();
 	}
 
+    /**
+     * Scales the image to either given width or height keeping its aspect ratio.
+     * The width takes precedence over the height.
+     * @param width nullable
+     * @param height nullable
+     */
 	void resizeSprite(Integer width, Integer height) {
 	    Double scaleFactor = null;
 	    if (width != null) {
@@ -127,6 +139,12 @@ class Character extends MovablePane {
         resizeSprite(scaleFactor.floatValue());
     }
 
+    /**
+     * Scales the image relatively. Unlike the usual resizeSprite(), this method
+     * gets the old value of the scale factor and adds an increment to it.
+     * Use a positive value to zoom in the image, or a negative one to zoom it out.
+     * @param scaleFactorIncrement a positive or negative number
+     */
 	void resizeSpriteRelatively(float scaleFactorIncrement) {
 		resizeSprite(scaleFactor + scaleFactorIncrement);
 	}
