@@ -61,7 +61,8 @@ public class Main implements Plugin {
 			if (lastSeq != null) {
 				pluginProxy.sendMessage("core-utils:notify-after-delay",
 						new HashMap<String, Object>() {{
-							put("seq", lastSeq); put("delay", (long) -1);
+							put("seq", lastSeq);
+							put("delay", (long) -1);
 						}});
 			}
 		}
@@ -178,7 +179,7 @@ public class Main implements Plugin {
 		Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		quotes.load(pluginProxy.getDataDirPath(), currentPreset.quotesBaseList);
 		operatePhraseRequest("HELLO");
-
+		
 		return true;
 	}
 	

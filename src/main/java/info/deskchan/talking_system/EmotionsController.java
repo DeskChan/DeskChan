@@ -2,7 +2,9 @@ package info.deskchan.talking_system;
 
 import info.deskchan.core.ResponseListener;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class EmotionsController {
 	private int emotionValue;

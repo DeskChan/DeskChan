@@ -144,12 +144,12 @@ class ImageSetSkin implements Skin {
 	
 	@Override
 	public String toString() {
-		Path cur=path;
-		StringBuilder name=new StringBuilder(cur.getFileName().toString().replace(".pack",""));
-		cur=cur.getParent();
-		while(!cur.equals(Skin.getSkinsPath())){
-			name.insert(0,cur.getFileName().toString()+" ");
-			cur=cur.getParent();
+		Path cur = path;
+		StringBuilder name = new StringBuilder(cur.getFileName().toString().replace(".pack", ""));
+		cur = cur.getParent();
+		while (!cur.equals(Skin.getSkinsPath())) {
+			name.insert(0, cur.getFileName().toString() + " ");
+			cur = cur.getParent();
 		}
 		return name + " [IMAGE SET]";
 	}

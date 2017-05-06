@@ -17,5 +17,5 @@ public interface SkinLoader {
 	default Skin loadByName(String name) {
 		return null;
 	}
-
+	
 }

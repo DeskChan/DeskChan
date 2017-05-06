@@ -13,8 +13,6 @@ import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.TextArea;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;

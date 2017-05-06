@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class CoreInfo {
-
+	
 	private static final Map<String, String> info = new HashMap<>();
 	
 	public static String get(String key) {
@@ -17,7 +17,7 @@ public class CoreInfo {
 		return info.keySet();
 	}
 	
-	public static void printInfo(){
+	public static void printInfo() {
 		PluginManager.log(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
 		PluginManager.log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
 		PluginManager.log("Git branch: " + CoreInfo.get("GIT_BRANCH_NAME"));

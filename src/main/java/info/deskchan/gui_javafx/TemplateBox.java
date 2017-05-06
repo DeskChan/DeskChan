@@ -7,7 +7,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 class TemplateBox extends Dialog<Void> {
-
+	
 	public TemplateBox(String name) {
 		setTitle(name);
 		initModality(Modality.NONE);
@@ -16,7 +16,8 @@ class TemplateBox extends Dialog<Void> {
 		stage.getIcons().add(new Image(App.ICON_URL.toString()));
 		getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 	}
-	public void requestFocus(){
+	
+	public void requestFocus() {
 		getDialogPane().getScene().getWindow().requestFocus();
 	}
 	
