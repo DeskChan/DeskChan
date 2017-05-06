@@ -26,7 +26,7 @@ public interface Skin {
 		if (!Files.isDirectory(path)) {
 			path = PluginManager.getPluginsDirPath().getParent().resolve("data").resolve("skins");
 		}
-		return path;
+		return path.toAbsolutePath();
 	}
 	
 	static Path getSkinPath(String name) {
