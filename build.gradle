@@ -44,24 +44,32 @@ project.version = '0.1.5'
 
 mainClassName = 'info.deskchan.core.Main'
 
-def gitQueries = [
-		['rev-list', '--count', 'HEAD'],
-		['rev-parse', 'HEAD'],
-		['rev-parse', '--abbrev-ref', 'HEAD']
-]
-def stdout = new ByteArrayOutputStream()
-for (def query : gitQueries) {
-	exec {
-		workingDir = project.rootDir
-		executable = 'git'
-		args = query
-		standardOutput = stdout
+def gitCommitCount = '[UNOFFICIAL]'
+def gitCommitHash = 'Unknown'
+def gitBranchName = 'Unknown'
+
+try {
+	def gitQueries = [
+			['rev-list', '--count', 'HEAD'],
+			['rev-parse', 'HEAD'],
+			['rev-parse', '--abbrev-ref', 'HEAD']
+	]
+	def stdout = new ByteArrayOutputStream()
+	for (def query : gitQueries) {
+		exec {
+			workingDir = project.rootDir
+			executable = 'git'
+			args = query
+			standardOutput = stdout
+		}
 	}
+	def versionInfo = stdout.toString().split('\n')
+	gitCommitCount = versionInfo[0].trim()
+	gitCommitHash = versionInfo[1].trim()
+	gitBranchName = versionInfo[2].trim()
+} catch (Exception e) {
+	System.err.println("Failed to get git metadata")
 }
-def versionInfo = stdout.toString().split('\n')
-def gitCommitCount = versionInfo[0].trim()
-def gitCommitHash = versionInfo[1].trim()
-def gitBranchName = versionInfo[2].trim()
 
 buildConfig {
 	packageName = 'info.deskchan.core'
