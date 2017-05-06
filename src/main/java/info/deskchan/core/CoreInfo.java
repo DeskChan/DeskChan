@@ -17,7 +17,15 @@ public class CoreInfo {
 		return info.keySet();
 	}
 	
-	public static void PrintInfo(){
+	public static void printInfo(){
+		PluginManager.log(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
+		PluginManager.log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
+		PluginManager.log("Git branch: " + CoreInfo.get("GIT_BRANCH_NAME"));
+		PluginManager.log("Git commit hash: " + CoreInfo.get("GIT_COMMIT_HASH"));
+		PluginManager.log("Build date and time: " + CoreInfo.get("BUILD_DATETIME"));
+	}
+	
+	static {
 		try {
 			Class cls = Class.forName("info.deskchan.core.BuildConfig");
 			for (Field field : cls.getDeclaredFields()) {
@@ -28,14 +36,11 @@ public class CoreInfo {
 					// Do nothing
 				}
 			}
-			PluginManager.log(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-			PluginManager.log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
-			PluginManager.log("Git branch: " + CoreInfo.get("GIT_BRANCH_NAME"));
-			PluginManager.log("Git commit hash: " + CoreInfo.get("GIT_COMMIT_HASH"));
-			PluginManager.log("Build date and time: " + CoreInfo.get("BUILD_DATETIME"));
 		} catch (ClassNotFoundException e) {
-			PluginManager.log("DeskChan: unknown source, unknown version.");
-			PluginManager.log("No additional info because you are building project without gradle support.");
+			PluginManager.log("WARNING: BuildConfig class not found!");
+			PluginManager.log("Possible cause: The gradle buildConfig task was not executed for some reason.");
+			PluginManager.log("Using fallback values instead of actual");
+			info.put("NAME", "DeskChan");
 		}
 	}
 	

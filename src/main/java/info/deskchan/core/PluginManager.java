@@ -41,7 +41,7 @@ public class PluginManager {
 		} catch (IOException e) {
 			log(e);
 		}
-		CoreInfo.PrintInfo();
+		CoreInfo.printInfo();
 		tryLoadPluginByClass(CorePlugin.class);
 		loadPluginsBlacklist();
 	}
