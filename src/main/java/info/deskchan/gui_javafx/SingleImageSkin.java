@@ -43,7 +43,7 @@ class SingleImageSkin implements Skin {
 	
 	@Override
 	public String getName() {
-		return path.getFileName().toString();
+		return Skin.getSkinsPath().relativize(path).toString();
 	}
 	
 	@Override
