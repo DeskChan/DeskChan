@@ -58,18 +58,22 @@ public interface Skin {
 		}
 		return load(getSkinPath(name));
 	}
-	
-	static List<String> getSkinList() {
+	static List<String> getSkinList(Path path){
 		List<String> list = new ArrayList<>();
-		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(getSkinsPath())) {
+		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
 			for (Path skinPath : directoryStream) {
+				boolean foundLoader=false;
 				synchronized (App.skinLoaders) {
 					for (SkinLoader loader : App.skinLoaders) {
 						if (loader.matchByPath(skinPath)) {
-							list.add(skinPath.getFileName().toString());
+							list.add(skinPath.toString());
+							foundLoader=true;
 							break;
 						}
 					}
+				}
+				if(!foundLoader && Files.isDirectory(skinPath)){
+					list.addAll(getSkinList(skinPath));
 				}
 			}
 			synchronized (App.skinLoaders) {
@@ -81,6 +85,9 @@ public interface Skin {
 			Main.log(e);
 		}
 		return list;
+	}
+	static List<String> getSkinList() {
+		return getSkinList(getSkinsPath());
 	}
 	
 	static void registerSkinLoader(SkinLoader loader) {

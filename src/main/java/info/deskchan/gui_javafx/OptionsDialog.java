@@ -25,26 +25,22 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-class OptionsDialog extends Dialog<Void> {
+class OptionsDialog extends TemplateBox {
 	
 	private static OptionsDialog instance = null;
 	private TabPane tabPane = new TabPane();
 	private Button skinManagerButton = new Button();
 	private ListView<PluginListItem> pluginsList = new ListView<>();
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
-	private static Map<String, List<PluginOptionsTab>> pluginsTabs = new HashMap<>();
+	private static Map<String, List<ControlsContainer>> pluginsTabs = new HashMap<>();
 	
 	OptionsDialog() {
+		super(Main.getString("deskchan_options"));
 		instance = this;
-		setTitle(Main.getString("deskchan_options"));
-		initModality(Modality.NONE);
 		Stage stage = (Stage) getDialogPane().getScene().getWindow();
-		stage.setAlwaysOnTop(true);
-		stage.getIcons().add(new Image(App.ICON_URL.toString()));
 		tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 		initTabs();
 		getDialogPane().setContent(tabPane);
-		getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 		setOnHidden(event -> {
 			instance = null;
 		});
@@ -248,8 +244,8 @@ class OptionsDialog extends Dialog<Void> {
 		});
 		debugTab.setBottom(button);
 		tabPane.getTabs().add(new Tab(Main.getString("debug"), debugTab));
-		for (Map.Entry<String, List<PluginOptionsTab>> entry : pluginsTabs.entrySet()) {
-			for (PluginOptionsTab tab : entry.getValue()) {
+		for (Map.Entry<String, List<ControlsContainer>> entry : pluginsTabs.entrySet()) {
+			for (ControlsContainer tab : entry.getValue()) {
 				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane()));
 			}
 		}
@@ -283,8 +279,8 @@ class OptionsDialog extends Dialog<Void> {
 	}
 	
 	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag) {
-		List<PluginOptionsTab> tabs = pluginsTabs.getOrDefault(plugin, null);
-		PluginOptionsTab poTab = new PluginOptionsTab(name, controls, msgTag);
+		List<ControlsContainer> tabs = pluginsTabs.getOrDefault(plugin, null);
+		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			pluginsTabs.put(plugin, tabs);
@@ -349,72 +345,6 @@ class OptionsDialog extends Dialog<Void> {
 		
 		AlternativeTreeItem(String tag) {
 			this(tag, null, -1);
-		}
-		
-	}
-	
-	private static class PluginOptionsTab {
-		
-		final String name;
-		List<Map<String, Object>> controls;
-		String msgTag;
-		
-		PluginOptionsTab(String name, List<Map<String, Object>> controls, String msgTag) {
-			this.name = name;
-			this.controls = controls;
-			this.msgTag = msgTag;
-		}
-		
-		void update(List<Map<String, Object>> controls, String msgTag) {
-			this.controls = controls;
-			this.msgTag = msgTag;
-		}
-		
-		Node createControlsPane() {
-			final Map<String, PluginOptionsControlItem> namedControls = new HashMap<>();
-			BorderPane borderPane = new BorderPane();
-			GridPane gridPane = new GridPane();
-			int row = 0;
-			for (Map<String, Object> controlInfo : controls) {
-				String id = (String) controlInfo.getOrDefault("id", null);
-				String label = (String) controlInfo.getOrDefault("label", null);
-				PluginOptionsControlItem item = PluginOptionsControlItem.create(controlInfo);
-				if (item == null) {
-					continue;
-				}
-				if (id != null) {
-					namedControls.put(id, item);
-				}
-				if (label == null) {
-					gridPane.add(item.getNode(), 0, row, 2, 1);
-				} else {
-					gridPane.add(new Label(label + ":"), 0, row);
-					gridPane.add(item.getNode(), 1, row);
-				}
-				row++;
-			}
-			if (msgTag != null) {
-				Button saveButton = new Button(Main.getString("save"));
-				saveButton.setOnAction(event -> {
-					Map<String, Object> data = new HashMap<>();
-					for (Map.Entry<String, PluginOptionsControlItem> entry : namedControls.entrySet()) {
-						data.put(entry.getKey(), entry.getValue().getValue());
-						for (Map<String, Object> control : controls) {
-							String id = (String) control.getOrDefault("id", null);
-							if (id != null) {
-								if (id.equals(entry.getKey())) {
-									control.put("value", entry.getValue().getValue());
-									break;
-								}
-							}
-						}
-					}
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, data);
-				});
-				gridPane.add(saveButton, 0, row, 2, 1);
-			}
-			borderPane.setTop(gridPane);
-			return borderPane;
 		}
 		
 	}

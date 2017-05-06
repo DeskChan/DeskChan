@@ -178,6 +178,7 @@ public class Main implements Plugin {
 		Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		quotes.load(pluginProxy.getDataDirPath(), currentPreset.quotesBaseList);
 		operatePhraseRequest("HELLO");
+
 		return true;
 	}
 	

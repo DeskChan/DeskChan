@@ -41,11 +41,7 @@ public class PluginManager {
 		} catch (IOException e) {
 			log(e);
 		}
-		log(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-		log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
-		log("Git branch: " + CoreInfo.get("GIT_BRANCH_NAME"));
-		log("Git commit hash: " + CoreInfo.get("GIT_COMMIT_HASH"));
-		log("Build date and time: " + CoreInfo.get("BUILD_DATETIME"));
+		CoreInfo.PrintInfo();
 		tryLoadPluginByClass(CorePlugin.class);
 		loadPluginsBlacklist();
 	}

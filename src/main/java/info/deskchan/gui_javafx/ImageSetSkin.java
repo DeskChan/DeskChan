@@ -144,14 +144,21 @@ class ImageSetSkin implements Skin {
 	
 	@Override
 	public String toString() {
-		return path.getFileName().toString() + " [IMAGE SET]";
+		Path cur=path;
+		StringBuilder name=new StringBuilder(cur.getFileName().toString().replace(".pack",""));
+		cur=cur.getParent();
+		while(!cur.equals(Skin.getSkinsPath())){
+			name.insert(0,cur.getFileName().toString()+" ");
+			cur=cur.getParent();
+		}
+		return name + " [IMAGE SET]";
 	}
 	
 	static class Loader implements SkinLoader {
 		
 		@Override
 		public boolean matchByPath(Path path) {
-			return Files.isDirectory(path);
+			return Files.isDirectory(path) && path.getFileName().toString().endsWith(".pack");
 		}
 		
 		@Override

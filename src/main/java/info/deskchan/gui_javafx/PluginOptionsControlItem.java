@@ -27,7 +27,7 @@ interface PluginOptionsControlItem {
 	}
 	
 	Node getNode();
-	
+
 	static PluginOptionsControlItem create(Map<String, Object> options) {
 		String type = (String) options.get("type");
 		Object value = options.getOrDefault("value", null);

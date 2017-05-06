@@ -12,7 +12,7 @@ import java.util.PriorityQueue;
 
 class Character extends MovablePane {
 	
-	private static final String DEFAULT_SKIN_NAME = "illia";
+	private static final String DEFAULT_SKIN_NAME = "illia.pack";
 	
 	enum LayerMode {
 		ALWAYS_NORMAL,

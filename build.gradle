@@ -40,7 +40,7 @@ dependencies {
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
-project.version = '0.1.5'
+project.version = '0.1.6'
 
 mainClassName = 'info.deskchan.core.Main'
 
