@@ -158,7 +158,7 @@ class ImageSetSkin implements Skin {
 		
 		@Override
 		public boolean matchByPath(Path path) {
-			return Files.isDirectory(path) && path.getFileName().toString().endsWith(".pack");
+			return Files.isDirectory(path);
 		}
 		
 		@Override

@@ -63,18 +63,18 @@ public interface Skin {
 		List<String> list = new ArrayList<>();
 		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
 			for (Path skinPath : directoryStream) {
-				boolean foundLoader = false;
+				if (Files.isDirectory(skinPath) &&
+						skinPath.getFileName().toString().endsWith(".pack")) {
+					list.addAll(getSkinList(skinPath));
+					continue;
+				}
 				synchronized (App.skinLoaders) {
 					for (SkinLoader loader : App.skinLoaders) {
 						if (loader.matchByPath(skinPath)) {
 							list.add(skinPath.toString());
-							foundLoader = true;
 							break;
 						}
 					}
-				}
-				if (!foundLoader && Files.isDirectory(skinPath)) {
-					list.addAll(getSkinList(skinPath));
 				}
 			}
 			synchronized (App.skinLoaders) {
