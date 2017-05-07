@@ -53,13 +53,23 @@ class Character extends MovablePane {
 				.setOnClickListener()
 				.setOnScrollListener(event -> {
 					Point2D characterPosition = getPosition();
-					int charX = (int) characterPosition.getX();
-					int charY = (int) characterPosition.getY();
-					int x = event.getX();
-					int y = event.getY();
+					double charX = characterPosition.getX();
+					double charY = characterPosition.getY();
+					double x = event.getX();
+					double y = event.getY();
+					double x0 = x - charX;
+					double y0 = y - charY;
 
-					PixelReader imagePixels = getImage().getPixelReader();
-					Color pixelColor = imagePixels.getColor(x - charX, y - charY);
+					// just in case
+					if (scaleFactor == 0) {
+						Main.log("The scale factor of the image is equal to zero!");
+						return false;
+					}
+					x0 /= scaleFactor;
+					y0 /= scaleFactor;
+
+					PixelReader imagePixels = imageView.getImage().getPixelReader();
+					Color pixelColor = imagePixels.getColor((int) x0, (int) y0);
 
 					return !pixelColor.equals(Color.TRANSPARENT);
 				});
