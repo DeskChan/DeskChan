@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,6 +48,10 @@ public class Main implements Plugin {
 			} catch (IOException e) {
 				log(e);
 			}
+		}
+
+		if (SystemUtils.IS_OS_WINDOWS) {
+			MouseEventNotificator.disableHooks();
 		}
 	}
 	

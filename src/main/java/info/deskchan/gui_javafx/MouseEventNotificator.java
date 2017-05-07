@@ -28,8 +28,11 @@ class MouseEventNotificator {
 
     // Gets rid of all garbage messages from the GlobalScreen of JNativeHook.
     static {
-        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(Level.OFF);
+        if (SystemUtils.IS_OS_WINDOWS) {
+            Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+            logger.setLevel(Level.OFF);
+            logger.setUseParentHandlers(false);
+        }
     }
 
     /**
@@ -163,6 +166,20 @@ class MouseEventNotificator {
         // All methods have their own internal checks for the case when a filter is not set and equals null.
         sender.removeEventFilter(MouseEvent.MOUSE_CLICKED, this::notifyClickEvent);
         sender.removeEventFilter(ScrollEvent.SCROLL, this::notifyScrollEvent);
-        GlobalScreen.removeNativeMouseWheelListener(mouseWheelListener);
+        if (SystemUtils.IS_OS_WINDOWS) {
+            GlobalScreen.removeNativeMouseWheelListener(mouseWheelListener);
+        }
+    }
+
+    /**
+     * Call this static method when you don't need to listen to events anymore.
+     * It unregisters native hook and stops catching mouse events at all.
+     */
+    static void disableHooks() {
+        try {
+            GlobalScreen.unregisterNativeHook();
+        } catch (NativeHookException | UnsatisfiedLinkError e) {
+            e.printStackTrace();
+        }
     }
 }
