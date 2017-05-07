@@ -96,7 +96,7 @@ class Character extends MovablePane {
 		updateImage();
 	}
 	
-	Image getImage() {
+	private Image getImage() {
 		return (skin != null) ? skin.getImage(imageName) : null;
 	}
 	
@@ -107,26 +107,31 @@ class Character extends MovablePane {
 				screenBounds.getMaxY() - getHeight()));
 	}
 	
-	private void updateImage() {
-		Image image = getImage();
-		imageView.setImage(image);
-		if (image != null) {
-			double oldWidth = imageView.getFitWidth();
-			double oldHeight = imageView.getFitHeight();
-			double newWidth = image.getWidth() * scaleFactor;
-			double newHeight = image.getHeight() * scaleFactor;
+	private void updateImage(boolean reloadImage) {
+	    if (reloadImage) {
+            imageView.setImage(getImage());
+        }
 
-			imageView.setFitWidth(newWidth);
-			imageView.setFitHeight(newHeight);
-			resize(imageView.getFitWidth(), imageView.getFitHeight());
+        Image image = imageView.getImage();
+        double oldWidth = imageView.getFitWidth();
+        double oldHeight = imageView.getFitHeight();
+        double newWidth = image.getWidth() * scaleFactor;
+        double newHeight = image.getHeight() * scaleFactor;
 
-			Point2D oldPosition = getPosition();
-			double deltaX = -(newWidth - oldWidth) / 2;
-			double deltaY = -(newHeight - oldHeight) / 2;
-			Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
-			setPosition(newPosition);
-		}
+        imageView.setFitWidth(newWidth);
+        imageView.setFitHeight(newHeight);
+        resize(imageView.getFitWidth(), imageView.getFitHeight());
+
+        Point2D oldPosition = getPosition();
+        double deltaX = -(newWidth - oldWidth) / 2;
+        double deltaY = -(newHeight - oldHeight) / 2;
+        Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
+        setPosition(newPosition);
 	}
+
+	private void updateImage() {
+	    updateImage(true);
+    }
 
     /**
      * Scales the image to a given scale factor.
@@ -139,7 +144,7 @@ class Character extends MovablePane {
 			return;
 		}
 		this.scaleFactor = Math.abs(scaleFactor);
-		updateImage();
+		updateImage(false);
 	}
 
     /**
