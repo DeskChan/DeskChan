@@ -28,7 +28,7 @@ class SingleImageSkin implements Skin {
 		if (stream != null) {
 			try {
 				stream.close();
-			} catch (Exception e) {
+			} catch (IOException e) {
 				Main.log(e);
 			}
 		}
