@@ -25,6 +25,13 @@ class SingleImageSkin implements Skin {
 			Main.getInstance().getPluginProxy().log(e);
 		}
 		image = (stream != null) ? new Image(stream) : null;
+		if (stream != null) {
+			try {
+				stream.close();
+			} catch (Exception e) {
+				Main.log(e);
+			}
+		}
 		propertiesPath = Main.getInstance().getPluginProxy().getDataDirPath().resolve(
 				"skin_" + getName() + ".properties"
 		);
@@ -39,9 +46,6 @@ class SingleImageSkin implements Skin {
 				// Do nothing
 			}
 		}
-		try{
-			stream.close();
-		} catch(Exception e){ }
 	}
 	
 	@Override
