@@ -86,7 +86,7 @@ class MouseEventNotificator {
      * This is a special method for Windows. Since Windows allows scrolling only for active windows (not windows
      * beneath the cursor, like Linux does), we need to use a special library to call WinAPI Hooks via JNI.
      * It fixes the problem but have another: events propagates globally for a whole screen. I limit the handling
-     * area to the rectangle around a Node. But in most cases it's not enough.
+     * area to the rectangle around a node. But in most cases it's not enough.
      * You must pass a lambda function (or an instance of Function explicitly if you want for whatever reason) as
      * the second parameter. It takes an event object and must return true if the check is passed successfully and
      * the event should be propagate further, and false otherwise.
@@ -99,7 +99,6 @@ class MouseEventNotificator {
         double x = event.getX();
         double y = event.getY();
 
-        Main.log(String.format("X: %f, Y: %f, senderX: %f, senderY: %f.", x, y, senderX, senderY));
         if (sender.contains(x - senderX, y - senderY)) {
             if (intersectionTestFunc.apply(event)) {
                 impl_notifyScrollEvent(event.getWheelRotation());
@@ -108,9 +107,9 @@ class MouseEventNotificator {
     }
 
     /**
-     * Encapsulates common code of the notifyScrollEvent() methods and represents an implementation of sending
+     * Encapsulates common code of the `notifyScrollEvent` methods and represents an implementation of sending
      * `gui-events:%element%-scroll` messages.
-     * @param delta 1 for scrolling down or -1 for scrolling up.
+     * @param delta 1 for scrolling down or -1 for scrolling up
      */
     private void impl_notifyScrollEvent(int delta) {
         Map<String, Object> m = new HashMap<>();
@@ -121,8 +120,8 @@ class MouseEventNotificator {
     }
 
     /**
-     * Enables handling of click events for the Node.
-     * @return itself to let you use a chain of calls.
+     * Enables handling of click events for the node.
+     * @return itself to let you use a chain of calls
      */
     MouseEventNotificator setOnClickListener() {
         sender.addEventFilter(MouseEvent.MOUSE_CLICKED, this::notifyClickEvent);
@@ -130,11 +129,11 @@ class MouseEventNotificator {
     }
 
     /**
-     * Enables handling of scroll and mouse wheel events for the Node.
+     * Enables handling of scroll and mouse wheel events for the node.
      * This type of events has a peculiarity on Windows. See the javadoc of notifyScrollEvents for more information.
-     * @see this.notifyScrollEvent
+     * @see #notifyScrollEvent
      * @param intersectionTestFunc a function that takes an event object and must return boolean
-     * @return itself to let you use a chain of calls.
+     * @return itself to let you use a chain of calls
      */
     MouseEventNotificator setOnScrollListener(Function<NativeMouseWheelEvent, Boolean> intersectionTestFunc) {
         if (SystemUtils.IS_OS_WINDOWS) {
@@ -148,7 +147,7 @@ class MouseEventNotificator {
                     return this;
                 }
             }
-            mouseWheelListener = event -> this.notifyScrollEvent(event, intersectionTestFunc);
+            mouseWheelListener = event -> notifyScrollEvent(event, intersectionTestFunc);
             GlobalScreen.addNativeMouseWheelListener(mouseWheelListener);
         } else {
             sender.addEventFilter(ScrollEvent.SCROLL, this::notifyScrollEvent);
