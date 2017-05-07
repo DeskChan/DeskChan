@@ -38,7 +38,7 @@ class Character extends MovablePane {
 	
 	Character(String id, Skin skin) {
 		this.id = id;
-		scaleFactor = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
+		setScaleFactor(Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0")));
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
@@ -143,7 +143,7 @@ class Character extends MovablePane {
 		if (scaleFactor == 0) {
 			return;
 		}
-		this.scaleFactor = Math.abs(scaleFactor);
+		setScaleFactor(scaleFactor);
 		updateImage(false);
 	}
 
@@ -247,6 +247,14 @@ class Character extends MovablePane {
 	float getScaleFactor() {
 	    return scaleFactor;
     }
+
+    void setScaleFactor(float scaleFactor) {
+		if (scaleFactor == 0) {
+			this.scaleFactor = 1.0f;
+		} else {
+			this.scaleFactor = Math.round(Math.abs(scaleFactor) * 100.0f) / 100.0f;
+		}
+	}
 	
 	private static class MessageInfo implements Comparable<MessageInfo> {
 		
