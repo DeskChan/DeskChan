@@ -101,9 +101,20 @@ class Character extends MovablePane {
 		Image image = getImage();
 		imageView.setImage(image);
 		if (image != null) {
-			imageView.setFitWidth(image.getWidth() * scaleFactor);
-			imageView.setFitHeight(image.getHeight() * scaleFactor);
+			double oldWidth = imageView.getFitWidth();
+			double oldHeight = imageView.getFitHeight();
+			double newWidth = image.getWidth() * scaleFactor;
+			double newHeight = image.getHeight() * scaleFactor;
+
+			imageView.setFitWidth(newWidth);
+			imageView.setFitHeight(newHeight);
 			resize(imageView.getFitWidth(), imageView.getFitHeight());
+
+			Point2D oldPosition = getPosition();
+			double deltaX = -(newWidth - oldWidth) / 2;
+			double deltaY = -(newHeight - oldHeight) / 2;
+			Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
+			setPosition(newPosition);
 		}
 	}
 
