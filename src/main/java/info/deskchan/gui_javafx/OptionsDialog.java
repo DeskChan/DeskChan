@@ -95,7 +95,7 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(characterLayerModeComboBox, 1, 3);
 		gridPane.add(new Label(Main.getString("balloon_default_timeout")), 0, 4);
 		Spinner<Integer> balloonDefaultTimeoutSpinner = new Spinner<>(0, 120000,
-				Integer.parseInt(Main.getProperty("balloon.default_timeout", "15000")), 1000);
+				Integer.parseInt(Main.getProperty("balloon.default_timeout", "300")), 100);
 		balloonDefaultTimeoutSpinner.valueProperty().addListener((property, oldValue, value) -> {
 			Main.setProperty("balloon.default_timeout", value.toString());
 		});
