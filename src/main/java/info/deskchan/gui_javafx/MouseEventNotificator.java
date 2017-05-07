@@ -54,8 +54,10 @@ class MouseEventNotificator {
         }
 
         Map<String, Object> m = new HashMap<>();
-        m.put("x", event.getScreenX());
-        m.put("y", event.getScreenY());
+        m.put("screenX", event.getScreenX());
+        m.put("screenY", event.getScreenY());
+        m.put("nodeX", event.getScreenX() - sender.getLayoutX());
+        m.put("nodeY", event.getScreenY() - sender.getLayoutY());
 
         StringBuilder eventMessage = new StringBuilder("gui-events:").append(senderName).append("-");
         if (event.getButton() == MouseButton.PRIMARY) {
@@ -82,7 +84,7 @@ class MouseEventNotificator {
      */
     void notifyScrollEvent(ScrollEvent event) {
         int delta = (event.getDeltaY() > 0) ? 1 : -1;
-        impl_notifyScrollEvent(delta);
+        impl_notifyScrollEvent(delta, event.getScreenX(), event.getScreenY(), event.getX(), event.getY());
     }
 
     /**
@@ -97,14 +99,14 @@ class MouseEventNotificator {
      * @param intersectionTestFunc a function that takes an event object and must return boolean
      */
     void notifyScrollEvent(NativeMouseWheelEvent event, Function<NativeMouseWheelEvent, Boolean> intersectionTestFunc) {
-        double senderX = sender.getLayoutX();
-        double senderY = sender.getLayoutY();
-        double x = event.getX();
-        double y = event.getY();
+        int screenX = event.getX();
+        int screenY = event.getY();
+        double nodeX = screenX - sender.getLayoutX();
+        double nodeY = screenY - sender.getLayoutY();
 
-        if (sender.contains(x - senderX, y - senderY)) {
+        if (sender.contains(nodeX, nodeY)) {
             if (intersectionTestFunc.apply(event)) {
-                impl_notifyScrollEvent(event.getWheelRotation());
+                impl_notifyScrollEvent(event.getWheelRotation(), screenX, screenY, nodeX, nodeY);
             }
         }
     }
@@ -113,10 +115,18 @@ class MouseEventNotificator {
      * Encapsulates common code of the `notifyScrollEvent` methods and represents an implementation of sending
      * `gui-events:%element%-scroll` messages.
      * @param delta 1 for scrolling down or -1 for scrolling up
+     * @param screenX an x coordinate from the left-upper corner of the screen
+     * @param screenY a y coordinate from the left-upper corner of the screen
+     * @param nodeX an x coordinate from the left-upper corner of the element beneath the cursor
+     * @param nodeY a y coordinate from the left-upper corner of the element beneath the cursor
      */
-    private void impl_notifyScrollEvent(int delta) {
+    private void impl_notifyScrollEvent(int delta, double screenX, double screenY, double nodeX, double nodeY) {
         Map<String, Object> m = new HashMap<>();
         m.put("delta", delta);
+        m.put("screenX", screenX);
+        m.put("screenY", screenY);
+        m.put("nodeX", nodeX);
+        m.put("nodeY", nodeY);
 
         String eventMessage = "gui-events:" + senderName + "-scroll";
         Main.getInstance().getPluginProxy().sendMessage(eventMessage, m);
