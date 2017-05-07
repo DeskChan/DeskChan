@@ -57,7 +57,7 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(new Label(Main.getString("scale_factor")), 0, 1);
 		double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
 		// e.g. 1.74 -> 1.75
-		scaleFactorValue = Math.round(scaleFactorValue * 4.0f) / 4.0f;
+		scaleFactorValue = Math.round(scaleFactorValue * 20.0f) / 20.0f;
 		Spinner<Double> scaleFactorSpinner = new Spinner<>(0.1, 10.0, scaleFactorValue, 0.05);
 		scaleFactorSpinner.valueProperty().addListener((property, oldValue, value) -> {
 			Main.setProperty("skin.scale_factor", value.toString());
