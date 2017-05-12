@@ -18,7 +18,7 @@ public class CoreInfo {
 	}
 	
 	public static void printInfo() {
-		PluginManager.log(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
+		PluginManager.log((!CoreInfo.get("NAME").equals("DeskChan") ? "Unofficial build: " : "")+CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
 		PluginManager.log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
 		PluginManager.log("Git branch: " + CoreInfo.get("GIT_BRANCH_NAME"));
 		PluginManager.log("Git commit hash: " + CoreInfo.get("GIT_COMMIT_HASH"));
