@@ -1,4 +1,4 @@
-.root {
+.root, .label {
     -fx-font-family: "PT Sans";
 }
 
