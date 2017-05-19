@@ -2,9 +2,11 @@ package info.deskchan.gui_javafx;
 
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
@@ -47,6 +49,17 @@ class Character extends MovablePane {
 						Balloon.PositionMode.AUTO.toString())
 		);
 		addEventFilter(MouseEvent.MOUSE_PRESSED, this::startDrag);
+		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+			boolean enabled = Main.getProperty("character.enable_context_menu", "0").equals("1");
+			ContextMenu contextMenu = App.getInstance().getContextMenu();
+			if (enabled && event.getButton() == MouseButton.SECONDARY && event.isStillSincePress()) {
+				// If we don't hide the menu manually, we get it with incorrect width.
+				contextMenu.hide();
+				contextMenu.show(this, event.getScreenX(), event.getScreenY());
+			} else if (contextMenu.isShowing()) {
+				contextMenu.hide();
+			}
+		});
 
 		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "character");
 		mouseEventNotificator

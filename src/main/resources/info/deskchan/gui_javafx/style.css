@@ -1,3 +1,7 @@
 .root {
     -fx-font-family: "PT Sans";
 }
+
+.menu-item:hover {
+     -fx-background-color: #45aac67f;
+}

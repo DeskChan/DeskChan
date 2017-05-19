@@ -112,6 +112,13 @@ class OptionsDialog extends TemplateBox {
 				}
 		);
 		gridPane.add(balloonPositionModeComboBox, 1, 5);
+		gridPane.add(new Label(Main.getString("enable_context_menu")), 0, 6);
+		CheckBox showContextMenuCheckBox = new CheckBox();
+		showContextMenuCheckBox.setSelected(Main.getProperty("character.enable_context_menu", "0").equals("1"));
+		showContextMenuCheckBox.selectedProperty().addListener((property, oldValue, newValue) -> {
+			Main.setProperty("character.enable_context_menu", (newValue) ? "1" : "0");
+		});
+		gridPane.add(showContextMenuCheckBox, 1, 6);
 		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();

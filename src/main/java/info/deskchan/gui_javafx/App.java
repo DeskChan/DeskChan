@@ -11,8 +11,11 @@ import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
@@ -42,6 +45,7 @@ public class App extends Application {
 			new SingleImageSkin.Loader(), new ImageSetSkin.Loader()
 	);
 	private SystemTray systemTray = null;
+	private ContextMenu contextMenu = new ContextMenu();
 	private SortedMap<String, List<PluginActionInfo>> pluginsActions = new TreeMap<>();
 	private Character character = new Character("main", Skin.load(Main.getProperty("skin.name", null)));
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
@@ -69,6 +73,10 @@ public class App extends Application {
 	
 	Character getCharacter() {
 		return character;
+	}
+
+	ContextMenu getContextMenu() {
+		return contextMenu;
 	}
 	
 	static void run(String[] args) {
@@ -253,10 +261,21 @@ public class App extends Application {
 		}
 		mainMenu.clear();
 		systemTray.setStatus(NAME);
-		mainMenu.add(new MenuItem(Main.getString("options"), event -> {
-			Platform.runLater(this::showOptionsDialog);
-		}));
+		ObservableList<javafx.scene.control.MenuItem> contextMenuItems = contextMenu.getItems();
+		contextMenuItems.clear();
+
+		MenuItemAction optionsMenuItemAction = new MenuItemAction() {
+			@Override
+			protected void run() {
+				Platform.runLater(App.getInstance()::showOptionsDialog);
+			}
+		};
+		mainMenu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
 		mainMenu.add(new Separator());
+		javafx.scene.control.MenuItem optionsMenuItem = new javafx.scene.control.MenuItem(Main.getString("options"));
+		optionsMenuItem.setOnAction(optionsMenuItemAction);
+		contextMenuItems.addAll(optionsMenuItem, new SeparatorMenuItem());
+
 		if (pluginsActions.size() > 0) {
 			for (Map.Entry<String, List<PluginActionInfo>> entry : pluginsActions.entrySet()) {
 				String pluginId = entry.getKey();
@@ -265,18 +284,33 @@ public class App extends Application {
 					continue;
 				}
 				if (actions.size() == 1) {
-					mainMenu.add(actions.get(0).createMenuItem());
+					mainMenu.add(actions.get(0).createMenuItemForTray());
+					contextMenuItems.add(actions.get(0).createMenuItemForContextMenu());
 				} else {
-					Menu pluginMenu = new Menu(pluginId);
-					mainMenu.add(pluginMenu);
+					Menu pluginTrayMenu = new Menu(pluginId);
+					mainMenu.add(pluginTrayMenu);
+					javafx.scene.control.Menu pluginContextMenu = new javafx.scene.control.Menu(pluginId);
+					contextMenuItems.add(pluginContextMenu);
 					for (PluginActionInfo action : actions) {
-						pluginMenu.add(action.createMenuItem());
+						pluginTrayMenu.add(action.createMenuItemForTray());
+						pluginContextMenu.getItems().add(action.createMenuItemForContextMenu());
 					}
 				}
 			}
 			mainMenu.add(new Separator());
+			contextMenuItems.add(new SeparatorMenuItem());
 		}
-		mainMenu.add(new MenuItem(Main.getString("quit"), event -> Main.getInstance().quit()));
+
+		MenuItemAction quitAction = new MenuItemAction() {
+			@Override
+			protected void run() {
+				Main.getInstance().quit();
+			}
+		};
+		mainMenu.add(new MenuItem(Main.getString("quit"), quitAction));
+		javafx.scene.control.MenuItem quitContextMenuItem = new javafx.scene.control.MenuItem(Main.getString("quit"));
+		quitContextMenuItem.setOnAction(quitAction);
+		contextMenuItems.add(quitContextMenuItem);
 	}
 	
 	private void showOptionsDialog() {
@@ -337,8 +371,22 @@ public class App extends Application {
 		alert.getDialogPane().setExpandableContent(textArea);
 		alert.showAndWait();
 	}
+
+	abstract class MenuItemAction implements ActionListener, EventHandler<javafx.event.ActionEvent> {
+		@Override
+		public void actionPerformed(ActionEvent actionEvent) {
+			run();
+		}
+
+		@Override
+		public void handle(javafx.event.ActionEvent event) {
+			run();
+		}
+
+		protected abstract void run();
+	}
 	
-	class PluginActionInfo implements ActionListener {
+	class PluginActionInfo extends MenuItemAction {
 		
 		String name;
 		String msgTag;
@@ -349,14 +397,19 @@ public class App extends Application {
 			this.msgTag = msgTag;
 			this.msgData = msgData;
 		}
-		
-		@Override
-		public void actionPerformed(ActionEvent actionEvent) {
+
+		protected void run() {
 			Main.getInstance().getPluginProxy().sendMessage(msgTag, msgData);
 		}
 		
-		MenuItem createMenuItem() {
+		MenuItem createMenuItemForTray() {
 			return new MenuItem(name, this);
+		}
+
+		javafx.scene.control.MenuItem createMenuItemForContextMenu() {
+			javafx.scene.control.MenuItem menuItem = new javafx.scene.control.MenuItem(name);
+			menuItem.setOnAction(this);
+			return menuItem;
 		}
 	}
 	
