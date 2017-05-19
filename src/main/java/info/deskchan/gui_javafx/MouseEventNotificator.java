@@ -45,7 +45,7 @@ class MouseEventNotificator {
     }
 
     /**
-     * Use this method to process a click event and send a special GUI event by the means of the Message System.
+     * Use this method to process a click event and send a special GUI event by the means of the message system.
      * @param event MouseEvent. A click event
      */
     void notifyClickEvent(MouseEvent event) {
@@ -79,7 +79,22 @@ class MouseEventNotificator {
     }
 
     /**
-     * Use this method to process a scroll event and send a special GUI event by the means of the Message System.
+     * Use this method to process a mouse moved event and send a special GUI event by the means of the message system.
+     * @param event MouseEvent. A mouse moved event
+     */
+    void notifyMovedEvent(MouseEvent event) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("screenX", event.getScreenX());
+        m.put("screenY", event.getScreenY());
+        m.put("nodeX", event.getScreenX() - sender.getLayoutX());
+        m.put("nodeY", event.getScreenY() - sender.getLayoutY());
+
+        String eventMessage = "gui-events:" + senderName + "-mouse-moved";
+        Main.getInstance().getPluginProxy().sendMessage(eventMessage, m);
+    }
+
+    /**
+     * Use this method to process a scroll event and send a special GUI event by the means of the message system.
      * @param event ScrollEvent
      */
     void notifyScrollEvent(ScrollEvent event) {
@@ -138,6 +153,15 @@ class MouseEventNotificator {
      */
     MouseEventNotificator setOnClickListener() {
         sender.addEventFilter(MouseEvent.MOUSE_CLICKED, this::notifyClickEvent);
+        return this;
+    }
+
+    /**
+     * Enables handling of mouse moved events for the node.
+     * @return itself to let you use a chain of calls
+     */
+    MouseEventNotificator setOnMovedListener() {
+        sender.addEventFilter(MouseEvent.MOUSE_MOVED, this::notifyMovedEvent);
         return this;
     }
 

@@ -93,8 +93,11 @@ class Balloon extends MovablePane {
 			}
 		});
 
-		// TODO: Figure out how to write more precise check.
-		mouseEventNotificator.setOnClickListener().setOnScrollListener(event -> true);
+		mouseEventNotificator
+				.setOnClickListener()
+				.setOnMovedListener()
+				// TODO: Figure out how to write more precise check.
+				.setOnScrollListener(event -> true);
 	}
 	
 	Balloon(Character character, PositionMode positionMode, String text) {

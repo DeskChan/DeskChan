@@ -64,6 +64,7 @@ class Character extends MovablePane {
 		MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "character");
 		mouseEventNotificator
 				.setOnClickListener()
+				.setOnMovedListener()
 				.setOnScrollListener(event -> {
 					Point2D characterPosition = getPosition();
 					double charX = characterPosition.getX();
