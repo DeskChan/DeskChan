@@ -18,14 +18,13 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.text.Font;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.Window;
+import javafx.stage.*;
 import javafx.util.Duration;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -33,7 +32,9 @@ import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class App extends Application {
 	
@@ -192,6 +193,82 @@ public class App extends Application {
 						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null)).createControlsPane());
 				dialog.requestFocus();
 				dialog.show();
+			});
+		});
+		pluginProxy.addMessageListener("gui:choose-files", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Map<String, Object> m = (Map<String, Object>) data;
+				FileChooser chooser = new FileChooser();
+				chooser.setTitle((String) m.getOrDefault("title", Main.getString("chooser.file.default_title")));
+
+				List<Map<String, Object>> filters = (List<Map<String, Object>>) m.getOrDefault("filters", null);
+				for (Map<String, Object> filter : filters) {
+					String description = (String) filter.getOrDefault("description", null);
+					List<String> extensions = (List<String>) filter.getOrDefault("extensions", null);
+					if (description != null && extensions != null) {
+						chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description, extensions));
+					}
+				}
+
+				String initialDirectory = (String) m.getOrDefault("initialDirectory", null);
+				if (initialDirectory != null) {
+					Path initialDirectoryPath = Paths.get(initialDirectory);
+					if (Files.isDirectory(initialDirectoryPath)) {
+						chooser.setInitialDirectory(initialDirectoryPath.toFile());
+					}
+				}
+
+				String initialFilename = (String) m.getOrDefault("initialFilename", null);
+				if (initialFilename != null) {
+					chooser.setInitialFileName(initialFilename);
+				}
+
+				Window ownerWindow = OverlayStage.getInstance(character.getCurrentLayerName()).getOwner();
+				Object result;
+				boolean multiple = (boolean) m.getOrDefault("multiple", false);
+				if (multiple) {
+					List<File> chosenFiles = chooser.showOpenMultipleDialog(ownerWindow);
+					if (chosenFiles != null) {
+						result = chosenFiles.stream().map(File::toString).collect(Collectors.toList());
+					} else {
+						result = null;
+					}
+				} else {
+					boolean saveDialog = (boolean) m.getOrDefault("saveDialog", false);
+					File chosenFile = (saveDialog) ? chooser.showSaveDialog(ownerWindow) : chooser.showOpenDialog(ownerWindow);
+					result = (chosenFile != null) ? chosenFile.toString() : null;
+				}
+
+				Object seq = m.get("seq");
+				Map<String, Object> response = new HashMap<>();
+				response.put("seq", seq);
+				response.put((multiple) ? "paths" : "path", result);
+				pluginProxy.sendMessage(sender, response);
+			});
+		});
+		pluginProxy.addMessageListener("gui:choose-directory", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Map<String, Object> m = (Map<String, Object>) data;
+				DirectoryChooser chooser = new DirectoryChooser();
+				chooser.setTitle((String) m.getOrDefault("title", Main.getString("chooser.directory.default_title")));
+
+				String initialDirectory = (String) m.getOrDefault("initialDirectory", null);
+				if (initialDirectory != null) {
+					Path initialDirectoryPath = Paths.get(initialDirectory);
+					if (Files.isDirectory(initialDirectoryPath)) {
+						chooser.setInitialDirectory(initialDirectoryPath.toFile());
+					}
+				}
+
+				Window ownerWindow = OverlayStage.getInstance(character.getCurrentLayerName()).getOwner();
+				File chosenFile = chooser.showDialog(ownerWindow);
+				String chosenFilePath = (chosenFile != null) ? chosenFile.toString() : null;
+
+				Object seq = m.get("seq");
+				Map<String, Object> response = new HashMap<>();
+				response.put("seq", seq);
+				response.put("path", chosenFilePath);
+				pluginProxy.sendMessage(sender, response);
 			});
 		});
 		pluginProxy.addMessageListener("gui:notify-after-delay", (sender, tag, data) -> {

@@ -235,6 +235,10 @@ class Character extends MovablePane {
 	LayerMode getLayerMode() {
 		return layerMode;
 	}
+
+	String getCurrentLayerName() {
+		return layerName;
+	}
 	
 	void setLayerMode(LayerMode mode) {
 		layerMode = mode;
