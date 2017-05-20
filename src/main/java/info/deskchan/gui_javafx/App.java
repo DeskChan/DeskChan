@@ -283,7 +283,8 @@ public class App extends Application {
 						delayNotifier.timeline.stop();
 					}
 				}
-				long delay = (Long) m.get("delay");
+				Object delayObj = m.getOrDefault("delay", -1L);
+				long delay = delayObj instanceof Integer ? (long) (int) delayObj : (long) delayObj;
 				if (delay > 0) {
 					new DelayNotifier(sender, seq, delay);
 				}

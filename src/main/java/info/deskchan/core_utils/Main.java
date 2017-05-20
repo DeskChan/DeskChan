@@ -28,7 +28,8 @@ public class Main implements Plugin {
 							}
 						}
 					}
-					long delay = (Long) m.getOrDefault("delay", -1);
+					Object delayObj = m.getOrDefault("delay", -1L);
+					long delay = delayObj instanceof Integer ? (long) (int) delayObj : (long) delayObj;
 					if (delay > 0) {
 						MyTimerTask task = new MyTimerTask(sender, seq);
 						timer.schedule(task, delay);
