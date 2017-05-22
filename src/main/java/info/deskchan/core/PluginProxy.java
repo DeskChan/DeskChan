@@ -57,7 +57,10 @@ public class PluginProxy implements MessageListener {
 			data = m;
 		}
 		Map<String, Object> m = (Map<String, Object>) data;
-		Integer seq = this.seq++;
+		Object seq = m.getOrDefault("seq", null);
+		if (seq == null) {
+			seq = this.seq++;
+		}
 		responseListeners.put(seq, responseListener);
 		m.put("seq", seq);
 		sendMessage(tag, data);
