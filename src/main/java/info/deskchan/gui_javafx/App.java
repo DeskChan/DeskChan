@@ -294,6 +294,7 @@ public class App extends Application {
 			Platform.runLater(() -> {
 				String pluginId = (String) data;
 				OptionsDialog.unregisterPluginTabs(pluginId);
+				pluginsActions.remove(pluginId);
 				rebuildMenu();
 				Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
 				while (iterator.hasNext()) {
@@ -368,6 +369,7 @@ public class App extends Application {
 					Menu pluginTrayMenu = new Menu(pluginId);
 					mainMenu.add(pluginTrayMenu);
 					javafx.scene.control.Menu pluginContextMenu = new javafx.scene.control.Menu(pluginId);
+					pluginContextMenu.setMnemonicParsing(false);
 					contextMenuItems.add(pluginContextMenu);
 					for (PluginActionInfo action : actions) {
 						pluginTrayMenu.add(action.createMenuItemForTray());
