@@ -42,6 +42,9 @@ interface PluginOptionsControlItem {
 			case "Spinner":
 				item = new SpinnerItem();
 				break;
+			case "CheckBox":
+				item = new CheckBoxItem();
+				break;
 			case "ComboBox":
 				item = new ComboBoxItem();
 				break;
@@ -141,6 +144,25 @@ interface PluginOptionsControlItem {
 			return spinner;
 		}
 		
+	}
+
+	class CheckBoxItem extends CheckBox implements PluginOptionsControlItem {
+
+		@Override
+		public void setValue(Object value) {
+			setSelected((boolean) value);
+		}
+
+		@Override
+		public Object getValue() {
+			return isSelected();
+		}
+
+		@Override
+		public Node getNode() {
+			return this;
+		}
+
 	}
 	
 	class ComboBoxItem implements PluginOptionsControlItem {
