@@ -121,7 +121,7 @@ class Character extends MovablePane {
 				screenBounds.getMaxY() - getHeight()));
 	}
 	
-	private void updateImage(boolean reloadImage) {
+	void updateImage(boolean reloadImage) {
 	    if (reloadImage) {
             imageView.setImage(getImage());
         }
@@ -135,6 +135,7 @@ class Character extends MovablePane {
         imageView.setFitWidth(newWidth);
         imageView.setFitHeight(newHeight);
         resize(imageView.getFitWidth(), imageView.getFitHeight());
+		imageView.setOpacity(Float.parseFloat(Main.getProperty("skin.opacity", "1.0")));
 
         Point2D oldPosition = getPosition();
         double deltaX = -(newWidth - oldWidth) / 2;

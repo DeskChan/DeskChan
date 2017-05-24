@@ -54,7 +54,7 @@ class OptionsDialog extends TemplateBox {
 		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
 		skinManagerButton.setOnAction(event -> openSkinManager());
 		gridPane.add(skinManagerButton, 1, 0);
-		gridPane.add(new Label(Main.getString("scale_factor")), 0, 1);
+		gridPane.add(new Label(Main.getString("skin.scale_factor")), 0, 1);
 		double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
 		// e.g. 1.74 -> 1.75
 		scaleFactorValue = Math.round(scaleFactorValue * 20.0f) / 20.0f;
@@ -64,7 +64,16 @@ class OptionsDialog extends TemplateBox {
 			App.getInstance().getCharacter().resizeSprite(value.floatValue());
 		});
 		gridPane.add(scaleFactorSpinner, 1, 1);
-		gridPane.add(new Label(Main.getString("balloon_font")), 0, 2);
+		gridPane.add(new Label(Main.getString("skin.opacity")), 0, 2);
+		double opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
+		opacity = Math.round(opacity * 20.0f) / 20.0f;
+		Spinner<Double> opacitySpinner = new Spinner<>(0.10, 1.0, opacity, 0.05);
+		opacitySpinner.valueProperty().addListener((property, oldValue, value) -> {
+			Main.setProperty("skin.opacity", value.toString());
+			App.getInstance().getCharacter().updateImage(false);
+		});
+		gridPane.add(opacitySpinner, 1, 2);
+		gridPane.add(new Label(Main.getString("balloon_font")), 0, 3);
 		Button balloonFontButton = new Button(
 				Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize()
 		);
@@ -80,8 +89,8 @@ class OptionsDialog extends TemplateBox {
 				balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
 			}
 		});
-		gridPane.add(balloonFontButton, 1, 2);
-		gridPane.add(new Label(Main.getString("character.layer_mode")), 0, 3);
+		gridPane.add(balloonFontButton, 1, 3);
+		gridPane.add(new Label(Main.getString("character.layer_mode")), 0, 4);
 		ComboBox<Character.LayerMode> characterLayerModeComboBox = new ComboBox<>();
 		characterLayerModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
 				Character.LayerMode.values())));
@@ -92,15 +101,15 @@ class OptionsDialog extends TemplateBox {
 					Main.setProperty("character.layer_mode", value.toString());
 				}
 		);
-		gridPane.add(characterLayerModeComboBox, 1, 3);
-		gridPane.add(new Label(Main.getString("balloon_default_timeout")), 0, 4);
+		gridPane.add(characterLayerModeComboBox, 1, 4);
+		gridPane.add(new Label(Main.getString("balloon_default_timeout")), 0, 5);
 		Spinner<Integer> balloonDefaultTimeoutSpinner = new Spinner<>(0, 120000,
 				Integer.parseInt(Main.getProperty("balloon.default_timeout", "300")), 100);
 		balloonDefaultTimeoutSpinner.valueProperty().addListener((property, oldValue, value) -> {
 			Main.setProperty("balloon.default_timeout", value.toString());
 		});
-		gridPane.add(balloonDefaultTimeoutSpinner, 1, 4);
-		gridPane.add(new Label(Main.getString("balloon_position_mode")), 0, 5);
+		gridPane.add(balloonDefaultTimeoutSpinner, 1, 5);
+		gridPane.add(new Label(Main.getString("balloon_position_mode")), 0, 6);
 		ComboBox<Balloon.PositionMode> balloonPositionModeComboBox = new ComboBox<>();
 		balloonPositionModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
 				Balloon.PositionMode.values())));
@@ -111,14 +120,14 @@ class OptionsDialog extends TemplateBox {
 					App.getInstance().getCharacter().setBalloonPositionMode(value);
 				}
 		);
-		gridPane.add(balloonPositionModeComboBox, 1, 5);
-		gridPane.add(new Label(Main.getString("enable_context_menu")), 0, 6);
+		gridPane.add(balloonPositionModeComboBox, 1, 6);
+		gridPane.add(new Label(Main.getString("enable_context_menu")), 0, 7);
 		CheckBox showContextMenuCheckBox = new CheckBox();
 		showContextMenuCheckBox.setSelected(Main.getProperty("character.enable_context_menu", "0").equals("1"));
 		showContextMenuCheckBox.selectedProperty().addListener((property, oldValue, newValue) -> {
 			Main.setProperty("character.enable_context_menu", (newValue) ? "1" : "0");
 		});
-		gridPane.add(showContextMenuCheckBox, 1, 6);
+		gridPane.add(showContextMenuCheckBox, 1, 7);
 		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
