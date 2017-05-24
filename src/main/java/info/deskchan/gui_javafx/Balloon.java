@@ -50,12 +50,12 @@ class Balloon extends MovablePane {
 		bubbleShape.setStroke(Color.BLACK);
 		bubbleShape.setScaleX(0);
 		bubbleShape.setScaleY(0);
-		
-		bubbleShadow.setRadius(10.0);
-		bubbleShadow.setOffsetX(3.0);
-		bubbleShadow.setOffsetY(7.0);
+
+		bubbleShadow.setRadius(5.0);
+		bubbleShadow.setOffsetX(1.5);
+		bubbleShadow.setOffsetY(2.5);
 		bubbleShadow.setColor(Color.BLACK);
-		bubbleShape.setEffect(bubbleShadow);
+		stackPane.setEffect(bubbleShadow);
 		
 		Label label = new Label(text);
 		label.setWrapText(true);
