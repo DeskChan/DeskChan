@@ -7,8 +7,10 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
@@ -48,8 +50,15 @@ class OptionsDialog extends TemplateBox {
 	
 	private void initTabs() {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
-		BorderPane appearanceTab = new BorderPane();
 		GridPane gridPane = new GridPane();
+		ColumnConstraints column1 = new ColumnConstraints();
+        column1.setPercentWidth(60);
+        ColumnConstraints column2 = new ColumnConstraints();
+        column2.setPercentWidth(40);
+        gridPane.getColumnConstraints().addAll(column1, column2);
+        gridPane.setVgap(5);
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+
 		gridPane.add(new Label(Main.getString("skin")), 0, 0);
 		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
 		skinManagerButton.setOnAction(event -> openSkinManager());
@@ -125,10 +134,9 @@ class OptionsDialog extends TemplateBox {
 		CheckBox showContextMenuCheckBox = new CheckBox();
 		showContextMenuCheckBox.setSelected(Main.getProperty("character.enable_context_menu", "0").equals("1"));
 		showContextMenuCheckBox.selectedProperty().addListener((property, oldValue, newValue) -> {
-			Main.setProperty("character.enable_context_menu", (newValue) ? "1" : "0");
+			Main.setProperty("character.enable_context_menu", newValue ? "1" : "0");
 		});
 		gridPane.add(showContextMenuCheckBox, 1, 7);
-		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
