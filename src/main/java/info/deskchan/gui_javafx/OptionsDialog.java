@@ -13,6 +13,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.stage.Stage;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
@@ -50,12 +51,25 @@ class OptionsDialog extends TemplateBox {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
 		BorderPane appearanceTab = new BorderPane();
 		GridPane gridPane = new GridPane();
+                
+                //gridPane.setHgap(50);
+                gridPane.setVgap(5);
+                
+                ColumnConstraints column0 = new ColumnConstraints();
+                column0.setPercentWidth(70);
+                ColumnConstraints column1 = new ColumnConstraints();
+                column1.setPercentWidth(30);
+                gridPane.getColumnConstraints().addAll(column0, column1);
+                
+                //gridPane.setGridLinesVisible(false);
+                //gridPane.setManaged(true);
+                
 		gridPane.add(new Label(Main.getString("skin")), 0, 0);
 		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
 		skinManagerButton.setOnAction(event -> openSkinManager());
 		gridPane.add(skinManagerButton, 1, 0);
 		gridPane.add(new Label(Main.getString("scale_factor")), 0, 1);
-		double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
+		double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));                
 		// e.g. 1.74 -> 1.75
 		scaleFactorValue = Math.round(scaleFactorValue * 20.0f) / 20.0f;
 		Spinner<Double> scaleFactorSpinner = new Spinner<>(0.1, 10.0, scaleFactorValue, 0.05);
@@ -112,13 +126,23 @@ class OptionsDialog extends TemplateBox {
 				}
 		);
 		gridPane.add(balloonPositionModeComboBox, 1, 5);
-		gridPane.add(new Label(Main.getString("enable_context_menu")), 0, 6);
+                
+                gridPane.add(new Label(Main.getString("skin.opacity")), 0, 6);
+                double Opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
+		Spinner<Double> OpacitySpinner = new Spinner<>(0.10, 1.0, Opacity, 0.05);
+		OpacitySpinner.valueProperty().addListener((property, oldValue, value) -> {
+			Main.setProperty("skin.opacity", value.toString());
+                        App.getInstance().getCharacter().updateImage();
+                        });
+                gridPane.add(OpacitySpinner, 1, 6);
+                
+		gridPane.add(new Label(Main.getString("enable_context_menu")), 0, 7);
 		CheckBox showContextMenuCheckBox = new CheckBox();
 		showContextMenuCheckBox.setSelected(Main.getProperty("character.enable_context_menu", "0").equals("1"));
 		showContextMenuCheckBox.selectedProperty().addListener((property, oldValue, newValue) -> {
 			Main.setProperty("character.enable_context_menu", (newValue) ? "1" : "0");
 		});
-		gridPane.add(showContextMenuCheckBox, 1, 6);
+		gridPane.add(showContextMenuCheckBox, 1, 7);
 		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
