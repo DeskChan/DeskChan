@@ -172,12 +172,12 @@ public class App extends Application {
 				Map<String, Object> m = (Map<String, Object>) data;
 				if (m.containsKey("scaleFactor")) {
 					Double scaleFactor = (double) m.get("scaleFactor");
-					character.resizeSprite(scaleFactor.floatValue());
+					character.resizeSkin(scaleFactor.floatValue());
 				} else if (m.containsKey("zoom")) {
 					Double zoom = (double) m.get("zoom");
-					character.resizeSpriteRelatively(zoom.floatValue());
+					character.resizeSkinRelatively(zoom.floatValue());
 				} else if (m.containsKey("width") || m.containsKey("height")) {
-					character.resizeSprite((Integer) m.get("width"), (Integer) m.get("height"));
+					character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
 				}
 
 				boolean save = (boolean) m.getOrDefault("save", false);

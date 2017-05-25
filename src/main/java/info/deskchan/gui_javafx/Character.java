@@ -156,7 +156,7 @@ class Character extends MovablePane {
      * Use a number in the range of (0.0; 1.0) to make the image smaller.
      * @param scaleFactor a positive float-point number
      */
-	void resizeSprite(float scaleFactor) {
+	void resizeSkin(float scaleFactor) {
 		if (scaleFactor == 0) {
 			return;
 		}
@@ -170,7 +170,7 @@ class Character extends MovablePane {
      * @param width nullable
      * @param height nullable
      */
-	void resizeSprite(Integer width, Integer height) {
+	void resizeSkin(Integer width, Integer height) {
 	    Double scaleFactor = null;
 	    if (width != null) {
 	        scaleFactor = width / imageView.getImage().getWidth();
@@ -179,7 +179,7 @@ class Character extends MovablePane {
         } else {
 	        return;
         }
-        resizeSprite(scaleFactor.floatValue());
+        resizeSkin(scaleFactor.floatValue());
     }
 
     /**
@@ -188,8 +188,8 @@ class Character extends MovablePane {
      * Use a positive value to zoom in the image, or a negative one to zoom it out.
      * @param scaleFactorIncrement a positive or negative float-point number
      */
-	void resizeSpriteRelatively(float scaleFactorIncrement) {
-		resizeSprite(scaleFactor + scaleFactorIncrement);
+	void resizeSkinRelatively(float scaleFactorIncrement) {
+		resizeSkin(scaleFactor + scaleFactorIncrement);
 	}
 
 	/**
@@ -327,8 +327,6 @@ class Character extends MovablePane {
 			}
 			this.characterImage = characterImage;
 			priority = (Integer) data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-			//timeout = (Integer) data.getOrDefault("timeout",
-			//		Integer.parseInt(Main.getProperty("balloon.default_timeout", "15000")));
 			timeout = (Integer) data.getOrDefault("timeout", Math.max(6000,
 					text.length() * Integer.parseInt(Main.getProperty("balloon.default_timeout", "300"))));
 		}

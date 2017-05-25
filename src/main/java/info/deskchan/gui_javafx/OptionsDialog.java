@@ -70,7 +70,7 @@ class OptionsDialog extends TemplateBox {
 		Spinner<Double> scaleFactorSpinner = new Spinner<>(0.1, 10.0, scaleFactorValue, 0.05);
 		scaleFactorSpinner.valueProperty().addListener((property, oldValue, value) -> {
 			Main.setProperty("skin.scale_factor", value.toString());
-			App.getInstance().getCharacter().resizeSprite(value.floatValue());
+			App.getInstance().getCharacter().resizeSkin(value.floatValue());
 		});
 		gridPane.add(scaleFactorSpinner, 1, 1);
 		gridPane.add(new Label(Main.getString("skin.opacity")), 0, 2);
