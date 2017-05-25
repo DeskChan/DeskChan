@@ -149,6 +149,24 @@ public class App extends Application {
 				}
 			});
 		});
+		pluginProxy.addMessageListener("gui:change-skin-opacity", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Map<String, Object> m = (Map<String, Object>) data;
+				if (m.containsKey("absolute")) {
+					Double opacity = (double) m.get("absolute");
+					character.changeOpacity(opacity.floatValue());
+				} else if (m.containsKey("relative")) {
+					Double opacityIncrement = (double) m.get("relative");
+					character.changeOpacityRelatively(opacityIncrement.floatValue());
+				}
+
+				boolean save = (boolean) m.getOrDefault("save", false);
+				if (save) {
+					Float opacity = character.getSkinOpacity();
+					Main.setProperty("skin.opacity", opacity.toString());
+				}
+			});
+		});
 		pluginProxy.addMessageListener("gui:resize-character", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;

@@ -79,7 +79,7 @@ class OptionsDialog extends TemplateBox {
 		Spinner<Double> opacitySpinner = new Spinner<>(0.10, 1.0, opacity, 0.05);
 		opacitySpinner.valueProperty().addListener((property, oldValue, value) -> {
 			Main.setProperty("skin.opacity", value.toString());
-			App.getInstance().getCharacter().updateImage(false);
+			App.getInstance().getCharacter().changeOpacity(value.floatValue());
 		});
 		gridPane.add(opacitySpinner, 1, 2);
 		gridPane.add(new Label(Main.getString("balloon_font")), 0, 3);

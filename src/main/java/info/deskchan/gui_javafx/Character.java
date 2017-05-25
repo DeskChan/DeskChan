@@ -37,10 +37,12 @@ class Character extends MovablePane {
 	private LayerMode layerMode = LayerMode.ALWAYS_TOP;
 	private Balloon.PositionMode balloonPositionMode;
 	private float scaleFactor = 1.0f;
+	private float skinOpacity = 1.0f;
 	
 	Character(String id, Skin skin) {
 		this.id = id;
 		setScaleFactor(Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0")));
+		setSkinOpacity(Float.parseFloat(Main.getProperty("skin.opacity", "1.0")));
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
@@ -121,7 +123,7 @@ class Character extends MovablePane {
 				screenBounds.getMaxY() - getHeight()));
 	}
 	
-	void updateImage(boolean reloadImage) {
+	private void updateImage(boolean reloadImage) {
 	    if (reloadImage) {
             imageView.setImage(getImage());
         }
@@ -135,7 +137,7 @@ class Character extends MovablePane {
         imageView.setFitWidth(newWidth);
         imageView.setFitHeight(newHeight);
         resize(imageView.getFitWidth(), imageView.getFitHeight());
-		imageView.setOpacity(Float.parseFloat(Main.getProperty("skin.opacity", "1.0")));
+		imageView.setOpacity(skinOpacity);
 
         Point2D oldPosition = getPosition();
         double deltaX = -(newWidth - oldWidth) / 2;
@@ -182,12 +184,33 @@ class Character extends MovablePane {
 
     /**
      * Scales the image relatively. Unlike the usual resizeSprite(), this method
-     * gets the old value of the scale factor and adds an increment to it.
+     * gets an old value of the scale factor and adds an increment to it.
      * Use a positive value to zoom in the image, or a negative one to zoom it out.
-     * @param scaleFactorIncrement a positive or negative number
+     * @param scaleFactorIncrement a positive or negative float-point number
      */
 	void resizeSpriteRelatively(float scaleFactorIncrement) {
 		resizeSprite(scaleFactor + scaleFactorIncrement);
+	}
+
+	/**
+	 * Changes the absolute value of the opacity of the image.
+	 * @param opacity a value in the range of (0.0; 1.0]
+	 */
+	void changeOpacity(float opacity) {
+		if (opacity == 0 || opacity > 1.0) {
+			return;
+		}
+		setSkinOpacity(opacity);
+		updateImage(false);
+	}
+
+	/**
+	 * Changes the value of the opacity of the image relatively.
+	 * Unlike the usual changeOpacity(), this method gets an old value of the scale factor and adds an increment to it.
+	 * @param opacityIncrement a positive or negative float-point number
+	 */
+	void changeOpacityRelatively(float opacityIncrement) {
+		changeOpacity(skinOpacity + opacityIncrement);
 	}
 	
 	void setIdleImageName(String name) {
@@ -267,11 +290,23 @@ class Character extends MovablePane {
 	    return scaleFactor;
     }
 
-    void setScaleFactor(float scaleFactor) {
+    private void setScaleFactor(float scaleFactor) {
 		if (scaleFactor == 0) {
 			this.scaleFactor = 1.0f;
 		} else {
-			this.scaleFactor = Math.round(Math.abs(scaleFactor) * 100.0f) / 100.0f;
+			this.scaleFactor = Math.round(Math.abs(scaleFactor) * 20.0f) / 20.0f;
+		}
+	}
+
+	float getSkinOpacity() {
+		return skinOpacity;
+	}
+
+	private void setSkinOpacity(float opacity) {
+		if (opacity == 0 || opacity > 1.0) {
+			skinOpacity = 1.0f;
+		} else {
+			skinOpacity = Math.round(Math.abs(opacity) * 20.0f) / 20.0f;
 		}
 	}
 	
