@@ -98,7 +98,7 @@ class MouseEventNotificator {
      * @param event ScrollEvent
      */
     void notifyScrollEvent(ScrollEvent event) {
-        int delta = (event.getDeltaY() > 0) ? 1 : -1;
+        int delta = (event.getDeltaY() > 0) ? -1 : 1;
         impl_notifyScrollEvent(delta, event.getScreenX(), event.getScreenY(), event.getX(), event.getY());
     }
 
