@@ -7,12 +7,8 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
-import javafx.geometry.Insets;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -51,16 +47,16 @@ class OptionsDialog extends TemplateBox {
 	private void initTabs() {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
+		gridPane.getStyleClass().add("grid-pane");
 		ColumnConstraints column1 = new ColumnConstraints();
-        column1.setPercentWidth(60);
+        column1.setPercentWidth(55);
         ColumnConstraints column2 = new ColumnConstraints();
-        column2.setPercentWidth(40);
+        column2.setPercentWidth(45);
         gridPane.getColumnConstraints().addAll(column1, column2);
-        gridPane.setVgap(5);
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
 
 		gridPane.add(new Label(Main.getString("skin")), 0, 0);
-		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
+		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString().replaceAll(
+				String.format(".*\\%c", File.separatorChar), ""));
 		skinManagerButton.setOnAction(event -> openSkinManager());
 		gridPane.add(skinManagerButton, 1, 0);
 		gridPane.add(new Label(Main.getString("skin.scale_factor")), 0, 1);
@@ -280,8 +276,7 @@ class OptionsDialog extends TemplateBox {
 			}
 		}
 		gridPane = new GridPane();
-		gridPane.setHgap(6);
-		gridPane.setVgap(6);
+		gridPane.getStyleClass().add("grid-pane");
 		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
 		label.setFont(Font.font(20));
 		gridPane.add(label, 0, 0, 2, 1);
@@ -308,9 +303,9 @@ class OptionsDialog extends TemplateBox {
 		Main.setProperty("skin.name", App.getInstance().getCharacter().getSkin().getName());
 	}
 	
-	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag) {
+	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag, float columnGrow) {
 		List<ControlsContainer> tabs = pluginsTabs.getOrDefault(plugin, null);
-		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag);
+		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag, columnGrow);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			pluginsTabs.put(plugin, tabs);

@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 
 import java.util.HashMap;
@@ -15,22 +16,33 @@ public class ControlsContainer {
 	final String name;
 	List<Map<String, Object>> controls;
 	String msgTag;
+	float columnGrow;
 	
-	ControlsContainer(String name, List<Map<String, Object>> controls, String msgTag) {
+	ControlsContainer(String name, List<Map<String, Object>> controls, String msgTag, float columnGrow) {
 		this.name = name;
 		this.controls = controls;
 		this.msgTag = msgTag;
+		this.columnGrow = columnGrow;
 	}
 	
-	void update(List<Map<String, Object>> controls, String msgTag) {
+	void update(List<Map<String, Object>> controls, String msgTag, float columnGrow) {
 		this.controls = controls;
 		this.msgTag = msgTag;
+		this.columnGrow = columnGrow;
 	}
 	
 	Node createControlsPane() {
 		final Map<String, PluginOptionsControlItem> namedControls = new HashMap<>();
 		BorderPane borderPane = new BorderPane();
 		GridPane gridPane = new GridPane();
+		gridPane.getStyleClass().add("grid-pane");
+		float columnGrowPercentage = columnGrow * 100;
+		ColumnConstraints column1 = new ColumnConstraints();
+		column1.setPercentWidth(columnGrowPercentage);
+		ColumnConstraints column2 = new ColumnConstraints();
+		column2.setPercentWidth(100 - columnGrowPercentage);
+		gridPane.getColumnConstraints().addAll(column1, column2);
+
 		int row = 0;
 		for (Map<String, Object> controlInfo : controls) {
 			String id = (String) controlInfo.getOrDefault("id", null);

@@ -191,7 +191,8 @@ public class App extends Application {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
 				OptionsDialog.registerPluginTab(sender, (String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
+						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null),
+						(float) m.getOrDefault("columnGrow", 0.5f));
 			});
 		});
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
@@ -208,7 +209,8 @@ public class App extends Application {
 				Map<String, Object> m = (Map<String, Object>) data;
 				TemplateBox dialog = new TemplateBox((String) m.getOrDefault("name", Main.getString("default_messagebox_name")));
 				dialog.getDialogPane().setContent(new ControlsContainer((String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null)).createControlsPane());
+						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null),
+						(float) m.getOrDefault("columnGrow", 0.5f)).createControlsPane());
 				dialog.requestFocus();
 				dialog.show();
 			});
