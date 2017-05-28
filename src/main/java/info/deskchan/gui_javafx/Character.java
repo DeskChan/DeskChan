@@ -54,12 +54,10 @@ class Character extends MovablePane {
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
 			boolean enabled = Main.getProperty("character.enable_context_menu", "0").equals("1");
 			ContextMenu contextMenu = App.getInstance().getContextMenu();
+			// We need to hide menu manually in both cases to avoid showing the menu with incorrect width.
+			contextMenu.hide();
 			if (enabled && event.getButton() == MouseButton.SECONDARY && event.isStillSincePress()) {
-				// If we don't hide the menu manually, we get it with incorrect width.
-				contextMenu.hide();
 				contextMenu.show(this, event.getScreenX(), event.getScreenY());
-			} else if (contextMenu.isShowing()) {
-				contextMenu.hide();
 			}
 		});
 
