@@ -190,9 +190,11 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
+				Object columnGrowObj = m.getOrDefault("columnGrow", 0.5f);
+				float columnGrow = columnGrowObj instanceof Double ? (float) (double) columnGrowObj : (float) columnGrowObj;
+
 				OptionsDialog.registerPluginTab(sender, (String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null),
-						(float) m.getOrDefault("columnGrow", 0.5f));
+						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null), columnGrow);
 			});
 		});
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
@@ -207,10 +209,13 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
+				Object columnGrowObj = m.getOrDefault("columnGrow", 0.5f);
+				float columnGrow = columnGrowObj instanceof Double ? (float) (double) columnGrowObj : (float) columnGrowObj;
+
 				TemplateBox dialog = new TemplateBox((String) m.getOrDefault("name", Main.getString("default_messagebox_name")));
 				dialog.getDialogPane().setContent(new ControlsContainer((String) m.get("name"),
 						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null),
-						(float) m.getOrDefault("columnGrow", 0.5f)).createControlsPane());
+						columnGrow).createControlsPane());
 				dialog.requestFocus();
 				dialog.show();
 			});
