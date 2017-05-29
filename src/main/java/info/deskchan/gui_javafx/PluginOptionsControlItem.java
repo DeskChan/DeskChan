@@ -77,7 +77,12 @@ interface PluginOptionsControlItem {
 	}
 	
 	class LabelItem extends Label implements PluginOptionsControlItem {
-		
+
+		public LabelItem() {
+			super();
+			setWrapText(true);
+		}
+
 		@Override
 		public void setValue(Object value) {
 			setText(value.toString());
@@ -324,6 +329,7 @@ interface PluginOptionsControlItem {
 				}
 			});
 			setRight(selectButton);
+			setMaxHeight(textField.getHeight());
 		}
 		
 		@Override
@@ -331,6 +337,15 @@ interface PluginOptionsControlItem {
 			String path = (String) options.getOrDefault("initialDirectory", null);
 			if (path != null) {
 				chooser.setInitialDirectory(new File(path));
+			}
+
+			List<Map<String, Object>> filters = (List<Map<String, Object>>) options.getOrDefault("filters", new ArrayList<>(0));
+			for (Map<String, Object> filter : filters) {
+				String description = (String) filter.getOrDefault("description", null);
+				List<String> extensions = (List<String>) filter.getOrDefault("extensions", null);
+				if (description != null && extensions != null) {
+					chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description, extensions));
+				}
 			}
 		}
 		

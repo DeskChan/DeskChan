@@ -63,7 +63,9 @@ public class ControlsContainer {
 			if (label == null) {
 				gridPane.add(item.getNode(), 0, row, 2, 1);
 			} else {
-				gridPane.add(new Label(label + ":"), 0, row);
+				Label labelNode = new Label(label + ":");
+				labelNode.setWrapText(true);
+				gridPane.add(labelNode, 0, row);
 				gridPane.add(item.getNode(), 1, row);
 			}
 			row++;
