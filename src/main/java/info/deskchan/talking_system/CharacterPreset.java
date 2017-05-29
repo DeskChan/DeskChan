@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 public abstract class CharacterPreset {
@@ -19,12 +20,10 @@ public abstract class CharacterPreset {
 	protected ArrayList<String> usernames;
 	protected ArrayList<String> abuses = new ArrayList<String>() {{
 		add("идиот");
-		add("придурок");
 		add("дурак");
-		add("козёл");
 		add("бака");
 	}};
-	protected ArrayList<String> quotesBaseList;
+	protected List<String> quotesBaseList;
 	protected ArrayList<String> interestsBaseList;
 	protected CharacterDefinite MainCharacter;
 	

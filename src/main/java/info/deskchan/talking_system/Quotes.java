@@ -18,31 +18,81 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+
+class QuotePack{
+	private Path packName;
+	private String packNameString;
+	private ArrayList<Quote> quotes = new ArrayList<Quote>();
+
+	public QuotePack(String file){
+        packNameString=file;
+		packName=Paths.get(file).normalize();
+
+        if(!packName.getFileName().toString().contains("."))
+            packName=Paths.get(file+".quotes").normalize();
+		if(!packName.isAbsolute())
+			packName=Main.getDataDirPath().resolve(packName);
+        else if(packName.startsWith(Main.getDataDirPath()))
+            packNameString=packName.getFileName().toString();
+
+		DocumentBuilder builder;
+		try {
+			DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+			f.setValidating(false);
+			builder = f.newDocumentBuilder();
+		} catch (Exception e) {
+			Main.log("Error while starting quotes parser: " + e);
+			return;
+		}
+		try {
+			InputStream inputStream = Files.newInputStream(packName);
+			Document doc = builder.parse(inputStream);
+			inputStream.close();
+			Node mainNode = doc.getChildNodes().item(0);
+			NodeList list = mainNode.getChildNodes();
+			for (int i = 0; i < list.getLength(); i++) {
+				if (!list.item(i).getNodeName().equals("quote")) {
+					continue;
+				}
+				try {
+					add(Quote.create(list.item(i)));
+				} catch (Exception e2) {
+					Main.log(e2);
+				}
+			}
+		} catch (Exception e) {
+			Main.log("Error while parsing quotes file " + file + ": " + e);
+            return;
+		}
+	}
+	public void add(Quote quote) {
+		if (quote == null) return;
+		//for (Quote q : quotes)
+		//	if (q.toString().equals(quote.toString())) return;
+		quotes.add(quote);
+	}
+	public int size(){
+		return quotes.size();
+	}
+
+	public Quote get(int i){
+		return quotes.get(i);
+	}
+	public String getFileName(){
+		return packNameString;
+	}
+}
 
 public class Quotes {
 	CharacterDefinite current = new CharacterDefinite();
 	private int queueLength = 30;
 	private int curPos = 0;
-	Quote[] lastUsed = new Quote[queueLength];
-	ArrayList<Quote> quotes = new ArrayList();
-	ArrayList<Quote> suitableQuotes = new ArrayList();
-	
-	public void add(Quote quote) {
-		if (quote == null) {
-			return;
-		}
-		for (Quote q : quotes) {
-			if (q.toString().equals(quote.toString())) {
-				return;
-			}
-		}
-		quotes.add(quote);
-		if (quote.matchToCharacter(current)) {
-			suitableQuotes.add(quote);
-		}
-	}
-	
+	private Quote[] lastUsed = new Quote[queueLength];
+	private ArrayList<QuotePack> packs = new ArrayList<QuotePack>();
+	private ArrayList<Quote> suitableQuotes = new ArrayList<Quote>();
+
 	public void update(CharacterDefinite newCharacter) {
 		if (current.equal(newCharacter)) {
 			return;
@@ -52,25 +102,56 @@ public class Quotes {
 	}
 	
 	public void update() {
-		suitableQuotes = new ArrayList();
-		for (int i = 0, l = quotes.size(); i < l; i++) {
-			if (quotes.get(i).matchToCharacter(current)) {
-				suitableQuotes.add(quotes.get(i));
-			}
+		suitableQuotes = new ArrayList<Quote>();
+		for (QuotePack pack : packs) {
+			for (int i = 0, l = pack.size(); i < l; i++)
+				if (pack.get(i).matchToCharacter(current))
+					suitableQuotes.add(pack.get(i));
 		}
-		
 	}
-	
-	public ArrayList<Quote> GetMatching(CharacterDefinite target) {
-		ArrayList<Quote> sq = new ArrayList();
-		for (int i = 0, l = quotes.size(); i < l; i++) {
-			if (quotes.get(i).matchToCharacter(target)) {
-				sq.add(quotes.get(i));
-			}
-		}
-		return sq;
-	}
-	
+	public void load(List<String> files){
+        for(int i=0;i<files.size();i++){
+            QuotePack p;
+            try{
+                p=new QuotePack(files.get(i));
+            } catch (Exception e){
+                Main.log("Error while reading file "+files.get(i)+": "+e.getMessage());
+                files.remove(i);
+                i--;
+                continue;
+            }
+            boolean found=false;
+            for(QuotePack pack : packs)
+                if(pack.getFileName().equals(files.get(i))){
+                    found=true;
+                    break;
+                }
+            if(!found && p.size()>0){
+                packs.add(p);
+                files.set(i,p.getFileName());
+                Main.log("Loaded quotes: " + p.getFileName()+" "+ p.size());
+            }
+        }
+        files.clear();
+        for(QuotePack pack : packs){
+            files.add(pack.getFileName());
+        }
+        update();
+    }
+    public void setPacks(List<String> files){
+        for(int i=0;i<packs.size();i++){
+            boolean found=false;
+            for(int k=0;k<files.size();k++)
+                if(packs.get(i).getFileName().equals(files.get(k))){
+                    found=true;
+                    break;
+                }
+            if(found)continue;
+            packs.remove(i);
+            i--;
+        }
+        load(files);
+    }
 	public Quote getRandomQuote(String purpose) {
 		purpose = purpose.toUpperCase();
 		if (suitableQuotes.size() == 0) {
@@ -93,14 +174,15 @@ public class Quotes {
 				sq.add(q);
 			}
 		}
-		
+
 		if (sq.size() == 0) {
 			return new Quote("Я не знаю, что сказать.");
 		}
-		int counter = queueLength + 1;
+		int counter = queueLength + 1,k;
 		do {
 			counter--;
 			r = new Random().nextInt(sq.size());
+			k=r;
 			q = sq.get(r);
 			int i, j = curPos - 1;
 			for (i = 0; i < counter; i++, j--) {
@@ -130,47 +212,11 @@ public class Quotes {
 	}
 	
 	public void clear() {
-		quotes = new ArrayList();
-		suitableQuotes = new ArrayList();
+		packs = new ArrayList<>();
+		suitableQuotes = new ArrayList<>();
 		lastUsed = new Quote[queueLength];
 	}
-	
-	public void load(Path path, ArrayList<String> files) {
-		DocumentBuilder builder;
-		try {
-			DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-			f.setValidating(false);
-			builder = f.newDocumentBuilder();
-		} catch (Exception e) {
-			Main.log("Error while starting quotes parser: " + e);
-			return;
-		}
-		
-		for (String file : files) {
-			try {
-				InputStream inputStream = Files.newInputStream(path.resolve(file + ".quotes"));
-				Document doc = builder.parse(inputStream);
-				inputStream.close();
-				Node mainNode = doc.getChildNodes().item(0);
-				NodeList list = mainNode.getChildNodes();
-				for (int i = 0; i < list.getLength(); i++) {
-					if (!list.item(i).getNodeName().equals("quote")) {
-						continue;
-					}
-					try {
-						add(Quote.create(list.item(i)));
-					} catch (Exception e2) {
-						Main.log(e2);
-					}
-				}
-			} catch (Exception e) {
-				Main.log("Error while loading file " + file + ".quotes" + ": " + e);
-			}
-		}
-		Main.log("Loaded quotes: " + quotes.size() + " " + suitableQuotes.size());
-		update();
-	}
-	
+
 	public static void saveTo(String URL, String filename) {
 		try {
 			URL DATA_URL = new URL(URL);

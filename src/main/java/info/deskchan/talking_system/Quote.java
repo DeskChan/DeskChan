@@ -140,8 +140,7 @@ public class Quote {
 				} catch (Exception e) {
 				}
 			}
-		} catch (Exception e) {
-		}
+		} catch (Exception e) { }
 		return q;
 	}
 	

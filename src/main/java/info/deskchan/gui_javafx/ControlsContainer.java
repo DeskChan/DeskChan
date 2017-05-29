@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Window;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,14 +18,17 @@ public class ControlsContainer {
 	List<Map<String, Object>> controls;
 	String msgTag;
 	float columnGrow;
-	
-	ControlsContainer(String name, List<Map<String, Object>> controls, String msgTag, float columnGrow) {
+	Window parent;
+	ControlsContainer(String name, List<Map<String, Object>> controls, String msgTag) {
 		this.name = name;
 		this.controls = controls;
 		this.msgTag = msgTag;
-		this.columnGrow = columnGrow;
+		this.parent=null;
+		columnGrow=0.4f;
 	}
-	
+	void setParent(Window parent){
+		this.parent=parent;
+	}
 	void update(List<Map<String, Object>> controls, String msgTag, float columnGrow) {
 		this.controls = controls;
 		this.msgTag = msgTag;
@@ -32,6 +36,8 @@ public class ControlsContainer {
 	}
 	
 	Node createControlsPane() {
+		if(parent==null)
+			parent=OptionsDialog.getInstance().getDialogPane().getScene().getWindow();
 		final Map<String, PluginOptionsControlItem> namedControls = new HashMap<>();
 		BorderPane borderPane = new BorderPane();
 		GridPane gridPane = new GridPane();
@@ -47,7 +53,7 @@ public class ControlsContainer {
 		for (Map<String, Object> controlInfo : controls) {
 			String id = (String) controlInfo.getOrDefault("id", null);
 			String label = (String) controlInfo.getOrDefault("label", null);
-			PluginOptionsControlItem item = PluginOptionsControlItem.create(controlInfo);
+			PluginOptionsControlItem item = PluginOptionsControlItem.create(parent,controlInfo);
 			if (item == null) {
 				continue;
 			}

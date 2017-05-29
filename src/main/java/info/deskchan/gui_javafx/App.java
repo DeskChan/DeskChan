@@ -20,6 +20,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.text.Font;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.apache.commons.io.FileUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -190,11 +191,8 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				Object columnGrowObj = m.getOrDefault("columnGrow", 0.5f);
-				float columnGrow = columnGrowObj instanceof Double ? (float) (double) columnGrowObj : (float) columnGrowObj;
-
 				OptionsDialog.registerPluginTab(sender, (String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null), columnGrow);
+						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
 			});
 		});
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
@@ -214,8 +212,7 @@ public class App extends Application {
 
 				TemplateBox dialog = new TemplateBox((String) m.getOrDefault("name", Main.getString("default_messagebox_name")));
 				dialog.getDialogPane().setContent(new ControlsContainer((String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null),
-						columnGrow).createControlsPane());
+						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null)).createControlsPane());
 				dialog.requestFocus();
 				dialog.show();
 			});
@@ -270,6 +267,26 @@ public class App extends Application {
 				response.put((multiple) ? "paths" : "path", result);
 				pluginProxy.sendMessage(sender, response);
 			});
+		});
+		pluginProxy.addMessageListener("gui:supply-resource", (sender, tag, data) -> {
+			try {
+				Map<String, Object> map = (Map<String, Object>) data;
+				if (map.containsKey("skin")) {
+					String type=(String)map.get("skin");
+					if(!type.startsWith(Skin.getSkinsPath().toString())){
+						Path resFile=Paths.get(type);
+						Path newPath=Skin.getSkinsPath().resolve(resFile.getFileName());
+						try {
+							FileUtils.copyDirectory(resFile.toFile(), newPath.toFile());
+						} catch(Exception e){ }
+						type=newPath.toString();
+					}
+					character.setSkin(Skin.load(type));
+					OptionsDialog.updateInstanceTabs();
+				}
+			} catch(Exception e){
+				Main.log(e);
+			}
 		});
 		pluginProxy.addMessageListener("gui:choose-directory", (sender, tag, data) -> {
 			Platform.runLater(() -> {

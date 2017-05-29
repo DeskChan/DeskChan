@@ -316,8 +316,9 @@ public class PluginManager {
 			return Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
 		}
 	}
-	
+	private static Path pluginsDirPath=null;
 	public static Path getPluginsDirPath() {
+		if(pluginsDirPath!=null) return pluginsDirPath;
 		Path corePath = getCorePath();
 		Path path;
 		if (Files.isDirectory(corePath)) {
@@ -325,14 +326,17 @@ public class PluginManager {
 		} else {
 			path = corePath.getParent().resolve("../plugins");
 		}
-		return path;
+		pluginsDirPath=path.normalize();
+		return pluginsDirPath;
 	}
 	
 	public static Path getPluginDirPath(String name) {
 		return getPluginsDirPath().resolve(name);
 	}
-	
+
+	private static Path dataDirPath=null;
 	public static Path getDataDirPath() {
+		if(dataDirPath!=null) return dataDirPath;
 		Path corePath = getCorePath();
 		Path path;
 		if (Files.isDirectory(corePath)) {
@@ -344,10 +348,13 @@ public class PluginManager {
 			path.toFile().mkdir();
 			log("Created directory: " + path);
 		}
-		return path;
+		dataDirPath=path.normalize();
+		return dataDirPath;
 	}
-	
+
+	private static Path rootDirPath=null;
 	public static Path getRootDirPath() {
+		if(rootDirPath!=null) return rootDirPath;
 		Path corePath = getCorePath();
 		Path path;
 		if (Files.isDirectory(corePath)) {
@@ -355,9 +362,10 @@ public class PluginManager {
 		} else {
 			path = corePath.getParent().resolve("../");
 		}
-		return path;
+		rootDirPath=path.normalize();
+		return rootDirPath;
 	}
-	
+
 	public static Path getPluginDataDirPath(String id) {
 		final Path baseDir = getDataDirPath();
 		final Path dataDir = baseDir.resolve(id);

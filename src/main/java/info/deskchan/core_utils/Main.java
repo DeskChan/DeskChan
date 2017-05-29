@@ -6,8 +6,7 @@ import info.deskchan.core.PluginProxy;
 import java.util.*;
 
 public class Main implements Plugin {
-	
-	private PluginProxy pluginProxy;
+	private static PluginProxy pluginProxy;
 	private final List<MyTimerTask> timerTasks = new LinkedList<>();
 	private final Timer timer = new Timer();
 	
@@ -47,6 +46,16 @@ public class Main implements Plugin {
 				}
 			}
 		});
+		pluginProxy.addMessageListener("core:distribute-resources", (sender, tag, data) -> {
+			String resList;
+			try{
+				resList=(String)((HashMap<String,Object>)data).get("resourcesList");
+			} catch(Exception e){
+				log("No file specified for resource distribution");
+				return;
+			}
+			ResourceDistributor.distribute(resList);
+		});
 		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
 			put("srcTag", "core-utils:notify-after-delay");
 			put("dstTag", "core-utils:notify-after-delay-default-impl");
@@ -83,5 +92,15 @@ public class Main implements Plugin {
 			}});
 		}
 	}
-	
+	static void log(String text) {
+		pluginProxy.log(text);
+	}
+
+	static void log(Throwable e) {
+		pluginProxy.log(e);
+	}
+
+	static PluginProxy getPluginProxy() {
+				return pluginProxy;
+			}
 }

@@ -8,9 +8,13 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
@@ -20,14 +24,14 @@ import java.nio.file.Path;
 import java.util.*;
 
 class OptionsDialog extends TemplateBox {
-	
+
 	private static OptionsDialog instance = null;
 	private TabPane tabPane = new TabPane();
 	private Button skinManagerButton = new Button();
 	private ListView<PluginListItem> pluginsList = new ListView<>();
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
 	private static Map<String, List<ControlsContainer>> pluginsTabs = new HashMap<>();
-	
+
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
 		instance = this;
@@ -39,11 +43,15 @@ class OptionsDialog extends TemplateBox {
 			instance = null;
 		});
 	}
-	
+
 	static OptionsDialog getInstance() {
 		return instance;
 	}
-	
+
+	static void updateInstanceTabs(){
+		getInstance().skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString().replaceAll(
+				String.format(".*\\%c", File.separatorChar), ""));
+	}
 	private void initTabs() {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
@@ -133,6 +141,20 @@ class OptionsDialog extends TemplateBox {
 			Main.setProperty("character.enable_context_menu", newValue ? "1" : "0");
 		});
 		gridPane.add(showContextMenuCheckBox, 1, 7);
+		gridPane.add(new Label(Main.getString("load_resource_pack")), 0, 8);
+		FileChooser packChooser=new FileChooser();
+		packChooser.setInitialDirectory(pluginProxy.getRootDirPath().toFile());
+		Button distributeButton = new Button(Main.getString("load"));
+		distributeButton.setOnAction(event -> {
+			try {
+				File f = packChooser.showOpenDialog(getDialogPane().getScene().getWindow());
+				pluginProxy.sendMessage("core:distribute-resources", new HashMap<String, Object>() {{
+					put("resourcesList", f.toString());
+				}});
+			} catch(Exception e){ }
+		});
+		gridPane.add(distributeButton, 1, 8);
+		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
@@ -295,17 +317,17 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
 		tabPane.getTabs().add(new Tab(Main.getString("about"), gridPane));
 	}
-	
+
 	private void openSkinManager() {
 		SkinManagerDialog dialog = new SkinManagerDialog(getDialogPane().getScene().getWindow());
 		dialog.showAndWait();
 		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
 		Main.setProperty("skin.name", App.getInstance().getCharacter().getSkin().getName());
 	}
-	
-	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag, float columnGrow) {
+
+	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag) {
 		List<ControlsContainer> tabs = pluginsTabs.getOrDefault(plugin, null);
-		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag, columnGrow);
+		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			pluginsTabs.put(plugin, tabs);
@@ -324,7 +346,7 @@ class OptionsDialog extends TemplateBox {
 				tabs.add(poTab);
 			}
 		}
-		
+
 		if (instance != null) {
 			for (Tab tab : instance.tabPane.getTabs()) {
 				if (tab.getText().equals(name)) {
@@ -334,43 +356,43 @@ class OptionsDialog extends TemplateBox {
 			}
 		}
 	}
-	
+
 	static void unregisterPluginTabs(String plugin) {
 		pluginsTabs.remove(plugin);
 	}
-	
+
 	private static class PluginListItem {
-		
+
 		String id;
 		boolean blacklisted;
-		
+
 		PluginListItem(String id, boolean blacklisted) {
 			this.id = id;
 			this.blacklisted = blacklisted;
 		}
-		
+
 		@Override
 		public String toString() {
 			return blacklisted ? (id + " [BLACKLISTED]") : id;
 		}
-		
+
 	}
-	
+
 	private static class AlternativeTreeItem {
-		
+
 		String tag;
 		String plugin;
 		int priority;
-		
+
 		AlternativeTreeItem(String tag, String plugin, int priority) {
 			this.tag = tag;
 			this.plugin = plugin;
 			this.priority = priority;
 		}
-		
+
 		AlternativeTreeItem(String tag) {
 			this(tag, null, -1);
 		}
-		
+
 	}
 }

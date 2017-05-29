@@ -15,12 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-/**
- * TODO
- * нужно написать хуки
- * нужно написать команды, чтобы плагины могли всем этим пользоваться
- * нужно возвращать характер по требованию
- */
 public class Main implements Plugin {
 	private static PluginProxy pluginProxy;
 	
@@ -48,25 +42,20 @@ public class Main implements Plugin {
 		}
 		
 		void start() {
-			if (lastSeq != null) {
+			if (lastSeq != null)
 				stop();
-			}
-			lastSeq = pluginProxy.sendMessage("core-utils:notify-after-delay",
-					new HashMap<String, Object>() {{
+			lastSeq = pluginProxy.sendMessage("core-utils:notify-after-delay", new HashMap<String, Object>() {{
 						put("delay", (long) messageTimeout);
-					}}, this);
+			}}, this);
 		}
 		
 		void stop() {
-			if (lastSeq != null) {
-				pluginProxy.sendMessage("core-utils:notify-after-delay",
-						new HashMap<String, Object>() {{
+			if (lastSeq != null)
+				pluginProxy.sendMessage("core-utils:notify-after-delay", new HashMap<String, Object>() {{
 							put("seq", lastSeq);
 							put("delay", (long) -1);
-						}});
-			}
+				}});
 		}
-		
 	};
 	
 	@Override
@@ -92,20 +81,16 @@ public class Main implements Plugin {
 		if (properties != null) {
 			try {
 				applyInfluence = properties.getProperty("applyInfluence").equals("1");
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 			try {
 				currentPreset = CharacterPreset.getFromJSON(new JSONObject(properties.getProperty("characterPreset")));
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 			try {
 				Influence.globalMultiplier = Float.valueOf(properties.getProperty("influenceMultiplier"));
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 			try {
 				messageTimeout = Integer.valueOf(properties.getProperty("messageTimeout"));
-			} catch (Exception e) {
-			}
+			} catch (Exception e) { }
 		}
 		log("Loaded options");
 		try {
@@ -120,12 +105,10 @@ public class Main implements Plugin {
 			Map<String, Object> dat = (Map<String, Object>) data;
 			float multiplier = 1;
 			Object obj = dat.getOrDefault("multiplier", 1);
-			if (obj instanceof String) {
+			if (obj instanceof String)
 				multiplier = Float.valueOf((String) obj);
-			}
-			if (obj instanceof Float) {
+			if (obj instanceof Float)
 				multiplier = (Float) obj;
-			}
 			if (dat.getOrDefault("type", "character") != "emotional") {
 				currentPreset.applyInfluence(Influence.CreateCharacterInfluence(
 						(String) dat.getOrDefault("feature", "sympathy"),
@@ -169,6 +152,36 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:perk-answer",
 				(sender, tag, data) -> perkContainer.getAnswerFromPerk(sender, (Map<String, Object>) data)
 		);
+		pluginProxy.addMessageListener("talk:supply-resource",
+				(sender, tag, data) -> {
+					try {
+						Map<String, Object> map = (Map<String, Object>) data;
+						if (map.containsKey("preset")) {
+							currentPreset = CharacterPreset.getFromFileUnsafe(Paths.get((String) map.get("preset")));
+						}
+						String type = (String) map.getOrDefault("quotes", null);
+						if (type != null && type.length() > 0) {
+							if (type.equals("#default")) {
+								currentPreset.quotesBaseList = new ArrayList<>();
+								currentPreset.quotesBaseList.add("main");
+							} else {
+								if(!type.startsWith(pluginProxy.getDataDirPath().toString())){
+									Path resFile=Paths.get(type);
+									Path newPath=pluginProxy.getDataDirPath().resolve(resFile.getFileName());
+									if(!newPath.toFile().exists())
+										Files.copy(resFile,newPath);
+									type=newPath.toString();
+								}
+								currentPreset.quotesBaseList.add(type);
+								quotes.load(currentPreset.quotesBaseList);
+							}
+						}
+						updateOptionsTab();
+					} catch(Exception e){
+						log(e);
+					}
+				}
+		);
 		pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
 			put("name", getString("say_phrase"));
 			put("msgTag", "talk:request");
@@ -177,12 +190,11 @@ public class Main implements Plugin {
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
 		Quotes.saveTo(MAIN_PHRASES_URL, "main");
 		Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
-		quotes.load(pluginProxy.getDataDirPath(), currentPreset.quotesBaseList);
+		quotes.load(currentPreset.quotesBaseList);
 		operatePhraseRequest("HELLO");
-		
 		return true;
 	}
-	
+
 	static String getListAsString(List<String> s) {
 		if (s.size() == 0) {
 			return "";
@@ -191,14 +203,14 @@ public class Main implements Plugin {
 		for (String n : s) {
 			ret = ret + n + ";";
 		}
-		
+
 		return ret.substring(0, ret.length() - 1);
 	}
-	
+
 	static ArrayList<String> getListFromString(String s) {
 		return new ArrayList<>(Arrays.asList(s.split(";")));
 	}
-	
+
 	void operatePhraseRequest(Map<String, Object> data) {
 		String purpose = "CHAT";
 		if (data != null) {
@@ -209,7 +221,7 @@ public class Main implements Plugin {
 		}
 		operatePhraseRequest(purpose);
 	}
-	
+
 	void operatePhraseRequest(String purpose) {
 		CharacterDefinite cd = currentPreset.getCharacter(emotionsController);
 		quotes.update(cd);
@@ -232,7 +244,7 @@ public class Main implements Plugin {
 		ret.put("priority", 1100);
 		pluginProxy.sendMessage("gui:say", ret);
 	}
-	
+
 	void updateOptionsTab() {
 		pluginProxy.sendMessage("gui:setup-options-tab", new HashMap<String, Object>() {{
 			put("name", getString("character"));
@@ -252,9 +264,9 @@ public class Main implements Plugin {
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "quotes");
-				put("type", "TextField");
+				put("type", "FilesManager");
 				put("label", getString("quotes_list"));
-				put("value", getListAsString(currentPreset.quotesBaseList));
+				put("value", new ArrayList<String>(currentPreset.quotesBaseList));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "type");
@@ -309,7 +321,7 @@ public class Main implements Plugin {
 			put("controls", list);
 		}});
 	}
-	
+
 	void saveOptions(Map<String, Object> data) {
 		String val = (String) data.getOrDefault("file", "");
 		String errorMessage = "";
@@ -337,12 +349,9 @@ public class Main implements Plugin {
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
-			try {
-				val = (String) data.getOrDefault("quotes", "");
-				if (!val.isEmpty()) {
-					currentPreset.quotesBaseList = getListFromString(val);
-				}
-			} catch (Exception e) {
+			try{
+				currentPreset.quotesBaseList=(List<String>)(data.get("quotes"));
+			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
 			try {
@@ -381,12 +390,11 @@ public class Main implements Plugin {
 		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
 			log(e);
 		}
+		quotes.setPacks(currentPreset.quotesBaseList);
 		updateOptionsTab();
-		quotes.clear();
-		quotes.load(pluginProxy.getDataDirPath(), currentPreset.quotesBaseList);
 		saveSettings();
 	}
-	
+
 	void saveSettings() {
 		Properties properties = new Properties();
 		properties.setProperty("applyInfluence", applyInfluence ? "1" : "0");
@@ -401,10 +409,10 @@ public class Main implements Plugin {
 			log(e);
 		}
 	}
-	
+
 	private static final ResourceBundle strings =
 			ResourceBundle.getBundle("info/deskchan/talking_system/talk-strings");
-	
+
 	static synchronized String getString(String key) {
 		try {
 			String s = strings.getString(key);
@@ -413,23 +421,23 @@ public class Main implements Plugin {
 			return key;
 		}
 	}
-	
+
 	static void log(String text) {
 		pluginProxy.log(text);
 	}
-	
+
 	static void log(Throwable e) {
 		pluginProxy.log(e);
 	}
-	
+
 	public static void sendToProxy(String tag, Map<String, Object> data) {
 		pluginProxy.sendMessage(tag, data);
 	}
-	
+
 	public static Path getDataDirPath() {
 		return pluginProxy.getDataDirPath();
 	}
-	
+
 	public static Path getPresetsPath() {
 		Path path = pluginProxy.getRootDirPath().resolve("presets/");
 		if (!Files.isDirectory(path)) {
@@ -442,15 +450,15 @@ public class Main implements Plugin {
 		}
 		return path;
 	}
-	
+
 	@Override
 	public void unload() {
 		saveSettings();
 		operatePhraseRequest("BYE");
 	}
-	
+
 	static PluginProxy getPluginProxy() {
 		return pluginProxy;
 	}
-	
+
 }

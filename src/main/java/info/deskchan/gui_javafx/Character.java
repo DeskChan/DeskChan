@@ -11,6 +11,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -236,7 +237,7 @@ class Character extends MovablePane {
 			if (messageQueue.peek() != messageInfo) {
 				return;
 			}
-		} else {
+		} else if(messageQueue.peek().itsTimeToStop()){
 			messageQueue.poll();
 		}
 		if (balloon != null) {
@@ -248,7 +249,8 @@ class Character extends MovablePane {
 			setImageName(idleImageName);
 		} else {
 			setImageName(messageInfo.characterImage);
-			balloon = new Balloon(this, balloonPositionMode, messageInfo.text);
+			balloon = new Balloon(this, balloonPositionMode, messageInfo.text[messageInfo.counter]);
+            messageInfo.counter++;
 			balloon.setTimeout(messageInfo.timeout);
 		}
 		setLayerMode(layerMode);
@@ -309,14 +311,74 @@ class Character extends MovablePane {
 	}
 	
 	private static class MessageInfo implements Comparable<MessageInfo> {
-		
-		private final String text;
+		private final String[] text;
 		private final String characterImage;
 		private final int priority;
 		private final int timeout;
-		
+		private static int max_length=100;
 		MessageInfo(Map<String, Object> data) {
-			text = (String) data.getOrDefault("text", "");
+			String text2 = (String) data.getOrDefault("text", "");
+			ArrayList<String> list=new ArrayList<String>();
+			boolean inQuotes=false;
+			int state=0,start=0,end=0;   // 0 - sentence, 1 - end of sentence, 2 - pre sentence
+			for(int i=0;i<text2.length();i++){
+				switch(text2.charAt(i)){
+					case '.': case '?': case '!': {
+						if(state==2 || inQuotes) continue;
+						state=1;
+					} break;
+					case ' ': {
+						if(state==0 && !inQuotes) continue;
+						state=2;
+					} break;
+					case '"': case '\'':{
+						if(state!=0) state=0;
+						inQuotes=!inQuotes;
+					} break;
+					default:{
+						if(state==0 || inQuotes) continue;
+						end=i-1;
+						state=0;
+						list.add(text2.substring(start,end));
+						start=end=i;
+					}
+				}
+			}
+			list.add(text2.substring(start));
+			for(int i=0;i<list.size();i++){
+				if(list.get(i).length()>max_length){
+					if(list.get(i).contains(",")){
+						String[] spl=list.get(i).split(",\\s*");
+						StringBuilder left=new StringBuilder();
+						StringBuilder right=new StringBuilder();
+						left.append(spl[0]+",");
+						int j=1;
+						while(left.length()+spl[j].length()<max_length) {
+							left.append(" " + spl[j] + ",");
+							j++;
+						}
+						left.append("...");
+						right.append("...");
+						for(;j<spl.length;j++)
+							right.append(" "+spl[j]+(j<spl.length-1 ? "," : ""));
+						list.set(i,left.toString());
+						list.add(i+1,right.toString());
+						continue;
+					} else {
+						int l=list.get(i).length()/2;
+						while(list.get(i).charAt(l)!=' ')l--;
+						list.add(i+1,"... "+list.get(i).substring(l+1));
+						list.set(i,list.get(i).substring(0,l-1)+"...");
+						i--;
+						continue;
+					}
+				}
+				if(i+1==list.size() ||  list.get(i).length()+list.get(i+1).length()>max_length) continue;
+				list.set(i,list.get(i)+" "+list.get(i+1));
+				list.remove(i+1);
+				i--;
+			}
+			text=(String[])list.toArray(new String[list.size()]);
 			String characterImage = (String) data.getOrDefault("characterImage", null);
 			if (characterImage != null) {
 				characterImage = characterImage.toLowerCase();
@@ -326,9 +388,12 @@ class Character extends MovablePane {
 			this.characterImage = characterImage;
 			priority = (Integer) data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
 			timeout = (Integer) data.getOrDefault("timeout", Math.max(6000,
-					text.length() * Integer.parseInt(Main.getProperty("balloon.default_timeout", "300"))));
+					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "300"))));
 		}
-		
+		public int counter=0;
+        public boolean itsTimeToStop(){
+            return counter>=text.length;
+        }
 		@Override
 		public int compareTo(MessageInfo messageInfo) {
 			return -(priority - messageInfo.priority);
