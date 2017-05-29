@@ -6,6 +6,7 @@ import info.deskchan.core.PluginProxy;
 import java.util.*;
 
 public class Main implements Plugin {
+
 	private static PluginProxy pluginProxy;
 	private final List<MyTimerTask> timerTasks = new LinkedList<>();
 	private final Timer timer = new Timer();
@@ -48,9 +49,9 @@ public class Main implements Plugin {
 		});
 		pluginProxy.addMessageListener("core:distribute-resources", (sender, tag, data) -> {
 			String resList;
-			try{
-				resList=(String)((HashMap<String,Object>)data).get("resourcesList");
-			} catch(Exception e){
+			try {
+				resList = (String) ((HashMap<String,Object>) data).get("resourcesList");
+			} catch (Exception e) {
 				log("No file specified for resource distribution");
 				return;
 			}
@@ -103,4 +104,5 @@ public class Main implements Plugin {
 	static PluginProxy getPluginProxy() {
 				return pluginProxy;
 			}
+
 }

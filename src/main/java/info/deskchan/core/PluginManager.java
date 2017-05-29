@@ -22,6 +22,10 @@ public class PluginManager {
 	private final Set<String> blacklistedPlugins = new HashSet<>();
 	private String[] args;
 	private static OutputStream logStream = null;
+
+	private static Path pluginsDirPath = null;
+	private static Path dataDirPath = null;
+	private static Path rootDirPath = null;
 	
 	/* Singleton */
 	
@@ -316,9 +320,11 @@ public class PluginManager {
 			return Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
 		}
 	}
-	private static Path pluginsDirPath=null;
+
 	public static Path getPluginsDirPath() {
-		if(pluginsDirPath!=null) return pluginsDirPath;
+		if(pluginsDirPath != null) {
+			return pluginsDirPath;
+		}
 		Path corePath = getCorePath();
 		Path path;
 		if (Files.isDirectory(corePath)) {
@@ -326,7 +332,7 @@ public class PluginManager {
 		} else {
 			path = corePath.getParent().resolve("../plugins");
 		}
-		pluginsDirPath=path.normalize();
+		pluginsDirPath = path.normalize();
 		return pluginsDirPath;
 	}
 	
@@ -334,9 +340,10 @@ public class PluginManager {
 		return getPluginsDirPath().resolve(name);
 	}
 
-	private static Path dataDirPath=null;
 	public static Path getDataDirPath() {
-		if(dataDirPath!=null) return dataDirPath;
+		if(dataDirPath != null) {
+			return dataDirPath;
+		}
 		Path corePath = getCorePath();
 		Path path;
 		if (Files.isDirectory(corePath)) {
@@ -348,13 +355,14 @@ public class PluginManager {
 			path.toFile().mkdir();
 			log("Created directory: " + path);
 		}
-		dataDirPath=path.normalize();
+		dataDirPath = path.normalize();
 		return dataDirPath;
 	}
 
-	private static Path rootDirPath=null;
 	public static Path getRootDirPath() {
-		if(rootDirPath!=null) return rootDirPath;
+		if(rootDirPath != null) {
+			return rootDirPath;
+		}
 		Path corePath = getCorePath();
 		Path path;
 		if (Files.isDirectory(corePath)) {
@@ -362,7 +370,7 @@ public class PluginManager {
 		} else {
 			path = corePath.getParent().resolve("../");
 		}
-		rootDirPath=path.normalize();
+		rootDirPath = path.normalize();
 		return rootDirPath;
 	}
 

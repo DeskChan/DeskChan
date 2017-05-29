@@ -207,12 +207,11 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				Object columnGrowObj = m.getOrDefault("columnGrow", 0.5f);
-				float columnGrow = columnGrowObj instanceof Double ? (float) (double) columnGrowObj : (float) columnGrowObj;
-
 				TemplateBox dialog = new TemplateBox((String) m.getOrDefault("name", Main.getString("default_messagebox_name")));
-				dialog.getDialogPane().setContent(new ControlsContainer((String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null)).createControlsPane());
+				Window ownerWindow = dialog.getDialogPane().getScene().getWindow();
+				ControlsContainer controlsContainer = new ControlsContainer(ownerWindow, (String) m.get("name"),
+						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
+				dialog.getDialogPane().setContent(controlsContainer.createControlsPane());
 				dialog.requestFocus();
 				dialog.show();
 			});
@@ -274,12 +273,14 @@ public class App extends Application {
 				if (map.containsKey("skin")) {
 					String type=(String)map.get("skin");
 					if(!type.startsWith(Skin.getSkinsPath().toString())){
-						Path resFile=Paths.get(type);
-						Path newPath=Skin.getSkinsPath().resolve(resFile.getFileName());
+						Path resFile = Paths.get(type);
+						Path newPath = Skin.getSkinsPath().resolve(resFile.getFileName());
 						try {
 							FileUtils.copyDirectory(resFile.toFile(), newPath.toFile());
-						} catch(Exception e){ }
-						type=newPath.toString();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						type = newPath.toString();
 					}
 					character.setSkin(Skin.load(type));
 					OptionsDialog.updateInstanceTabs();

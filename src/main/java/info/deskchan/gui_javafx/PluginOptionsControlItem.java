@@ -260,30 +260,37 @@ interface PluginOptionsControlItem {
 		}
 		
 	}
+
 	class FilesManagerItem extends Button implements PluginOptionsControlItem {
 		private List<String> files;
 		private Window parent;
+
 		public FilesManagerItem(Window window){
-			parent=window;
+			parent = window;
 		}
+
 		@Override
 		public void init(Map<String, Object> options) {
 			setText(Main.getString("choose"));
-			files=new ArrayList<String>();
+			files = new ArrayList<>();
 			try {
 				files = (List<String>) options.get("filesList");
-			} catch(Exception e){ }
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			setOnAction(event -> callAction());
 		}
+
 		private void callAction(){
-			FilesManagerDialog dialog=new FilesManagerDialog(parent,files);
+			FilesManagerDialog dialog = new FilesManagerDialog(parent,files);
 			dialog.requestFocus();
 			dialog.showAndWait();
-			files=dialog.getFilesList();
+			files = dialog.getFilesList();
 		}
+
 		@Override
 		public void setValue(Object value) {
-			files=(List<String>)value;
+			files = (List<String>) value;
 		}
 
 		@Override

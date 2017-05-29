@@ -16,17 +16,17 @@ import java.util.Map;
 import java.util.PriorityQueue;
 
 class Character extends MovablePane {
-	
+
 	private static final String DEFAULT_SKIN_NAME = "illia.image_set";
-	
+
 	enum LayerMode {
 		ALWAYS_NORMAL,
 		TOP_IF_MESSAGE,
 		ALWAYS_TOP
 	}
-	
+
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
-	
+
 	private final String id;
 	private ImageView imageView = new ImageView();
 	private Skin skin = null;
@@ -39,7 +39,7 @@ class Character extends MovablePane {
 	private Balloon.PositionMode balloonPositionMode;
 	private float scaleFactor = 1.0f;
 	private float skinOpacity = 1.0f;
-	
+
 	Character(String id, Skin skin) {
 		this.id = id;
 		setScaleFactor(Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0")));
@@ -89,11 +89,11 @@ class Character extends MovablePane {
 					return !pixelColor.equals(Color.TRANSPARENT);
 				});
 	}
-	
+
 	Skin getSkin() {
 		return skin;
 	}
-	
+
 	void setSkin(Skin skin) {
 		if (skin == null) {
 			skin = Skin.load(DEFAULT_SKIN_NAME);
@@ -101,27 +101,27 @@ class Character extends MovablePane {
 		this.skin = skin;
 		setImageName(imageName);
 	}
-	
+
 	String getImageName() {
 		return imageName;
 	}
-	
+
 	void setImageName(String name) {
 		imageName = ((name != null) && (name.length() > 0)) ? name : "normal";
 		updateImage();
 	}
-	
+
 	private Image getImage() {
 		return (skin != null) ? skin.getImage(imageName) : null;
 	}
-	
+
 	@Override
 	void setDefaultPosition() {
 		Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
 		setPosition(new Point2D(screenBounds.getMaxX() - getWidth(),
 				screenBounds.getMaxY() - getHeight()));
 	}
-	
+
 	private void updateImage(boolean reloadImage) {
 	    if (reloadImage) {
             imageView.setImage(getImage());
@@ -211,21 +211,21 @@ class Character extends MovablePane {
 	void changeOpacityRelatively(float opacityIncrement) {
 		changeOpacity(skinOpacity + opacityIncrement);
 	}
-	
+
 	void setIdleImageName(String name) {
 		idleImageName = name;
 		setImageName(name);
 	}
-	
+
 	Balloon.PositionMode getBalloonPositionMode() {
 		return balloonPositionMode;
 	}
-	
+
 	void setBalloonPositionMode(Balloon.PositionMode mode) {
 		balloonPositionMode = mode;
 		Main.setProperty("character." + id + ".balloon_position_mode", mode.toString());
 	}
-	
+
 	void say(Map<String, Object> data) {
 		MessageInfo messageInfo = null;
 		if (data != null) {
@@ -255,7 +255,7 @@ class Character extends MovablePane {
 		}
 		setLayerMode(layerMode);
 	}
-	
+
 	LayerMode getLayerMode() {
 		return layerMode;
 	}
@@ -263,7 +263,7 @@ class Character extends MovablePane {
 	String getCurrentLayerName() {
 		return layerName;
 	}
-	
+
 	void setLayerMode(LayerMode mode) {
 		layerMode = mode;
 		String newLayerName;
@@ -309,76 +309,91 @@ class Character extends MovablePane {
 			skinOpacity = Math.round(Math.abs(opacity) * 20.0f) / 20.0f;
 		}
 	}
-	
+
 	private static class MessageInfo implements Comparable<MessageInfo> {
 		private final String[] text;
 		private final String characterImage;
 		private final int priority;
 		private final int timeout;
-		private static int max_length=100;
+		private static int max_length = 100;
+		private int counter = 0;
+
 		MessageInfo(Map<String, Object> data) {
 			String text2 = (String) data.getOrDefault("text", "");
-			ArrayList<String> list=new ArrayList<String>();
-			boolean inQuotes=false;
-			int state=0,start=0,end=0;   // 0 - sentence, 1 - end of sentence, 2 - pre sentence
-			for(int i=0;i<text2.length();i++){
-				switch(text2.charAt(i)){
-					case '.': case '?': case '!': {
-						if(state==2 || inQuotes) continue;
-						state=1;
-					} break;
-					case ' ': {
-						if(state==0 && !inQuotes) continue;
-						state=2;
-					} break;
-					case '"': case '\'':{
-						if(state!=0) state=0;
-						inQuotes=!inQuotes;
-					} break;
-					default:{
-						if(state==0 || inQuotes) continue;
-						end=i-1;
-						state=0;
-						list.add(text2.substring(start,end));
-						start=end=i;
-					}
+			ArrayList<String> list = new ArrayList<>();
+			boolean inQuotes = false;
+			ParsingState state = ParsingState.SENTENCE;
+			int start = 0, end;
+			for (int i = 0; i < text2.length(); i++){
+				switch (text2.charAt(i)) {
+					case '.': case '?': case '!':
+						if (state == ParsingState.PRE_SENTENCE || inQuotes) {
+							continue;
+						}
+						state = ParsingState.END_OF_SENTENCE;
+					    break;
+					case ' ':
+						if (state == ParsingState.SENTENCE && !inQuotes) {
+							continue;
+						}
+						state = ParsingState.PRE_SENTENCE;
+					    break;
+					case '"': case '\'':
+						if (state != ParsingState.SENTENCE) {
+							state = ParsingState.SENTENCE;
+						}
+						inQuotes = !inQuotes;
+					    break;
+					default:
+						if (state == ParsingState.SENTENCE || inQuotes) {
+							continue;
+						}
+						end = i - 1;
+						state = ParsingState.SENTENCE;
+						list.add(text2.substring(start, end));
+						start = i;
 				}
 			}
 			list.add(text2.substring(start));
-			for(int i=0;i<list.size();i++){
-				if(list.get(i).length()>max_length){
-					if(list.get(i).contains(",")){
-						String[] spl=list.get(i).split(",\\s*");
-						StringBuilder left=new StringBuilder();
-						StringBuilder right=new StringBuilder();
-						left.append(spl[0]+",");
-						int j=1;
-						while(left.length()+spl[j].length()<max_length) {
-							left.append(" " + spl[j] + ",");
+			for (int i = 0; i < list.size(); i++) {
+				if (list.get(i).length() > max_length){
+					if (list.get(i).contains(",")) {
+						String[] spl = list.get(i).split(",\\s*");
+						StringBuilder left = new StringBuilder();
+						StringBuilder right = new StringBuilder();
+						left.append(spl[0]).append(",");
+						int j = 1;
+						while (left.length() + spl[j].length() < max_length) {
+							left.append(" ").append(spl[j]).append(",");
 							j++;
 						}
 						left.append("...");
 						right.append("...");
-						for(;j<spl.length;j++)
-							right.append(" "+spl[j]+(j<spl.length-1 ? "," : ""));
-						list.set(i,left.toString());
-						list.add(i+1,right.toString());
+						for (; j<spl.length; j++) {
+							right.append(" ").append(spl[j]).append(j < spl.length - 1 ? "," : "");
+						}
+						list.set(i, left.toString());
+						list.add(i + 1, right.toString());
 						continue;
 					} else {
-						int l=list.get(i).length()/2;
-						while(list.get(i).charAt(l)!=' ')l--;
-						list.add(i+1,"... "+list.get(i).substring(l+1));
-						list.set(i,list.get(i).substring(0,l-1)+"...");
+						int l = list.get(i).length() / 2;
+						while (list.get(i).charAt(l) != ' ') {
+							l--;
+						}
+						list.add(i + 1,"... " + list.get(i).substring(l + 1));
+						list.set(i, list.get(i).substring(0,l - 1) + "...");
 						i--;
 						continue;
 					}
 				}
-				if(i+1==list.size() ||  list.get(i).length()+list.get(i+1).length()>max_length) continue;
-				list.set(i,list.get(i)+" "+list.get(i+1));
-				list.remove(i+1);
+				if (i + 1 == list.size() || list.get(i).length() + list.get(i + 1).length() > max_length) {
+					continue;
+				}
+				list.set(i, list.get(i) + " " + list.get(i + 1));
+				list.remove(i + 1);
 				i--;
 			}
-			text=(String[])list.toArray(new String[list.size()]);
+			text = list.toArray(new String[list.size()]);
 			String characterImage = (String) data.getOrDefault("characterImage", null);
 			if (characterImage != null) {
 				characterImage = characterImage.toLowerCase();
@@ -390,15 +405,23 @@ class Character extends MovablePane {
 			timeout = (Integer) data.getOrDefault("timeout", Math.max(6000,
 					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "300"))));
 		}
-		public int counter=0;
-        public boolean itsTimeToStop(){
+
+        boolean itsTimeToStop(){
             return counter>=text.length;
         }
+
 		@Override
 		public int compareTo(MessageInfo messageInfo) {
 			return -(priority - messageInfo.priority);
 		}
-		
+
+
+		private enum ParsingState {
+			SENTENCE,
+			END_OF_SENTENCE,
+			PRE_SENTENCE
+		}
+
 	}
-	
+
 }

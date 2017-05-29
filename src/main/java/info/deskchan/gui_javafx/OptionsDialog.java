@@ -15,7 +15,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
 
@@ -35,7 +34,6 @@ class OptionsDialog extends TemplateBox {
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
 		instance = this;
-		Stage stage = (Stage) getDialogPane().getScene().getWindow();
 		tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 		initTabs();
 		getDialogPane().setContent(tabPane);
@@ -52,6 +50,7 @@ class OptionsDialog extends TemplateBox {
 		getInstance().skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString().replaceAll(
 				String.format(".*\\%c", File.separatorChar), ""));
 	}
+
 	private void initTabs() {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
@@ -154,7 +153,6 @@ class OptionsDialog extends TemplateBox {
 			} catch(Exception e){ }
 		});
 		gridPane.add(distributeButton, 1, 8);
-		//appearanceTab.setTop(gridPane);
 		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
@@ -327,7 +325,7 @@ class OptionsDialog extends TemplateBox {
 
 	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag) {
 		List<ControlsContainer> tabs = pluginsTabs.getOrDefault(plugin, null);
-		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag);
+		ControlsContainer poTab = new ControlsContainer(() -> instance.getDialogPane().getScene().getWindow(), name, controls, msgTag);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			pluginsTabs.put(plugin, tabs);
