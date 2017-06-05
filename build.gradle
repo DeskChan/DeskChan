@@ -22,9 +22,6 @@ apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'edu.sc.seis.launch4j'
 apply plugin: 'de.fuerstenau.buildconfig'
-if (enable_android_support) {
-	apply plugin: 'com.android.application'
-}
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
