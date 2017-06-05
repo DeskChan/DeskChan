@@ -22,11 +22,23 @@ apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'edu.sc.seis.launch4j'
 apply plugin: 'de.fuerstenau.buildconfig'
+if (enable_android_support) {
+	apply plugin: 'com.android.application'
+}
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 compileJava.options.encoding = 'UTF-8'
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+			exclude 'info/deskchan/gui_android/**'
+		}
+	}
+}
 
 dependencies {
 	compile group: 'org.json', name: 'json', version: '20160810+'
