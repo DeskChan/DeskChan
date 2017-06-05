@@ -1,3 +1,5 @@
+buildDir = new File(rootProject.rootDir, 'build/android')
+
 buildscript {
 	repositories {
 		jcenter()

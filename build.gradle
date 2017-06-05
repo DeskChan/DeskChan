@@ -178,3 +178,8 @@ task createExeDistZip(type: Zip) {
 createExe.dependsOn createStartScriptsForExe
 createExe.dependsOn copyIconForExe
 createExeDistZip.dependsOn createExe
+
+task createAPK(type: GradleBuild) {
+	buildFile = 'android.gradle'
+	tasks = ['assemble']
+}
