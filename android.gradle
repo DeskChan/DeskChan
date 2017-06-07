@@ -1,0 +1,73 @@
+buildDir = new File(rootProject.rootDir, 'build/android')
+
+buildscript {
+	repositories {
+		jcenter()
+		maven {
+			url 'https://plugins.gradle.org/m2/'
+		}
+	}
+	dependencies {
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+		classpath group: 'edu.sc.seis.gradle', name: 'launch4j', version: '2.3.0+'
+		classpath 'gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.8'
+		classpath 'com.android.tools.build:gradle:2.3.2+'
+	}
+}
+
+repositories {
+	jcenter()
+	mavenCentral()
+}
+
+apply plugin: 'com.android.application'
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+			exclude 'info/deskchan/gui_javafx/**'
+		}
+	}
+}
+
+android {
+	compileSdkVersion 25
+	buildToolsVersion "25.0.3"
+	defaultConfig {
+		applicationId "info.deskchan.android_core"
+		minSdkVersion 21
+		targetSdkVersion 22
+		versionCode 1
+		versionName "1.0"
+		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+	}
+	buildTypes {
+		debug {
+			debuggable true
+		}
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+		}
+	}
+}
+
+dependencies {
+	//compile fileTree(dir: 'libs', include: ['*.jar'])
+	//compile files('libs/tooleap-sdk-0.9.8.jar')
+	androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+		exclude group: 'com.android.support', module: 'support-annotations'
+	})
+	compile 'com.android.support:appcompat-v7:25.3.1'
+	compile 'com.android.support.constraint:constraint-layout:1.0.2'
+	compile group: 'org.json', name: 'json', version: '20160810+'
+	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.4.7+'
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5+'
+	compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2+'
+	compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0+'
+	compile group: 'org.javassist', name: 'javassist', version: '3.22+'
+	
+	testCompile group: 'junit', name: 'junit', version: '4.+'
+	testCompile 'junit:junit:4.12'
+}

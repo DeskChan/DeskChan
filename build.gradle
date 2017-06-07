@@ -28,6 +28,15 @@ targetCompatibility = 1.8
 
 compileJava.options.encoding = 'UTF-8'
 
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+			exclude 'info/deskchan/gui_android/**'
+		}
+	}
+}
+
 dependencies {
 	compile group: 'org.json', name: 'json', version: '20160810+'
 	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.4.7+'
@@ -169,3 +178,8 @@ task createExeDistZip(type: Zip) {
 createExe.dependsOn createStartScriptsForExe
 createExe.dependsOn copyIconForExe
 createExeDistZip.dependsOn createExe
+
+task createAPK(type: GradleBuild) {
+	buildFile = 'android.gradle'
+	tasks = ['assemble']
+}
