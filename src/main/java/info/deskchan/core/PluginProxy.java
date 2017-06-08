@@ -50,17 +50,21 @@ public class PluginProxy implements MessageListener {
 		PluginManager.getInstance().sendMessage(id, tag, data);
 	}
 	
-	public void sendMessage(String tag, Object data, ResponseListener responseListener) {
+	public Object sendMessage(String tag, Object data, ResponseListener responseListener) {
 		if (!(data instanceof Map)) {
 			Map<String, Object> m = new HashMap<>();
 			m.put("data", data);
 			data = m;
 		}
 		Map<String, Object> m = (Map<String, Object>) data;
-		Integer seq = this.seq++;
+		Object seq = m.getOrDefault("seq", null);
+		if (seq == null) {
+			seq = this.seq++;
+		}
 		responseListeners.put(seq, responseListener);
 		m.put("seq", seq);
 		sendMessage(tag, data);
+		return seq;
 	}
 	
 	public void addMessageListener(String tag, MessageListener listener) {
@@ -93,10 +97,11 @@ public class PluginProxy implements MessageListener {
 			listener.handle(sender, data);
 		}
 	}
-	public Path getStartPath() {
-		return PluginManager.getStartPath();
+	
+	public Path getRootDirPath() {
+		return PluginManager.getRootDirPath();
 	}
-
+	
 	public Path getDataDirPath() {
 		return PluginManager.getPluginDataDirPath(id);
 	}

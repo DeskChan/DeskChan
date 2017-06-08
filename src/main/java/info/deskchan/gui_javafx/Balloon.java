@@ -5,6 +5,7 @@ import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.StackPane;
@@ -13,7 +14,13 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.util.Duration;
 
-class Balloon extends StackPane {
+class Balloon extends MovablePane {
+	
+	enum PositionMode {
+		AUTO,
+		RELATIVE,
+		ABSOLUTE
+	}
 	
 	private static final String BUBBLE_SVG_PATH = "m 32.339338,-904.55632 c -355.323298,0 -643.374998,210.31657 " +
 			"-643.374998,469.78125 0,259.46468 288.0517,469.812505 643.374998,469.812505 123.404292,0 " +
@@ -23,51 +30,52 @@ class Balloon extends StackPane {
 	
 	private static Font defaultFont = null;
 	
-	private final Character character;
+	private Character character = null;
 	private String layer;
 	private SVGPath bubbleShape = new SVGPath();
 	private Timeline timeoutTimeline = null;
 	private final DropShadow bubbleShadow = new DropShadow();
+	private final StackPane stackPane = new StackPane();
+	private final Node content;
+	private PositionMode positionMode = PositionMode.ABSOLUTE;
 
-	Balloon(Character character, String text) {
-		this.character = character;
-		setPrefWidth(400);
-		setMinHeight(200);
+	private final MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "balloon");
+	
+	Balloon(String id, String text) {
+		stackPane.setPrefWidth(400);
+		stackPane.setMinHeight(200);
+		
 		bubbleShape.setContent(BUBBLE_SVG_PATH);
 		bubbleShape.setFill(Color.WHITE);
 		bubbleShape.setStroke(Color.BLACK);
 		bubbleShape.setScaleX(0);
 		bubbleShape.setScaleY(0);
 
-		bubbleShadow.setRadius(10.0);
-		bubbleShadow.setOffsetX(3.0);
-		bubbleShadow.setOffsetY(7.0);
+		bubbleShadow.setRadius(5.0);
+		bubbleShadow.setOffsetX(1.5);
+		bubbleShadow.setOffsetY(2.5);
 		bubbleShadow.setColor(Color.BLACK);
-		bubbleShape.setEffect(bubbleShadow);
-
+		stackPane.setEffect(bubbleShadow);
+		
 		Label label = new Label(text);
 		label.setWrapText(true);
 		if (defaultFont != null) {
 			label.setFont(defaultFont);
 		}
-		StackPane labelPane = new StackPane();
-		labelPane.getChildren().add(label);
-		StackPane.setMargin(label, new Insets(40, 20, 40, 20));
-		getChildren().add(new Group(bubbleShape));
-		getChildren().add(labelPane);
-		if (character != null) {
-			ChangeListener<java.lang.Number> updateBalloonLayoutX = (property, oldValue, value) -> {
-				double x = character.getLayoutX() - getWidth();
-				setLayoutX((x >= 0) ? x : character.getLayoutX() + character.getWidth());
-				bubbleShape.getParent().setScaleX((x >= 0) ? 1 : -1);
-				StackPane.setMargin(label, new Insets(40, (x >= 0) ? 40 : 20,
-						40, (x >= 0) ? 20 : 40));
-			};
-			character.layoutXProperty().addListener(updateBalloonLayoutX);
-			widthProperty().addListener(updateBalloonLayoutX);
-			layoutYProperty().bind(character.layoutYProperty());
-		}
-		setOnMouseClicked(event -> {
+		content = label;
+		StackPane contentPane = new StackPane();
+		contentPane.getChildren().add(content);
+		stackPane.getChildren().add(new Group(bubbleShape));
+		stackPane.getChildren().add(contentPane);
+		StackPane.setMargin(content, new Insets(40, 20, 40, 20));
+		
+		getChildren().add(stackPane);
+		
+		setOnMousePressed(event -> {
+			if ((positionMode != PositionMode.AUTO) && event.isSecondaryButtonDown()) {
+				startDrag(event);
+				return;
+			}
 			if (character != null) {
 				character.say(null);
 			} else {
@@ -84,6 +92,77 @@ class Balloon extends StackPane {
 				timeoutTimeline.play();
 			}
 		});
+
+		mouseEventNotificator
+				.setOnClickListener()
+				.setOnMovedListener()
+				// TODO: Figure out how to write more precise check.
+				.setOnScrollListener(event -> true);
+	}
+	
+	Balloon(Character character, PositionMode positionMode, String text) {
+		this(character.getId() + ".balloon", text);
+		this.character = character;
+		this.positionMode = positionMode;
+		if (positionMode != PositionMode.ABSOLUTE) {
+			positionRelativeToDesktopSize = false;
+			positionAnchor = character;
+			if (positionMode == PositionMode.AUTO) {
+				ChangeListener<java.lang.Number> updateBalloonLayoutX = (property, oldValue, value) -> {
+					double x = character.getLayoutX() - getWidth();
+					setLayoutX((x >= 0) ? x : character.getLayoutX() + character.getWidth());
+					bubbleShape.getParent().setScaleX((x >= 0) ? 1 : -1);
+					StackPane.setMargin(content, new Insets(40, (x >= 0) ? 40 : 20,
+							40, (x >= 0) ? 20 : 40));
+				};
+				character.layoutXProperty().addListener(updateBalloonLayoutX);
+				widthProperty().addListener(updateBalloonLayoutX);
+				layoutYProperty().bind(character.layoutYProperty());
+			} else {
+				character.layoutXProperty().addListener((property, oldValue, value) -> {
+					loadPositionFromStorage();
+				});
+				character.layoutYProperty().addListener((property, oldValue, value) -> {
+					loadPositionFromStorage();
+				});
+			}
+		}
+		setPositionStorageID(character.getId() + ".balloon");
+	}
+	
+	@Override
+	protected void setDefaultPosition() {
+		if (character != null) {
+			double x = character.getLayoutX() - getWidth();
+			setLayoutX((x >= 0) ? x : character.getLayoutX() + character.getWidth());
+			bubbleShape.getParent().setScaleX((x >= 0) ? 1 : -1);
+			StackPane.setMargin(content, new Insets(40, (x >= 0) ? 40 : 20,
+					40, (x >= 0) ? 20 : 40));
+			setLayoutY(character.getLayoutY());
+		} else {
+			super.setDefaultPosition();
+		}
+	}
+	
+	@Override
+	protected void loadPositionFromStorage() {
+		if (positionMode == PositionMode.RELATIVE) {
+			assert character != null;
+			setPosition(character.getSkin().getPreferredBalloonPosition(character.getImageName()));
+		} else if (positionMode == PositionMode.ABSOLUTE) {
+			super.loadPositionFromStorage();
+		}
+	}
+	
+	@Override
+	protected void storePositionToStorage() {
+		if (positionMode == PositionMode.RELATIVE) {
+			assert character != null;
+			character.getSkin().overridePreferredBalloonPosition(character.getImageName(),
+					getPosition());
+		} else if (positionMode == PositionMode.ABSOLUTE) {
+			super.storePositionToStorage();
+		}
 	}
 	
 	Character getCharacter() {
@@ -108,8 +187,9 @@ class Balloon extends StackPane {
 	void close() {
 		setTimeout(0);
 		hide();
+		mouseEventNotificator.cleanListeners();
 	}
-
+	
 	void setTimeout(int timeout) {
 		if (timeoutTimeline != null) {
 			timeoutTimeline.stop();

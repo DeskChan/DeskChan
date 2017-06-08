@@ -1,10 +1,14 @@
 buildscript {
 	repositories {
 		jcenter()
+		maven {
+			url 'https://plugins.gradle.org/m2/'
+		}
 	}
 	dependencies {
 		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
 		classpath group: 'edu.sc.seis.gradle', name: 'launch4j', version: '2.3.0+'
+		classpath 'gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.8'
 	}
 }
 
@@ -17,11 +21,21 @@ apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'edu.sc.seis.launch4j'
+apply plugin: 'de.fuerstenau.buildconfig'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 compileJava.options.encoding = 'UTF-8'
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+			exclude 'info/deskchan/gui_android/**'
+		}
+	}
+}
 
 dependencies {
 	compile group: 'org.json', name: 'json', version: '20160810+'
@@ -32,10 +46,51 @@ dependencies {
 	compile group: 'com.dorkbox', name: 'SystemTray', version: '3.1+'
 	compile group: 'org.javassist', name: 'javassist', version: '3.22+'
 	compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12+'
+	compile group: 'com.1stleg', name: 'jnativehook', version: '2.1.0'
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
+project.version = '0.1.6'
+
 mainClassName = 'info.deskchan.core.Main'
+
+def gitCommitCount = '[UNOFFICIAL]'
+def gitCommitHash = 'Unknown'
+def gitBranchName = 'Unknown'
+
+try {
+	def gitQueries = [
+			['rev-list', '--count', 'HEAD'],
+			['rev-parse', 'HEAD'],
+			['rev-parse', '--abbrev-ref', 'HEAD']
+	]
+	def stdout = new ByteArrayOutputStream()
+	for (def query : gitQueries) {
+		exec {
+			workingDir = project.rootDir
+			executable = 'git'
+			args = query
+			standardOutput = stdout
+		}
+	}
+	def versionInfo = stdout.toString().split('\n')
+	gitCommitCount = versionInfo[0].trim()
+	gitCommitHash = versionInfo[1].trim()
+	gitBranchName = versionInfo[2].trim()
+} catch (Exception e) {
+	System.err.println("Failed to get git metadata")
+}
+
+buildConfig {
+	packageName = 'info.deskchan.core'
+	clsName = 'BuildConfig'
+	appName = project.name
+	version = "${project.version}-r${gitCommitCount}"
+	buildConfigField 'String', 'GIT_COMMIT_HASH', gitCommitHash
+	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
+	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd\'T\'HH:mm:ssZ')
+	buildConfigField 'String', 'PROJECT_SITE_URL', 'http://deskchan.info/'
+}
 
 jar {
 	baseName = project.name
@@ -123,3 +178,8 @@ task createExeDistZip(type: Zip) {
 createExe.dependsOn createStartScriptsForExe
 createExe.dependsOn copyIconForExe
 createExeDistZip.dependsOn createExe
+
+task createAPK(type: GradleBuild) {
+	buildFile = 'android.gradle'
+	tasks = ['assemble']
+}

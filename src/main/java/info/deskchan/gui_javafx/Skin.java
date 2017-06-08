@@ -1,6 +1,7 @@
 package info.deskchan.gui_javafx;
 
 import info.deskchan.core.PluginManager;
+import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 
 import java.io.IOException;
@@ -16,12 +17,16 @@ public interface Skin {
 	
 	Image getImage(String name);
 	
+	Point2D getPreferredBalloonPosition(String imageName);
+	
+	void overridePreferredBalloonPosition(String imageName, Point2D position);
+	
 	static Path getSkinsPath() {
 		Path path = PluginManager.getPluginsDirPath().getParent().resolve("skins");
 		if (!Files.isDirectory(path)) {
 			path = PluginManager.getPluginsDirPath().getParent().resolve("data").resolve("skins");
 		}
-		return path;
+		return path.toAbsolutePath();
 	}
 	
 	static Path getSkinPath(String name) {
@@ -54,14 +59,19 @@ public interface Skin {
 		return load(getSkinPath(name));
 	}
 	
-	static List<String> getSkinList() {
+	static List<String> getSkinList(Path path) {
 		List<String> list = new ArrayList<>();
-		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(getSkinsPath())) {
+		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
 			for (Path skinPath : directoryStream) {
+				if (Files.isDirectory(skinPath) &&
+						skinPath.getFileName().toString().endsWith(".pack")) {
+					list.addAll(getSkinList(skinPath));
+					continue;
+				}
 				synchronized (App.skinLoaders) {
 					for (SkinLoader loader : App.skinLoaders) {
 						if (loader.matchByPath(skinPath)) {
-							list.add(skinPath.getFileName().toString());
+							list.add(skinPath.toString());
 							break;
 						}
 					}
@@ -76,6 +86,10 @@ public interface Skin {
 			Main.log(e);
 		}
 		return list;
+	}
+	
+	static List<String> getSkinList() {
+		return getSkinList(getSkinsPath());
 	}
 	
 	static void registerSkinLoader(SkinLoader loader) {

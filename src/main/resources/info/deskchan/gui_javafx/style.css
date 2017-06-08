@@ -1,3 +1,13 @@
-.root {
+.root, .label {
     -fx-font-family: "PT Sans";
+}
+
+.menu-item:hover {
+     -fx-background-color: #45aac67f;
+}
+
+.grid-pane {
+    -fx-hgap: 6px;
+    -fx-vgap: 6px;
+    -fx-padding: 10px;
 }

@@ -5,11 +5,13 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
+import javafx.stage.Window;
 
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +30,7 @@ interface PluginOptionsControlItem {
 	
 	Node getNode();
 	
-	static PluginOptionsControlItem create(Map<String, Object> options) {
+	static PluginOptionsControlItem create(Window parent, Map<String, Object> options) {
 		String type = (String) options.get("type");
 		Object value = options.getOrDefault("value", null);
 		PluginOptionsControlItem item = null;
@@ -42,6 +44,9 @@ interface PluginOptionsControlItem {
 			case "Spinner":
 				item = new SpinnerItem();
 				break;
+			case "CheckBox":
+				item = new CheckBoxItem();
+				break;
 			case "ComboBox":
 				item = new ComboBoxItem();
 				break;
@@ -52,10 +57,13 @@ interface PluginOptionsControlItem {
 				item = new ButtonItem();
 				break;
 			case "FileField":
-				item = new FileFieldItem();
+				item = new FileFieldItem(parent);
 				break;
 			case "DatePicker":
 				item = new DatePickerItem();
+				break;
+			case "FilesManager":
+				item = new FilesManagerItem(parent);
 				break;
 		}
 		if (item == null) {
@@ -69,7 +77,12 @@ interface PluginOptionsControlItem {
 	}
 	
 	class LabelItem extends Label implements PluginOptionsControlItem {
-		
+
+		public LabelItem() {
+			super();
+			setWrapText(true);
+		}
+
 		@Override
 		public void setValue(Object value) {
 			setText(value.toString());
@@ -141,6 +154,25 @@ interface PluginOptionsControlItem {
 			return spinner;
 		}
 		
+	}
+
+	class CheckBoxItem extends CheckBox implements PluginOptionsControlItem {
+
+		@Override
+		public void setValue(Object value) {
+			setSelected((boolean) value);
+		}
+
+		@Override
+		public Object getValue() {
+			return isSelected();
+		}
+
+		@Override
+		public Node getNode() {
+			return this;
+		}
+
 	}
 	
 	class ComboBoxItem implements PluginOptionsControlItem {
@@ -233,7 +265,51 @@ interface PluginOptionsControlItem {
 		}
 		
 	}
-	
+
+	class FilesManagerItem extends Button implements PluginOptionsControlItem {
+		private List<String> files;
+		private Window parent;
+
+		public FilesManagerItem(Window window){
+			parent = window;
+		}
+
+		@Override
+		public void init(Map<String, Object> options) {
+			setText(Main.getString("choose"));
+			files = new ArrayList<>();
+			try {
+				files = (List<String>) options.get("filesList");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			setOnAction(event -> callAction());
+		}
+
+		private void callAction(){
+			FilesManagerDialog dialog = new FilesManagerDialog(parent,files);
+			dialog.requestFocus();
+			dialog.showAndWait();
+			files = dialog.getFilesList();
+		}
+
+		@Override
+		public void setValue(Object value) {
+			files = (List<String>) value;
+		}
+
+		@Override
+		public Object getValue() {
+			return files;
+		}
+
+		@Override
+		public Node getNode() {
+			return this;
+		}
+
+	}
+
 	class FileFieldItem extends BorderPane implements PluginOptionsControlItem {
 		
 		private final TextField textField = new TextField();
@@ -241,18 +317,19 @@ interface PluginOptionsControlItem {
 		private final Button clearButton = new Button("X");
 		private final FileChooser chooser = new FileChooser();
 		
-		FileFieldItem() {
+		FileFieldItem(Window parent) {
 			textField.setEditable(false);
 			setCenter(textField);
 			clearButton.setOnAction(event -> textField.clear());
 			setLeft(clearButton);
 			selectButton.setOnAction(event -> {
-				File file = chooser.showOpenDialog(OptionsDialog.getInstance().getDialogPane().getScene().getWindow());
+				File file = chooser.showOpenDialog(parent);
 				if (file != null) {
 					textField.setText(file.getAbsolutePath());
 				}
 			});
 			setRight(selectButton);
+			setMaxHeight(textField.getHeight());
 		}
 		
 		@Override
@@ -260,6 +337,15 @@ interface PluginOptionsControlItem {
 			String path = (String) options.getOrDefault("initialDirectory", null);
 			if (path != null) {
 				chooser.setInitialDirectory(new File(path));
+			}
+
+			List<Map<String, Object>> filters = (List<Map<String, Object>>) options.getOrDefault("filters", new ArrayList<>(0));
+			for (Map<String, Object> filter : filters) {
+				String description = (String) filter.getOrDefault("description", null);
+				List<String> extensions = (List<String>) filter.getOrDefault("extensions", null);
+				if (description != null && extensions != null) {
+					chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description, extensions));
+				}
 			}
 		}
 		

@@ -140,8 +140,7 @@ public class Quote {
 				} catch (Exception e) {
 				}
 			}
-		} catch (Exception e) {
-		}
+		} catch (Exception e) { }
 		return q;
 	}
 	
@@ -197,7 +196,7 @@ public class Quote {
 	}
 	
 	public boolean noTimeout() {
-		if (last_usage == null) {
+		if (last_usage == null || timeout<=0) {
 			return true;
 		}
 		return (new Date().getTime() - last_usage.getTime() > timeout * 1000);
