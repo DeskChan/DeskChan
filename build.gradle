@@ -58,7 +58,7 @@ dependencies {
 
 project.version = '0.1.6'
 
-mainClassName = 'info.deskchan.core.Main'
+mainClassName = 'info.deskchan.core.MainKt'
 
 def gitCommitCount = '[UNOFFICIAL]'
 def gitCommitHash = 'Unknown'
