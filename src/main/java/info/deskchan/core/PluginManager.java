@@ -112,7 +112,13 @@ public class PluginManager {
 			}
 		}
 	}
-	
+	int getMessageListenersCount(String tag) {
+		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
+		if (listeners != null) {
+			return listeners.size();
+		}
+		return 0;
+	}
 	void sendMessage(String sender, String tag, Object data) {
 		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
 		if (listeners != null) {
@@ -121,17 +127,17 @@ public class PluginManager {
 			}
 		}
 	}
-	
+
 	/* Plugin loaders */
-	
+
 	public synchronized void registerPluginLoader(PluginLoader loader) {
 		loaders.add(loader);
 	}
-	
+
 	public synchronized void unregisterPluginLoader(PluginLoader loader) {
 		loaders.remove(loader);
 	}
-	
+
 	public boolean loadPluginByClass(Class cls) throws Throwable {
 		Object plugin = cls.newInstance();
 		if (plugin instanceof Plugin) {
@@ -143,7 +149,7 @@ public class PluginManager {
 		}
 		return false;
 	}
-	
+
 	public boolean tryLoadPluginByClass(Class cls) {
 		try {
 			return loadPluginByClass(cls);
@@ -151,12 +157,12 @@ public class PluginManager {
 			return false;
 		}
 	}
-	
+
 	public boolean loadPluginByClassName(String className) throws Throwable {
 		Class cls = getClass().getClassLoader().loadClass(className);
 		return loadPluginByClass(cls);
 	}
-	
+
 	public boolean tryLoadPluginByClassName(String className) {
 		try {
 			return loadPluginByClassName(className);
@@ -164,15 +170,16 @@ public class PluginManager {
 			return false;
 		}
 	}
-	
+
 	public boolean loadPluginByPackageName(String packageName) throws Throwable {
 		return loadPluginByClassName(packageName + ".Main");
 	}
-	
+
 	public boolean tryLoadPluginByPackageName(String packageName) {
 		try {
 			return loadPluginByPackageName(packageName);
 		} catch (Throwable e) {
+			log(e);
 			return false;
 		}
 	}
