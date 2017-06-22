@@ -18,7 +18,7 @@ import java.util.*;
 public class Main implements Plugin {
 	private static PluginProxy pluginProxy;
 	
-	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:M800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private CharacterPreset currentPreset;
@@ -29,7 +29,7 @@ public class Main implements Plugin {
 	private Quotes quotes;
 	private PriorityQueue<Quote> quoteQueue;
 	private PerkContainer perkContainer;
-	
+	private LinkedList<String> recievers;
 	private final ResponseListener chatTimerListener = new ResponseListener() {
 		
 		private Object lastSeq = null;
@@ -61,6 +61,8 @@ public class Main implements Plugin {
 	@Override
 	public boolean initialize(PluginProxy newPluginProxy) {
 		pluginProxy = newPluginProxy;
+		recievers=new LinkedList<>();
+		recievers.add("gui:say");
 		Properties properties = new Properties();
 		emotionsController = new EmotionsController();
 		quoteQueue = new PriorityQueue<>();
@@ -152,6 +154,14 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:perk-answer",
 				(sender, tag, data) -> perkContainer.getAnswerFromPerk(sender, (Map<String, Object>) data)
 		);
+		pluginProxy.addMessageListener("talk:add-reciever",
+				(sender, tag, data) -> {
+					Map<String, Object> map = (Map<String, Object>) data;
+					String rec=(String)map.getOrDefault("tag",null);
+					if(rec==null || rec.length()<2) return;
+					if(!recievers.contains(rec)) recievers.add(rec);
+				}
+		);
 		pluginProxy.addMessageListener("talk:supply-resource",
 				(sender, tag, data) -> {
 					try {
@@ -192,6 +202,11 @@ public class Main implements Plugin {
 		Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		quotes.load(currentPreset.quotesBaseList);
 		operatePhraseRequest("HELLO");
+		/*MeaningExtractor extractor=new MeaningExtractor();
+		for(Quote quote : quotes.toArray()){
+			extractor.teach(quote.quote,quote.purposeType);
+		}
+		extractor.print();*/
 		return true;
 	}
 
@@ -242,7 +257,8 @@ public class Main implements Plugin {
 			ret.replace("text", t);
 		}
 		ret.put("priority", 1100);
-		pluginProxy.sendMessage("gui:say", ret);
+		for(String rec : recievers)
+			pluginProxy.sendMessage(rec, ret);
 	}
 
 	void updateOptionsTab() {

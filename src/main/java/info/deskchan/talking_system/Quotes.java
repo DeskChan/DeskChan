@@ -103,11 +103,38 @@ public class Quotes {
 	
 	public void update() {
 		suitableQuotes = new ArrayList<Quote>();
+		HashMap<String,Object> quotesToSend=new HashMap<>();
+		ArrayList<HashMap<String,Object>> list=new ArrayList<>();
+		quotesToSend.put("quotes",list);
 		for (QuotePack pack : packs) {
 			for (int i = 0, l = pack.size(); i < l; i++)
-				if (pack.get(i).matchToCharacter(current))
+				if (pack.get(i).matchToCharacter(current)){
 					suitableQuotes.add(pack.get(i));
+					list.add(pack.get(i).toMap());
+				}
 		}
+		Main.getPluginProxy().sendMessage("talk:remove-quote",quotesToSend,
+		(sender, dat) -> {
+			HashMap<String,Object> data=(HashMap<String,Object>)dat;
+			ArrayList<HashMap<String,Object>> quotes_list=(ArrayList<HashMap<String,Object>>)data.getOrDefault("quotes",null);
+			if(list==null) return;
+			for (HashMap<String,Object> map : quotes_list) {
+				int hash=(int)map.getOrDefault("hash",0);
+				for(int i=0;i<suitableQuotes.size();i++){
+					if(suitableQuotes.get(i).hashCode()==hash){
+						suitableQuotes.remove(i);
+						break;
+					}
+				}
+			}
+		});
+	}
+	public Quote[] toArray(){
+		LinkedList<Quote> q=new LinkedList<>();
+		for (QuotePack pack : packs)
+			for (int i = 0, l = pack.size(); i < l; i++)
+				q.add(pack.get(i));
+		return q.toArray(new Quote[q.size()]);
 	}
 	public void load(List<String> files){
         for(int i=0;i<files.size();i++){
@@ -152,6 +179,7 @@ public class Quotes {
         }
         load(files);
     }
+
 	public Quote getRandomQuote(String purpose) {
 		purpose = purpose.toUpperCase();
 		if (suitableQuotes.size() == 0) {
@@ -160,21 +188,41 @@ public class Quotes {
 		int r;
 		Quote q;
 		LinkedList<Quote> sq = new LinkedList<>();
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(new Date());
+
+		HashMap<String,Object> quotesToSend=new HashMap<>();
+		ArrayList<HashMap<String,Object>> list=new ArrayList<>();
+		quotesToSend.put("quotes",list);
 		for (int i = 0; i < suitableQuotes.size(); i++) {
 			q = suitableQuotes.get(i);
-			int dow = cal.get(Calendar.DAY_OF_WEEK);
+			/*int dow = cal.get(Calendar.DAY_OF_WEEK);
 			if (dow == 1) {
 				dow = 7;
 			} else {
 				dow--;
 			}
-			if (q.noTimeout() && q.purposeType.equals(purpose) && q.possibleMonth.get(1 + cal.get(Calendar.MONTH)) && q.possibleHour.get(cal.get(Calendar.HOUR_OF_DAY)) && q.possibleWeekDay.get(dow)) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(new Date());
+			&& q.possibleMonth.get(1 + cal.get(Calendar.MONTH)) && q.possibleHour.get(cal.get(Calendar.HOUR_OF_DAY)) && q.possibleWeekDay.get(dow)*/
+			if (q.noTimeout() && q.purposeType.equals(purpose)){
 				sq.add(q);
+				list.add(q.toMap());
 			}
 		}
-
+		Main.getPluginProxy().sendMessage("talk:remove-quote",quotesToSend,
+				(sender, dat) -> {
+					HashMap<String,Object> data=(HashMap<String,Object>)dat;
+					ArrayList<HashMap<String,Object>> quotes_list=(ArrayList<HashMap<String,Object>>)data.getOrDefault("quotes",null);
+					if(list==null) return;
+					for (HashMap<String,Object> map : quotes_list) {
+						int hash=(int)map.getOrDefault("hash",0);
+						for(int i=0;i<suitableQuotes.size();i++){
+							if(suitableQuotes.get(i).hashCode()==hash){
+								suitableQuotes.remove(i);
+								break;
+							}
+						}
+					}
+				});
 		if (sq.size() == 0) {
 			return new Quote("Я не знаю, что сказать.");
 		}
@@ -238,7 +286,7 @@ public class Quotes {
 					for (int k = 0; k < CharacterSystem.featureCount; k++) {
 						range_values[k] = new int[]{-10, 10};
 					}
-					for (int k = 0; k < phrase.length() && k < 13; k++) {
+					for (int k = 0; k < phrase.length() && k < 11; k++) {
 						switch (k) {
 							case 0:
 								next = new Quote(phrase.getString(k));
@@ -277,24 +325,41 @@ public class Quotes {
 							case 9:
 								try {
 									next.timeout = array.getInt(k);
-								} catch (Exception u) {
-								}
+								} catch (Exception u) { }
 								break;
-							case 10:
-								if (phrase.getString(k).length() > 0) {
-									next.possibleHour.fillFromString(phrase.getString(k));
+							case 10: {
+								if (phrase.length()<14) continue;
+								if (phrase.getString(13).length() == 0) continue;
+								boolean inQuoteMarks=false;
+								boolean before=true;
+								String text=phrase.getString(13)+",";
+								String tagname=new String();
+								int st=0;
+								for(int c=0;c<text.length();c++){
+									if(!before){
+										if(text.charAt(c)==',') {
+											if(next.tags==null) next.tags=new HashMap<>();
+											ArrayList<String> list=new ArrayList<>();
+											next.fillTagFromString(tagname,text.substring(st, c));
+											st = c + 1;
+											tagname=new String();
+											before=true;
+										}
+									} else if(text.charAt(c)=='"') inQuoteMarks=!inQuoteMarks;
+									else if(text.charAt(c)==':' && !inQuoteMarks){
+										if(st==c) {
+											st=c+1;
+											continue;
+										}
+										if(text.charAt(st)=='"' && text.charAt(c-1)=='"')
+											 tagname=text.substring(st + 1, c - 1);
+										else tagname=text.substring(st, c);
+										tagname=tagname.trim();
+										st = c + 1;
+										before=false;
+									}
 								}
-								break;
-							case 11:
-								if (phrase.getString(k).length() > 0) {
-									next.possibleWeekDay.fillFromString(phrase.getString(k));
-								}
-								break;
-							case 12:
-								if (phrase.getString(k).length() > 0) {
-									next.possibleMonth.fillFromString(phrase.getString(k));
-								}
-								break;
+							} break;
 						}
 					}
 					next.character = new CharacterRange(range_values);
