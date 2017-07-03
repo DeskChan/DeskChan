@@ -10,6 +10,7 @@ fun main(args: Array<String>) {
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.groovy_support")
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.gui_javafx")
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.talking_system")
+	pluginManager.tryLoadPluginByPackageName("info.deskchan.telegram_api")
 	try {
 		val pluginsDirPath = PluginManager.getPluginsDirPath()
 		val dirStream = Files.newDirectoryStream(pluginsDirPath)

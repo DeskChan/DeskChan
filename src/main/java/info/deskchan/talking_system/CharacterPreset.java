@@ -10,27 +10,17 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public abstract class CharacterPreset {
 	public String name;
-	protected ArrayList<String> usernames;
-	protected ArrayList<String> abuses = new ArrayList<String>() {{
-		add("идиот");
-		add("дурак");
-		add("бака");
-	}};
-	protected List<String> quotesBaseList;
-	protected ArrayList<String> interestsBaseList;
 	protected CharacterDefinite MainCharacter;
-	
+	public TagsContainer tags;
 	public CharacterPreset() {
+		tags=new TagsContainer();
 		setStandart();
 	}
-	
+	public ArrayList<String> quotesBaseList;
 	public CharacterPreset(String jsonString) {
 		JSONObject json;
 		try {
@@ -40,7 +30,7 @@ public abstract class CharacterPreset {
 		}
 	}
 	
-	protected ArrayList<String> fillListFromJSON(JSONObject obj, String arrayname) {
+	protected ArrayList<String> listFromJSON(JSONObject obj, String arrayname) {
 		ArrayList<String> list = new ArrayList<>();
 		if (obj == null || !obj.has(arrayname)) {
 			return list;
@@ -72,69 +62,68 @@ public abstract class CharacterPreset {
 	public void fillFromJSON(JSONObject json) {
 		name = json.getString("name");
 		if (name.isEmpty()) {
-			name = "noname";
+			name = Main.getString("default_name");
 		}
-		usernames = fillListFromJSON(json, "usernames");
-		if (usernames.size() == 0) {
-			usernames = new ArrayList<>();
-			usernames.add("Хозяин");
-		}
-		interestsBaseList = fillListFromJSON(json, "interests");
-		quotesBaseList = fillListFromJSON(json, "quotes");
+		MainCharacter = new CharacterDefinite(json.getJSONObject("main"));
+		quotesBaseList = listFromJSON(json, "quotes");
 		if (quotesBaseList.size() == 0) {
 			quotesBaseList = new ArrayList<>();
 			quotesBaseList.add("main");
 		}
-		MainCharacter = new CharacterDefinite(json.getJSONObject("main"));
+		try {
+			json=json.getJSONObject("tags");
+		} catch(Exception e){
+			return;
+		}
+		tags=new TagsContainer();
+		for(HashMap.Entry<String,Object> obj : json.toMap().entrySet()){
+			tags.put(obj.getKey(),(String)obj.getValue());
+		}
 	}
 	
 	public void setStandart() {
 		MainCharacter = new CharacterDefinite();
-		name = "noname";
-		usernames = new ArrayList<>();
-		usernames.add("Хозяин");
+		name = Main.getString("default_name");
 		quotesBaseList = new ArrayList<>();
 		quotesBaseList.add("main");
-		interestsBaseList = new ArrayList<>();
 	}
-	
-	public void setUsernames(ArrayList<String> list) {
-		usernames = list;
-	}
-	
 	public void setQuotesBases(ArrayList<String> list) {
 		quotesBaseList = list;
 	}
-	
-	public void setInterests(ArrayList<String> list) {
-		interestsBaseList = list;
-	}
-	
 	public abstract CharacterDefinite getCharacter(EmotionsController emo);
-	
+	private static String[] requiredQuotesTags=new String[]{ "gender" , "species" , "interests" , "breastSize" };
+	public boolean isTagsMatch(HashMap<String,Object> tagsToMatch){
+		for(HashMap.Entry<String,Object> entry : tagsToMatch.entrySet()){
+			boolean found=false;
+			for(String reqTag : requiredQuotesTags)
+				if(reqTag.equals(entry.getKey())){
+					found=true;
+					break;
+				}
+			if(!found) continue;
+			if(!tags.isMatch(entry.getKey(),(List<String>)entry.getValue())) return false;
+		}
+		return true;
+	}
 	public JSONObject toJSON() {
 		JSONObject json = new JSONObject();
 		json.put("name", name);
 		json.put("main", MainCharacter.toJSON());
-		
+
 		JSONArray ar = new JSONArray();
-		for (int i = 0; i < usernames.size(); i++) {
-			ar.put(usernames.get(i));
-		}
-		json.put("usernames", ar);
-		
-		ar = new JSONArray();
 		for (int i = 0; i < quotesBaseList.size(); i++) {
 			ar.put(quotesBaseList.get(i));
 		}
-		json.put("quotes", ar);
-		
-		ar = new JSONArray();
-		for (int i = 0; i < interestsBaseList.size(); i++) {
-			ar.put(interestsBaseList.get(i));
+		JSONObject preset_tags=new JSONObject();
+		for(Map.Entry<String,List<String>> entry : tags.entrySet()){
+			StringBuilder sb=new StringBuilder();
+			for(String arg : entry.getValue())
+				sb.append("\""+arg+"\" ");
+			sb.setLength(sb.length()-1);
+			preset_tags.put(entry.getKey(),sb.toString());
 		}
-		json.put("interests", ar);
-		
+		json.put("quotes", ar);
+		json.put("tags",preset_tags);
 		json.put("type", this.getClass().getSimpleName());
 		return json;
 	}
@@ -158,15 +147,22 @@ public abstract class CharacterPreset {
 		
 		return cp;
 	}
-	
+	public List<String> getUsernames(){
+		return tags.get("usernames");
+	}
 	public String replaceTags(String quote) {
 		String ret = quote;
-		if (usernames.size() > 0) {
-			ret = ret.replaceAll("%USERNAME%", usernames.get(new Random().nextInt(usernames.size())));
-		}
-		if (abuses.size() > 0) {
-			ret = ret.replaceAll("%ABUSE%", abuses.get(new Random().nextInt(abuses.size())));
-		}
+		if (name!=null) {
+			ret = ret.replaceAll("%NAME%", name);
+		} else ret = ret.replaceAll("%NAME%", Main.getString("default_name"));
+		List<String> list=tags.get("usernames");
+		if (list!=null && list.size() > 0) {
+			ret = ret.replaceAll("%USERNAME%", list.get(new Random().nextInt(list.size())));
+		} else ret = ret.replaceAll("%USERNAME%",Main.getString("default_username"));
+		list=tags.get("abuses");
+		if (list!=null && list.size() > 0) {
+			ret = ret.replaceAll("%ABUSE%", list.get(new Random().nextInt(list.size())));
+		} else ret = ret.replaceAll("%USERNAME%",Main.getString("default_abuse"));
 		ret = ret.replaceAll("%TIME%", new SimpleDateFormat("HH:mm").format(new Date()));
 		ret = ret.replaceAll("%DATE%", new SimpleDateFormat("d LLLL").format(new Date()));
 		ret = ret.replaceAll("%YEAR%", new SimpleDateFormat("YYYY").format(new Date()));
@@ -188,12 +184,14 @@ public abstract class CharacterPreset {
 	
 	public void saveInFile(Path path) throws IOException {
 		String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<preset>"
-				+ XML.toString(toJSON()) + "</preset>";
+				+ XML.toString(toJSON()).replace("&quot;","\"") + "</preset>";
 		xml = xml.replace("><", ">\n<");
 		Writer out = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(path.resolve("saved.preset").toFile()), "UTF-8"));
 		try {
 			out.write(xml);
+		} catch (Exception e) {
+			Main.log("Error while writing preset file");
 		} finally {
 			out.close();
 		}

@@ -26,7 +26,7 @@ public class MeaningExtractor {
         load();
     }
     public String analyze(String phrase){
-        String[] words=TextOperations.simplifyWords(TextOperations.extractWordsLower(phrase));
+        ArrayList<String> words=TextOperations.simplifyWords(TextOperations.extractWordsLower(phrase));
         float max=0;
         int index=-1;
         int count=0;
@@ -49,7 +49,7 @@ public class MeaningExtractor {
         return meaningNames.get(index);
     }
     public void teach(String phrase,String meaning){
-        String[] words=TextOperations.simplifyWords(TextOperations.extractWordsLower(phrase));
+        ArrayList<String> words=TextOperations.simplifyWords(TextOperations.extractWordsLower(phrase));
         meaning=meaning.toUpperCase();
         int meanIndex=meaningNames.indexOf(meaning);
         if(meanIndex<0){

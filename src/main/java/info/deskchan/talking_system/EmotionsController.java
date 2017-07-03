@@ -3,6 +3,7 @@ package info.deskchan.talking_system;
 import info.deskchan.core.ResponseListener;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -86,7 +87,18 @@ public class EmotionsController {
 		
 		RaiseMessage();
 	}
-	
+	public boolean isTagsMatch(HashMap<String,Object> tagsToMatch){
+		for(HashMap.Entry<String,Object> entry : tagsToMatch.entrySet()){
+			if(!entry.getKey().equals("emotion")) continue;
+			List<String> arglist=(List<String>) entry.getValue();
+			if (arglist.size()==0) continue;
+			String curEmotion=getEmotionName();
+			for(int i=0;i<arglist.size();i++)
+				if(arglist.get(i).equals(curEmotion)) return true;
+			return false;
+		}
+		return true;
+	}
 	public CharacterDefinite Construct(CharacterDefinite target) {
 		if (emotionValue == 0) {
 			return target;

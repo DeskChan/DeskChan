@@ -36,7 +36,7 @@ public class Main implements Plugin {
 		
 		@Override
 		public void handle(String sender, Object data) {
-			Main.this.operatePhraseRequest("CHAT");
+			Main.this.phraseRequest("CHAT");
 			lastSeq = null;
 			start();
 		}
@@ -101,7 +101,7 @@ public class Main implements Plugin {
 			log(e);
 		}
 		pluginProxy.addMessageListener("talk:request", (sender, tag, data) -> {
-			operatePhraseRequest((Map<String, Object>) data);
+			phraseRequest((Map<String, Object>) data);
 		});
 		pluginProxy.addMessageListener("talk:make-influence", (sender, tag, data) -> {
 			Map<String, Object> dat = (Map<String, Object>) data;
@@ -197,11 +197,32 @@ public class Main implements Plugin {
 			put("msgTag", "talk:request");
 		}});
 		updateOptionsTab();
+		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsReject(sender,tag,dat));
+		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsRemove(sender,tag,dat));
+		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	{
+			HashMap<String, Object> data = (HashMap<String, Object>) dat;
+			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
+			HashMap<String, Object> ret = new HashMap<>();
+			ret.put("seq", data.get("seq"));
+			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
+			ret.put("quotes",quotes_list);
+			if (list == null) {
+				Main.getPluginProxy().sendMessage(sender, ret);
+				return;
+			}
+			for(HashMap<String,Object> entry : list) {
+				if(!currentPreset.isTagsMatch(entry))
+					quotes_list.add(entry);
+				else if(!emotionsController.isTagsMatch(entry))
+					quotes_list.add(entry);
+			}
+			Main.getPluginProxy().sendMessage(sender,ret);
+		});
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
 		Quotes.saveTo(MAIN_PHRASES_URL, "main");
 		Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		quotes.load(currentPreset.quotesBaseList);
-		operatePhraseRequest("HELLO");
+		//phraseRequest("HELLO");
 		/*MeaningExtractor extractor=new MeaningExtractor();
 		for(Quote quote : quotes.toArray()){
 			extractor.teach(quote.quote,quote.purposeType);
@@ -211,7 +232,7 @@ public class Main implements Plugin {
 	}
 
 	static String getListAsString(List<String> s) {
-		if (s.size() == 0) {
+		if (s==null || s.size() == 0) {
 			return "";
 		}
 		String ret = "";
@@ -226,7 +247,7 @@ public class Main implements Plugin {
 		return new ArrayList<>(Arrays.asList(s.split(";")));
 	}
 
-	void operatePhraseRequest(Map<String, Object> data) {
+	void phraseRequest(Map<String, Object> data) {
 		String purpose = "CHAT";
 		if (data != null) {
 			String np = (String) data.getOrDefault("purpose", null);
@@ -234,17 +255,21 @@ public class Main implements Plugin {
 				purpose = np;
 			}
 		}
-		operatePhraseRequest(purpose);
+		phraseRequest(purpose);
 	}
 
-	void operatePhraseRequest(String purpose) {
-		CharacterDefinite cd = currentPreset.getCharacter(emotionsController);
-		quotes.update(cd);
-		HashMap<String, Object> ret = quotes.getRandomQuote(purpose).toMap();
+	void phraseRequest(String purpose) {
+		quotes.update(currentPreset.getCharacter(emotionsController));
+		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
+			public void call(Quote quote){ sendPhrase(quote); }
+		});
+	}
+	void sendPhrase(Quote quote){
+		HashMap<String,Object> ret=quote.toMap();
 		if (ret.get("characterImage").equals("AUTO")) {
 			String ci = emotionsController.getSpriteType();
 			if (ci == null) {
-				ci = cd.getSpriteType();
+				ci = currentPreset.getCharacter(emotionsController).getSpriteType();
 			}
 			if (ci == null) {
 				ci = "NORMAL";
@@ -273,12 +298,6 @@ public class Main implements Plugin {
 				put("value", currentPreset.name);
 			}});
 			list.add(new HashMap<String, Object>() {{
-				put("id", "usernames");
-				put("type", "TextField");
-				put("label", getString("usernames_list"));
-				put("value", getListAsString(currentPreset.usernames));
-			}});
-			list.add(new HashMap<String, Object>() {{
 				put("id", "quotes");
 				put("type", "FilesManager");
 				put("label", getString("quotes_list"));
@@ -300,6 +319,12 @@ public class Main implements Plugin {
 				}
 				put("values", CharacterPreset.presetTypeList);
 				put("value", i);
+			}});
+			list.add(new HashMap<String, Object>() {{
+				put("id", "tags");
+				put("type", "TextField");
+				put("label", getString("tags"));
+				put("value", currentPreset.tags.toString());
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("type", "Label");
@@ -357,16 +382,13 @@ public class Main implements Plugin {
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
-			try {
-				val = (String) data.getOrDefault("usernames", "");
-				if (!val.isEmpty()) {
-					currentPreset.usernames = getListFromString(val);
-				}
-			} catch (Exception e) {
+			try{
+				currentPreset.quotesBaseList=(ArrayList<String>)(data.get("quotes"));
+			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentPreset.quotesBaseList=(List<String>)(data.get("quotes"));
+				currentPreset.tags=new TagsContainer((String)data.getOrDefault("tags",null));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
@@ -470,7 +492,7 @@ public class Main implements Plugin {
 	@Override
 	public void unload() {
 		saveSettings();
-		operatePhraseRequest("BYE");
+		phraseRequest("BYE");
 	}
 
 	static PluginProxy getPluginProxy() {

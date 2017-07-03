@@ -1,25 +1,21 @@
 package info.deskchan.telegram_api;
 
-import com.pengrad.telegrambot.Callback;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.TelegramBotAdapter;
-import com.pengrad.telegrambot.model.*;
-import com.pengrad.telegrambot.model.request.ForceReply;
+import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.GetChat;
 import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.response.GetChatResponse;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
 import com.pengrad.telegrambot.response.SendResponse;
 import info.deskchan.core.ResponseListener;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 
 public class App {
@@ -43,9 +39,9 @@ public class App {
                     if (!lastUpdates.containsKey(update.message().chat()))
                         lastUpdates.put(update.message().chat(),0);
                     if (lastUpdates.get(update.message().chat()) >= update.updateId()) continue;
+                    lastUpdates.replace(update.message().chat(),update.updateId());
                     if (update.message().from().id() == selfId) continue;
                     if (update.message()==null || update.message().text()==null) continue;
-                    lastUpdates.replace(update.message().chat(),update.updateId());
                     if(!skipHistory) continue;
                     App.AnalyzeMessage(update.message());
                 }
@@ -78,8 +74,11 @@ public class App {
         if(words[0].equals("/notice")){
             if(message.from().id().equals(masterId)){
                 currentChat=message.chat();
-                skipHistory=false;
-                lastUpdates.put(currentChat,0);
+                bot.execute(new GetChat(currentChat));
+                if(!lastUpdates.containsKey(currentChat)) {
+                    skipHistory = false;
+                    lastUpdates.put(currentChat, 0);
+                }
                 SendTalkRequest("HELLO");
                 System.out.println("all okay");
             } else SendTalkRequest("REFUSE");
@@ -112,10 +111,6 @@ public class App {
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             Main.log(e);
         }
-        GetChat chatRequest=new GetChat("352867125");
-
-        GetChatResponse resp=bot.execute(chatRequest);
-        currentChat=resp.chat();
         lastUpdates.put(currentChat,0);
         SendTalkRequest("HELLO");
     }

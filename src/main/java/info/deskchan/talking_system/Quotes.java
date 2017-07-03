@@ -117,11 +117,12 @@ public class Quotes {
 		(sender, dat) -> {
 			HashMap<String,Object> data=(HashMap<String,Object>)dat;
 			ArrayList<HashMap<String,Object>> quotes_list=(ArrayList<HashMap<String,Object>>)data.getOrDefault("quotes",null);
-			if(list==null) return;
+			if(quotes_list==null) return;
 			for (HashMap<String,Object> map : quotes_list) {
 				int hash=(int)map.getOrDefault("hash",0);
 				for(int i=0;i<suitableQuotes.size();i++){
 					if(suitableQuotes.get(i).hashCode()==hash){
+						System.out.println("remove: "+suitableQuotes.get(i));
 						suitableQuotes.remove(i);
 						break;
 					}
@@ -180,77 +181,79 @@ public class Quotes {
         load(files);
     }
 
-	public Quote getRandomQuote(String purpose) {
+	public void requestRandomQuote(String purpose,GetQuoteCallback callback) {
 		purpose = purpose.toUpperCase();
 		if (suitableQuotes.size() == 0) {
-			return new Quote("Я не знаю, что сказать.");
+			callback.call(new Quote("Я не знаю, что сказать."));
+			return;
 		}
-		int r;
-		Quote q;
+
 		LinkedList<Quote> sq = new LinkedList<>();
 
 		HashMap<String,Object> quotesToSend=new HashMap<>();
 		ArrayList<HashMap<String,Object>> list=new ArrayList<>();
 		quotesToSend.put("quotes",list);
+		Quote q;
 		for (int i = 0; i < suitableQuotes.size(); i++) {
 			q = suitableQuotes.get(i);
-			/*int dow = cal.get(Calendar.DAY_OF_WEEK);
-			if (dow == 1) {
-				dow = 7;
-			} else {
-				dow--;
-			}
-			Calendar cal = Calendar.getInstance();
-			cal.setTime(new Date());
-			&& q.possibleMonth.get(1 + cal.get(Calendar.MONTH)) && q.possibleHour.get(cal.get(Calendar.HOUR_OF_DAY)) && q.possibleWeekDay.get(dow)*/
 			if (q.noTimeout() && q.purposeType.equals(purpose)){
 				sq.add(q);
 				list.add(q.toMap());
 			}
 		}
-		Main.getPluginProxy().sendMessage("talk:remove-quote",quotesToSend,
+		Main.getPluginProxy().sendMessage("talk:reject-quote",quotesToSend,
 				(sender, dat) -> {
-					HashMap<String,Object> data=(HashMap<String,Object>)dat;
+					System.out.println("i got answer");
+  					HashMap<String,Object> data=(HashMap<String,Object>)dat;
 					ArrayList<HashMap<String,Object>> quotes_list=(ArrayList<HashMap<String,Object>>)data.getOrDefault("quotes",null);
-					if(list==null) return;
+					if(quotes_list==null) return;
 					for (HashMap<String,Object> map : quotes_list) {
 						int hash=(int)map.getOrDefault("hash",0);
-						for(int i=0;i<suitableQuotes.size();i++){
-							if(suitableQuotes.get(i).hashCode()==hash){
-								suitableQuotes.remove(i);
+						for(int i=0;i<sq.size();i++){
+							if(sq.get(i).hashCode()==hash){
+								System.out.println("reject: "+sq.get(i));
+								sq.remove(i);
 								break;
 							}
 						}
 					}
-				});
-		if (sq.size() == 0) {
-			return new Quote("Я не знаю, что сказать.");
-		}
-		int counter = queueLength + 1,k;
-		do {
-			counter--;
-			r = new Random().nextInt(sq.size());
-			k=r;
-			q = sq.get(r);
-			int i, j = curPos - 1;
-			for (i = 0; i < counter; i++, j--) {
-				if (j < 0) {
-					j = j + queueLength;
+				},
+				(sender, dat) -> {
+					if (sq.size() == 0) {
+						callback.call(new Quote("Я не знаю, что сказать."));
+						return;
+					}
+					int counter = queueLength + 1;
+					int r;
+					Quote quote;
+					do {
+						counter--;
+						r = new Random().nextInt(sq.size());
+						quote = sq.get(r);
+						int i, j = curPos - 1;
+						for (i = 0; i < counter; i++, j--) {
+							if (j < 0) {
+								j = j + queueLength;
+							}
+							if (lastUsed[j] == quote) {
+								break;
+							}
+						}
+						if (i == counter) {
+							break;
+						}
+					} while (counter > 0);
+					lastUsed[curPos] = quote;
+					curPos = (curPos + 1) % queueLength;
+					quote.UpdateLastUsage();
+					callback.call(quote);
+					return;
 				}
-				if (lastUsed[j] == q) {
-					break;
-				}
-			}
-			if (i == counter) {
-				break;
-			}
-		} while (counter > 0);
-		lastUsed[curPos] = q;
-		curPos = (curPos + 1) % queueLength;
-		q.UpdateLastUsage();
-		return q;
+		);
 	}
-	
+	public interface GetQuoteCallback{
+    	void call(Quote quote);
+	}
 	public Quote get(int index) {
 		return suitableQuotes.get(index);
 	}
@@ -330,35 +333,7 @@ public class Quotes {
 							case 10: {
 								if (phrase.length()<14) continue;
 								if (phrase.getString(13).length() == 0) continue;
-								boolean inQuoteMarks=false;
-								boolean before=true;
-								String text=phrase.getString(13)+",";
-								String tagname=new String();
-								int st=0;
-								for(int c=0;c<text.length();c++){
-									if(!before){
-										if(text.charAt(c)==',') {
-											if(next.tags==null) next.tags=new HashMap<>();
-											ArrayList<String> list=new ArrayList<>();
-											next.fillTagFromString(tagname,text.substring(st, c));
-											st = c + 1;
-											tagname=new String();
-											before=true;
-										}
-									} else if(text.charAt(c)=='"') inQuoteMarks=!inQuoteMarks;
-									else if(text.charAt(c)==':' && !inQuoteMarks){
-										if(st==c) {
-											st=c+1;
-											continue;
-										}
-										if(text.charAt(st)=='"' && text.charAt(c-1)=='"')
-											 tagname=text.substring(st + 1, c - 1);
-										else tagname=text.substring(st, c);
-										tagname=tagname.trim();
-										st = c + 1;
-										before=false;
-									}
-								}
+								next.setTags(phrase.getString(13));
 							} break;
 						}
 					}

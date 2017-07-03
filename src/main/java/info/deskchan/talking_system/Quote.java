@@ -4,14 +4,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class Quote {
 	public CharacterRange character;
 	public String quote;
 	public int timeout;
-	public HashMap<String,List<String>> tags;
+	private TagsContainer tags;
 	public String purposeType;
 	public String spriteType;
 	
@@ -40,9 +43,10 @@ public class Quote {
 		if (timeout > 0) {
 			s.append(" / timeout: " + timeout);
 		}
-		for(Map.Entry<String,List<String>> tag : tags.entrySet()){
-			s.append(" / "+tag.getKey()+":"+tag.getValue());
-		}
+		if(tags!=null)
+			for(Map.Entry<String,List<String>> tag : tags.entrySet()){
+				s.append(" / "+tag.getKey()+":"+tag.getValue());
+			}
 		return s.toString();
 	}
 	
@@ -55,17 +59,11 @@ public class Quote {
 		map.put("characterImage", spriteType);
 		map.put("purpose",purposeType);
 		map.put("hash",this.hashCode());
-		for(Map.Entry<String,List<String>> tag : tags.entrySet()) {
-			if(tag.getValue().size()==0) continue;
-			StringBuilder sb=new StringBuilder();
-			for(String value : tag.getValue()) {
-				sb.append("\"");
-				sb.append(value);
-				sb.append("\" ");
+		if(tags!=null)
+			for(Map.Entry<String,List<String>> tag : tags.entrySet()) {
+				if(tag.getValue().size()==0) continue;
+				map.put(tag.getKey(), tag.getValue());
 			}
-			sb.deleteCharAt(sb.length()-1);
-			map.put(tag.getKey(), sb.toString());
-		}
 		return map;
 	}
 	private static final String[] notTags={"text","purpose","sprite","timeout","range"};
@@ -130,33 +128,21 @@ public class Quote {
 				if (list.item(i).getNodeName().equals(notTags[k]))
 					break;
 			if(k<notTags.length) continue;
-			q.fillTagFromString(list.item(i).getNodeName(),list.item(i).getTextContent());
+			q.setTag(list.item(i).getNodeName(),list.item(i).getTextContent());
 		}
 		return q;
 	}
-	public void fillTagFromString(String tagname,String text){
-		text=text+" ";
-		try{
-			if(tags==null) tags=new HashMap<>();
-			ArrayList<String> args=new ArrayList<String>();
-			boolean inQuoteMarks=false;
-			int st=0;
-			for(int c=0;c<text.length();c++){
-				if(text.charAt(c)=='"') inQuoteMarks=!inQuoteMarks;
-				else if(text.charAt(c)==' ' && !inQuoteMarks){
-					if(st==c) {
-						st=c+1;
-						continue;
-					}
-					if(text.charAt(st)=='"' && text.charAt(c-1)=='"')
-						args.add(text.substring(st + 1, c - 1));
-					else
-						args.add(text.substring(st,c));
-					st=c+1;
-				}
-			}
-			tags.put(tagname,args);
-		} catch(Exception e){ Main.log(e); }
+	public void setTag(String tag,String text){
+		if(tags==null) tags=new TagsContainer();
+		tags.put(tag, text);
+	}
+	public void setTags(String text){
+		if(tags==null) tags=new TagsContainer();
+		tags.put(text);
+	}
+	public List<String> getTag(String name){
+		if(tags==null) return null;
+		return tags.get(name);
 	}
 	private void AppendTo(Document doc, Node target, String name, String text) {
 		Node n = doc.createElement(name);
