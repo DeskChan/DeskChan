@@ -122,7 +122,6 @@ public class Quotes {
 				int hash=(int)map.getOrDefault("hash",0);
 				for(int i=0;i<suitableQuotes.size();i++){
 					if(suitableQuotes.get(i).hashCode()==hash){
-						System.out.println("remove: "+suitableQuotes.get(i));
 						suitableQuotes.remove(i);
 						break;
 					}
@@ -203,7 +202,6 @@ public class Quotes {
 		}
 		Main.getPluginProxy().sendMessage("talk:reject-quote",quotesToSend,
 				(sender, dat) -> {
-					System.out.println("i got answer");
   					HashMap<String,Object> data=(HashMap<String,Object>)dat;
 					ArrayList<HashMap<String,Object>> quotes_list=(ArrayList<HashMap<String,Object>>)data.getOrDefault("quotes",null);
 					if(quotes_list==null) return;
@@ -211,7 +209,6 @@ public class Quotes {
 						int hash=(int)map.getOrDefault("hash",0);
 						for(int i=0;i<sq.size();i++){
 							if(sq.get(i).hashCode()==hash){
-								System.out.println("reject: "+sq.get(i));
 								sq.remove(i);
 								break;
 							}
