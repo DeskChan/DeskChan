@@ -143,6 +143,7 @@ public class CorePlugin implements Plugin, MessageListener {
 				}
 			}
 		});
+		CommandsProxy.initialize(pluginProxy);
 		return true;
 	}
 	
