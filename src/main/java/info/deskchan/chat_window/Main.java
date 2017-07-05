@@ -3,10 +3,8 @@ package info.deskchan.chat_window;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxy;
 
-import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.List;
 
 
 public class Main implements Plugin {
@@ -41,7 +39,9 @@ public class Main implements Plugin {
             return map;
         }
     }
-    Color color=Color.BLACK;
+
+    private boolean chatIsOpened=false;
+
     private LinkedList<ChatPhrase> history;
     private ArrayList<HashMap<String,Object>> historyToChat(){
         ArrayList<HashMap<String,Object>> ret=new ArrayList<>();
@@ -64,7 +64,15 @@ public class Main implements Plugin {
         log("setup chat window started");
         history=new LinkedList<>();
         pluginProxy.addMessageListener("chat:setup", (sender, tag, data) -> {
+            chatIsOpened=true;
             setupChat();
+        });
+        pluginProxy.addMessageListener("chat:setup", (sender, tag, data) -> {
+            chatIsOpened=true;
+            setupChat();
+        });
+        pluginProxy.addMessageListener("chat:closed", (sender, tag, data) -> {
+            chatIsOpened=false;
         });
         pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
             put("name", "Открыть чат");
@@ -79,10 +87,12 @@ public class Main implements Plugin {
             setupChat();
         });
         log("setup chat window completed");
+        setupChat();
         return true;
     }
 
     void setupChat() {
+        if(!chatIsOpened) return;
         pluginProxy.sendMessage("gui:show-custom-window", new HashMap<String, Object>() {{
             LinkedList<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
             list.add(new HashMap<String, Object>() {{
@@ -99,6 +109,7 @@ public class Main implements Plugin {
             }});
             put("controls", list);
             put("name","Чат");
+            put("onClose","chat:closed");
         }});
     }
     static void log(String text) {
