@@ -162,7 +162,7 @@ public abstract class CharacterPreset {
 		list=tags.get("abuses");
 		if (list!=null && list.size() > 0) {
 			ret = ret.replaceAll("%ABUSE%", list.get(new Random().nextInt(list.size())));
-		} else ret = ret.replaceAll("%USERNAME%",Main.getString("default_abuse"));
+		} else ret = ret.replaceAll("%ABUSE%",Main.getString("default_abuse"));
 		ret = ret.replaceAll("%TIME%", new SimpleDateFormat("HH:mm").format(new Date()));
 		ret = ret.replaceAll("%DATE%", new SimpleDateFormat("d LLLL").format(new Date()));
 		ret = ret.replaceAll("%YEAR%", new SimpleDateFormat("YYYY").format(new Date()));

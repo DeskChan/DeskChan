@@ -21,6 +21,8 @@ public class Main implements Plugin {
 	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+	private boolean autoPhrasesSync;
+
 	private CharacterPreset currentPreset;
 	private EmotionsController emotionsController;
 	
@@ -71,6 +73,7 @@ public class Main implements Plugin {
 		currentPreset = new SimpleCharacterPreset();
 		Influence.globalMultiplier = 0.05f;
 		messageTimeout = 40000;
+		autoPhrasesSync=true;
 		try {
 			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.load(ip);
@@ -92,6 +95,9 @@ public class Main implements Plugin {
 			} catch (Exception e) { }
 			try {
 				messageTimeout = Integer.valueOf(properties.getProperty("messageTimeout"));
+			} catch (Exception e) { }
+			try {
+				autoPhrasesSync = properties.getProperty("autoPhrasesSync").equals("1");
 			} catch (Exception e) { }
 		}
 		log("Loaded options");
@@ -219,8 +225,10 @@ public class Main implements Plugin {
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
-		Quotes.saveTo(MAIN_PHRASES_URL, "main");
-		Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+		if(autoPhrasesSync) {
+			Quotes.saveTo(MAIN_PHRASES_URL, "main");
+			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+		}
 		quotes.load(currentPreset.quotesBaseList);
 		//phraseRequest("HELLO");
 		/*MeaningExtractor extractor=new MeaningExtractor();
@@ -342,6 +350,12 @@ public class Main implements Plugin {
 				put("label", getString("message_interval"));
 			}});
 			list.add(new HashMap<String, Object>() {{
+				put("id", "autoSync");
+				put("type", "CheckBox");
+				put("value", autoPhrasesSync);
+				put("label", getString("autoPhrasesSync"));
+			}});
+			list.add(new HashMap<String, Object>() {{
 				put("id", "save_preset");
 				put("type", "Button");
 				put("value", getString("save_preset"));
@@ -404,6 +418,12 @@ public class Main implements Plugin {
 			errorMessage += e.getMessage();
 			messageTimeout = 40000;
 		}
+		boolean oa=autoPhrasesSync;
+		autoPhrasesSync = (Boolean) data.getOrDefault("autoSync", true);
+		if(!oa && autoPhrasesSync){
+			Quotes.saveTo(MAIN_PHRASES_URL, "main");
+			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+		}
 		if (errorMessage.length() > 1) {
 			HashMap<String, Object> list = new HashMap<String, Object>();
 			list.put("name", "Ошибка");
@@ -424,6 +444,7 @@ public class Main implements Plugin {
 	void saveSettings() {
 		Properties properties = new Properties();
 		properties.setProperty("applyInfluence", applyInfluence ? "1" : "0");
+		properties.setProperty("autoPhrasesSync", autoPhrasesSync ? "1" : "0");
 		properties.setProperty("characterPreset", currentPreset.toJSON().toString());
 		properties.setProperty("influenceMultiplier", String.valueOf(Influence.globalMultiplier));
 		properties.setProperty("messageTimeout", String.valueOf(messageTimeout));
