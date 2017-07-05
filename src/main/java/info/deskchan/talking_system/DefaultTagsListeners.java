@@ -54,7 +54,6 @@ public class DefaultTagsListeners {
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
 
-			//&& q.possibleMonth.get(1 + cal.get(Calendar.MONTH)) && q.possibleHour.get(cal.get(Calendar.HOUR_OF_DAY)) && q.possibleWeekDay.get(dow)*/
         for(HashMap<String,Object> entry : list){
             List<String> tag;
             try {

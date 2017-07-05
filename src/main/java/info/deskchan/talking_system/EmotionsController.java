@@ -93,6 +93,7 @@ public class EmotionsController {
 			List<String> arglist=(List<String>) entry.getValue();
 			if (arglist.size()==0) continue;
 			String curEmotion=getEmotionName();
+			if(curEmotion==null) return false;
 			for(int i=0;i<arglist.size();i++)
 				if(arglist.get(i).equals(curEmotion)) return true;
 			return false;
@@ -132,6 +133,7 @@ public class EmotionsController {
 		}
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("emotion", Emotion.getEmotion(emotionIndex).name);
+		Main.sendToProxy("talk:emotion-changed", map);
 		Main.sendToProxy("talk:emotion-changed", map);
 	}
 	

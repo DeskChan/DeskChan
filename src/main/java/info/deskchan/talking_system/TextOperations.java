@@ -40,12 +40,18 @@ public class TextOperations {
     }
     public static String simplifyWord(String word){
         StringBuilder sb=new StringBuilder(word);
-        for(int i=0;i<sb.length();i++)
-            for(int k=0;k<simplify.length;k++)
-                if(sb.charAt(i)==simplify[k][0]){
-                    sb.setCharAt(i,simplify[k][1]);
+        for(int i=0;i<sb.length();i++) {
+            if(i>0 && sb.charAt(i)==sb.charAt(i-1)){
+                sb.deleteCharAt(i);
+                i--;
+                continue;
+            }
+            for (int k = 0; k < simplify.length; k++)
+                if (sb.charAt(i) == simplify[k][0]) {
+                    sb.setCharAt(i, simplify[k][1]);
                     break;
                 }
+        }
         return sb.toString();
     }
     public static ArrayList<String> extractWords(String phrase){

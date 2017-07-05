@@ -231,23 +231,11 @@ public class Main implements Plugin {
 		return true;
 	}
 
-	static String getListAsString(List<String> s) {
-		if (s==null || s.size() == 0) {
-			return "";
-		}
-		String ret = "";
-		for (String n : s) {
-			ret = ret + n + ";";
-		}
-
-		return ret.substring(0, ret.length() - 1);
-	}
-
 	static ArrayList<String> getListFromString(String s) {
 		return new ArrayList<>(Arrays.asList(s.split(";")));
 	}
 
-	void phraseRequest(Map<String, Object> data) {
+	public void phraseRequest(Map<String, Object> data) {
 		String purpose = "CHAT";
 		if (data != null) {
 			String np = (String) data.getOrDefault("purpose", null);
@@ -258,7 +246,7 @@ public class Main implements Plugin {
 		phraseRequest(purpose);
 	}
 
-	void phraseRequest(String purpose) {
+	public void phraseRequest(String purpose) {
 		quotes.update(currentPreset.getCharacter(emotionsController));
 		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
 			public void call(Quote quote){ sendPhrase(quote); }

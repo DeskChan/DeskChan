@@ -51,7 +51,7 @@ public class App extends Application {
 	private SortedMap<String, List<PluginActionInfo>> pluginsActions = new TreeMap<>();
 	private Character character = new Character("main", Skin.load(Main.getProperty("skin.name", null)));
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
-	
+	private List<TemplateBox> customWindowOpened = new LinkedList<TemplateBox>();
 	@Override
 	public void start(Stage primaryStage) {
 		instance = this;
@@ -207,10 +207,26 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				TemplateBox dialog = new TemplateBox((String) m.getOrDefault("name", Main.getString("default_messagebox_name")));
+				String name=(String) m.getOrDefault("name", Main.getString("default_messagebox_name"));
+				for(TemplateBox window : customWindowOpened){
+					if(window.getTitle().equals(name)){
+						ControlsContainer controlsContainer = new ControlsContainer(window.getDialogPane().getScene().getWindow(),name,
+								(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
+						window.getDialogPane().setContent(controlsContainer.createControlsPane());
+						return;
+					}
+				}
+				TemplateBox dialog = new TemplateBox(name);
+				customWindowOpened.add(dialog);
 				Window ownerWindow = dialog.getDialogPane().getScene().getWindow();
 				ControlsContainer controlsContainer = new ControlsContainer(ownerWindow, (String) m.get("name"),
 						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
+				String onClose=(String) m.getOrDefault("onClose", null);
+				if(onClose!=null)
+					dialog.setOnCloseRequest(event -> {
+						customWindowOpened.remove(dialog);
+						pluginProxy.sendMessage(onClose,null);
+					});
 				dialog.getDialogPane().setContent(controlsContainer.createControlsPane());
 				dialog.requestFocus();
 				dialog.show();
