@@ -1,7 +1,6 @@
 package info.deskchan.telegram_api;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.TelegramBotAdapter;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -13,7 +12,6 @@ import com.pengrad.telegrambot.response.GetUpdatesResponse;
 import com.pengrad.telegrambot.response.SendResponse;
 import info.deskchan.core.ResponseListener;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -70,6 +68,7 @@ public class App {
     static void AnalyzeMessage(Message message){
         String text=message.text();
         text=text.replace(selfName,"");
+        System.out.println(text);
         String[] words=text.split(" ");
         if(words[0].equals("/notice")){
             if(message.from().id().equals(masterId)){
@@ -102,9 +101,9 @@ public class App {
         }});
     }
     static void Start(){
-        skipHistory=false;
+        /*skipHistory=false;
         lastUpdates=new HashMap<Chat,Integer>();
-        bot = TelegramBotAdapter.build("399780180:AAHF5SayAnSXlRM-AK6J2FNkW-jXJqRCkKY");
+        bot = TelegramBotAdapter.build("");
         getUpdates = new GetUpdates().limit(100).offset(0).timeout(0);
         try {
             chatTimerListener.getClass().getDeclaredMethod("start").invoke(chatTimerListener);
@@ -112,7 +111,7 @@ public class App {
             Main.log(e);
         }
         lastUpdates.put(currentChat,0);
-        SendTalkRequest("HELLO");
+        SendTalkRequest("HELLO");*/
     }
     static void Stop(){
 

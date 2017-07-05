@@ -103,7 +103,7 @@ public class CommandsProxy{
         proxy.addMessageListener("core:get-commands-match", (sender, tag, dat) -> {
             HashMap<String,Object> data=(HashMap<String,Object>) dat;
             String eventName=(String) data.getOrDefault("eventName",null);
-            String seq=(String) data.getOrDefault("seq",null);
+            Integer seq=(Integer) data.getOrDefault("seq",null);
             data=new HashMap<>();
             data.put("seq",seq);
             data.put("commands",getCommandsMatch(eventName));

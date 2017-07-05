@@ -230,7 +230,7 @@ public class Main implements Plugin {
 			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		}
 		quotes.load(currentPreset.quotesBaseList);
-		//phraseRequest("HELLO");
+		phraseRequest("HELLO");
 		/*MeaningExtractor extractor=new MeaningExtractor();
 		for(Quote quote : quotes.toArray()){
 			extractor.teach(quote.quote,quote.purposeType);
