@@ -8,6 +8,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -87,6 +88,9 @@ interface PluginOptionsControlItem {
 			item.setValue(value);
 		}
 		Node node=item.getNode();
+		if(width!=null && height!=null){
+			node.setClip(new Rectangle(width,height));
+		}
 		if(width!=null && node instanceof Region) {
 			((Region) node).setMinWidth(width);
 			((Region) node).setMaxWidth(width);
@@ -246,13 +250,22 @@ interface PluginOptionsControlItem {
 	class SpinnerItem implements PluginOptionsControlItem {
 		
 		private final Spinner<Integer> spinner = new Spinner<>();
-		
+
 		@Override
 		public void init(Map<String, Object> options) {
 			Integer min = (Integer) options.getOrDefault("min", 0);
 			Integer max = (Integer) options.getOrDefault("max", 100);
 			Integer step = (Integer) options.getOrDefault("step", 1);
 			spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, min, step));
+			String msgTag=(String)options.getOrDefault("msgTag",null);
+			if(msgTag!=null){
+				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+						put("value", newValue);
+						put("oldValue", oldValue);
+					}});
+				});
+			}
 		}
 		
 		@Override
@@ -275,9 +288,18 @@ interface PluginOptionsControlItem {
 	class CheckBoxItem extends CheckBox implements PluginOptionsControlItem {
 
 		@Override
-		public void setValue(Object value) {
-			setSelected((boolean) value);
+		public void init(Map<String, Object> options) {
+			String msgTag=(String)options.getOrDefault("msgTag",null);
+			if(msgTag!=null){
+				selectedProperty().addListener((obs, oldValue, newValue) -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+						put("value", newValue);
+					}});
+				});
+			}
 		}
+		@Override
+		public void setValue(Object value) { setSelected((boolean) value); }
 
 		@Override
 		public Object getValue() {
@@ -299,6 +321,14 @@ interface PluginOptionsControlItem {
 		public void init(Map<String, Object> options) {
 			List<Object> items = (List<Object>) options.get("values");
 			comboBox.setItems(FXCollections.observableList(items));
+			String msgTag=(String)options.getOrDefault("msgTag",null);
+			if(msgTag!=null){
+				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+						put("value", newValue.toString());
+					}});
+				});
+			}
 		}
 		
 		@Override

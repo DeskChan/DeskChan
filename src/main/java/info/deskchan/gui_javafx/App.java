@@ -349,6 +349,40 @@ public class App extends Application {
 				}
 			});
 		});
+		pluginProxy.addMessageListener("gui:change-balloon-timeout", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",300));
+				Integer val=value.intValue();
+				Main.setProperty("balloon.default_timeout", val.toString() );
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-character-scale", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
+				Main.setProperty("skin.scale_factor", value.toString());
+				getCharacter().resizeSkin(value.floatValue());
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-character-opacity", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
+				Main.setProperty("skin.opacity", value.toString());
+				getCharacter().changeOpacity(value.floatValue());
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-layer-mode", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				String value=(String) ((Map<String,Object>) data).getOrDefault("value","ALWAYS_TOP");
+				App.getInstance().getCharacter().setLayerMode(Character.LayerMode.valueOf(value));
+				Main.setProperty("character.layer_mode", value);
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-balloon-position-mode", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				String value=(String) ((Map<String,Object>) data).getOrDefault("value","AUTO");
+				App.getInstance().getCharacter().setBalloonPositionMode(Balloon.PositionMode.valueOf(value));
+			});
+		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				String pluginId = (String) data;
@@ -388,7 +422,16 @@ public class App extends Application {
 				}}
 		));
 	}
-	
+	private Double extractValue(Object val){
+		Double value=100d;
+		if(val instanceof Integer){
+			Integer a=(Integer)val;
+			value=a.doubleValue();
+		} else if(val instanceof Double){
+			value=(Double) val;
+		}
+		return value;
+	}
 	private void rebuildMenu() {
 		Menu mainMenu = systemTray.getMenu();
 		if (mainMenu instanceof dorkbox.systemTray.swingUI.SwingUI) {

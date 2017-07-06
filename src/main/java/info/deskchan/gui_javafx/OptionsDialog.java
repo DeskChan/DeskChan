@@ -7,9 +7,9 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
@@ -27,6 +27,7 @@ class OptionsDialog extends TemplateBox {
 	private static OptionsDialog instance = null;
 	private TabPane tabPane = new TabPane();
 	private Button skinManagerButton = new Button();
+	private Button balloonFontButton = new Button();
 	private ListView<PluginListItem> pluginsList = new ListView<>();
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
 	private static Map<String, List<ControlsContainer>> pluginsTabs = new HashMap<>();
@@ -49,111 +50,110 @@ class OptionsDialog extends TemplateBox {
 	static void updateInstanceTabs(){
 		getInstance().skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString().replaceAll(
 				String.format(".*\\%c", File.separatorChar), ""));
+		getInstance().balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
 	}
 
+	private void initMainOptions(){
+		List<Map<String, Object>> list = new LinkedList<Map<String, Object>>();
+		list.add(new HashMap<String, Object>() {{
+			put("id", "skin");
+			put("type", "Button");
+			put("label", Main.getString("skin"));
+			put("hint","Скины доступны в папке skins в корне программы.");
+			put("value", App.getInstance().getCharacter().getSkin().toString().replaceAll(
+				String.format(".*\\%c", File.separatorChar), ""));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "scale");
+			put("type", "Spinner");
+			put("label", Main.getString("skin.scale_factor"));
+			put("min", 10);
+			put("max", 1000);
+			put("step", 5);
+			put("msgTag","gui:change-character-scale");
+			double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
+			// e.g. 1.74 -> 1.75
+			scaleFactorValue = Math.round(scaleFactorValue * 200.0f) / 2.0f;
+			put("value", (int)scaleFactorValue);
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "opacity");
+			put("type", "Spinner");
+			put("label", Main.getString("skin.opacity"));
+			put("min", 0);
+			put("max", 100);
+			put("step", 2);
+			put("msgTag","gui:change-character-opacity");
+			double opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
+			opacity = Math.round(opacity * 200.0f) / 2.0f;
+			put("value", (int)opacity);
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "balloon_font");
+			put("type", "Button");
+			put("label", Main.getString("balloon_font"));
+			put("value", Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "layer_mode");
+			put("type", "ComboBox");
+			put("label", Main.getString("character.layer_mode"));
+			List<Object> values=FXCollections.observableList(Arrays.asList(Character.LayerMode.values()));
+			int sel=-1;
+			for(Object value : values){
+				sel++;
+				if(value.equals(App.getInstance().getCharacter().getLayerMode())) break;
+			}
+			put("msgTag","gui:change-layer-mode");
+			put("values", values);
+			put("value", sel);
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "balloon_default_timeout");
+			put("type", "Spinner");
+			put("label", Main.getString("balloon_default_timeout"));
+			put("min", 0);
+			put("max", 120000);
+			put("step", 100);
+			put("msgTag","gui:change-balloon-timeout");
+			put("value", Integer.parseInt(Main.getProperty("balloon.default_timeout", "300")));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "balloon_position_mode");
+			put("type", "ComboBox");
+			put("label", Main.getString("balloon_position_mode"));
+			List<Object> values=FXCollections.observableList(Arrays.asList(Balloon.PositionMode.values()));
+			int sel=-1;
+			for(Object value : values){
+				sel++;
+				if(value.equals(App.getInstance().getCharacter().getBalloonPositionMode())) break;
+			}
+			put("msgTag","gui:change-balloon-position-mode");
+			put("values", values);
+			put("value", sel);
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "enable_context_menu");
+			put("type", "CheckBox");
+			put("label", Main.getString("enable_context_menu"));
+			put("value", Main.getProperty("character.enable_context_menu", "0").equals("1"));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id", "load_resource_pack");
+			put("type", "Button");
+			put("label", Main.getString("load_resource_pack"));
+			put("value", Main.getString("load"));
+		}});
+		ControlsContainer poTab = new ControlsContainer(() -> instance.getDialogPane().getScene().getWindow(), Main.getString("appearance"), list, null);
+		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane()));
+	}
 	private void initTabs() {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
-		ColumnConstraints column1 = new ColumnConstraints();
-        column1.setPercentWidth(55);
-        ColumnConstraints column2 = new ColumnConstraints();
-        column2.setPercentWidth(45);
-        gridPane.getColumnConstraints().addAll(column1, column2);
 
-		gridPane.add(new Label(Main.getString("skin")), 0, 0);
-		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString().replaceAll(
-				String.format(".*\\%c", File.separatorChar), ""));
-		skinManagerButton.setOnAction(event -> openSkinManager());
-		gridPane.add(skinManagerButton, 1, 0);
-		gridPane.add(new Label(Main.getString("skin.scale_factor")), 0, 1);
-		double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
-		// e.g. 1.74 -> 1.75
-		scaleFactorValue = Math.round(scaleFactorValue * 20.0f) / 20.0f;
-		Spinner<Double> scaleFactorSpinner = new Spinner<>(0.1, 10.0, scaleFactorValue, 0.05);
-		scaleFactorSpinner.valueProperty().addListener((property, oldValue, value) -> {
-			Main.setProperty("skin.scale_factor", value.toString());
-			App.getInstance().getCharacter().resizeSkin(value.floatValue());
-		});
-		gridPane.add(scaleFactorSpinner, 1, 1);
-		gridPane.add(new Label(Main.getString("skin.opacity")), 0, 2);
-		double opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
-		opacity = Math.round(opacity * 20.0f) / 20.0f;
-		Spinner<Double> opacitySpinner = new Spinner<>(0.10, 1.0, opacity, 0.05);
-		opacitySpinner.valueProperty().addListener((property, oldValue, value) -> {
-			Main.setProperty("skin.opacity", value.toString());
-			App.getInstance().getCharacter().changeOpacity(value.floatValue());
-		});
-		gridPane.add(opacitySpinner, 1, 2);
-		gridPane.add(new Label(Main.getString("balloon_font")), 0, 3);
-		Button balloonFontButton = new Button(
-				Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize()
-		);
-		balloonFontButton.setOnAction(event -> {
-			FontSelectorDialog dialog = new FontSelectorDialog(Balloon.getDefaultFont());
-			dialog.initOwner(getDialogPane().getScene().getWindow());
-			Optional<Font> selectedFontOpt = dialog.showAndWait();
-			if (selectedFontOpt.isPresent()) {
-				Font selectedFont = selectedFontOpt.get();
-				Balloon.setDefaultFont(selectedFont);
-				Main.setProperty("balloon.font.family", selectedFont.getFamily());
-				Main.setProperty("balloon.font.size", String.valueOf(selectedFont.getSize()));
-				balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
-			}
-		});
-		gridPane.add(balloonFontButton, 1, 3);
-		gridPane.add(new Label(Main.getString("character.layer_mode")), 0, 4);
-		ComboBox<Character.LayerMode> characterLayerModeComboBox = new ComboBox<>();
-		characterLayerModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
-				Character.LayerMode.values())));
-		characterLayerModeComboBox.getSelectionModel().select(App.getInstance().getCharacter().getLayerMode());
-		characterLayerModeComboBox.getSelectionModel().selectedItemProperty().addListener(
-				(property, oldValue, value) -> {
-					App.getInstance().getCharacter().setLayerMode(value);
-					Main.setProperty("character.layer_mode", value.toString());
-				}
-		);
-		gridPane.add(characterLayerModeComboBox, 1, 4);
-		gridPane.add(new Label(Main.getString("balloon_default_timeout")), 0, 5);
-		Spinner<Integer> balloonDefaultTimeoutSpinner = new Spinner<>(0, 120000,
-				Integer.parseInt(Main.getProperty("balloon.default_timeout", "300")), 100);
-		balloonDefaultTimeoutSpinner.valueProperty().addListener((property, oldValue, value) -> {
-			Main.setProperty("balloon.default_timeout", value.toString());
-		});
-		gridPane.add(balloonDefaultTimeoutSpinner, 1, 5);
-		gridPane.add(new Label(Main.getString("balloon_position_mode")), 0, 6);
-		ComboBox<Balloon.PositionMode> balloonPositionModeComboBox = new ComboBox<>();
-		balloonPositionModeComboBox.setItems(FXCollections.observableList(Arrays.asList(
-				Balloon.PositionMode.values())));
-		balloonPositionModeComboBox.getSelectionModel().select(
-				App.getInstance().getCharacter().getBalloonPositionMode());
-		balloonPositionModeComboBox.getSelectionModel().selectedItemProperty().addListener(
-				(property, oldValue, value) -> {
-					App.getInstance().getCharacter().setBalloonPositionMode(value);
-				}
-		);
-		gridPane.add(balloonPositionModeComboBox, 1, 6);
-		gridPane.add(new Label(Main.getString("enable_context_menu")), 0, 7);
-		CheckBox showContextMenuCheckBox = new CheckBox();
-		showContextMenuCheckBox.setSelected(Main.getProperty("character.enable_context_menu", "0").equals("1"));
-		showContextMenuCheckBox.selectedProperty().addListener((property, oldValue, newValue) -> {
-			Main.setProperty("character.enable_context_menu", newValue ? "1" : "0");
-		});
-		gridPane.add(showContextMenuCheckBox, 1, 7);
-		gridPane.add(new Label(Main.getString("load_resource_pack")), 0, 8);
-		FileChooser packChooser=new FileChooser();
-		packChooser.setInitialDirectory(pluginProxy.getRootDirPath().toFile());
-		Button distributeButton = new Button(Main.getString("load"));
-		distributeButton.setOnAction(event -> {
-			try {
-				File f = packChooser.showOpenDialog(getDialogPane().getScene().getWindow());
-				pluginProxy.sendMessage("core:distribute-resources", new HashMap<String, Object>() {{
-					put("resourcesList", f.toString());
-				}});
-			} catch(Exception e){ }
-		});
-		gridPane.add(distributeButton, 1, 8);
-		tabPane.getTabs().add(new Tab(Main.getString("appearance"), gridPane));
+		initMainOptions();
+
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
 		pluginsList.setPrefSize(400, 300);
@@ -314,15 +314,54 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(new Label(Main.getString("about.build_datetime")), 0, 4);
 		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
 		tabPane.getTabs().add(new Tab(Main.getString("about"), gridPane));
+		for(Tab tab : getInstance().tabPane.getTabs()) {
+			if (!tab.getText().equals(Main.getString("appearance"))) continue;
+			GridPane pane = (GridPane) ((BorderPane) tab.getContent()).getChildren().get(0);
+			for (Node node : pane.getChildren()) {
+				if (node.getId() != null && node.getId().equals("skin"))
+					skinManagerButton = (Button) node;
+				if (node.getId() != null && node.getId().equals("balloon_font"))
+					balloonFontButton = (Button) node;
+				if (node.getId() != null && node.getId().equals("enable_context_menu")){
+					((CheckBox) node).selectedProperty().addListener((property, oldValue, newValue) -> {
+						Main.setProperty("character.enable_context_menu", newValue ? "1" : "0");
+					});
+				}
+				if (node.getId() != null && node.getId().equals("load_resource_pack")) {
+					((Button) node).setOnAction(event -> {
+						try {
+							FileChooser packChooser=new FileChooser();
+							packChooser.setInitialDirectory(pluginProxy.getRootDirPath().toFile());
+							File f = packChooser.showOpenDialog(getDialogPane().getScene().getWindow());
+							pluginProxy.sendMessage("core:distribute-resources", new HashMap<String, Object>() {{
+								put("resourcesList", f.toString());
+							}});
+						} catch(Exception e){ }
+					});
+				}
+			}
+		}
+		balloonFontButton.setOnAction(event -> {
+			FontSelectorDialog dialog = new FontSelectorDialog(Balloon.getDefaultFont());
+			dialog.initOwner(getDialogPane().getScene().getWindow());
+			Optional<Font> selectedFontOpt = dialog.showAndWait();
+			if (selectedFontOpt.isPresent()) {
+				Font selectedFont = selectedFontOpt.get();
+				Balloon.setDefaultFont(selectedFont);
+				Main.setProperty("balloon.font.family", selectedFont.getFamily());
+				Main.setProperty("balloon.font.size", String.valueOf(selectedFont.getSize()));
+				updateInstanceTabs();
+			}
+		});
+		skinManagerButton.setOnAction(event -> openSkinManager());
 	}
 
-	private void openSkinManager() {
+	protected void openSkinManager() {
 		SkinManagerDialog dialog = new SkinManagerDialog(getDialogPane().getScene().getWindow());
 		dialog.showAndWait();
-		skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString());
+		updateInstanceTabs();
 		Main.setProperty("skin.name", App.getInstance().getCharacter().getSkin().getName());
 	}
-
 	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag) {
 		List<ControlsContainer> tabs = pluginsTabs.getOrDefault(plugin, null);
 		ControlsContainer poTab = new ControlsContainer(() -> instance.getDialogPane().getScene().getWindow(), name, controls, msgTag);
