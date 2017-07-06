@@ -6,7 +6,6 @@ import info.deskchan.core.PluginProxy;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 public class Main implements Plugin {
     private static PluginProxy pluginProxy;
@@ -16,14 +15,14 @@ public class Main implements Plugin {
         pluginProxy = newPluginProxy;
         log("loading api");
         pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
-            put("name", getString("start"));
+            put("name", pluginProxy.getString("start"));
             put("msgTag", "telegram:start");
         }});
         pluginProxy.addMessageListener("telegram:start", (sender, tag, data) -> {
             App.Start();
         });
         pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
-            put("name", getString("stop"));
+            put("name", pluginProxy.getString("stop"));
             put("msgTag", "telegram:stop");
         }});
         pluginProxy.addMessageListener("telegram:stop", (sender, tag, data) -> {
@@ -39,17 +38,6 @@ public class Main implements Plugin {
         App.Start();
         log("api loaded");
         return true;
-    }
-    private static final ResourceBundle strings =
-            ResourceBundle.getBundle("info/deskchan/telegram_api/st-strings");
-
-    static synchronized String getString(String key) {
-        try {
-            String s = strings.getString(key);
-            return new String(s.getBytes("ISO-8859-1"), "UTF-8");
-        } catch (Throwable e) {
-            return key;
-        }
     }
 
     static void log(String text) {

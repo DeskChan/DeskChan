@@ -1,10 +1,7 @@
 package info.deskchan.core;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PluginProxy implements MessageListener {
 	
@@ -121,6 +118,30 @@ public class PluginProxy implements MessageListener {
 			if(listener.handle(sender, id, data)){
 				responseListeners.remove(seq);
 			}
+		}
+	}
+	private static ResourceBundle general_strings = null;
+
+	static {
+		try {
+			general_strings = ResourceBundle.getBundle("info/deskchan/strings");
+		} catch(Exception e){
+			PluginManager.log("Cannot find resource bundle info/deskchan/strings");
+		}
+	}
+
+	public ResourceBundle plugin_strings = null;
+
+	public final String getString(String key){
+		String s=key;
+		if(general_strings!=null && general_strings.containsKey(key))
+			s=general_strings.getString(key);
+		else if(plugin_strings!=null && plugin_strings.containsKey(key))
+			s=plugin_strings.getString(key);
+		try{
+			return new String(s.getBytes("ISO-8859-1"), "UTF-8");
+		} catch(Exception e){
+			return s;
 		}
 	}
 

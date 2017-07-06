@@ -16,13 +16,14 @@ public class Main implements Plugin {
 	private static Main instance;
 	private PluginProxy pluginProxy;
 	private Semaphore appInitSem = new Semaphore(0);
-	private static final ResourceBundle strings = ResourceBundle.getBundle("info/deskchan/gui_javafx/gui-strings");
 	private static final Properties properties = new Properties();
 	
 	@Override
 	public boolean initialize(PluginProxy pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		instance = this;
+		pluginProxy.plugin_strings=ResourceBundle.getBundle("info/deskchan/gui_javafx/gui-strings");
+
 		try {
 			properties.load(Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties")));
 		} catch (IOException e) {
@@ -78,14 +79,9 @@ public class Main implements Plugin {
 	static void log(Throwable e) {
 		instance.pluginProxy.log(e);
 	}
-	
-	static synchronized String getString(String key) {
-		try {
-			String s = strings.getString(key);
-			return new String(s.getBytes("ISO-8859-1"), "UTF-8");
-		} catch (Throwable e) {
-			return key;
-		}
+
+	public static String getString(String text){
+		return getInstance().pluginProxy.getString(text);
 	}
 	
 	static synchronized String getProperty(String key, String def) {

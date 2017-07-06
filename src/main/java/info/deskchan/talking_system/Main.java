@@ -74,6 +74,8 @@ public class Main implements Plugin {
 		Influence.globalMultiplier = 0.05f;
 		messageTimeout = 40000;
 		autoPhrasesSync=true;
+		pluginProxy.plugin_strings=ResourceBundle.getBundle("info/deskchan/talking_system/talk-strings");
+
 		try {
 			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.load(ip);
@@ -457,18 +459,9 @@ public class Main implements Plugin {
 		}
 	}
 
-	private static final ResourceBundle strings =
-			ResourceBundle.getBundle("info/deskchan/talking_system/talk-strings");
-
-	static synchronized String getString(String key) {
-		try {
-			String s = strings.getString(key);
-			return new String(s.getBytes("ISO-8859-1"), "UTF-8");
-		} catch (Throwable e) {
-			return key;
-		}
+	public static String getString(String text){
+		return pluginProxy.getString(text);
 	}
-
 	static void log(String text) {
 		pluginProxy.log(text);
 	}

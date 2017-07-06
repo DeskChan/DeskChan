@@ -75,7 +75,7 @@ public class Main implements Plugin {
             chatIsOpened=false;
         });
         pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
-            put("name", "Открыть чат");
+            put("name", pluginProxy.getString("chat.open"));
             put("msgTag", "chat:setup");
         }});
         pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
@@ -108,7 +108,7 @@ public class Main implements Plugin {
                 put("value",historyToChat());
             }});
             put("controls", list);
-            put("name","Чат");
+            put("name",pluginProxy.getString("chat"));
             put("onClose","chat:closed");
         }});
     }
