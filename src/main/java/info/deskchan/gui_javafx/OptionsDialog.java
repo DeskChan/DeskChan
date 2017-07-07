@@ -1,20 +1,28 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core.CommandsProxy;
 import info.deskchan.core.CoreInfo;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.ComboBoxTableCell;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.util.converter.DefaultStringConverter;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
 
@@ -30,6 +38,7 @@ class OptionsDialog extends TemplateBox {
 	private Button balloonFontButton = new Button();
 	private ListView<PluginListItem> pluginsList = new ListView<>();
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
+	private TableView<CommandItem> commandsTable=new TableView<>();
 	private static Map<String, List<ControlsContainer>> pluginsTabs = new HashMap<>();
 
 	OptionsDialog() {
@@ -53,7 +62,7 @@ class OptionsDialog extends TemplateBox {
 		getInstance().balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
 	}
 
-	private void initMainOptions(){
+	private void initMainTab(){
 		List<Map<String, Object>> list = new LinkedList<Map<String, Object>>();
 		list.add(new HashMap<String, Object>() {{
 			put("id", "skin");
@@ -147,13 +156,94 @@ class OptionsDialog extends TemplateBox {
 		ControlsContainer poTab = new ControlsContainer(() -> instance.getDialogPane().getScene().getWindow(), Main.getString("appearance"), list, null);
 		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane()));
 	}
+	private void initCommandsTab(){
+		BorderPane commandTab = new BorderPane();
+		commandTab.setCenter(commandsTable);
+		commandTab.setPrefSize(400, 300);
+
+		commandsTable.setEditable(true);
+
+		TableColumn eventCol = new TableColumn(Main.getString("events"));
+		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
+		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),FXCollections.observableArrayList(CommandsProxy.getEventsList())));
+		eventCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setEvent(event.getNewValue());
+		});
+		eventCol.setMinWidth(120);
+
+		TableColumn commandCol = new TableColumn(Main.getString("commands"));
+		commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
+		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),FXCollections.observableArrayList(CommandsProxy.getCommandsList())));
+		commandCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setCommand(event.getNewValue());
+		});
+		commandCol.setMinWidth(120);
+
+		TableColumn ruleCol = new TableColumn(Main.getString("rules"));
+		ruleCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("rule"));
+		ruleCol.setCellFactory(TextFieldTableCell.<CommandItem> forTableColumn());
+		ruleCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setRule(event.getNewValue());
+		});
+		ruleCol.setMinWidth(120);
+
+		TableColumn msgCol = new TableColumn(Main.getString("parameters"));
+		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
+		msgCol.setMinWidth(120);
+
+		ObservableList<CommandItem> list=FXCollections.observableArrayList();
+		for(Map<String,Object> entry : CommandsProxy.getLinksList()){
+			list.add(new CommandItem(entry));
+		}
+
+		commandsTable.setItems(list);
+
+		commandsTable.getColumns().addAll(eventCol,commandCol,ruleCol,msgCol);
+
+		Button saveButton = new Button(Main.getString("save"));
+		saveButton.setOnAction(event -> {
+			ArrayList<Map<String,Object>> push=new ArrayList<>();
+			for(CommandItem item : commandsTable.getItems()){
+				push.add(item.toMap());
+			}
+			CommandsProxy.resetLinks(push);
+			CommandsProxy.save();
+		});
+		Button loadButton = new Button(Main.getString("load"));
+		loadButton.setOnAction(event -> {
+			CommandsProxy.load();
+			ObservableList<CommandItem> l=FXCollections.observableArrayList();
+			for(Map<String,Object> entry : CommandsProxy.getLinksList()){
+				l.add(new CommandItem(entry));
+			}
+			commandsTable.setItems(l);
+		});
+		TextField f1=new TextField(), f2=new TextField(), f3=new TextField(), f4=new TextField();
+		Button addButton=new Button(Main.getString("add"));
+		HBox addBox=new HBox(f1,f2,f3,f4);
+		HBox buttons=new HBox(addButton,loadButton,saveButton);
+		VBox botPanel=new VBox(addBox,buttons);
+		commandTab.setBottom(botPanel);
+		tabPane.getTabs().add(new Tab(Main.getString("commands"), commandTab));
+	}
 	private void initTabs() {
 		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 
-		initMainOptions();
+		/// appearance
+		initMainTab();
 
+		/// commands
+		initCommandsTab();
+
+		/// plugins
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
 		pluginsList.setPrefSize(400, 300);
@@ -234,6 +324,8 @@ class OptionsDialog extends TemplateBox {
 		pluginsTab.setBottom(hbox);
 		pluginsList.getSelectionModel().selectedItemProperty().addListener(pluginListItemChangeListener);
 		tabPane.getTabs().add(new Tab(Main.getString("plugins"), pluginsTab));
+
+		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
 		alternativesTab.setCenter(alternativesTable);
 		alternativesTable.setPrefSize(400, 300);
@@ -271,6 +363,8 @@ class OptionsDialog extends TemplateBox {
 			alternativesTable.setRoot(root);
 		});
 		tabPane.getTabs().add(new Tab(Main.getString("alternatives"), alternativesTab));
+
+		/// debug
 		BorderPane debugTab = new BorderPane();
 		TextField debugMsgTag = new TextField("DeskChan:say");
 		debugTab.setTop(debugMsgTag);
@@ -290,11 +384,15 @@ class OptionsDialog extends TemplateBox {
 		});
 		debugTab.setBottom(button);
 		tabPane.getTabs().add(new Tab(Main.getString("debug"), debugTab));
+
+		/// plugin's tabs
 		for (Map.Entry<String, List<ControlsContainer>> entry : pluginsTabs.entrySet()) {
 			for (ControlsContainer tab : entry.getValue()) {
 				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane()));
 			}
 		}
+
+		/// about
 		gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
@@ -314,6 +412,8 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(new Label(Main.getString("about.build_datetime")), 0, 4);
 		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
 		tabPane.getTabs().add(new Tab(Main.getString("about"), gridPane));
+
+		/// appearance set up
 		for(Tab tab : getInstance().tabPane.getTabs()) {
 			if (!tab.getText().equals(Main.getString("appearance"))) continue;
 			GridPane pane = (GridPane) ((BorderPane) tab.getContent()).getChildren().get(0);
@@ -431,5 +531,40 @@ class OptionsDialog extends TemplateBox {
 			this(tag, null, -1);
 		}
 
+	}
+
+	public static class CommandItem{
+		SimpleStringProperty event;
+		SimpleStringProperty command;
+		SimpleStringProperty rule;
+		Object msgData;
+		CommandItem(String event, String command, String rule, String msg) {
+			this.event=new SimpleStringProperty(event);
+			this.command=new SimpleStringProperty(command);
+			this.rule=new SimpleStringProperty(rule);
+			this.msgData=msg;
+		}
+		CommandItem(Map<String,Object> data) {
+			this.event=new SimpleStringProperty((String)data.get("event"));
+			this.command=new SimpleStringProperty((String)data.get("command"));
+			this.rule=new SimpleStringProperty((String)data.get("rule"));
+			this.msgData=data.get("msg");
+		}
+		public String getEvent(){ return event.getValue(); }
+		public void setEvent(String value){ event.setValue(value); }
+		public String getCommand(){ return command.getValue(); }
+		public void setCommand(String value){ command.setValue(value); }
+		public String getRule(){ return rule.getValue(); }
+		public void setRule(String value){ rule.setValue(value); }
+		public String getMsgData(){ return msgData!=null ? msgData.toString() : ""; }
+		public void setMsgData(String value){ msgData=value; }
+		public Map<String,Object> toMap(){
+			HashMap<String,Object> data=new HashMap<>();
+			data.put("eventName",event.getValue());
+			data.put("commandName",command.getValue());
+			if(rule!=null && rule.getValue().length()>0) data.put("rule",rule.getValue());
+			if(msgData!=null) data.put("msgData",msgData);
+			return data;
+		}
 	}
 }
