@@ -154,6 +154,7 @@ public class CommandsProxy{
             data.put("commands",getCommandsMatch(eventName));
             proxy.sendMessage(sender,data);
         });
+        load();
     }
     private static final File file=PluginManager.getDataDirPath().resolve("core").resolve("links").toFile();
     public static void save(){
