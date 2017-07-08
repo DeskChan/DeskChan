@@ -373,6 +373,13 @@ public class App extends Application {
 				getCharacter().changeOpacity(value.floatValue());
 			});
 		});
+		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
+				Main.setProperty("balloon.opacity", value.toString());
+				if(Balloon.getInstance()!=null) Balloon.getInstance().setBalloonOpacity(value.floatValue());
+			});
+		});
 		pluginProxy.addMessageListener("gui:change-layer-mode", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				String value=(String) ((Map<String,Object>) data).getOrDefault("value","ALWAYS_TOP");

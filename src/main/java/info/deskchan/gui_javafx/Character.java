@@ -48,6 +48,7 @@ class Character extends MovablePane {
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
+		imageView.setMouseTransparent(true);
 		balloonPositionMode = Balloon.PositionMode.valueOf(
 				Main.getProperty("character." + id + ".balloon_position_mode",
 						Balloon.PositionMode.AUTO.toString())
