@@ -15,19 +15,14 @@ public class CommandsProxy{
             this.rule=( rule.equals("") ? null : rule );
             this.msgData=msgData;
         }
-        public Link(Map<String,Object> data){
-            String a=(String)data.getOrDefault("rule",null);
-            this.rule=( a.equals("") ? null : a );
-            this.msgData=data.getOrDefault("msgData",null);
-        }
     }
     private static HashMap<String,Map<String,Object>> events=new HashMap<>();
     private static HashMap<String,Map<String,Object>> commands=new HashMap<>();
 
     /// < event < command , rule > >
-    private static HashMap<String,Map<String,Link>> commandLinks=new HashMap<>();
+    private static HashMap < String , Map <String , ArrayList<Link> > > commandLinks=new HashMap<>();
 
-    public static Link getCommandLinks(String targetName,String commandName){
+    public static ArrayList<Link> getCommandLinks(String targetName,String commandName){
         try{
             return commandLinks.get(targetName).get(commandName);
         } catch(Exception e){
@@ -64,7 +59,7 @@ public class CommandsProxy{
             PluginManager.log("No name specified for event to remove: "+data);
         else events.remove((String)data.get("tag"));
     }
-    public static void addEventLink(String eventName,String commandName,Map<String,Object> data){
+    public static void addEventLink(String eventName,String commandName,String rule,Object msgData){
         if(eventName==null){
             PluginManager.log("No event name specified to event link");
             return;
@@ -73,15 +68,21 @@ public class CommandsProxy{
             PluginManager.log("No target command name specified to add event link");
             return;
         }
-        Map<String,Link> map=commandLinks.getOrDefault(eventName,null);
+        Map<String,ArrayList<Link>> map=commandLinks.getOrDefault(eventName,null);
         if(map==null){
-            map=new HashMap<String,Link>();
+            map=new HashMap<>();
             commandLinks.put(eventName,map);
         }
-        map.put(commandName,new Link(data));
+        ArrayList<Link> links=map.getOrDefault(commandName,null);
+        if(links==null) {
+            links = new ArrayList<>();
+            map.put(commandName,links);
+        }
+        links.add(new Link(rule,msgData));
     }
     public static void addEventLink(Map<String,Object> data){
-        addEventLink((String)data.getOrDefault("eventName",null),(String)data.getOrDefault("commandName",null),data);
+        addEventLink((String)data.getOrDefault("eventName",null),(String)data.getOrDefault("commandName",null),
+                     (String)data.getOrDefault("rule",null),data.getOrDefault("msgData",null));
     }
     public static void removeEventLink(String eventName,String commandName){
         try{
@@ -98,13 +99,14 @@ public class CommandsProxy{
         if(eventName==null)
             PluginManager.log("No event name specified for matching command list");
         else try{
-            for(HashMap.Entry<String,Link> entry : commandLinks.get(eventName).entrySet()){
+            for(HashMap.Entry<String,ArrayList<Link>> entry : commandLinks.get(eventName).entrySet()){
                 if(commands.containsKey(entry.getKey())) {
-                    HashMap<String,Object> cpy=new HashMap<String,Object>(commands.get(entry.getKey()));
-                    Link link=entry.getValue();
-                    if(link.rule!=null) cpy.put("rule",link.rule);
-                    if(link.msgData!=null) cpy.put("msgData",link.msgData);
-                    ar.put(entry.getKey(),cpy);
+                    for (Link link : entry.getValue()) {
+                        HashMap<String, Object> cpy = new HashMap<String, Object>(commands.get(entry.getKey()));
+                        if (link.rule != null) cpy.put("rule", link.rule);
+                        if (link.msgData != null) cpy.put("msgData", link.msgData);
+                        ar.put(entry.getKey(), cpy);
+                    }
                 }
             }
         } catch(Exception e){
@@ -120,14 +122,16 @@ public class CommandsProxy{
     }
     public static ArrayList<Map<String,Object>> getLinksList(){
         ArrayList<Map<String,Object>> list=new ArrayList<>();
-        for(Map.Entry<String,Map<String,Link>> entry1 : commandLinks.entrySet()){
-            for(Map.Entry<String,Link> entry2 : entry1.getValue().entrySet()){
-                HashMap<String,Object> map=new HashMap<>();
-                map.put("event",entry1.getKey());
-                map.put("command",entry2.getKey());
-                map.put("rule",entry2.getValue().rule);
-                map.put("data",entry2.getValue().msgData!=null ? entry2.getValue().msgData : "");
-                list.add(map);
+        for(Map.Entry<String,Map<String,ArrayList<Link>>> entry1 : commandLinks.entrySet()){
+            for(Map.Entry<String,ArrayList<Link>> entry2 : entry1.getValue().entrySet()){
+                for(Link link : entry2.getValue()) {
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("event", entry1.getKey());
+                    map.put("command", entry2.getKey());
+                    map.put("rule", link.rule);
+                    map.put("data", link.msgData != null ? link.msgData : "");
+                    list.add(map);
+                }
             }
         }
         return list;
@@ -168,15 +172,17 @@ public class CommandsProxy{
         BufferedWriter out=new BufferedWriter(writer);
         try {
             JSONArray array=new JSONArray();
-            for(Map.Entry<String,Map<String,Link>> entry1 : commandLinks.entrySet()) {
-                for (Map.Entry<String, Link> entry2 : entry1.getValue().entrySet()) {
-                    JSONArray link=new JSONArray();
-                    link.put(entry1.getKey());
-                    link.put(entry2.getKey());
-                    link.put(entry2.getValue().rule!=null ? entry2.getValue().rule : "");
-                    if(entry2.getValue().msgData!=null && entry2.getValue().msgData instanceof String)
-                        link.put(entry2.getValue().msgData);
-                    array.put(link);
+            for(Map.Entry<String,Map<String,ArrayList<Link>>> entry1 : commandLinks.entrySet()) {
+                for (Map.Entry<String, ArrayList<Link>> entry2 : entry1.getValue().entrySet()) {
+                    for(Link link : entry2.getValue()) {
+                        JSONArray ar = new JSONArray();
+                        ar.put(entry1.getKey());
+                        ar.put(entry2.getKey());
+                        ar.put(link.rule != null ? link.rule : "");
+                        if (link.msgData != null && link.msgData instanceof String)
+                            ar.put(link.msgData);
+                        array.put(ar);
+                    }
                 }
             }
             out.write(array.toString());
@@ -201,16 +207,11 @@ public class CommandsProxy{
                 if(!(obj instanceof JSONArray)) continue;
                 JSONArray link=(JSONArray) obj;
                 if(link.length()<3 || link.getString(0).length()==0 || link.getString(1).length()==0 || link.getString(0).length()==2) continue;
-                Map<String,Link> map=commandLinks.getOrDefault(link.getString(0),null);
-                if(map==null){
-                    map=new HashMap<String,Link>();
-                    commandLinks.put(link.getString(0),map);
-                }
-                map.put(link.getString(1),new Link(link.getString(0),link.length()>2 ? link.getString(3) : ""));
+                addEventLink(link.getString(0),link.getString(1),link.getString(2),link.length()>2 ? link.getString(3) : "");
             }
             PluginManager.log("Links successfully loaded");
         } catch (Exception e){
-            PluginManager.log("Error while writing command links file");
+            PluginManager.log("Error while loading command links file");
         }
     }
 }

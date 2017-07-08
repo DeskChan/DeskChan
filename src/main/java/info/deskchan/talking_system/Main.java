@@ -226,6 +226,7 @@ public class Main implements Plugin {
 			}
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
+		EventsCommentary.initialize();
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
 		if(autoPhrasesSync) {
 			Quotes.saveTo(MAIN_PHRASES_URL, "main");
@@ -241,28 +242,35 @@ public class Main implements Plugin {
 		return true;
 	}
 
-	static ArrayList<String> getListFromString(String s) {
-		return new ArrayList<>(Arrays.asList(s.split(";")));
-	}
+	private static final int defaultPriority=1100;
 
 	public void phraseRequest(Map<String, Object> data) {
 		String purpose = "CHAT";
+		final int priority;
+		Integer p=defaultPriority;
 		if (data != null) {
 			String np = (String) data.getOrDefault("purpose", null);
-			if (np != null) {
-				purpose = np;
+			if (np != null) purpose = np;
+			if(data.containsKey("priority")){
+				Object a=data.get("priority");
+				if(a instanceof String) p=Integer.valueOf( (String) a );
+				else if(a instanceof Integer) p=(Integer) a;
 			}
 		}
-		phraseRequest(purpose);
+		priority=p;
+		quotes.update(currentPreset.getCharacter(emotionsController));
+		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
+			public void call(Quote quote){ sendPhrase(quote,priority); }
+		});
 	}
 
 	public void phraseRequest(String purpose) {
 		quotes.update(currentPreset.getCharacter(emotionsController));
 		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
-			public void call(Quote quote){ sendPhrase(quote); }
+			public void call(Quote quote){ sendPhrase(quote,defaultPriority); }
 		});
 	}
-	void sendPhrase(Quote quote){
+	void sendPhrase(Quote quote,int priority){
 		HashMap<String,Object> ret=quote.toMap();
 		if (ret.get("characterImage").equals("AUTO")) {
 			String ci = emotionsController.getSpriteType();
@@ -279,7 +287,7 @@ public class Main implements Plugin {
 		if (t != null) {
 			ret.replace("text", t);
 		}
-		ret.put("priority", 1100);
+		ret.put("priority", priority);
 		for(String rec : recievers)
 			pluginProxy.sendMessage(rec, ret);
 	}
@@ -392,7 +400,7 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentPreset.tags=new TagsContainer((String)data.getOrDefault("tags",null));
+				currentPreset.setTags((String)data.getOrDefault("tags",null));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}

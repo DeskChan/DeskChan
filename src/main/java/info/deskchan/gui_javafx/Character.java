@@ -12,6 +12,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -51,7 +52,19 @@ class Character extends MovablePane {
 				Main.getProperty("character." + id + ".balloon_position_mode",
 						Balloon.PositionMode.AUTO.toString())
 		);
-		addEventFilter(MouseEvent.MOUSE_PRESSED, this::startDrag);
+		addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+			startDrag(event);
+			Map<String, Object> m = new HashMap<>();
+			m.put("screenX", event.getScreenX());
+			m.put("screenY", event.getScreenY());
+			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-start-drag",m);
+		});
+		addEventFilter(MouseEvent.MOUSE_RELEASED, event -> {
+			Map<String, Object> m = new HashMap<>();
+			m.put("screenX", event.getScreenX());
+			m.put("screenY", event.getScreenY());
+			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-stop-drag",m);
+		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
 			boolean enabled = Main.getProperty("character.enable_context_menu", "0").equals("1");
 			ContextMenu contextMenu = App.getInstance().getContextMenu();
@@ -245,7 +258,7 @@ class Character extends MovablePane {
 			balloon = null;
 		}
 		messageInfo = messageQueue.peek();
-		if (messageInfo == null) {
+		if (messageInfo == null || messageInfo.counter>=messageInfo.text.length) {
 			setImageName(idleImageName);
 		} else {
 			setImageName(messageInfo.characterImage);
@@ -402,8 +415,8 @@ class Character extends MovablePane {
 			}
 			this.characterImage = characterImage;
 			priority = (Integer) data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-			timeout = (Integer) data.getOrDefault("timeout", Math.max(6000,
-					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "300"))));
+			timeout = (Integer) data.getOrDefault("timeout", Math.max(3000,
+					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "200"))));
 		}
 
         boolean itsTimeToStop(){

@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core.TextOperations;
 import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,9 +16,9 @@ import java.util.*;
 public abstract class CharacterPreset {
 	public String name;
 	protected CharacterDefinite MainCharacter;
-	public TagsContainer tags;
+	public TextOperations.TagsContainer tags;
 	public CharacterPreset() {
-		tags=new TagsContainer();
+		tags=new TextOperations.TagsContainer();
 		setStandart();
 	}
 	public ArrayList<String> quotesBaseList;
@@ -58,7 +59,9 @@ public abstract class CharacterPreset {
 		}
 		return list;
 	}
-	
+	public void setTags(String text){
+		tags=new TextOperations.TagsContainer(text);
+	}
 	public void fillFromJSON(JSONObject json) {
 		name = json.getString("name");
 		if (name.isEmpty()) {
@@ -75,7 +78,7 @@ public abstract class CharacterPreset {
 		} catch(Exception e){
 			return;
 		}
-		tags=new TagsContainer();
+		tags=new TextOperations.TagsContainer();
 		for(HashMap.Entry<String,Object> obj : json.toMap().entrySet()){
 			tags.put(obj.getKey(),(String)obj.getValue());
 		}

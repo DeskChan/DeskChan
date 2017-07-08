@@ -181,12 +181,11 @@ public class Quotes {
     }
 
 	public void requestRandomQuote(String purpose,GetQuoteCallback callback) {
-		purpose = purpose.toUpperCase();
 		if (suitableQuotes.size() == 0) {
 			callback.call(new Quote("Я не знаю, что сказать."));
 			return;
 		}
-
+		purpose = purpose.toUpperCase();
 		LinkedList<Quote> sq = new LinkedList<>();
 
 		HashMap<String,Object> quotesToSend=new HashMap<>();

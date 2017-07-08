@@ -1,5 +1,7 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core.TextOperations;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -26,7 +28,7 @@ public class MeaningExtractor {
         load();
     }
     public String analyze(String phrase){
-        ArrayList<String> words=TextOperations.simplifyWords(TextOperations.extractWordsLower(phrase));
+        ArrayList<String> words= TextOperations.simplifyWords(TextOperations.extractWordsLower(phrase));
         float max=0;
         int index=-1;
         int count=0;

@@ -343,7 +343,10 @@ public class App extends Application {
 					}
 				}
 				Object delayObj = m.getOrDefault("delay", -1L);
-				long delay = delayObj instanceof Integer ? (long) (int) delayObj : (long) delayObj;
+				long delay=1000;
+				if(delayObj instanceof Integer) delay=(long) (int) delayObj;
+				else if(delayObj instanceof Long) delay=(long) delayObj;
+				else if(delayObj instanceof String) delay=Long.valueOf((String) delayObj);
 				if (delay > 0) {
 					new DelayNotifier(sender, seq, delay);
 				}
@@ -351,7 +354,7 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:change-balloon-timeout", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",300));
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",200));
 				Integer val=value.intValue();
 				Main.setProperty("balloon.default_timeout", val.toString() );
 			});

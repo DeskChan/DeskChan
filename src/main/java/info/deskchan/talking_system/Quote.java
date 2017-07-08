@@ -1,5 +1,7 @@
 package info.deskchan.talking_system;
 
+
+import info.deskchan.core.TextOperations;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -14,7 +16,7 @@ public class Quote {
 	public CharacterRange character;
 	public String quote;
 	public int timeout;
-	private TagsContainer tags;
+	private TextOperations.TagsContainer tags;
 	public String purposeType;
 	public String spriteType;
 	
@@ -133,11 +135,11 @@ public class Quote {
 		return q;
 	}
 	public void setTag(String tag,String text){
-		if(tags==null) tags=new TagsContainer();
+		if(tags==null) tags=new TextOperations.TagsContainer();
 		tags.put(tag, text);
 	}
 	public void setTags(String text){
-		if(tags==null) tags=new TagsContainer();
+		if(tags==null) tags=new TextOperations.TagsContainer();
 		tags.put(text);
 	}
 	public List<String> getTag(String name){

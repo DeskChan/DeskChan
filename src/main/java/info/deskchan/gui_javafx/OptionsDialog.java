@@ -6,7 +6,6 @@ import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -122,10 +121,10 @@ class OptionsDialog extends TemplateBox {
 			put("type", "Spinner");
 			put("label", Main.getString("balloon_default_timeout"));
 			put("min", 0);
-			put("max", 120000);
-			put("step", 100);
+			put("max", 2000);
+			put("step", 50);
 			put("msgTag","gui:change-balloon-timeout");
-			put("value", Integer.parseInt(Main.getProperty("balloon.default_timeout", "300")));
+			put("value", Integer.parseInt(Main.getProperty("balloon.default_timeout", "200")));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "balloon_position_mode");
@@ -206,6 +205,10 @@ class OptionsDialog extends TemplateBox {
 
 		commandsTable.getColumns().addAll(eventCol,commandCol,ruleCol,msgCol);
 
+		Button deleteButton = new Button(Main.getString("delete"));
+		deleteButton.setOnAction(event -> {
+			commandsTable.getItems().remove(commandsTable.getSelectionModel().getSelectedIndex());
+		});
 		Button saveButton = new Button(Main.getString("save"));
 		saveButton.setOnAction(event -> {
 			ArrayList<Map<String,Object>> push=new ArrayList<>();
@@ -224,10 +227,23 @@ class OptionsDialog extends TemplateBox {
 			}
 			commandsTable.setItems(l);
 		});
-		TextField f1=new TextField(), f2=new TextField(), f3=new TextField(), f4=new TextField();
+		ComboBox f1=new ComboBox(FXCollections.observableArrayList(CommandsProxy.getEventsList())), f2=new ComboBox(FXCollections.observableArrayList(CommandsProxy.getCommandsList()));
+		TextField f3=new TextField(), f4=new TextField();
+		f1.getSelectionModel().selectFirst();
+		f1.setMinWidth(120);
+		f2.getSelectionModel().selectFirst();
+		f2.setMinWidth(120);
+		f3.setMinWidth(120);
 		Button addButton=new Button(Main.getString("add"));
+		addButton.setOnAction(event -> {
+			CommandItem item=new CommandItem((String)f1.getSelectionModel().getSelectedItem(),(String)f2.getSelectionModel().getSelectedItem(),f3.getText(),f4.getText());
+			commandsTable.getItems().add(item);
+			CommandsProxy.addEventLink(item.event,item.command,item.rule,item.msgData);
+			f3.setText("");
+			f4.setText("");
+		});
 		HBox addBox=new HBox(f1,f2,f3,f4);
-		HBox buttons=new HBox(addButton,loadButton,saveButton);
+		HBox buttons=new HBox(addButton,deleteButton,loadButton,saveButton);
 		VBox botPanel=new VBox(addBox,buttons);
 		commandTab.setBottom(botPanel);
 		tabPane.getTabs().add(new Tab(Main.getString("commands"), commandTab));
@@ -534,35 +550,35 @@ class OptionsDialog extends TemplateBox {
 	}
 
 	public static class CommandItem{
-		SimpleStringProperty event;
-		SimpleStringProperty command;
-		SimpleStringProperty rule;
+		String event;
+		String command;
+		String rule;
 		Object msgData;
 		CommandItem(String event, String command, String rule, String msg) {
-			this.event=new SimpleStringProperty(event);
-			this.command=new SimpleStringProperty(command);
-			this.rule=new SimpleStringProperty(rule);
+			this.event=event;
+			this.command=command;
+			this.rule=rule;
 			this.msgData=msg;
 		}
 		CommandItem(Map<String,Object> data) {
-			this.event=new SimpleStringProperty((String)data.get("event"));
-			this.command=new SimpleStringProperty((String)data.get("command"));
-			this.rule=new SimpleStringProperty((String)data.get("rule"));
+			this.event=(String)data.get("event");
+			this.command=(String)data.get("command");
+			this.rule=(String)data.get("rule");
 			this.msgData=data.get("msg");
 		}
-		public String getEvent(){ return event.getValue(); }
-		public void setEvent(String value){ event.setValue(value); }
-		public String getCommand(){ return command.getValue(); }
-		public void setCommand(String value){ command.setValue(value); }
-		public String getRule(){ return rule.getValue(); }
-		public void setRule(String value){ rule.setValue(value); }
+		public String getEvent(){ return event; }
+		public void setEvent(String value){ event=value; }
+		public String getCommand(){ return command; }
+		public void setCommand(String value){ command=value; }
+		public String getRule(){ return rule; }
+		public void setRule(String value){ rule=value; }
 		public String getMsgData(){ return msgData!=null ? msgData.toString() : ""; }
 		public void setMsgData(String value){ msgData=value; }
 		public Map<String,Object> toMap(){
 			HashMap<String,Object> data=new HashMap<>();
-			data.put("eventName",event.getValue());
-			data.put("commandName",command.getValue());
-			if(rule!=null && rule.getValue().length()>0) data.put("rule",rule.getValue());
+			data.put("eventName",event);
+			data.put("commandName",command);
+			if(rule!=null && rule.length()>0) data.put("rule",rule);
 			if(msgData!=null) data.put("msgData",msgData);
 			return data;
 		}
