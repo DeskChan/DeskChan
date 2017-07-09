@@ -3,7 +3,7 @@ package info.deskchan.gui_javafx;
 import info.deskchan.core.CommandsProxy;
 import info.deskchan.core.CoreInfo;
 import info.deskchan.core.PluginManager;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
@@ -105,7 +105,7 @@ class OptionsDialog extends TemplateBox {
 			put("id", "layer_mode");
 			put("type", "ComboBox");
 			put("label", Main.getString("character.layer_mode"));
-			List<Object> values=FXCollections.observableList(Arrays.asList(Character.LayerMode.values()));
+			List<Object> values=FXCollections.observableList(Arrays.asList((Object[])Character.LayerMode.values()));
 			int sel=-1;
 			for(Object value : values){
 				sel++;
@@ -129,7 +129,7 @@ class OptionsDialog extends TemplateBox {
 			put("id", "balloon_position_mode");
 			put("type", "ComboBox");
 			put("label", Main.getString("balloon_position_mode"));
-			List<Object> values=FXCollections.observableList(Arrays.asList(Balloon.PositionMode.values()));
+			List<Object> values=FXCollections.observableList(Arrays.asList((Object[])Balloon.PositionMode.values()));
 			int sel=-1;
 			for(Object value : values){
 				sel++;
@@ -207,6 +207,11 @@ class OptionsDialog extends TemplateBox {
 
 		TableColumn msgCol = new TableColumn(Main.getString("parameters"));
 		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
+		msgCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setMsgData(event.getNewValue());
+		});
 		msgCol.setMinWidth(120);
 
 		ObservableList<CommandItem> list=FXCollections.observableArrayList();
@@ -251,7 +256,7 @@ class OptionsDialog extends TemplateBox {
 		tabPane.getTabs().add(new Tab(Main.getString("commands"), commandTab));
 	}
 	private void initTabs() {
-		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
+		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 

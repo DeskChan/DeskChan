@@ -3,7 +3,7 @@ package info.deskchan.core;
 import java.nio.file.Path;
 import java.util.*;
 
-public class PluginProxy implements MessageListener {
+public class PluginProxy implements PluginProxyInterface {
 	
 	private final Plugin plugin;
 	private String id = null;
@@ -130,7 +130,11 @@ public class PluginProxy implements MessageListener {
 		}
 	}
 
-	public ResourceBundle plugin_strings = null;
+	private ResourceBundle plugin_strings = null;
+
+	public void setResourceBundle(String path){
+		plugin_strings=ResourceBundle.getBundle(path);
+	}
 
 	public final String getString(String key){
 		String s=key;

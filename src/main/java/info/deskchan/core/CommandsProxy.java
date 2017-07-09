@@ -162,7 +162,7 @@ public class CommandsProxy{
             addEventLink(data);
         }
     }
-    public static void initialize(PluginProxy proxy){
+    public static void initialize(PluginProxyInterface proxy){
         proxy.addMessageListener("core:add-command", (sender, tag, data) -> addCommand((HashMap<String,Object>) data) );
         proxy.addMessageListener("core:remove-command", (sender, tag, data) -> removeCommand((HashMap<String,Object>) data) );
         proxy.addMessageListener("core:add-event", (sender, tag, data) -> addEvent((HashMap<String,Object>) data) );

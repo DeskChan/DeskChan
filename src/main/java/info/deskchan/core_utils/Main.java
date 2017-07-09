@@ -1,18 +1,18 @@
 package info.deskchan.core_utils;
 
 import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 
 import java.util.*;
 
 public class Main implements Plugin {
 
-	private static PluginProxy pluginProxy;
+	private static PluginProxyInterface pluginProxy;
 	private final List<MyTimerTask> timerTasks = new LinkedList<>();
 	private final Timer timer = new Timer();
 	
 	@Override
-	public boolean initialize(PluginProxy proxy) {
+	public boolean initialize(PluginProxyInterface proxy) {
 		pluginProxy = proxy;
 		pluginProxy.addMessageListener("core-utils:notify-after-delay-default-impl",
 				(sender, tag, data) -> {
@@ -101,8 +101,6 @@ public class Main implements Plugin {
 		pluginProxy.log(e);
 	}
 
-	static PluginProxy getPluginProxy() {
-				return pluginProxy;
-			}
+	static PluginProxyInterface getPluginProxy() { return pluginProxy; }
 
 }

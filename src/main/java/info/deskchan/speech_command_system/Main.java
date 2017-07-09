@@ -1,14 +1,14 @@
 package info.deskchan.speech_command_system;
 
 import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Main implements Plugin {
-    private static PluginProxy pluginProxy;
+    private static PluginProxyInterface pluginProxy;
     private String start_word="пожалуйста";
 
     private static final HashMap<String,Object> standartCommandsCoreQuery=new HashMap<String,Object>(){{
@@ -16,7 +16,7 @@ public class Main implements Plugin {
     }};
 
     @Override
-    public boolean initialize(PluginProxy newPluginProxy) {
+    public boolean initialize(PluginProxyInterface newPluginProxy) {
         pluginProxy=newPluginProxy;
 
         log("loading speech to command module");

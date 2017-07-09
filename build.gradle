@@ -54,8 +54,6 @@ dependencies {
 	compile group: 'com.1stleg', name: 'jnativehook', version: '2.1.0'
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-	compile 'com.github.pengrad:java-telegram-bot-api:3.0.1'
-	compile 'com.squareup.okhttp3:okhttp:3.8.0'
 }
 
 project.version = '0.1.6'
@@ -168,6 +166,24 @@ task copyIconForExe(type: Copy) {
 	from "${projectDir}/misc/appicon.ico"
 	into "${buildDir}/launch4j"
 }
+task proxyJar(type: Jar) {
+	jar {
+		from sourceSets.main.allSource
+		include "info/deskchan/core/ResponseListener.class"
+		include "info/deskchan/core/ResponseInfo.class"
+		include "info/deskchan/core/MessageListener.class"
+		include "info/deskchan/core/PluginProxyInterface.class"
+		include "info/deskchan/core/Plugin.class"
+	}
+	baseName = 'ProxyInterface'
+	with jar
+}
+task copyProxyLib(type: Copy) {
+	from ("${buildDir}/libs/"){
+		include 'Proxy*'
+	}
+	into "${buildDir}/launch4j/libs/"
+}
 
 task createExeDistZip(type: Zip) {
 	from "${buildDir}/launch4j"
@@ -183,6 +199,8 @@ task createExeDistZip(type: Zip) {
 	destinationDir file("${buildDir}/distributions")
 }
 
+createExe.dependsOn proxyJar
+createExe.dependsOn copyProxyLib
 createExe.dependsOn createStartScriptsForExe
 createExe.dependsOn copyIconForExe
 createExeDistZip.dependsOn createExe

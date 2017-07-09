@@ -1,7 +1,7 @@
 package info.deskchan.talking_system;
 
 import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core.ResponseListener;
 import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONObject;
@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class Main implements Plugin {
-	private static PluginProxy pluginProxy;
+	private static PluginProxyInterface pluginProxy;
 	
 	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private final static String DEVELOPERS_PHRASES_URL =
@@ -61,7 +61,7 @@ public class Main implements Plugin {
 	};
 	
 	@Override
-	public boolean initialize(PluginProxy newPluginProxy) {
+	public boolean initialize(PluginProxyInterface newPluginProxy) {
 		pluginProxy = newPluginProxy;
 		recievers=new LinkedList<>();
 		recievers.add("gui:say");
@@ -74,7 +74,7 @@ public class Main implements Plugin {
 		Influence.globalMultiplier = 0.05f;
 		messageTimeout = 40000;
 		autoPhrasesSync=true;
-		pluginProxy.plugin_strings=ResourceBundle.getBundle("info/deskchan/talking_system/talk-strings");
+		pluginProxy.setResourceBundle("info/deskchan/talking_system/talk-strings");
 
 		try {
 			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
@@ -505,7 +505,7 @@ public class Main implements Plugin {
 		phraseRequest("BYE");
 	}
 
-	static PluginProxy getPluginProxy() {
+	static PluginProxyInterface getPluginProxy() {
 		return pluginProxy;
 	}
 

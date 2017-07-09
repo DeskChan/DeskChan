@@ -1,14 +1,14 @@
 package info.deskchan.chat_window;
 
 import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 
 public class Main implements Plugin {
-    private static PluginProxy pluginProxy;
+    private static PluginProxyInterface pluginProxy;
 
     private class ChatPhrase{
         public final String text;
@@ -59,7 +59,7 @@ public class Main implements Plugin {
     }
 
     @Override
-    public boolean initialize(PluginProxy newPluginProxy) {
+    public boolean initialize(PluginProxyInterface newPluginProxy) {
         pluginProxy=newPluginProxy;
         log("setup chat window started");
         history=new LinkedList<>();

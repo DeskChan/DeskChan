@@ -2,27 +2,26 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginManager;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Properties;
-import java.util.ResourceBundle;
 import java.util.concurrent.Semaphore;
 
 public class Main implements Plugin {
 	
 	private static Main instance;
-	private PluginProxy pluginProxy;
+	private PluginProxyInterface pluginProxy;
 	private Semaphore appInitSem = new Semaphore(0);
 	private static final Properties properties = new Properties();
 	
 	@Override
-	public boolean initialize(PluginProxy pluginProxy) {
+	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		instance = this;
-		pluginProxy.plugin_strings=ResourceBundle.getBundle("info/deskchan/gui_javafx/gui-strings");
+		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/gui-strings");
 
 		try {
 			properties.load(Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties")));
@@ -59,10 +58,8 @@ public class Main implements Plugin {
 	static Main getInstance() {
 		return instance;
 	}
-	
-	PluginProxy getPluginProxy() {
-		return pluginProxy;
-	}
+
+	PluginProxyInterface getPluginProxy() { return pluginProxy; }
 	
 	Semaphore getAppInitSem() {
 		return appInitSem;

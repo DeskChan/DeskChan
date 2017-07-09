@@ -5,7 +5,7 @@ import dorkbox.systemTray.Menu;
 import dorkbox.systemTray.MenuItem;
 import dorkbox.systemTray.Separator;
 import dorkbox.systemTray.SystemTray;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -98,7 +98,7 @@ public class App extends Application {
 	}
 	
 	private void initMessageListeners() {
-		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
+		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 		pluginProxy.addMessageListener("gui:register-simple-action", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
