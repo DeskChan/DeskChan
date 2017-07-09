@@ -1,4 +1,4 @@
-package info.deskchan.core;
+package info.deskchan.core_utils;
 
 import java.util.*;
 

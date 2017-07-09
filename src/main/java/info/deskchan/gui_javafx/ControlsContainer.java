@@ -103,8 +103,7 @@ public class ControlsContainer {
 
 	class Hint extends Label{
 		Hint(String text){
-			//setMaxWidth(15);
-			setText("❔");
+			setText(" ❔ ");
 			setBorder(new Border(new BorderStroke(Color.BLACK,BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
 			setTooltip(new Tooltip(text));
 		}
