@@ -1,6 +1,6 @@
 package info.deskchan.talking_system;
 
-import info.deskchan.core.TextOperations;
+import info.deskchan.core_utils.TextOperations;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

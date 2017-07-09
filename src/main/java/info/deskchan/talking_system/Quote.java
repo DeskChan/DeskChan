@@ -1,7 +1,7 @@
 package info.deskchan.talking_system;
 
 
-import info.deskchan.core.TextOperations;
+import info.deskchan.core_utils.TextOperations;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;

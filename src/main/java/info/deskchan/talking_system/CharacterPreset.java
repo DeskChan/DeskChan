@@ -1,6 +1,6 @@
 package info.deskchan.talking_system;
 
-import info.deskchan.core.TextOperations;
+import info.deskchan.core_utils.TextOperations;
 import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONArray;
 import org.json.JSONException;
