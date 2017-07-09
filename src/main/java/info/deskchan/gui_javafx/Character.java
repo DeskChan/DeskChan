@@ -11,10 +11,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 
 class Character extends MovablePane {
 
@@ -248,6 +245,11 @@ class Character extends MovablePane {
 				return;
 			}
 			messageQueue.add(messageInfo);
+			Iterator<MessageInfo> i = messageQueue.iterator();
+			while (i.hasNext()) {
+				MessageInfo s = i.next();
+				if(s.skippable && s.priority<messageInfo.priority) i.remove();
+			}
 			if (messageQueue.peek() != messageInfo) {
 				return;
 			}
@@ -329,8 +331,10 @@ class Character extends MovablePane {
 		private final String characterImage;
 		private final int priority;
 		private final int timeout;
-		private static int max_length = 100;
+		private final boolean skippable;
 		private int counter = 0;
+
+		private static int max_length = 100;
 
 		MessageInfo(Map<String, Object> data) {
 			String text2 = (String) data.getOrDefault("text", "");
@@ -414,10 +418,25 @@ class Character extends MovablePane {
 			} else {
 				characterImage = "normal";
 			}
+
+			Object ob = data.getOrDefault("skippable", true);
+			if(ob instanceof String)
+				skippable = Boolean.parseBoolean((String)ob);
+			else skippable=(Boolean) ob;
+
 			this.characterImage = characterImage;
-			priority = (Integer) data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-			timeout = (Integer) data.getOrDefault("timeout", Math.max(3000,
+
+			ob = data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
+			if(ob instanceof String)
+				priority = Integer.parseInt((String)ob);
+			else priority=(Integer) ob;
+
+			ob = data.getOrDefault("timeout", Math.max(3000,
 					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "200"))));
+			if(ob instanceof String)
+				timeout = Integer.parseInt((String)ob);
+			else timeout=(Integer) ob;
+
 		}
 
         boolean itsTimeToStop(){

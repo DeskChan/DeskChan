@@ -12,8 +12,22 @@ public class CommandsProxy{
         public final String rule;
         public final Object msgData;
         public Link(String rule,Object msgData){
-            this.rule=( rule.equals("") ? null : rule );
-            this.msgData=msgData;
+            this.rule=( rule==null || rule.equals("") ? null : rule );
+            this.msgData=( msgData==null || msgData.equals("") ? null : msgData );
+        }
+        public boolean equals(Link link){
+            boolean eq=false;
+            if(rule==null){
+                if(link.rule!=null) return false;
+                eq=true;
+            } else if(rule.equals(link.rule)) eq=true;
+            if(!eq) return false;
+            eq=false;
+            if(msgData==null){
+                if(link.msgData!=null) return false;
+                eq=true;
+            } else if(msgData.equals(link.msgData)) eq=true;
+            return eq;
         }
     }
     private static HashMap<String,Map<String,Object>> events=new HashMap<>();
@@ -74,11 +88,17 @@ public class CommandsProxy{
             commandLinks.put(eventName,map);
         }
         ArrayList<Link> links=map.getOrDefault(commandName,null);
+        Link linktoadd=new Link(rule,msgData);
         if(links==null) {
             links = new ArrayList<>();
             map.put(commandName,links);
+            links.add(linktoadd);
+            return;
         }
-        links.add(new Link(rule,msgData));
+        for(Link link : links) {
+            if (link.equals(linktoadd)) return;
+        }
+        links.add(linktoadd);
     }
     public static void addEventLink(Map<String,Object> data){
         addEventLink((String)data.getOrDefault("eventName",null),(String)data.getOrDefault("commandName",null),
@@ -202,16 +222,17 @@ public class CommandsProxy{
         }
         BufferedReader out=new BufferedReader(reader);
         try {
-            JSONArray array=new JSONArray(out.read());
+            JSONArray array=new JSONArray(out.readLine());
             for(Object obj : array) {
                 if(!(obj instanceof JSONArray)) continue;
                 JSONArray link=(JSONArray) obj;
                 if(link.length()<3 || link.getString(0).length()==0 || link.getString(1).length()==0 || link.getString(0).length()==2) continue;
-                addEventLink(link.getString(0),link.getString(1),link.getString(2),link.length()>2 ? link.getString(3) : "");
+                addEventLink(link.getString(0),link.getString(1),link.getString(2),link.length()>3 ? link.getString(3) : "");
             }
             PluginManager.log("Links successfully loaded");
         } catch (Exception e){
             PluginManager.log("Error while loading command links file");
+            PluginManager.log(e);
         }
     }
 }

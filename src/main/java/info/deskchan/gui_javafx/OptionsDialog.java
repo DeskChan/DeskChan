@@ -17,7 +17,6 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -174,6 +173,7 @@ class OptionsDialog extends TemplateBox {
 		commandTab.setPrefSize(400, 300);
 
 		commandsTable.setEditable(true);
+		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
 
 		TableColumn eventCol = new TableColumn(Main.getString("events"));
 		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
@@ -220,7 +220,8 @@ class OptionsDialog extends TemplateBox {
 
 		Button deleteButton = new Button(Main.getString("delete"));
 		deleteButton.setOnAction(event -> {
-			commandsTable.getItems().remove(commandsTable.getSelectionModel().getSelectedIndex());
+			if(commandsTable.getSelectionModel().getSelectedIndex()>=0)
+				commandsTable.getItems().remove(commandsTable.getSelectionModel().getSelectedIndex());
 		});
 		Button saveButton = new Button(Main.getString("save"));
 		saveButton.setOnAction(event -> {
@@ -240,25 +241,13 @@ class OptionsDialog extends TemplateBox {
 			}
 			commandsTable.setItems(l);
 		});
-		ComboBox f1=new ComboBox(FXCollections.observableArrayList(CommandsProxy.getEventsList())), f2=new ComboBox(FXCollections.observableArrayList(CommandsProxy.getCommandsList()));
-		TextField f3=new TextField(), f4=new TextField();
-		f1.getSelectionModel().selectFirst();
-		f1.setMinWidth(120);
-		f2.getSelectionModel().selectFirst();
-		f2.setMinWidth(120);
-		f3.setMinWidth(120);
 		Button addButton=new Button(Main.getString("add"));
 		addButton.setOnAction(event -> {
-			CommandItem item=new CommandItem((String)f1.getSelectionModel().getSelectedItem(),(String)f2.getSelectionModel().getSelectedItem(),f3.getText(),f4.getText());
+			CommandItem item=new CommandItem(CommandsProxy.getEventsList().get(0),CommandsProxy.getCommandsList().get(0),"","");
 			commandsTable.getItems().add(item);
-			CommandsProxy.addEventLink(item.event,item.command,item.rule,item.msgData);
-			f3.setText("");
-			f4.setText("");
 		});
-		HBox addBox=new HBox(f1,f2,f3,f4);
 		HBox buttons=new HBox(addButton,deleteButton,loadButton,saveButton);
-		VBox botPanel=new VBox(addBox,buttons);
-		commandTab.setBottom(botPanel);
+		commandTab.setBottom(buttons);
 		tabPane.getTabs().add(new Tab(Main.getString("commands"), commandTab));
 	}
 	private void initTabs() {
