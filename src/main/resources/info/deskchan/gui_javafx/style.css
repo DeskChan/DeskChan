@@ -2,6 +2,10 @@
     -fx-font-family: "PT Sans";
 }
 
+.header {
+    -fx-font-size: 20;
+}
+
 .menu-item:hover {
      -fx-background-color: #45aac67f;
 }

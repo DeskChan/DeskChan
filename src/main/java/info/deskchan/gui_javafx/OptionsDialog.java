@@ -423,7 +423,7 @@ class OptionsDialog extends TemplateBox {
 		gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-		label.setFont(Font.font(20));
+		label.getStyleClass().add("header");
 		gridPane.add(label, 0, 0, 2, 1);
 		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
 		Hyperlink hyperlink = new Hyperlink();
