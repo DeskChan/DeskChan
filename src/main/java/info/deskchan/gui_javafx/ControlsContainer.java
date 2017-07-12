@@ -46,9 +46,9 @@ public class ControlsContainer {
 		ColumnConstraints column1 = new ColumnConstraints();
 		column1.setPercentWidth(columnGrowPercentage);
 		ColumnConstraints column2 = new ColumnConstraints();
-		column2.setPercentWidth(97 - columnGrowPercentage);
+		column2.setPercentWidth(95 - columnGrowPercentage);
 		ColumnConstraints column3 = new ColumnConstraints();
-		column3.setPercentWidth(3);
+		column3.setPercentWidth(5);
 		gridPane.getColumnConstraints().addAll(column1, column2, column3);
 
 		int row = 0;

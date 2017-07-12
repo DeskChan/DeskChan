@@ -66,7 +66,7 @@ class OptionsDialog extends TemplateBox {
 			put("id", "skin");
 			put("type", "Button");
 			put("label", Main.getString("skin"));
-			put("hint","Скины доступны в папке skins в корне программы.");
+			put("hint",Main.getString("help.skin"));
 			put("value", App.getInstance().getCharacter().getSkin().toString().replaceAll(
 				String.format(".*\\%c", File.separatorChar), ""));
 		}});
@@ -104,6 +104,7 @@ class OptionsDialog extends TemplateBox {
 		list.add(new HashMap<String, Object>() {{
 			put("id", "layer_mode");
 			put("type", "ComboBox");
+			put("hint",Main.getString("help.layer_mode"));
 			put("label", Main.getString("character.layer_mode"));
 			List<Object> values=FXCollections.observableList(Arrays.asList((Object[])Character.LayerMode.values()));
 			int sel=-1;
@@ -128,6 +129,7 @@ class OptionsDialog extends TemplateBox {
 		list.add(new HashMap<String, Object>() {{
 			put("id", "balloon_position_mode");
 			put("type", "ComboBox");
+			put("hint",Main.getString("help.balloon_position"));
 			put("label", Main.getString("balloon_position_mode"));
 			List<Object> values=FXCollections.observableList(Arrays.asList((Object[])Balloon.PositionMode.values()));
 			int sel=-1;
@@ -155,12 +157,14 @@ class OptionsDialog extends TemplateBox {
 		list.add(new HashMap<String, Object>() {{
 			put("id", "enable_context_menu");
 			put("type", "CheckBox");
+			put("hint",Main.getString("help.context_menu"));
 			put("label", Main.getString("enable_context_menu"));
 			put("value", Main.getProperty("character.enable_context_menu", "0").equals("1"));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "load_resource_pack");
 			put("type", "Button");
+			put("hint",Main.getString("help.resources"));
 			put("label", Main.getString("load_resource_pack"));
 			put("value", Main.getString("load"));
 		}});

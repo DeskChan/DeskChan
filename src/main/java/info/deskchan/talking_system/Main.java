@@ -308,6 +308,7 @@ public class Main implements Plugin {
 				put("type", "FilesManager");
 				put("label", getString("quotes_list"));
 				put("value", new ArrayList<String>(currentPreset.quotesBaseList));
+				put("hint",getString("help.quotes_pack"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "type");
@@ -325,12 +326,14 @@ public class Main implements Plugin {
 				}
 				put("values", CharacterPreset.presetTypeList);
 				put("value", i);
+				put("hint",getString("help.character_type"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "tags");
 				put("type", "TextField");
 				put("label", getString("tags"));
 				put("value", currentPreset.tags.toString());
+				put("hint",getString("help.tags"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("type", "Label");
@@ -342,6 +345,7 @@ public class Main implements Plugin {
 				ch.put("label", getString(CharacterSystem.getFeatureName(i)));
 				ch.put("value", currentPreset.MainCharacter.getValueString(i));
 				ch.put("type", "TextField");
+				ch.put("hint",getString("help."+CharacterSystem.getFeatureName(i)));
 				list.add(ch);
 			}
 			list.add(new HashMap<String, Object>() {{
@@ -363,7 +367,7 @@ public class Main implements Plugin {
 				put("id", "autoSync");
 				put("type", "CheckBox");
 				put("value", autoPhrasesSync);
-				put("label", getString("autoPhrasesSync"));
+				put("label", getString("packs_auto_sync"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "save_preset");
