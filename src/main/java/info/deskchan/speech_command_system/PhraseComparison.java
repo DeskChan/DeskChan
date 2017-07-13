@@ -2,7 +2,7 @@ package info.deskchan.speech_command_system;
 
 import java.util.ArrayList;
 
-public class TextOperations {
+public class PhraseComparison {
     private static char[][] replaceable=new char[][]{
         {'о','а'} , {'е','и'} , {'д','т'} , {'г','к'} , {'ж','ш'} , {'ы','и'} , {'з','с'} , {'б','п'} , {'в','ф'}
     };
