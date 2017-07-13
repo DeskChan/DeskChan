@@ -11,9 +11,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 
 class Character extends MovablePane {
 
@@ -47,11 +45,24 @@ class Character extends MovablePane {
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
+		imageView.setMouseTransparent(true);
 		balloonPositionMode = Balloon.PositionMode.valueOf(
 				Main.getProperty("character." + id + ".balloon_position_mode",
 						Balloon.PositionMode.AUTO.toString())
 		);
-		addEventFilter(MouseEvent.MOUSE_PRESSED, this::startDrag);
+		addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+			startDrag(event);
+			Map<String, Object> m = new HashMap<>();
+			m.put("screenX", event.getScreenX());
+			m.put("screenY", event.getScreenY());
+			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-start-drag",m);
+		});
+		addEventFilter(MouseEvent.MOUSE_RELEASED, event -> {
+			Map<String, Object> m = new HashMap<>();
+			m.put("screenX", event.getScreenX());
+			m.put("screenY", event.getScreenY());
+			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-stop-drag",m);
+		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
 			boolean enabled = Main.getProperty("character.enable_context_menu", "0").equals("1");
 			ContextMenu contextMenu = App.getInstance().getContextMenu();
@@ -234,6 +245,11 @@ class Character extends MovablePane {
 				return;
 			}
 			messageQueue.add(messageInfo);
+			Iterator<MessageInfo> i = messageQueue.iterator();
+			while (i.hasNext()) {
+				MessageInfo s = i.next();
+				if(s.skippable && s.priority<messageInfo.priority) i.remove();
+			}
 			if (messageQueue.peek() != messageInfo) {
 				return;
 			}
@@ -245,7 +261,7 @@ class Character extends MovablePane {
 			balloon = null;
 		}
 		messageInfo = messageQueue.peek();
-		if (messageInfo == null) {
+		if (messageInfo == null || messageInfo.counter>=messageInfo.text.length) {
 			setImageName(idleImageName);
 		} else {
 			setImageName(messageInfo.characterImage);
@@ -315,8 +331,10 @@ class Character extends MovablePane {
 		private final String characterImage;
 		private final int priority;
 		private final int timeout;
-		private static int max_length = 100;
+		private final boolean skippable;
 		private int counter = 0;
+
+		private static int max_length = 100;
 
 		MessageInfo(Map<String, Object> data) {
 			String text2 = (String) data.getOrDefault("text", "");
@@ -400,10 +418,25 @@ class Character extends MovablePane {
 			} else {
 				characterImage = "normal";
 			}
+
+			Object ob = data.getOrDefault("skippable", true);
+			if(ob instanceof String)
+				skippable = Boolean.parseBoolean((String)ob);
+			else skippable=(Boolean) ob;
+
 			this.characterImage = characterImage;
-			priority = (Integer) data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-			timeout = (Integer) data.getOrDefault("timeout", Math.max(6000,
-					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "300"))));
+
+			ob = data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
+			if(ob instanceof String)
+				priority = Integer.parseInt((String)ob);
+			else priority=(Integer) ob;
+
+			ob = data.getOrDefault("timeout", Math.max(3000,
+					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "200"))));
+			if(ob instanceof String)
+				timeout = Integer.parseInt((String)ob);
+			else timeout=(Integer) ob;
+
 		}
 
         boolean itsTimeToStop(){

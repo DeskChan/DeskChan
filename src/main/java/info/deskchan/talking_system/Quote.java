@@ -1,34 +1,31 @@
 package info.deskchan.talking_system;
 
+
+import info.deskchan.core_utils.TextOperations;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class Quote {
 	public CharacterRange character;
 	public String quote;
-	public String purposeType;
-	public TextBooleanSet possibleHour;
-	public TextBooleanSet possibleMonth;
-	public TextBooleanSet possibleWeekDay;
 	public int timeout;
+	private TextOperations.TagsContainer tags;
+	public String purposeType;
 	public String spriteType;
 	
 	public Quote(String quote) {
 		this.quote = quote;
 		purposeType = "CHAT";
-		possibleHour = new TextBooleanSet(24);
-		possibleMonth = new TextBooleanSet(12);
-		possibleWeekDay = new TextBooleanSet(7);
-		possibleMonth.offset = 1;
-		possibleWeekDay.offset = 1;
 		character = new CharacterRange();
-		timeout = 0;
 		spriteType = "AUTO";
+		timeout=0;
 	}
 	
 	private static Node findInNode(NodeList list, String name) {
@@ -41,23 +38,18 @@ public class Quote {
 	}
 	
 	public String toString() {
-		String s = "{" + quote + "} / Purpose: " + purposeType + " / Range: { " + character.toString() + " }";
+		StringBuilder s = new StringBuilder("{" + quote + "} / Purpose: " + purposeType + " / Range: { " + character.toString() + " }");
 		if (!spriteType.equals("AUTO")) {
-			s += " / SpriteType: " + spriteType;
+			s.append(" / SpriteType: " + spriteType);
 		}
 		if (timeout > 0) {
-			s += " / timeout: " + timeout;
+			s.append(" / timeout: " + timeout);
 		}
-		if (!possibleHour.full()) {
-			s += " / possibleHour: " + possibleHour.toString();
-		}
-		if (!possibleMonth.full()) {
-			s += " / possibleMonth: " + possibleMonth.toString();
-		}
-		if (!possibleWeekDay.full()) {
-			s += " / possibleWeekDay: " + possibleWeekDay.toString();
-		}
-		return s;
+		if(tags!=null)
+			for(Map.Entry<String,List<String>> tag : tags.entrySet()){
+				s.append(" / "+tag.getKey()+":"+tag.getValue());
+			}
+		return s.toString();
 	}
 	
 	public HashMap<String, Object> toMap() {
@@ -67,9 +59,16 @@ public class Quote {
 			map.put("timeout", timeout);
 		}
 		map.put("characterImage", spriteType);
+		map.put("purpose",purposeType);
+		map.put("hash",this.hashCode());
+		if(tags!=null)
+			for(Map.Entry<String,List<String>> tag : tags.entrySet()) {
+				if(tag.getValue().size()==0) continue;
+				map.put(tag.getKey(), tag.getValue());
+			}
 		return map;
 	}
-	
+	private static final String[] notTags={"text","purpose","sprite","timeout","range"};
 	public static Quote create(Node node) {
 		NodeList list = node.getChildNodes();
 		String p;
@@ -98,27 +97,11 @@ public class Quote {
 		} catch (Exception e) {
 			q.spriteType = "AUTO";
 		}
-		n = findInNode(list, "possibleHour");
-		if (n != null) {
-			q.possibleHour.fillFromString(n.getTextContent());
-		}
-		
-		n = findInNode(list, "possibleMonth");
-		if (n != null) {
-			q.possibleMonth.fillFromString(n.getTextContent());
-		}
-		
-		n = findInNode(list, "possibleWeekDay");
-		if (n != null) {
-			q.possibleWeekDay.fillFromString(n.getTextContent());
-		}
-		
 		try {
 			q.timeout = Integer.valueOf(findInNode(list, "timeout").getTextContent());
 		} catch (Exception e) {
 			q.timeout = 0;
 		}
-		
 		try {
 			Node range = findInNode(list, "range");
 			for (int i = 0; i < CharacterSystem.getFeatureCount(); i++) {
@@ -137,13 +120,32 @@ public class Quote {
 						a2 = 10;
 					}
 					q.character.range[i] = new Range(a1, a2);
-				} catch (Exception e) {
-				}
+				} catch (Exception e) { }
 			}
 		} catch (Exception e) { }
+		q.tags=null;
+		for (int i = 0,k=0; i < list.getLength(); i++) {
+			if(list.item(i).getNodeName().charAt(0)=='#') continue;
+			for (k = 0; k < notTags.length; k++)
+				if (list.item(i).getNodeName().equals(notTags[k]))
+					break;
+			if(k<notTags.length) continue;
+			q.setTag(list.item(i).getNodeName(),list.item(i).getTextContent());
+		}
 		return q;
 	}
-	
+	public void setTag(String tag,String text){
+		if(tags==null) tags=new TextOperations.TagsContainer();
+		tags.put(tag, text);
+	}
+	public void setTags(String text){
+		if(tags==null) tags=new TextOperations.TagsContainer();
+		tags.put(text);
+	}
+	public List<String> getTag(String name){
+		if(tags==null) return null;
+		return tags.get(name);
+	}
 	private void AppendTo(Document doc, Node target, String name, String text) {
 		Node n = doc.createElement(name);
 		n.setTextContent(text);
@@ -161,14 +163,18 @@ public class Quote {
 			if (!spriteType.equals("AUTO")) {
 				AppendTo(doc, mainNode, "sprite", spriteType);
 			}
-			if (!possibleHour.full()) {
-				AppendTo(doc, mainNode, "possibleHour", possibleHour.toString());
-			}
-			if (!possibleMonth.full()) {
-				AppendTo(doc, mainNode, "possibleMonth", possibleMonth.toString());
-			}
-			if (!possibleWeekDay.full()) {
-				AppendTo(doc, mainNode, "possibleWeekDay", possibleWeekDay.toString());
+			if (tags!=null) {
+				for(Map.Entry<String,List<String>> tag : tags.entrySet()) {
+					if(tag.getValue().size()==0) continue;
+					StringBuilder sb=new StringBuilder();
+					for(String value : tag.getValue()) {
+						sb.append("\"");
+						sb.append(value);
+						sb.append("\" ");
+					}
+					sb.deleteCharAt(sb.length()-1);
+					AppendTo(doc, mainNode, tag.getKey(), sb.toString());
+				}
 			}
 			Node c = character.toXMLNode(doc);
 			if (c != null) {

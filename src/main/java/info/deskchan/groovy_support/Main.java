@@ -5,7 +5,7 @@ import groovy.lang.Script;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginLoader;
 import info.deskchan.core.PluginManager;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import java.nio.file.Files;
@@ -14,7 +14,7 @@ import java.nio.file.Path;
 public class Main implements Plugin, PluginLoader {
 	
 	@Override
-	public boolean initialize(PluginProxy pluginProxy) {
+	public boolean initialize(PluginProxyInterface pluginProxy) {
 		PluginManager.getInstance().registerPluginLoader(this);
 		return true;
 	}

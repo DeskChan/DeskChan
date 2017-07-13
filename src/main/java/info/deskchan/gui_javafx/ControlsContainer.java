@@ -3,9 +3,9 @@ package info.deskchan.gui_javafx;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Window;
 
 import java.util.HashMap;
@@ -46,19 +46,23 @@ public class ControlsContainer {
 		ColumnConstraints column1 = new ColumnConstraints();
 		column1.setPercentWidth(columnGrowPercentage);
 		ColumnConstraints column2 = new ColumnConstraints();
-		column2.setPercentWidth(100 - columnGrowPercentage);
-		gridPane.getColumnConstraints().addAll(column1, column2);
+		column2.setPercentWidth(95 - columnGrowPercentage);
+		ColumnConstraints column3 = new ColumnConstraints();
+		column3.setPercentWidth(5);
+		gridPane.getColumnConstraints().addAll(column1, column2, column3);
 
 		int row = 0;
 		for (Map<String, Object> controlInfo : controls) {
 			String id = (String) controlInfo.getOrDefault("id", null);
 			String label = (String) controlInfo.getOrDefault("label", null);
+			String hint = (String) controlInfo.getOrDefault("hint", null);
 			PluginOptionsControlItem item = PluginOptionsControlItem.create(parentSupplier.get(), controlInfo);
 			if (item == null) {
 				continue;
 			}
 			if (id != null) {
 				namedControls.put(id, item);
+				item.getNode().setId(id);
 			}
 			if (label == null) {
 				gridPane.add(item.getNode(), 0, row, 2, 1);
@@ -67,6 +71,9 @@ public class ControlsContainer {
 				labelNode.setWrapText(true);
 				gridPane.add(labelNode, 0, row);
 				gridPane.add(item.getNode(), 1, row);
+			}
+			if(hint!=null){
+				gridPane.add(new Hint(hint),2,row);
 			}
 			row++;
 		}
@@ -93,5 +100,12 @@ public class ControlsContainer {
 		borderPane.setTop(gridPane);
 		return borderPane;
 	}
-	
+
+	class Hint extends Label{
+		Hint(String text){
+			setText(" ❔ ");
+			setBorder(new Border(new BorderStroke(Color.BLACK,BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+			setTooltip(new Tooltip(text));
+		}
+	}
 }
