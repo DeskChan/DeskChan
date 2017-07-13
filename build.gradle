@@ -37,7 +37,6 @@ sourceSets {
 	main {
 		java {
 			srcDir 'src/main/java'
-			exclude 'info/deskchan/gui_android/**'
 		}
 	}
 }
@@ -56,7 +55,7 @@ dependencies {
 	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 }
 
-project.version = '0.1.6'
+project.version = '0.2.0'
 
 mainClassName = 'info.deskchan.core.MainKt'
 
@@ -205,7 +204,3 @@ createExe.dependsOn createStartScriptsForExe
 createExe.dependsOn copyIconForExe
 createExeDistZip.dependsOn createExe
 
-task createAPK(type: GradleBuild) {
-	buildFile = 'android.gradle'
-	tasks = ['assemble']
-}
