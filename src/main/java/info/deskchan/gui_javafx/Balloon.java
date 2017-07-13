@@ -15,7 +15,11 @@ import javafx.scene.text.Font;
 import javafx.util.Duration;
 
 class Balloon extends MovablePane {
-	
+
+	private static Balloon instance;
+
+	public static Balloon getInstance(){ return instance; }
+
 	enum PositionMode {
 		AUTO,
 		RELATIVE,
@@ -40,22 +44,27 @@ class Balloon extends MovablePane {
 	private PositionMode positionMode = PositionMode.ABSOLUTE;
 
 	private final MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "balloon");
-	
+	private float balloonOpacity = 1.0f;
+        
 	Balloon(String id, String text) {
+		instance=this;
+
+		setBalloonOpacity(Float.parseFloat(Main.getProperty("balloon.opacity", "1.0")));
+            
 		stackPane.setPrefWidth(400);
 		stackPane.setMinHeight(200);
 		
 		bubbleShape.setContent(BUBBLE_SVG_PATH);
 		bubbleShape.setFill(Color.WHITE);
 		bubbleShape.setStroke(Color.BLACK);
+
 		bubbleShape.setScaleX(0);
 		bubbleShape.setScaleY(0);
-
+                
 		bubbleShadow.setRadius(5.0);
 		bubbleShadow.setOffsetX(1.5);
 		bubbleShadow.setOffsetY(2.5);
 		bubbleShadow.setColor(Color.BLACK);
-		stackPane.setEffect(bubbleShadow);
 		
 		Label label = new Label(text);
 		label.setWrapText(true);
@@ -101,7 +110,11 @@ class Balloon extends MovablePane {
 	}
 	
 	Balloon(Character character, PositionMode positionMode, String text) {
+
 		this(character.getId() + ".balloon", text);
+
+		instance=this;
+
 		this.character = character;
 		this.positionMode = positionMode;
 		if (positionMode != PositionMode.ABSOLUTE) {
@@ -130,6 +143,42 @@ class Balloon extends MovablePane {
 		setPositionStorageID(character.getId() + ".balloon");
 	}
 	
+        	/**
+	 * Changes the absolute value of the opacity of the image.
+	 * @param opacity a value in the range of (0.0; 1.0]
+	 */
+	private void changeOpacity(float opacity) {
+		if (opacity == 0 || opacity > 1.0) {
+			return;
+		}
+		setBalloonOpacity(opacity);
+
+	}
+
+	/**
+	 * Changes the value of the opacity of the image relatively.
+	 * Unlike the usual changeOpacity(), this method gets an old value of the scale factor and adds an increment to it.
+	 * @param opacityIncrement a positive or negative float-point number
+	 */
+	void changeOpacityRelatively(float opacityIncrement) {
+		changeOpacity(balloonOpacity + opacityIncrement);
+	}
+                
+	float getSkinOpacity() {
+        return balloonOpacity;
+	}
+        
+	public void setBalloonOpacity(float opacity) {
+		if (opacity == 0 || opacity > 0.99) {
+			balloonOpacity = 1.0f;
+			stackPane.setEffect(bubbleShadow);
+		} else {
+			balloonOpacity = Math.round(Math.abs(opacity) * 20.0f) / 20.0f;
+			stackPane.setEffect(null);
+		}
+		bubbleShape.setOpacity(balloonOpacity);
+	}
+        
 	@Override
 	protected void setDefaultPosition() {
 		if (character != null) {
@@ -188,6 +237,7 @@ class Balloon extends MovablePane {
 		setTimeout(0);
 		hide();
 		mouseEventNotificator.cleanListeners();
+		instance=null;
 	}
 	
 	void setTimeout(int timeout) {

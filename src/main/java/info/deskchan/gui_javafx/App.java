@@ -5,7 +5,7 @@ import dorkbox.systemTray.Menu;
 import dorkbox.systemTray.MenuItem;
 import dorkbox.systemTray.Separator;
 import dorkbox.systemTray.SystemTray;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -51,7 +51,7 @@ public class App extends Application {
 	private SortedMap<String, List<PluginActionInfo>> pluginsActions = new TreeMap<>();
 	private Character character = new Character("main", Skin.load(Main.getProperty("skin.name", null)));
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
-	
+	private List<TemplateBox> customWindowOpened = new LinkedList<TemplateBox>();
 	@Override
 	public void start(Stage primaryStage) {
 		instance = this;
@@ -98,7 +98,7 @@ public class App extends Application {
 	}
 	
 	private void initMessageListeners() {
-		PluginProxy pluginProxy = Main.getInstance().getPluginProxy();
+		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 		pluginProxy.addMessageListener("gui:register-simple-action", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
@@ -207,10 +207,26 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				TemplateBox dialog = new TemplateBox((String) m.getOrDefault("name", Main.getString("default_messagebox_name")));
+				String name=(String) m.getOrDefault("name", Main.getString("default_messagebox_name"));
+				for(TemplateBox window : customWindowOpened){
+					if(window.getTitle().equals(name)){
+						ControlsContainer controlsContainer = new ControlsContainer(window.getDialogPane().getScene().getWindow(),name,
+								(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
+						window.getDialogPane().setContent(controlsContainer.createControlsPane());
+						return;
+					}
+				}
+				TemplateBox dialog = new TemplateBox(name);
+				customWindowOpened.add(dialog);
 				Window ownerWindow = dialog.getDialogPane().getScene().getWindow();
 				ControlsContainer controlsContainer = new ControlsContainer(ownerWindow, (String) m.get("name"),
 						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
+				String onClose=(String) m.getOrDefault("onClose", null);
+				if(onClose!=null)
+					dialog.setOnCloseRequest(event -> {
+						customWindowOpened.remove(dialog);
+						pluginProxy.sendMessage(onClose,null);
+					});
 				dialog.getDialogPane().setContent(controlsContainer.createControlsPane());
 				dialog.requestFocus();
 				dialog.show();
@@ -327,10 +343,54 @@ public class App extends Application {
 					}
 				}
 				Object delayObj = m.getOrDefault("delay", -1L);
-				long delay = delayObj instanceof Integer ? (long) (int) delayObj : (long) delayObj;
+				long delay=1000;
+				if(delayObj instanceof Integer) delay=(long) (int) delayObj;
+				else if(delayObj instanceof Long) delay=(long) delayObj;
+				else if(delayObj instanceof String) delay=Long.valueOf((String) delayObj);
 				if (delay > 0) {
 					new DelayNotifier(sender, seq, delay);
 				}
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-balloon-timeout", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",200));
+				Integer val=value.intValue();
+				Main.setProperty("balloon.default_timeout", val.toString() );
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-character-scale", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
+				Main.setProperty("skin.scale_factor", value.toString());
+				getCharacter().resizeSkin(value.floatValue());
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-character-opacity", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
+				Main.setProperty("skin.opacity", value.toString());
+				getCharacter().changeOpacity(value.floatValue());
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
+				Main.setProperty("balloon.opacity", value.toString());
+				if(Balloon.getInstance()!=null) Balloon.getInstance().setBalloonOpacity(value.floatValue());
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-layer-mode", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				String value=(String) ((Map<String,Object>) data).getOrDefault("value","ALWAYS_TOP");
+				App.getInstance().getCharacter().setLayerMode(Character.LayerMode.valueOf(value));
+				Main.setProperty("character.layer_mode", value);
+			});
+		});
+		pluginProxy.addMessageListener("gui:change-balloon-position-mode", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				String value=(String) ((Map<String,Object>) data).getOrDefault("value","AUTO");
+				App.getInstance().getCharacter().setBalloonPositionMode(Balloon.PositionMode.valueOf(value));
 			});
 		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
@@ -372,7 +432,16 @@ public class App extends Application {
 				}}
 		));
 	}
-	
+	private Double extractValue(Object val){
+		Double value=100d;
+		if(val instanceof Integer){
+			Integer a=(Integer)val;
+			value=a.doubleValue();
+		} else if(val instanceof Double){
+			value=(Double) val;
+		}
+		return value;
+	}
 	private void rebuildMenu() {
 		Menu mainMenu = systemTray.getMenu();
 		if (mainMenu instanceof dorkbox.systemTray.swingUI.SwingUI) {

@@ -57,11 +57,12 @@ public class PluginManager {
 	/* Plugin initialization and unloading */
 	
 	public boolean initializePlugin(String id, Plugin plugin) {
-		if (blacklistedPlugins.contains(id)) {
-			return false;
-		}
 		if (!plugins.containsKey(id)) {
 			PluginProxy pluginProxy = new PluginProxy(plugin);
+			if (blacklistedPlugins.contains(id)) {
+				plugins.put(id, pluginProxy);
+				return false;
+			}
 			if (pluginProxy.initialize(id)) {
 				plugins.put(id, pluginProxy);
 				log("Registered plugin: " + id);

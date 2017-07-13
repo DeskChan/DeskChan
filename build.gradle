@@ -37,7 +37,6 @@ sourceSets {
 	main {
 		java {
 			srcDir 'src/main/java'
-			exclude 'info/deskchan/gui_android/**'
 		}
 	}
 }
@@ -56,7 +55,7 @@ dependencies {
 	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 }
 
-project.version = '0.1.6'
+project.version = '0.2.0'
 
 mainClassName = 'info.deskchan.core.MainKt'
 
@@ -166,6 +165,24 @@ task copyIconForExe(type: Copy) {
 	from "${projectDir}/misc/appicon.ico"
 	into "${buildDir}/launch4j"
 }
+task proxyJar(type: Jar) {
+	jar {
+		from sourceSets.main.allSource
+		include "info/deskchan/core/ResponseListener.class"
+		include "info/deskchan/core/ResponseInfo.class"
+		include "info/deskchan/core/MessageListener.class"
+		include "info/deskchan/core/PluginProxyInterface.class"
+		include "info/deskchan/core/Plugin.class"
+	}
+	baseName = 'ProxyInterface'
+	with jar
+}
+task copyProxyLib(type: Copy) {
+	from ("${buildDir}/libs/"){
+		include 'Proxy*'
+	}
+	into "${buildDir}/launch4j/libs/"
+}
 
 task createExeDistZip(type: Zip) {
 	from "${buildDir}/launch4j"
@@ -181,11 +198,9 @@ task createExeDistZip(type: Zip) {
 	destinationDir file("${buildDir}/distributions")
 }
 
+createExe.dependsOn proxyJar
+createExe.dependsOn copyProxyLib
 createExe.dependsOn createStartScriptsForExe
 createExe.dependsOn copyIconForExe
 createExeDistZip.dependsOn createExe
 
-task createAPK(type: GradleBuild) {
-	buildFile = 'android.gradle'
-	tasks = ['assemble']
-}

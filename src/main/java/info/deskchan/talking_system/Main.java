@@ -1,7 +1,7 @@
 package info.deskchan.talking_system;
 
 import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core.ResponseListener;
 import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONObject;
@@ -16,11 +16,13 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class Main implements Plugin {
-	private static PluginProxy pluginProxy;
+	private static PluginProxyInterface pluginProxy;
 	
-	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:M800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+	private boolean autoPhrasesSync;
+
 	private CharacterPreset currentPreset;
 	private EmotionsController emotionsController;
 	
@@ -29,14 +31,14 @@ public class Main implements Plugin {
 	private Quotes quotes;
 	private PriorityQueue<Quote> quoteQueue;
 	private PerkContainer perkContainer;
-	
+	private LinkedList<String> recievers;
 	private final ResponseListener chatTimerListener = new ResponseListener() {
 		
 		private Object lastSeq = null;
 		
 		@Override
 		public void handle(String sender, Object data) {
-			Main.this.operatePhraseRequest("CHAT");
+			Main.this.phraseRequest("CHAT");
 			lastSeq = null;
 			start();
 		}
@@ -59,8 +61,10 @@ public class Main implements Plugin {
 	};
 	
 	@Override
-	public boolean initialize(PluginProxy newPluginProxy) {
+	public boolean initialize(PluginProxyInterface newPluginProxy) {
 		pluginProxy = newPluginProxy;
+		recievers=new LinkedList<>();
+		recievers.add("gui:say");
 		Properties properties = new Properties();
 		emotionsController = new EmotionsController();
 		quoteQueue = new PriorityQueue<>();
@@ -69,6 +73,9 @@ public class Main implements Plugin {
 		currentPreset = new SimpleCharacterPreset();
 		Influence.globalMultiplier = 0.05f;
 		messageTimeout = 40000;
+		autoPhrasesSync=true;
+		pluginProxy.setResourceBundle("info/deskchan/talking_system/talk-strings");
+
 		try {
 			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.load(ip);
@@ -91,6 +98,9 @@ public class Main implements Plugin {
 			try {
 				messageTimeout = Integer.valueOf(properties.getProperty("messageTimeout"));
 			} catch (Exception e) { }
+			try {
+				autoPhrasesSync = properties.getProperty("autoPhrasesSync").equals("1");
+			} catch (Exception e) { }
 		}
 		log("Loaded options");
 		try {
@@ -99,7 +109,7 @@ public class Main implements Plugin {
 			log(e);
 		}
 		pluginProxy.addMessageListener("talk:request", (sender, tag, data) -> {
-			operatePhraseRequest((Map<String, Object>) data);
+			phraseRequest((Map<String, Object>) data);
 		});
 		pluginProxy.addMessageListener("talk:make-influence", (sender, tag, data) -> {
 			Map<String, Object> dat = (Map<String, Object>) data;
@@ -152,6 +162,14 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:perk-answer",
 				(sender, tag, data) -> perkContainer.getAnswerFromPerk(sender, (Map<String, Object>) data)
 		);
+		pluginProxy.addMessageListener("talk:add-reciever",
+				(sender, tag, data) -> {
+					Map<String, Object> map = (Map<String, Object>) data;
+					String rec=(String)map.getOrDefault("tag",null);
+					if(rec==null || rec.length()<2) return;
+					if(!recievers.contains(rec)) recievers.add(rec);
+				}
+		);
 		pluginProxy.addMessageListener("talk:supply-resource",
 				(sender, tag, data) -> {
 					try {
@@ -187,49 +205,77 @@ public class Main implements Plugin {
 			put("msgTag", "talk:request");
 		}});
 		updateOptionsTab();
+		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsReject(sender,tag,dat));
+		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsRemove(sender,tag,dat));
+		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	{
+			HashMap<String, Object> data = (HashMap<String, Object>) dat;
+			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
+			HashMap<String, Object> ret = new HashMap<>();
+			ret.put("seq", data.get("seq"));
+			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
+			ret.put("quotes",quotes_list);
+			if (list == null) {
+				Main.getPluginProxy().sendMessage(sender, ret);
+				return;
+			}
+			for(HashMap<String,Object> entry : list) {
+				if(!currentPreset.isTagsMatch(entry))
+					quotes_list.add(entry);
+				else if(!emotionsController.isTagsMatch(entry))
+					quotes_list.add(entry);
+			}
+			Main.getPluginProxy().sendMessage(sender,ret);
+		});
+		EventsCommentary.initialize();
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
-		Quotes.saveTo(MAIN_PHRASES_URL, "main");
-		Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+		if(autoPhrasesSync) {
+			Quotes.saveTo(MAIN_PHRASES_URL, "main");
+			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+		}
 		quotes.load(currentPreset.quotesBaseList);
-		operatePhraseRequest("HELLO");
+		phraseRequest("HELLO");
+		/*MeaningExtractor extractor=new MeaningExtractor();
+		for(Quote quote : quotes.toArray()){
+			extractor.teach(quote.quote,quote.purposeType);
+		}
+		extractor.print();*/
 		return true;
 	}
 
-	static String getListAsString(List<String> s) {
-		if (s.size() == 0) {
-			return "";
-		}
-		String ret = "";
-		for (String n : s) {
-			ret = ret + n + ";";
-		}
+	private static final int defaultPriority=1100;
 
-		return ret.substring(0, ret.length() - 1);
-	}
-
-	static ArrayList<String> getListFromString(String s) {
-		return new ArrayList<>(Arrays.asList(s.split(";")));
-	}
-
-	void operatePhraseRequest(Map<String, Object> data) {
+	public void phraseRequest(Map<String, Object> data) {
 		String purpose = "CHAT";
+		final int priority;
+		Integer p=defaultPriority;
 		if (data != null) {
 			String np = (String) data.getOrDefault("purpose", null);
-			if (np != null) {
-				purpose = np;
+			if (np != null) purpose = np;
+			if(data.containsKey("priority")){
+				Object a=data.get("priority");
+				if(a instanceof String) p=Integer.valueOf( (String) a );
+				else if(a instanceof Integer) p=(Integer) a;
 			}
 		}
-		operatePhraseRequest(purpose);
+		priority=p;
+		quotes.update(currentPreset.getCharacter(emotionsController));
+		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
+			public void call(Quote quote){ sendPhrase(quote,priority); }
+		});
 	}
 
-	void operatePhraseRequest(String purpose) {
-		CharacterDefinite cd = currentPreset.getCharacter(emotionsController);
-		quotes.update(cd);
-		HashMap<String, Object> ret = quotes.getRandomQuote(purpose).toMap();
+	public void phraseRequest(String purpose) {
+		quotes.update(currentPreset.getCharacter(emotionsController));
+		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
+			public void call(Quote quote){ sendPhrase(quote,defaultPriority); }
+		});
+	}
+	void sendPhrase(Quote quote,int priority){
+		HashMap<String,Object> ret=quote.toMap();
 		if (ret.get("characterImage").equals("AUTO")) {
 			String ci = emotionsController.getSpriteType();
 			if (ci == null) {
-				ci = cd.getSpriteType();
+				ci = currentPreset.getCharacter(emotionsController).getSpriteType();
 			}
 			if (ci == null) {
 				ci = "NORMAL";
@@ -241,8 +287,9 @@ public class Main implements Plugin {
 		if (t != null) {
 			ret.replace("text", t);
 		}
-		ret.put("priority", 1100);
-		pluginProxy.sendMessage("gui:say", ret);
+		ret.put("priority", priority);
+		for(String rec : recievers)
+			pluginProxy.sendMessage(rec, ret);
 	}
 
 	void updateOptionsTab() {
@@ -257,16 +304,11 @@ public class Main implements Plugin {
 				put("value", currentPreset.name);
 			}});
 			list.add(new HashMap<String, Object>() {{
-				put("id", "usernames");
-				put("type", "TextField");
-				put("label", getString("usernames_list"));
-				put("value", getListAsString(currentPreset.usernames));
-			}});
-			list.add(new HashMap<String, Object>() {{
 				put("id", "quotes");
 				put("type", "FilesManager");
 				put("label", getString("quotes_list"));
 				put("value", new ArrayList<String>(currentPreset.quotesBaseList));
+				put("hint",getString("help.quotes_pack"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "type");
@@ -284,6 +326,14 @@ public class Main implements Plugin {
 				}
 				put("values", CharacterPreset.presetTypeList);
 				put("value", i);
+				put("hint",getString("help.character_type"));
+			}});
+			list.add(new HashMap<String, Object>() {{
+				put("id", "tags");
+				put("type", "TextField");
+				put("label", getString("tags"));
+				put("value", currentPreset.tags.toString());
+				put("hint",getString("help.tags"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("type", "Label");
@@ -295,6 +345,7 @@ public class Main implements Plugin {
 				ch.put("label", getString(CharacterSystem.getFeatureName(i)));
 				ch.put("value", currentPreset.MainCharacter.getValueString(i));
 				ch.put("type", "TextField");
+				ch.put("hint",getString("help."+CharacterSystem.getFeatureName(i)));
 				list.add(ch);
 			}
 			list.add(new HashMap<String, Object>() {{
@@ -311,6 +362,12 @@ public class Main implements Plugin {
 				put("step", 1);
 				put("value", messageTimeout / 1000);
 				put("label", getString("message_interval"));
+			}});
+			list.add(new HashMap<String, Object>() {{
+				put("id", "autoSync");
+				put("type", "CheckBox");
+				put("value", autoPhrasesSync);
+				put("label", getString("packs_auto_sync"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "save_preset");
@@ -341,16 +398,13 @@ public class Main implements Plugin {
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
-			try {
-				val = (String) data.getOrDefault("usernames", "");
-				if (!val.isEmpty()) {
-					currentPreset.usernames = getListFromString(val);
-				}
-			} catch (Exception e) {
+			try{
+				currentPreset.quotesBaseList=(ArrayList<String>)(data.get("quotes"));
+			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentPreset.quotesBaseList=(List<String>)(data.get("quotes"));
+				currentPreset.setTags((String)data.getOrDefault("tags",null));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
@@ -378,6 +432,12 @@ public class Main implements Plugin {
 			errorMessage += e.getMessage();
 			messageTimeout = 40000;
 		}
+		boolean oa=autoPhrasesSync;
+		autoPhrasesSync = (Boolean) data.getOrDefault("autoSync", true);
+		if(!oa && autoPhrasesSync){
+			Quotes.saveTo(MAIN_PHRASES_URL, "main");
+			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+		}
 		if (errorMessage.length() > 1) {
 			HashMap<String, Object> list = new HashMap<String, Object>();
 			list.put("name", "Ошибка");
@@ -398,6 +458,7 @@ public class Main implements Plugin {
 	void saveSettings() {
 		Properties properties = new Properties();
 		properties.setProperty("applyInfluence", applyInfluence ? "1" : "0");
+		properties.setProperty("autoPhrasesSync", autoPhrasesSync ? "1" : "0");
 		properties.setProperty("characterPreset", currentPreset.toJSON().toString());
 		properties.setProperty("influenceMultiplier", String.valueOf(Influence.globalMultiplier));
 		properties.setProperty("messageTimeout", String.valueOf(messageTimeout));
@@ -410,18 +471,9 @@ public class Main implements Plugin {
 		}
 	}
 
-	private static final ResourceBundle strings =
-			ResourceBundle.getBundle("info/deskchan/talking_system/talk-strings");
-
-	static synchronized String getString(String key) {
-		try {
-			String s = strings.getString(key);
-			return new String(s.getBytes("ISO-8859-1"), "UTF-8");
-		} catch (Throwable e) {
-			return key;
-		}
+	public static String getString(String text){
+		return pluginProxy.getString(text);
 	}
-
 	static void log(String text) {
 		pluginProxy.log(text);
 	}
@@ -454,10 +506,10 @@ public class Main implements Plugin {
 	@Override
 	public void unload() {
 		saveSettings();
-		operatePhraseRequest("BYE");
+		phraseRequest("BYE");
 	}
 
-	static PluginProxy getPluginProxy() {
+	static PluginProxyInterface getPluginProxy() {
 		return pluginProxy;
 	}
 

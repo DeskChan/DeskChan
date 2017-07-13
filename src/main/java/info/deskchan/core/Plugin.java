@@ -2,11 +2,10 @@ package info.deskchan.core;
 
 public interface Plugin {
 	
-	default boolean initialize(PluginProxy proxy) {
+	default boolean initialize(PluginProxyInterface proxy) {
 		return true;
 	}
 	
-	default void unload() {
-	}
+	default void unload() { }
 	
 }

@@ -3,7 +3,7 @@ package info.deskchan.groovy_support;
 import groovy.lang.Script;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxy;
+import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core.ResponseListener;
 
 import java.nio.file.Path;
@@ -12,12 +12,12 @@ import java.util.List;
 
 public abstract class GroovyPlugin extends Script implements Plugin {
 	
-	private PluginProxy pluginProxy = null;
+	private PluginProxyInterface pluginProxy = null;
 	private List<Runnable> cleanupHandlers = new ArrayList<>();
 	private Path pluginDirPath;
 	
 	@Override
-	public boolean initialize(PluginProxy pluginProxy) {
+	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		try {
 			run();

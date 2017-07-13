@@ -5,12 +5,12 @@ import java.util.*;
 
 public class CorePlugin implements Plugin, MessageListener {
 	
-	private PluginProxy pluginProxy = null;
+	private PluginProxyInterface pluginProxy = null;
 	private final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
 	private final Map<String, PipeInfo> pipes = new HashMap<>();
 	
 	@Override
-	public boolean initialize(PluginProxy pluginProxy) {
+	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
 			pluginProxy.log("Plugin " + sender + " requested application quit");
@@ -45,6 +45,10 @@ public class CorePlugin implements Plugin, MessageListener {
 			}});
 		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
+			if(data==null) {
+				PluginManager.log("attempt to unload null plugin");
+				return;
+			}
 			String plugin = data.toString();
 			synchronized (this) {
 				Iterator<Map.Entry<String, List<AlternativeInfo>>> mapIterator = alternatives.entrySet().iterator();
@@ -143,6 +147,7 @@ public class CorePlugin implements Plugin, MessageListener {
 				}
 			}
 		});
+		CommandsProxy.initialize(pluginProxy);
 		return true;
 	}
 	
