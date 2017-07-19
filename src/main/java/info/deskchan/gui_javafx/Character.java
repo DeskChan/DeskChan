@@ -64,7 +64,7 @@ class Character extends MovablePane {
 			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-stop-drag",m);
 		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-			boolean enabled = Main.getProperty("character.enable_context_menu", "0").equals("1");
+			boolean enabled = Main.getProperty("character.enable_context_menu", "1").equals("1");
 			ContextMenu contextMenu = App.getInstance().getContextMenu();
 			// We need to hide menu manually in both cases to avoid showing the menu with incorrect width.
 			contextMenu.hide();

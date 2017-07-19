@@ -198,7 +198,7 @@ task createExeDistZip(type: Zip) {
 	destinationDir file("${buildDir}/distributions")
 }
 
-createExe.dependsOn proxyJar
+copyProxyLib.dependsOn proxyJar
 createExe.dependsOn copyProxyLib
 createExe.dependsOn createStartScriptsForExe
 createExe.dependsOn copyIconForExe

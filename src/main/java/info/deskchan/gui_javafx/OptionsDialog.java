@@ -159,7 +159,7 @@ class OptionsDialog extends TemplateBox {
 			put("type", "CheckBox");
 			put("hint",Main.getString("help.context_menu"));
 			put("label", Main.getString("enable_context_menu"));
-			put("value", Main.getProperty("character.enable_context_menu", "0").equals("1"));
+			put("value", Main.getProperty("character.enable_context_menu", "1").equals("1"));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "load_resource_pack");

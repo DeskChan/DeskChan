@@ -25,7 +25,8 @@ public class Main implements Plugin {
 
 	private CharacterPreset currentPreset;
 	private EmotionsController emotionsController;
-	
+
+	boolean mouseReaction = true;
 	private boolean applyInfluence = true;
 	private int messageTimeout;
 	private Quotes quotes;
@@ -88,6 +89,9 @@ public class Main implements Plugin {
 		if (properties != null) {
 			try {
 				applyInfluence = properties.getProperty("applyInfluence").equals("1");
+			} catch (Exception e) { }
+			try {
+				mouseReaction = properties.getProperty("mouseReaction").equals("1");
 			} catch (Exception e) { }
 			try {
 				currentPreset = CharacterPreset.getFromJSON(new JSONObject(properties.getProperty("characterPreset")));
@@ -462,6 +466,7 @@ public class Main implements Plugin {
 		properties.setProperty("characterPreset", currentPreset.toJSON().toString());
 		properties.setProperty("influenceMultiplier", String.valueOf(Influence.globalMultiplier));
 		properties.setProperty("messageTimeout", String.valueOf(messageTimeout));
+		properties.setProperty("mouseReaction", String.valueOf(mouseReaction));
 		try {
 			OutputStream ip = Files.newOutputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.store(ip, "config fot talking system");
