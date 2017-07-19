@@ -230,7 +230,7 @@ public class Main implements Plugin {
 			}
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
-		EventsCommentary.initialize();
+		if(mouseReaction) EventsCommentary.initialize();
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
 		if(autoPhrasesSync) {
 			Quotes.saveTo(MAIN_PHRASES_URL, "main");
@@ -466,7 +466,7 @@ public class Main implements Plugin {
 		properties.setProperty("characterPreset", currentPreset.toJSON().toString());
 		properties.setProperty("influenceMultiplier", String.valueOf(Influence.globalMultiplier));
 		properties.setProperty("messageTimeout", String.valueOf(messageTimeout));
-		properties.setProperty("mouseReaction", String.valueOf(mouseReaction));
+		properties.setProperty("mouseReaction", mouseReaction ? "1" : "0");
 		try {
 			OutputStream ip = Files.newOutputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.store(ip, "config fot talking system");
