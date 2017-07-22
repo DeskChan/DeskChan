@@ -14,7 +14,14 @@ public class CharacterDefinite extends CharacterSystem {
 			value[i] = new float[]{-10, 0, 10};
 		}
 	}
-	
+	public CharacterDefinite(long number){
+		value = new float[featureCount][3];
+		for (int i = 0; i < featureCount; i++){
+			value[i] = new float[]{-10, 0, 10};
+			value[i][1]=number%21-10;
+			number/=21;
+		}
+	}
 	public CharacterDefinite(float[][] values) {
 		value = new float[featureCount][3];
 		for (int i = 0; i < featureCount && i < values.length; i++) {

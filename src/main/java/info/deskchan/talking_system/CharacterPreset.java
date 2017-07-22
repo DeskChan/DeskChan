@@ -89,12 +89,13 @@ public abstract class CharacterPreset {
 		name = Main.getString("default_name");
 		quotesBaseList = new ArrayList<>();
 		quotesBaseList.add("main");
+		tags.put("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
 	}
 	public void setQuotesBases(ArrayList<String> list) {
 		quotesBaseList = list;
 	}
 	public abstract CharacterDefinite getCharacter(EmotionsController emo);
-	private static String[] requiredQuotesTags=new String[]{ "gender" , "species" , "interests" , "breastSize" };
+	private static String[] requiredQuotesTags=new String[]{ "gender" , "species" , "interests" , "breastSize" , "userGender" };
 	public boolean isTagsMatch(HashMap<String,Object> tagsToMatch){
 		for(HashMap.Entry<String,Object> entry : tagsToMatch.entrySet()){
 			boolean found=false;

@@ -2,6 +2,8 @@ package info.deskchan.talking_system;
 
 import org.apache.commons.lang3.SystemUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 public class DefaultTagsListeners {
@@ -18,25 +20,27 @@ public class DefaultTagsListeners {
         }
         for(HashMap<String,Object> entry : list) {
             List<String> tag;
+
+            /// operation system
             try {
                 tag = (List<String>) entry.getOrDefault("os", null);
-            } catch(Exception e){ continue; }
-            if (tag != null && tag.size()>0) {
-                String os = null;
-                if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX) os = "mac";
-                else if (SystemUtils.IS_OS_UNIX) os = "linux";
-                else if (SystemUtils.IS_OS_WINDOWS) os = "windows";
-                if (os == null) quotes_list.add(entry);
-                else {
-                    boolean found = false;
-                    for (String arg : tag) {
-                        if (arg.charAt(0) == '"' && arg.charAt(arg.length() - 1) == '"')
-                            arg = arg.substring(1, arg.length() - 1);
-                        if (arg.equals(os)) found = true;
+                if (tag != null && tag.size()>0) {
+                    String os = null;
+                    if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX) os = "mac";
+                    else if (SystemUtils.IS_OS_UNIX) os = "linux";
+                    else if (SystemUtils.IS_OS_WINDOWS) os = "windows";
+                    if (os == null) quotes_list.add(entry);
+                    else {
+                        boolean found = false;
+                        for (String arg : tag) {
+                            if (arg.charAt(0) == '"' && arg.charAt(arg.length() - 1) == '"')
+                                arg = arg.substring(1, arg.length() - 1);
+                            if (arg.equals(os)) found = true;
+                        }
+                        if (!found) quotes_list.add(entry);
                     }
-                    if (!found) quotes_list.add(entry);
                 }
-            }
+            } catch(Exception e){ }
         }
         Main.getPluginProxy().sendMessage(sender,ret);
     }
@@ -56,6 +60,8 @@ public class DefaultTagsListeners {
 
         for(HashMap<String,Object> entry : list){
             List<String> tag;
+
+            /// possibleHour
             try {
                 tag = (List<String>) entry.getOrDefault("possibleHour", null);
                 TextBooleanSet set=new TextBooleanSet(24);
@@ -65,6 +71,7 @@ public class DefaultTagsListeners {
                 if(!set.get(cal.get(Calendar.HOUR_OF_DAY))) quotes_list.add(entry);}
             } catch(Exception e){ Main.log("1"); Main.log(e); }
 
+            /// possibleMinute
             try {
                 tag = (List<String>) entry.getOrDefault("possibleMinute", null);
                 TextBooleanSet set=new TextBooleanSet(60);
@@ -74,6 +81,7 @@ public class DefaultTagsListeners {
                 if(!set.get(cal.get(Calendar.MINUTE))) quotes_list.add(entry);}
             } catch(Exception e){ Main.log("2"); Main.log(e); }
 
+            /// possibleDay
             try {
                 tag = (List<String>) entry.getOrDefault("possibleDay", null);
                 TextBooleanSet set=new TextBooleanSet(31);
@@ -84,6 +92,7 @@ public class DefaultTagsListeners {
                 if(!set.get(cal.get(Calendar.DAY_OF_MONTH))) quotes_list.add(entry);}
             } catch(Exception e){ Main.log("3"); Main.log(e); }
 
+            /// possibleDayOfWeek
             try {
                 tag = (List<String>) entry.getOrDefault("possibleDayOfWeek", null);
                 int dow = cal.get(Calendar.DAY_OF_WEEK);
@@ -103,6 +112,7 @@ public class DefaultTagsListeners {
                 if(!set.get(dow)) quotes_list.add(entry);}
             } catch(Exception e){ Main.log("4"); Main.log(e); }
 
+            /// possibleMonth
             try {
                 tag = (List<String>) entry.getOrDefault("possibleMonth", null);
                 TextBooleanSet set=new TextBooleanSet(12);
@@ -119,6 +129,17 @@ public class DefaultTagsListeners {
                 }
                 if(!set.get(cal.get(Calendar.MONTH))) quotes_list.add(entry);}
             } catch(Exception e){ Main.log("5"); Main.log(e); }
+
+            /// lastConversation
+            try {
+                tag = (List<String>) entry.getOrDefault("lastConversation", null);
+                if (tag != null && tag.size()>0) {
+                    Integer barrier = Integer.parseInt(tag.get(0));
+                    Instant lastConversation=Instant.parse(Main.getProperty("lastConversation","0"));
+                    if(Duration.between(lastConversation,Instant.now()).toMinutes()<barrier)
+                        quotes_list.add(entry);
+                }
+            } catch(Exception e){ }
         }
         Main.getPluginProxy().sendMessage(sender,ret);
             //if(list==null)

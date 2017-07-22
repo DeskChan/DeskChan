@@ -24,7 +24,7 @@ public class Main implements Plugin {
 
         pluginProxy.sendMessage("core:add-event", TextOperations.toMap("tag: \"speech:get\""));
 
-        pluginProxy.addMessageListener("chat:user-said", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
             String text=(String)((HashMap<String,Object>)data).getOrDefault("value","");
             ArrayList<String> words = PhraseComparison.toClearWords(text);
             if(PhraseComparison.Similar(words.get(0),start_word)<0.7) return;

@@ -83,6 +83,57 @@ class QuotePack{
 	public String getFileName(){
 		return packNameString;
 	}
+
+	public void printPhrasesLack(String purpose){
+		System.out.println(packNameString);
+
+		int len=10;
+		CharacterDefinite[] definites=new CharacterDefinite[len];
+		int[] counts=new int[len];
+		long charactersCount=(long)Math.pow(21,CharacterSystem.getFeatureCount());
+		try {
+		for(int i=0;i<len;i++){
+			definites[i]=new CharacterDefinite(i);
+			counts[i]=0;
+			for(Quote quote : quotes)
+				if(quote.matchToCharacter(definites[i])) counts[i]++;
+		}
+
+			for (int i = len; i < charactersCount; i+=2) {
+				if(i%1000000==0) System.out.println(i*1./charactersCount);
+				CharacterDefinite cur = new CharacterDefinite(i);
+				boolean close = false, ct;
+				for (int k = 0; k < len; k++) {
+					ct = true;
+
+					for (int j = 0; j < CharacterSystem.getFeatureCount(); j++) {
+						if (Math.abs(definites[k].getValue(j) - cur.getValue(j)) > 2.05) {
+							ct = false;
+							break;
+						}
+					}
+					if (ct) {
+						close = true;
+						break;
+					}
+				}
+
+				if (close) continue;
+				int count = 0;
+				for (Quote quote : quotes)
+					if (quote.matchToCharacter(cur)) count++;
+				for (int k = 0; k < len; k++)
+					if (counts[k] > count) {
+						counts[k] = count;
+						definites[k] = cur;
+						break;
+					}
+			}
+		} catch (Exception e){ Main.log(e); }
+		for(int k=0;k<len;k++)
+			System.out.println(k+" "+definites[k].toString()+" "+counts[k]);
+	}
+
 }
 
 public class Quotes {
@@ -173,10 +224,14 @@ public class Quotes {
                     found=true;
                     break;
                 }
-            if(found)continue;
+            if(found) continue;
             packs.remove(i);
             i--;
         }
+		for(int i=0;i<packs.size();i++)
+			System.out.print(packs.get(i).getFileName()+" ");
+		System.out.println("\n"+files);
+
         load(files);
     }
 
@@ -247,6 +302,13 @@ public class Quotes {
 				}
 		);
 	}
+
+	public void printPhrasesLack(String purpose){
+    	purpose=purpose.toUpperCase();
+		for(QuotePack pack : packs)
+			pack.printPhrasesLack(purpose);
+	}
+
 	public interface GetQuoteCallback{
     	void call(Quote quote);
 	}
@@ -327,9 +389,9 @@ public class Quotes {
 								} catch (Exception u) { }
 								break;
 							case 10: {
-								if (phrase.length()<14) continue;
-								if (phrase.getString(13).length() == 0) continue;
-								next.setTags(phrase.getString(13));
+								if (phrase.length()<11) continue;
+								if (phrase.getString(10).length() == 0) continue;
+								next.setTags(phrase.getString(10));
 							} break;
 						}
 					}

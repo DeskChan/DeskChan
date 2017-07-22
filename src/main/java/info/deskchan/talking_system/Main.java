@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.*;
 
 public class Main implements Plugin {
@@ -21,18 +22,16 @@ public class Main implements Plugin {
 	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
-	private boolean autoPhrasesSync;
-
+	private final static String defaultMessageTimeout = Integer.toString(40000);
 	private CharacterPreset currentPreset;
 	private EmotionsController emotionsController;
 
-	boolean mouseReaction = true;
-	private boolean applyInfluence = true;
-	private int messageTimeout;
 	private Quotes quotes;
 	private PriorityQueue<Quote> quoteQueue;
 	private PerkContainer perkContainer;
 	private LinkedList<String> recievers;
+	private static Properties properties;
+
 	private final ResponseListener chatTimerListener = new ResponseListener() {
 		
 		private Object lastSeq = null;
@@ -48,7 +47,7 @@ public class Main implements Plugin {
 			if (lastSeq != null)
 				stop();
 			lastSeq = pluginProxy.sendMessage("core-utils:notify-after-delay", new HashMap<String, Object>() {{
-						put("delay", (long) messageTimeout);
+						put("delay", Long.parseLong(properties.getProperty("messageTimeout",defaultMessageTimeout)));
 			}}, this);
 		}
 		
@@ -66,15 +65,13 @@ public class Main implements Plugin {
 		pluginProxy = newPluginProxy;
 		recievers=new LinkedList<>();
 		recievers.add("gui:say");
-		Properties properties = new Properties();
+		properties = new Properties();
 		emotionsController = new EmotionsController();
 		quoteQueue = new PriorityQueue<>();
 		perkContainer = new PerkContainer();
 		quotes = new Quotes();
 		currentPreset = new SimpleCharacterPreset();
 		Influence.globalMultiplier = 0.05f;
-		messageTimeout = 40000;
-		autoPhrasesSync=true;
 		pluginProxy.setResourceBundle("info/deskchan/talking_system/talk-strings");
 
 		try {
@@ -88,22 +85,10 @@ public class Main implements Plugin {
 		}
 		if (properties != null) {
 			try {
-				applyInfluence = properties.getProperty("applyInfluence").equals("1");
-			} catch (Exception e) { }
-			try {
-				mouseReaction = properties.getProperty("mouseReaction").equals("1");
-			} catch (Exception e) { }
-			try {
 				currentPreset = CharacterPreset.getFromJSON(new JSONObject(properties.getProperty("characterPreset")));
 			} catch (Exception e) { }
 			try {
 				Influence.globalMultiplier = Float.valueOf(properties.getProperty("influenceMultiplier"));
-			} catch (Exception e) { }
-			try {
-				messageTimeout = Integer.valueOf(properties.getProperty("messageTimeout"));
-			} catch (Exception e) { }
-			try {
-				autoPhrasesSync = properties.getProperty("autoPhrasesSync").equals("1");
 			} catch (Exception e) { }
 		}
 		log("Loaded options");
@@ -174,6 +159,13 @@ public class Main implements Plugin {
 					if(!recievers.contains(rec)) recievers.add(rec);
 				}
 		);
+		pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
+			properties.setProperty("lastConversation", Instant.now().toString());
+		});
+		pluginProxy.addMessageListener("talk:print-phrases-lack", (sender, tag, data) -> {
+			quotes.printPhrasesLack( (String) ((Map<String, Object>) data).getOrDefault("purpose","CHAT") );
+		});
+
 		pluginProxy.addMessageListener("talk:supply-resource",
 				(sender, tag, data) -> {
 					try {
@@ -230,9 +222,8 @@ public class Main implements Plugin {
 			}
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
-		if(mouseReaction) EventsCommentary.initialize();
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
-		if(autoPhrasesSync) {
+		if(properties.getProperty("quotesAutoSync","1").equals("1")) {
 			Quotes.saveTo(MAIN_PHRASES_URL, "main");
 			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		}
@@ -243,6 +234,7 @@ public class Main implements Plugin {
 			extractor.teach(quote.quote,quote.purposeType);
 		}
 		extractor.print();*/
+		quotes.printPhrasesLack("HELLO");
 		return true;
 	}
 
@@ -308,6 +300,12 @@ public class Main implements Plugin {
 				put("value", currentPreset.name);
 			}});
 			list.add(new HashMap<String, Object>() {{
+				put("id", "usernames");
+				put("type", "TextField");
+				put("label", getString("usernames_list"));
+				put("value", currentPreset.tags.getAsString("usernames"));
+			}});
+			list.add(new HashMap<String, Object>() {{
 				put("id", "quotes");
 				put("type", "FilesManager");
 				put("label", getString("quotes_list"));
@@ -364,13 +362,13 @@ public class Main implements Plugin {
 				put("min", 10);
 				put("max", 1000);
 				put("step", 1);
-				put("value", messageTimeout / 1000);
+				put("value", Integer.parseInt(properties.getProperty("messageTimeout",defaultMessageTimeout)) / 1000);
 				put("label", getString("message_interval"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "autoSync");
 				put("type", "CheckBox");
-				put("value", autoPhrasesSync);
+				put("value", properties.getProperty("quotesAutoSync","1").equals("1"));
 				put("label", getString("packs_auto_sync"));
 			}});
 			list.add(new HashMap<String, Object>() {{
@@ -403,13 +401,21 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentPreset.quotesBaseList=(ArrayList<String>)(data.get("quotes"));
+				currentPreset.quotesBaseList=new ArrayList<String>((List<String>)data.get("quotes"));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
 				currentPreset.setTags((String)data.getOrDefault("tags",null));
 			} catch(Exception e){
+				errorMessage += e.getMessage() + "\n";
+			}
+			try {
+				val = (String) data.getOrDefault("usernames", "");
+				if (!val.isEmpty()) {
+					currentPreset.tags.put("usernames",val);
+				}
+			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try {
@@ -431,14 +437,14 @@ public class Main implements Plugin {
 			}
 		}
 		try {
-			messageTimeout = (Integer) data.getOrDefault("message_interval", 40) * 1000;
+			properties.setProperty("messageTimeout",Integer.toString((Integer) data.getOrDefault("message_interval", 40) * 1000));
 		} catch (Exception e) {
 			errorMessage += e.getMessage();
-			messageTimeout = 40000;
+			properties.setProperty("messageTimeout",defaultMessageTimeout);
 		}
-		boolean oa=autoPhrasesSync;
-		autoPhrasesSync = (Boolean) data.getOrDefault("autoSync", true);
-		if(!oa && autoPhrasesSync){
+		boolean qas=(boolean) data.getOrDefault("autoSync", true);
+		properties.setProperty("quotesAutoSync", ( qas ? "1" : "0"));
+		if(qas){
 			Quotes.saveTo(MAIN_PHRASES_URL, "main");
 			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		}
@@ -460,13 +466,9 @@ public class Main implements Plugin {
 	}
 
 	void saveSettings() {
-		Properties properties = new Properties();
-		properties.setProperty("applyInfluence", applyInfluence ? "1" : "0");
-		properties.setProperty("autoPhrasesSync", autoPhrasesSync ? "1" : "0");
 		properties.setProperty("characterPreset", currentPreset.toJSON().toString());
 		properties.setProperty("influenceMultiplier", String.valueOf(Influence.globalMultiplier));
-		properties.setProperty("messageTimeout", String.valueOf(messageTimeout));
-		properties.setProperty("mouseReaction", mouseReaction ? "1" : "0");
+		properties.setProperty("lastConversation", Instant.now().toString());
 		try {
 			OutputStream ip = Files.newOutputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
 			properties.store(ip, "config fot talking system");
@@ -479,6 +481,7 @@ public class Main implements Plugin {
 	public static String getString(String text){
 		return pluginProxy.getString(text);
 	}
+
 	static void log(String text) {
 		pluginProxy.log(text);
 	}
@@ -508,6 +511,9 @@ public class Main implements Plugin {
 		return path;
 	}
 
+	public static String getProperty(String key,String defaultValue){
+		return properties.getProperty(key,defaultValue);
+	}
 	@Override
 	public void unload() {
 		saveSettings();
