@@ -234,7 +234,6 @@ public class Main implements Plugin {
 			extractor.teach(quote.quote,quote.purposeType);
 		}
 		extractor.print();*/
-		quotes.printPhrasesLack("HELLO");
 		return true;
 	}
 

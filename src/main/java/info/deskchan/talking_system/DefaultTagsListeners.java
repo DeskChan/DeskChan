@@ -134,9 +134,17 @@ public class DefaultTagsListeners {
             try {
                 tag = (List<String>) entry.getOrDefault("lastConversation", null);
                 if (tag != null && tag.size()>0) {
-                    Integer barrier = Integer.parseInt(tag.get(0));
+                    int left_barrier=0, right_barrier=-1;
+                    try {
+                        if (tag.get(0).contains("-")) {
+                            String[] di = tag.get(0).split("-");
+                            left_barrier = Integer.valueOf(di[0]);
+                            right_barrier = Integer.valueOf(di[1]);
+                        } else left_barrier = Integer.parseInt(tag.get(0));
+                    } catch (Exception e) { }
                     Instant lastConversation=Instant.parse(Main.getProperty("lastConversation","0"));
-                    if(Duration.between(lastConversation,Instant.now()).toMinutes()<barrier)
+                    long length=Duration.between(lastConversation,Instant.now()).toMinutes();
+                    if(length<left_barrier || (right_barrier>=left_barrier && length>=right_barrier))
                         quotes_list.add(entry);
                 }
             } catch(Exception e){ }

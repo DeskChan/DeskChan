@@ -98,7 +98,7 @@ public class Main implements Plugin {
             list.add(new HashMap<String, Object>() {{
                 put("id", "name");
                 put("type", "TextField");
-                put("enterTag","chat:user-said");
+                put("enterTag","DeskChan:user-said");
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "textname");

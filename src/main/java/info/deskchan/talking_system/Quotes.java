@@ -91,7 +91,6 @@ class QuotePack{
 		CharacterDefinite[] definites=new CharacterDefinite[len];
 		int[] counts=new int[len];
 		long charactersCount=(long)Math.pow(21,CharacterSystem.getFeatureCount());
-		try {
 		for(int i=0;i<len;i++){
 			definites[i]=new CharacterDefinite(i);
 			counts[i]=0;
@@ -99,37 +98,36 @@ class QuotePack{
 				if(quote.matchToCharacter(definites[i])) counts[i]++;
 		}
 
-			for (int i = len; i < charactersCount; i+=2) {
-				if(i%1000000==0) System.out.println(i*1./charactersCount);
-				CharacterDefinite cur = new CharacterDefinite(i);
-				boolean close = false, ct;
-				for (int k = 0; k < len; k++) {
-					ct = true;
+		for (int i = len; i < charactersCount; i+=2) {
+			if(i%1000000==0) System.out.println(i*1./charactersCount);
+			CharacterDefinite cur = new CharacterDefinite(i);
+			boolean close = false, ct;
+			for (int k = 0; k < len; k++) {
+				ct = true;
 
-					for (int j = 0; j < CharacterSystem.getFeatureCount(); j++) {
-						if (Math.abs(definites[k].getValue(j) - cur.getValue(j)) > 2.05) {
-							ct = false;
-							break;
-						}
-					}
-					if (ct) {
-						close = true;
+				for (int j = 0; j < CharacterSystem.getFeatureCount(); j++) {
+					if (Math.abs(definites[k].getValue(j) - cur.getValue(j)) > 2.05) {
+						ct = false;
 						break;
 					}
 				}
-
-				if (close) continue;
-				int count = 0;
-				for (Quote quote : quotes)
-					if (quote.matchToCharacter(cur)) count++;
-				for (int k = 0; k < len; k++)
-					if (counts[k] > count) {
-						counts[k] = count;
-						definites[k] = cur;
-						break;
-					}
+				if (ct) {
+					close = true;
+					break;
+				}
 			}
-		} catch (Exception e){ Main.log(e); }
+
+			if (close) continue;
+			int count = 0;
+			for (Quote quote : quotes)
+				if (quote.purposeType.equals(purpose) && quote.matchToCharacter(cur)) count++;
+			for (int k = 0; k < len; k++)
+				if (counts[k] > count) {
+					counts[k] = count;
+					definites[k] = cur;
+					break;
+				}
+		}
 		for(int k=0;k<len;k++)
 			System.out.println(k+" "+definites[k].toString()+" "+counts[k]);
 	}
