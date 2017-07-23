@@ -100,7 +100,7 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:request", (sender, tag, data) -> {
 			phraseRequest((Map<String, Object>) data);
 		});
-		pluginProxy.addMessageListener("talk:make-influence", (sender, tag, data) -> {
+		pluginProxy.addMessageListener("talk:make-character-influence", (sender, tag, data) -> {
 			Map<String, Object> dat = (Map<String, Object>) data;
 			float multiplier = 1;
 			Object obj = dat.getOrDefault("multiplier", 1);
@@ -108,17 +108,23 @@ public class Main implements Plugin {
 				multiplier = Float.valueOf((String) obj);
 			if (obj instanceof Float)
 				multiplier = (Float) obj;
-			if (dat.getOrDefault("type", "character") != "emotional") {
-				currentPreset.applyInfluence(Influence.CreateCharacterInfluence(
+			currentPreset.applyInfluence(Influence.CreateCharacterInfluence(
 						(String) dat.getOrDefault("feature", "sympathy"),
 						multiplier)
-				);
-			} else {
-				emotionsController.applyInfluence(Influence.CreateEmotionInfluence(
+			);
+		});
+		pluginProxy.addMessageListener("talk:make-emotion-influence", (sender, tag, data) -> {
+			Map<String, Object> dat = (Map<String, Object>) data;
+			float multiplier = 1;
+			Object obj = dat.getOrDefault("multiplier", 1);
+			if (obj instanceof String)
+				multiplier = Float.valueOf((String) obj);
+			if (obj instanceof Float)
+				multiplier = (Float) obj;
+			emotionsController.applyInfluence(Influence.CreateEmotionInfluence(
 						(String) dat.getOrDefault("emotion", "happiness"),
 						multiplier)
-				);
-			}
+			);
 		});
 		pluginProxy.addMessageListener("talk:options-saved", (sender, tag, data) -> {
 			saveOptions((Map<String, Object>) data);
