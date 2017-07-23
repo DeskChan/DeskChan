@@ -79,7 +79,13 @@ public class Main implements Plugin {
             put("msgTag", "chat:setup");
         }});
         pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
-            history.add(new ChatPhrase((String) ((HashMap<String,Object>) data).getOrDefault("text", ""),0));
+            String text;
+            if(data instanceof Map){
+                text=(String) ((HashMap<String,Object>) data).getOrDefault("text", "");
+            } else {
+                text=data.toString();
+            }
+            history.add(new ChatPhrase(text,0));
             setupChat();
         });
         pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {

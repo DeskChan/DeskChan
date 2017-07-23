@@ -133,7 +133,7 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				character.say((Map<String, Object>) data);
+				character.say(data);
 			});
 		});
 		pluginProxy.addMessageListener("gui:set-image", (sender, tag, data) -> {

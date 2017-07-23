@@ -237,7 +237,7 @@ class Character extends MovablePane {
 		Main.setProperty("character." + id + ".balloon_position_mode", mode.toString());
 	}
 
-	void say(Map<String, Object> data) {
+	void say(Object data) {
 		MessageInfo messageInfo = null;
 		if (data != null) {
 			messageInfo = new MessageInfo(data);
@@ -336,8 +336,47 @@ class Character extends MovablePane {
 
 		private static int max_length = 100;
 
-		MessageInfo(Map<String, Object> data) {
-			String text2 = (String) data.getOrDefault("text", "");
+		MessageInfo(Object data) {
+			String text2;
+			int _timeout;
+			if(data instanceof Map){
+				Map<String,Object> mapData = (Map<String,Object>) data;
+				String characterImage = (String) mapData.getOrDefault("characterImage", null);
+				if (characterImage != null) {
+					characterImage = characterImage.toLowerCase();
+				} else {
+					characterImage = "normal";
+				}
+
+				Object ob = mapData.getOrDefault("skippable", true);
+				if(ob instanceof String)
+					skippable = Boolean.parseBoolean((String)ob);
+				else skippable=(Boolean) ob;
+
+				this.characterImage = characterImage;
+
+				ob = mapData.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
+				if(ob instanceof String)
+					priority = Integer.parseInt((String)ob);
+				else priority=(Integer) ob;
+
+				ob = mapData.getOrDefault("timeout", Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") ));
+				if(ob instanceof String)
+					_timeout = Integer.parseInt((String)ob);
+				else _timeout=(Integer) ob;
+
+				text2=(String) mapData.getOrDefault("text", "");
+			} else {
+				if(data instanceof String)
+					text2=(String) data;
+				else text2=data.toString();
+
+				skippable=true;
+				characterImage = "normal";
+				priority=DEFAULT_MESSAGE_PRIORITY;
+				_timeout=Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") );
+			}
+
 			ArrayList<String> list = new ArrayList<>();
 			boolean inQuotes = false;
 			ParsingState state = ParsingState.SENTENCE;
@@ -412,31 +451,8 @@ class Character extends MovablePane {
 				i--;
 			}
 			text = list.toArray(new String[list.size()]);
-			String characterImage = (String) data.getOrDefault("characterImage", null);
-			if (characterImage != null) {
-				characterImage = characterImage.toLowerCase();
-			} else {
-				characterImage = "normal";
-			}
 
-			Object ob = data.getOrDefault("skippable", true);
-			if(ob instanceof String)
-				skippable = Boolean.parseBoolean((String)ob);
-			else skippable=(Boolean) ob;
-
-			this.characterImage = characterImage;
-
-			ob = data.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-			if(ob instanceof String)
-				priority = Integer.parseInt((String)ob);
-			else priority=(Integer) ob;
-
-			ob = data.getOrDefault("timeout", Math.max(3000,
-					text2.length()/text.length * Integer.parseInt(Main.getProperty("balloon.default_timeout", "200"))));
-			if(ob instanceof String)
-				timeout = Integer.parseInt((String)ob);
-			else timeout=(Integer) ob;
-
+			timeout = Math.max( 3000 , text2.length()/text.length * _timeout );
 		}
 
         boolean itsTimeToStop(){
