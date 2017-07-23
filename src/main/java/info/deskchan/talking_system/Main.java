@@ -29,7 +29,6 @@ public class Main implements Plugin {
 	private Quotes quotes;
 	private PriorityQueue<Quote> quoteQueue;
 	private PerkContainer perkContainer;
-	private LinkedList<String> recievers;
 	private static Properties properties;
 
 	private final ResponseListener chatTimerListener = new ResponseListener() {
@@ -63,8 +62,6 @@ public class Main implements Plugin {
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
 		pluginProxy = newPluginProxy;
-		recievers=new LinkedList<>();
-		recievers.add("gui:say");
 		properties = new Properties();
 		emotionsController = new EmotionsController();
 		quoteQueue = new PriorityQueue<>();
@@ -97,8 +94,17 @@ public class Main implements Plugin {
 		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
 			log(e);
 		}
-		pluginProxy.addMessageListener("talk:request", (sender, tag, data) -> {
-			phraseRequest((Map<String, Object>) data);
+		pluginProxy.addMessageListener("talk:request", (sender, tag, dat) -> {
+			Map<String, Object> data;
+			if(dat instanceof Map){
+				data=(Map<String, Object>) dat;
+			} else {
+				data=new HashMap<>();
+				if(dat!=null)
+					data.put("purpose",dat.toString());
+			}
+			data.put("sender",sender);
+			phraseRequest(data);
 		});
 		pluginProxy.addMessageListener("talk:make-character-influence", (sender, tag, data) -> {
 			Map<String, Object> dat = (Map<String, Object>) data;
@@ -156,14 +162,6 @@ public class Main implements Plugin {
 		);
 		pluginProxy.addMessageListener("talk:perk-answer",
 				(sender, tag, data) -> perkContainer.getAnswerFromPerk(sender, (Map<String, Object>) data)
-		);
-		pluginProxy.addMessageListener("talk:add-reciever",
-				(sender, tag, data) -> {
-					Map<String, Object> map = (Map<String, Object>) data;
-					String rec=(String)map.getOrDefault("tag",null);
-					if(rec==null || rec.length()<2) return;
-					if(!recievers.contains(rec)) recievers.add(rec);
-				}
 		);
 		pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
 			properties.setProperty("lastConversation", Instant.now().toString());
@@ -247,31 +245,23 @@ public class Main implements Plugin {
 
 	public void phraseRequest(Map<String, Object> data) {
 		String purpose = "CHAT";
-		final int priority;
-		Integer p=defaultPriority;
 		if (data != null) {
 			String np = (String) data.getOrDefault("purpose", null);
 			if (np != null) purpose = np;
-			if(data.containsKey("priority")){
-				Object a=data.get("priority");
-				if(a instanceof String) p=Integer.valueOf( (String) a );
-				else if(a instanceof Integer) p=(Integer) a;
-			}
 		}
-		priority=p;
 		quotes.update(currentPreset.getCharacter(emotionsController));
 		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
-			public void call(Quote quote){ sendPhrase(quote,priority); }
+			public void call(Quote quote){ sendPhrase(quote,data); }
 		});
 	}
 
 	public void phraseRequest(String purpose) {
 		quotes.update(currentPreset.getCharacter(emotionsController));
 		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
-			public void call(Quote quote){ sendPhrase(quote,defaultPriority); }
+			public void call(Quote quote){ sendPhrase(quote,null); }
 		});
 	}
-	void sendPhrase(Quote quote,int priority){
+	void sendPhrase(Quote quote,Map<String, Object> data){
 		HashMap<String,Object> ret=quote.toMap();
 		if (ret.get("characterImage").equals("AUTO")) {
 			String ci = emotionsController.getSpriteType();
@@ -288,9 +278,18 @@ public class Main implements Plugin {
 		if (t != null) {
 			ret.replace("text", t);
 		}
-		ret.put("priority", priority);
-		for(String rec : recievers)
-			pluginProxy.sendMessage(rec, ret);
+		if(data!=null){
+			ret.put("priority", data.getOrDefault("priority",defaultPriority));
+			if(data.containsKey("seq")){
+				ret.put("seq",data.get("seq"));
+				pluginProxy.sendMessage((String) data.get("sender"), ret);
+			} else {
+				pluginProxy.sendMessage("DeskChan:say", ret);
+			}
+		} else {
+			ret.put("priority", defaultPriority);
+			pluginProxy.sendMessage("DeskChan:say", ret);
+		}
 	}
 
 	void updateOptionsTab() {

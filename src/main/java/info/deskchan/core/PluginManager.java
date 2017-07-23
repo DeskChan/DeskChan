@@ -127,7 +127,7 @@ public class PluginManager {
 				try {
 					listener.handleMessage(sender, tag, data);
 				} catch (Exception e){
-					log("Error while calling "+sender+" by "+tag);
+					log("Error while calling "+tag+", called by "+sender);
 					log(e);
 				}
 			}

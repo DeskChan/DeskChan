@@ -34,6 +34,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		});
 		pluginProxy.addMessageListener("core:change-alternative-priority", (sender, tag, data) -> {
 			Map m = (Map) data;
+			System.out.println(data);
 			changeAlternativePriority(m.get("srcTag").toString(), m.get("dstTag").toString(),
 					(Integer) m.get("priority"));
 		});
@@ -209,6 +210,7 @@ public class CorePlugin implements Plugin, MessageListener {
 					}
 				}
 				info.priority = priority;
+				iterator.previous();
 				iterator.add(info);
 				break;
 			}
