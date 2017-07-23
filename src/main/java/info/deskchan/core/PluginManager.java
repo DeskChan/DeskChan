@@ -124,7 +124,12 @@ public class PluginManager {
 		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
 		if (listeners != null) {
 			for (MessageListener listener : listeners) {
-				listener.handleMessage(sender, tag, data);
+				try {
+					listener.handleMessage(sender, tag, data);
+				} catch (Exception e){
+					log("Error while calling "+sender+" by "+tag);
+					log(e);
+				}
 			}
 		}
 	}

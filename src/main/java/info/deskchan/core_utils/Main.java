@@ -48,14 +48,7 @@ public class Main implements Plugin {
 			}
 		});
 		pluginProxy.addMessageListener("core:distribute-resources", (sender, tag, data) -> {
-			String resList;
-			try {
-				resList = (String) ((HashMap<String,Object>) data).get("resourcesList");
-			} catch (Exception e) {
-				log("No file specified for resource distribution");
-				return;
-			}
-			ResourceDistributor.distribute(resList);
+			ResourceDistributor.distribute((String) data);
 		});
 		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
 			put("srcTag", "core-utils:notify-after-delay");

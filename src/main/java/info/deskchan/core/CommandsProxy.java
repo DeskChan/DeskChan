@@ -44,34 +44,32 @@ public class CommandsProxy{
         }
     }
     public static void addCommand(Map<String,Object> data){
-        if(!data.containsKey("tag"))
+        String tag=(String)data.getOrDefault("tag", null);
+        if(tag==null)
             PluginManager.log("No name specified for command to add: "+data);
-        else commands.put((String)data.get("tag"),data);
+        else {
+            data.remove("tag",tag);
+            commands.put(tag,data);
+        }
     }
     public static void removeCommand(String tag){
         if(tag==null)
             PluginManager.log("No name specified for command to remove, recieved null");
         else commands.remove(tag);
     }
-    public static void removeCommand(Map<String,Object> data) {
-        if(!data.containsKey("tag"))
-            PluginManager.log("No name specified for command to remove: "+data);
-        else commands.remove((String)data.get("tag"));
-    }
     public static void addEvent(Map<String,Object> data){
-        if(!data.containsKey("tag"))
+        String tag=(String)data.getOrDefault("tag", null);
+        if(tag==null)
             PluginManager.log("No name specified for event to add: "+data);
-        else events.put((String)data.get("tag"),data);
+        else {
+            data.remove("tag",tag);
+            events.put(tag,data);
+        }
     }
     public static void removeEvent(String tag) {
         if(tag==null)
             PluginManager.log("No name specified for event to remove, recieved null");
         else events.remove(tag);
-    }
-    public static void removeEvent(Map<String,Object> data) {
-        if(!data.containsKey("tag"))
-            PluginManager.log("No name specified for event to remove: "+data);
-        else events.remove((String)data.get("tag"));
     }
     public static void addEventLink(String eventName,String commandName,String rule,Object msgData){
         if(eventName==null){
@@ -163,14 +161,14 @@ public class CommandsProxy{
         }
     }
     public static void initialize(PluginProxyInterface proxy){
-        proxy.addMessageListener("core:add-command", (sender, tag, data) -> addCommand((HashMap<String,Object>) data) );
-        proxy.addMessageListener("core:remove-command", (sender, tag, data) -> removeCommand((HashMap<String,Object>) data) );
-        proxy.addMessageListener("core:add-event", (sender, tag, data) -> addEvent((HashMap<String,Object>) data) );
-        proxy.addMessageListener("core:remove-event", (sender, tag, data) -> removeEvent((HashMap<String,Object>) data) );
-        proxy.addMessageListener("core:set-event-link", (sender, tag, data) -> addEventLink((HashMap<String,Object>) data) );
-        proxy.addMessageListener("core:remove-event-link", (sender, tag, data) -> removeEventLink((HashMap<String,Object>) data) );
+        proxy.addMessageListener("core:add-command", (sender, tag, data) -> addCommand((Map<String,Object>) data) );
+        proxy.addMessageListener("core:remove-command", (sender, tag, data) -> removeCommand((String) data) );
+        proxy.addMessageListener("core:add-event", (sender, tag, data) -> addEvent((Map<String,Object>) data) );
+        proxy.addMessageListener("core:remove-event", (sender, tag, data) -> removeEvent((String) data) );
+        proxy.addMessageListener("core:set-event-link", (sender, tag, data) -> addEventLink((Map<String,Object>) data) );
+        proxy.addMessageListener("core:remove-event-link", (sender, tag, data) -> removeEventLink((Map<String,Object>) data) );
         proxy.addMessageListener("core:get-commands-match", (sender, tag, dat) -> {
-            HashMap<String,Object> data=(HashMap<String,Object>) dat;
+            Map<String,Object> data=(Map<String,Object>) dat;
             String eventName=(String) data.getOrDefault("eventName",null);
             Integer seq=(Integer) data.getOrDefault("seq",null);
             data=new HashMap<>();

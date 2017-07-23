@@ -164,7 +164,7 @@ class OptionsDialog extends TemplateBox {
 		list.add(new HashMap<String, Object>() {{
 			put("id", "load_resource_pack");
 			put("type", "Button");
-			put("hint",Main.getString("help.resources"));
+			put("hint", Main.getString("help.resources"));
 			put("label", Main.getString("load_resource_pack"));
 			put("value", Main.getString("load"));
 		}});
@@ -460,9 +460,7 @@ class OptionsDialog extends TemplateBox {
 							FileChooser packChooser=new FileChooser();
 							packChooser.setInitialDirectory(pluginProxy.getRootDirPath().toFile());
 							File f = packChooser.showOpenDialog(getDialogPane().getScene().getWindow());
-							pluginProxy.sendMessage("core:distribute-resources", new HashMap<String, Object>() {{
-								put("resourcesList", f.toString());
-							}});
+							pluginProxy.sendMessage("core:distribute-resources", f.toString());
 						} catch(Exception e){ }
 					});
 				}
