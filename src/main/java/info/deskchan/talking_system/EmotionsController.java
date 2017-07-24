@@ -1,10 +1,10 @@
 package info.deskchan.talking_system;
 
 import info.deskchan.core.ResponseListener;
+import info.deskchan.core_utils.TextOperations;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class EmotionsController {
@@ -35,9 +35,7 @@ public class EmotionsController {
 				}
 			}
 			if (emotionIndex >= 0) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				map.put("purpose", "EMOTION:" + Emotion.getEmotion(emotionIndex).name);
-				Main.sendToProxy("talk:emotion-changed", map);
+				Main.sendToProxy("talk:request", "EMOTION");
 			} else {
 				Reset();
 			}
@@ -45,10 +43,7 @@ public class EmotionsController {
 		}
 		
 		void start() {
-			Main.getPluginProxy().sendMessage("core-utils:notify-after-delay",
-					new HashMap<String, Object>() {{
-						put("delay", (long) 100000);
-					}}, this);
+			Main.getPluginProxy().sendMessage("core-utils:notify-after-delay", TextOperations.toMap("delay: 100000"),this);
 		}
 		
 	}
@@ -131,10 +126,7 @@ public class EmotionsController {
 		if (emotionValue == 0 || emotionIndex < 0) {
 			return;
 		}
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("emotion", Emotion.getEmotion(emotionIndex).name);
-		Main.sendToProxy("talk:emotion-changed", map);
-		Main.sendToProxy("talk:emotion-changed", map);
+		Main.sendToProxy("talk:emotion-changed", TextOperations.toMap("emotion: "+Emotion.getEmotion(emotionIndex).name));
 	}
 	
 	public String getSpriteType() {

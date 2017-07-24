@@ -205,8 +205,8 @@ public class Main implements Plugin {
 			put("msgTag", "talk:request");
 		}});
 		updateOptionsTab();
-		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsReject(sender,tag,dat));
 		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsRemove(sender,tag,dat));
+		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsReject(sender,tag,dat));
 		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	{
 			HashMap<String, Object> data = (HashMap<String, Object>) dat;
 			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
@@ -214,15 +214,26 @@ public class Main implements Plugin {
 			ret.put("seq", data.get("seq"));
 			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
 			ret.put("quotes",quotes_list);
-			if (list == null) {
-				Main.getPluginProxy().sendMessage(sender, ret);
-				return;
+			if (list != null) {
+				for (HashMap<String, Object> entry : list) {
+					if (!currentPreset.isTagsMatch(entry))
+						quotes_list.add(entry);
+				}
 			}
-			for(HashMap<String,Object> entry : list) {
-				if(!currentPreset.isTagsMatch(entry))
-					quotes_list.add(entry);
-				else if(!emotionsController.isTagsMatch(entry))
-					quotes_list.add(entry);
+			Main.getPluginProxy().sendMessage(sender,ret);
+		});
+		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	{
+			HashMap<String, Object> data = (HashMap<String, Object>) dat;
+			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
+			HashMap<String, Object> ret = new HashMap<>();
+			ret.put("seq", data.get("seq"));
+			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
+			ret.put("quotes",quotes_list);
+			if (list != null) {
+				for (HashMap<String, Object> entry : list) {
+					if (!emotionsController.isTagsMatch(entry))
+						quotes_list.add(entry);
+				}
 			}
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
@@ -494,7 +505,7 @@ public class Main implements Plugin {
 		pluginProxy.log(e);
 	}
 
-	public static void sendToProxy(String tag, Map<String, Object> data) {
+	public static void sendToProxy(String tag, Object data) {
 		pluginProxy.sendMessage(tag, data);
 	}
 
