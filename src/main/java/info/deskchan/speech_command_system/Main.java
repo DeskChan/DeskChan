@@ -39,7 +39,7 @@ public class Main implements Plugin {
         pluginProxy.sendMessage("core:add-command",TextOperations.toMap("tag: \"speech:test-command\""));
 
         pluginProxy.addMessageListener("speech:test-command", (sender, tag, data) -> {
-            Object text=((HashMap<String,Object>)data).getOrDefault("msgData","");
+            Object text=((HashMap<String,Object>)data).getOrDefault("msgData","Что ты хочещь услышать, сахарочек?");
             pluginProxy.sendMessage("DeskChan:say",new HashMap<String,Object>(){{
                 put("text",text.toString());
             }});
@@ -53,15 +53,17 @@ public class Main implements Plugin {
 
     void operateRequest(ArrayList<String> words,HashMap<String,Object> commandsInfo){
         float max_result=0;
-        HashMap<String,Object> match_command=null;
+        HashMap<String,Object> match_command_data=null;
+        String match_command_name=null;
         boolean[] max_used=null;
         for(Map.Entry<String,Object> commandEntry : commandsInfo.entrySet()){
             HashMap<String,Object> command=(HashMap<String,Object>) commandEntry.getValue();
             String rule=(String) command.getOrDefault("rule",null);
             if(rule==null){
-                pluginProxy.sendMessage((String) command.get("tag"),new HashMap<String,Object>(){{
+                pluginProxy.sendMessage(commandEntry.getKey(),new HashMap<String,Object>(){{
                     put("text",words);
-                    if(command.containsKey("msgData")) put("msgData",command.get("msgData"));
+                    if(command.containsKey("msgData"))
+                        put("msgData",command.get("msgData"));
                 }});
                 continue;
             }
@@ -87,19 +89,21 @@ public class Main implements Plugin {
             result/=words.size();
             if(result>max_result){
                 result=max_result;
-                match_command=command;
+                match_command_name=commandEntry.getKey();
+                match_command_data=command;
                 max_used=used;
             }
         }
-        if(match_command!=null) {
+        if(match_command_name!=null) {
             HashMap<String,Object> ret=new HashMap<>();
             for (int i = max_used.length - 1; i >= 0; i--) {
                 if(max_used[i]) words.remove(i);
             }
             if(words.size()>0)
                 ret.put("text",words);
-            if(match_command.containsKey("msgData")) ret.put("msgData",match_command.get("msgData"));
-            pluginProxy.sendMessage( (String) match_command.get("tag"), ret);
+            if(match_command_data.containsKey("msgData"))
+                ret.put("msgData",match_command_data.get("msgData"));
+            pluginProxy.sendMessage( match_command_name, ret);
         }
     }
     static void log(String text) {

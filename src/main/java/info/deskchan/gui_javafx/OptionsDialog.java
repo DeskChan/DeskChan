@@ -211,6 +211,7 @@ class OptionsDialog extends TemplateBox {
 
 		TableColumn msgCol = new TableColumn(Main.getString("parameters"));
 		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
+		msgCol.setCellFactory(TextFieldTableCell.<CommandItem> forTableColumn());
 		msgCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
