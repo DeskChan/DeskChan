@@ -91,7 +91,7 @@ class OptionsDialog extends TemplateBox {
 			put("min", 5);
 			put("max", 100);
 			put("step", 5);
-			put("msgTag","gui:change-character-opacity");
+			put("msgTag","gui:change-skin-opacity");
 			double opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
 			opacity = Math.round(opacity * 200.0f) / 2.0f;
 			put("value", (int)opacity);

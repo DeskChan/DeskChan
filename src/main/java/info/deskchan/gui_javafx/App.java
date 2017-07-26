@@ -153,15 +153,19 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-skin-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
+				boolean save = (boolean) m.getOrDefault("save", false);
 				if (m.containsKey("absolute")) {
-					Double opacity = (double) m.get("absolute");
+					Double opacity = extractValue(m.get("absolute"));
 					character.changeOpacity(opacity.floatValue());
 				} else if (m.containsKey("relative")) {
-					Double opacityIncrement = (double) m.get("relative");
+					Double opacityIncrement = extractValue(m.get("relative"));
 					character.changeOpacityRelatively(opacityIncrement.floatValue());
+				} else if (m.containsKey("value")){
+					Double opacity = extractValue(m.get("value"))/100;
+					character.changeOpacity(opacity.floatValue());
+					save=true;
 				}
 
-				boolean save = (boolean) m.getOrDefault("save", false);
 				if (save) {
 					Float opacity = character.getSkinOpacity();
 					Main.setProperty("skin.opacity", opacity.toString());
@@ -171,12 +175,14 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:resize-character", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
+				boolean save = (boolean) m.getOrDefault("save", false);
 				if (m.containsKey("scaleFactor")) {
 					Double scaleFactor = (double) m.get("scaleFactor");
 					character.resizeSkin(scaleFactor.floatValue());
 				} else if (m.containsKey("value")) {
 					Double scaleFactor = extractValue(m.get("value"))/100;
 					character.resizeSkin(scaleFactor.floatValue());
+					save=true;
 				} else if (m.containsKey("zoom")) {
 					Double zoom = (double) m.get("zoom");
 					character.resizeSkinRelatively(zoom.floatValue());
@@ -184,7 +190,6 @@ public class App extends Application {
 					character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
 				}
 
-				boolean save = (boolean) m.getOrDefault("save", false);
 				if (save) {
 					Float scaleFactor = character.getScaleFactor();
 					Main.setProperty("skin.scale_factor", scaleFactor.toString());
@@ -360,13 +365,6 @@ public class App extends Application {
 				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",200));
 				Integer val=value.intValue();
 				Main.setProperty("balloon.default_timeout", val.toString() );
-			});
-		});
-		pluginProxy.addMessageListener("gui:change-character-opacity", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
-				Main.setProperty("skin.opacity", value.toString());
-				getCharacter().changeOpacity(value.floatValue());
 			});
 		});
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
