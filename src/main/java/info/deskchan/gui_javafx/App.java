@@ -174,6 +174,9 @@ public class App extends Application {
 				if (m.containsKey("scaleFactor")) {
 					Double scaleFactor = (double) m.get("scaleFactor");
 					character.resizeSkin(scaleFactor.floatValue());
+				} else if (m.containsKey("value")) {
+					Double scaleFactor = extractValue(m.get("value"))/100;
+					character.resizeSkin(scaleFactor.floatValue());
 				} else if (m.containsKey("zoom")) {
 					Double zoom = (double) m.get("zoom");
 					character.resizeSkinRelatively(zoom.floatValue());
@@ -357,13 +360,6 @@ public class App extends Application {
 				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",200));
 				Integer val=value.intValue();
 				Main.setProperty("balloon.default_timeout", val.toString() );
-			});
-		});
-		pluginProxy.addMessageListener("gui:change-character-scale", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
-				Main.setProperty("skin.scale_factor", value.toString());
-				getCharacter().resizeSkin(value.floatValue());
 			});
 		});
 		pluginProxy.addMessageListener("gui:change-character-opacity", (sender, tag, data) -> {

@@ -78,7 +78,7 @@ class OptionsDialog extends TemplateBox {
 			put("min", 10);
 			put("max", 1000);
 			put("step", 5);
-			put("msgTag","gui:change-character-scale");
+			put("msgTag","gui:resize-character");
 			double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
 			// e.g. 1.74 -> 1.75
 			scaleFactorValue = Math.round(scaleFactorValue * 200.0f) / 2.0f;
