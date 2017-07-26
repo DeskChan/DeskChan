@@ -122,18 +122,21 @@ public class PluginProxy implements PluginProxyInterface {
 	}
 	private static ResourceBundle general_strings = null;
 
-	static {
+	public static void updateResourceBundle(){
 		try {
-			general_strings = ResourceBundle.getBundle("info/deskchan/strings");
+			general_strings = ResourceBundle.getBundle("info/deskchan/strings",Locale.getDefault());
 		} catch(Exception e){
 			PluginManager.log("Cannot find resource bundle info/deskchan/strings");
 		}
+	}
+	static {
+		updateResourceBundle();
 	}
 
 	private ResourceBundle plugin_strings = null;
 
 	public void setResourceBundle(String path){
-		plugin_strings=ResourceBundle.getBundle(path);
+		plugin_strings=ResourceBundle.getBundle(path,Locale.getDefault());
 	}
 
 	public final String getString(String key){

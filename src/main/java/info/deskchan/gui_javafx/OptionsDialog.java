@@ -7,6 +7,7 @@ import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -439,6 +440,27 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 1, 3);
 		gridPane.add(new Label(Main.getString("about.build_datetime")), 0, 4);
 		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
+		gridPane.add(new Label(Main.getString("Language")), 0, 5);
+		ComboBox<String> locales=new ComboBox<>();
+		for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+			locales.getItems().add(locale.getValue());
+			if(Locale.getDefault().getLanguage().equals(locale.getKey()))
+				locales.getSelectionModel().select(locale.getValue());
+		}
+		locales.valueProperty().addListener( (obj,oldValue,newValue) -> {
+			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+				if(locale.getValue().equals(newValue)){
+					TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
+					dialog.setContentText(Main.getString("info.restart"));
+					dialog.requestFocus();
+					dialog.show();
+					Locale.setDefault(new Locale(locale.getKey()));
+					Main.setProperty("locale", locale.getKey());
+					break;
+				}
+			}
+		});
+		gridPane.add(locales, 1, 5);
 		tabPane.getTabs().add(new Tab(Main.getString("about"), gridPane));
 
 		/// appearance set up

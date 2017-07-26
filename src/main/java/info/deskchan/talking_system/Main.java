@@ -3,6 +3,7 @@ package info.deskchan.talking_system;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core.ResponseListener;
+import info.deskchan.core_utils.TextOperations;
 import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONObject;
 
@@ -138,12 +139,10 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:save_preset", (sender, tag, data) -> {
 			try {
 				currentPreset.saveInFile(getPresetsPath());
-				HashMap<String, Object> list = new HashMap<String, Object>();
-				list.put("text", "Success");
-				pluginProxy.sendMessage("gui:show-notification", list);
+				pluginProxy.sendMessage("gui:show-notification", TextOperations.toMap("text: "+getString("done")));
 			} catch (Exception e) {
 				HashMap<String, Object> list = new HashMap<String, Object>();
-				list.put("name", "Ошибка");
+				list.put("name", getString("error"));
 				list.put("text", "Error while writing file: " + e.getMessage());
 				pluginProxy.sendMessage("gui:show-notification", list);
 			}
@@ -465,7 +464,7 @@ public class Main implements Plugin {
 		}
 		if (errorMessage.length() > 1) {
 			HashMap<String, Object> list = new HashMap<String, Object>();
-			list.put("name", "Ошибка");
+			list.put("name", getString("error"));
 			list.put("text", errorMessage);
 			pluginProxy.sendMessage("gui:show-notification", list);
 			//System.out.println(errorMessage);
@@ -537,7 +536,7 @@ public class Main implements Plugin {
 	@Override
 	public void unload() {
 		saveSettings();
-		phraseRequest("BYE");
+		phraseRequest(TextOperations.toMap("purpose: BYE, priority: 5000"));
 	}
 
 	static PluginProxyInterface getPluginProxy() {

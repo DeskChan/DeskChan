@@ -248,7 +248,7 @@ public class PluginManager {
 	
 	/* Application finalization */
 	
-	void quit() {
+	void unloadPlugins() {
 		List<PluginProxy> pluginsToUnload = new ArrayList<>();
 		for (Map.Entry<String, PluginProxy> entry : plugins.entrySet()) {
 			if (!entry.getKey().equals("core")) {
@@ -269,7 +269,6 @@ public class PluginManager {
 			}
 			logStream = null;
 		}
-		System.exit(0);
 	}
 	
 	/* Plugins blacklist */

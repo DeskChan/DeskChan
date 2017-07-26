@@ -2,11 +2,13 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginManager;
+import info.deskchan.core.PluginProxy;
 import info.deskchan.core.PluginProxyInterface;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 
@@ -21,13 +23,19 @@ public class Main implements Plugin {
 	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		instance = this;
-		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/gui-strings");
 
 		try {
 			properties.load(Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties")));
 		} catch (IOException e) {
 			// Ignore
 		}
+		if(properties.containsKey("locale")) {
+			Locale.setDefault(new Locale(properties.getProperty("locale")));
+			PluginProxy.updateResourceBundle();
+		}
+
+		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/gui-strings");
+
 		new Thread(() -> {
 			App.run(PluginManager.getInstance().getArgs());
 		}).start();
@@ -66,7 +74,7 @@ public class Main implements Plugin {
 	}
 	
 	void quit() {
-		pluginProxy.sendMessage("core:quit", null);
+		pluginProxy.sendMessage("core:quit", 2000);
 	}
 	
 	static void log(String text) {

@@ -16,7 +16,9 @@ public class CoreInfo {
 	public static Set<String> keys() {
 		return info.keySet();
 	}
-	
+
+	public static Map<String,String> locales;
+
 	public static void printInfo() {
 		PluginManager.log((!CoreInfo.get("NAME").equals("DeskChan") ? "Unofficial build: " : "")+CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
 		PluginManager.log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
@@ -42,6 +44,10 @@ public class CoreInfo {
 			PluginManager.log("Using fallback values instead of actual");
 			info.put("NAME", "DeskChan");
 		}
+
+		locales=new HashMap<>();
+		locales.put("ru","Русский");
+		locales.put("en","English");
 	}
 	
 }

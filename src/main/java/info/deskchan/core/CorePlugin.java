@@ -8,13 +8,31 @@ public class CorePlugin implements Plugin, MessageListener {
 	private PluginProxyInterface pluginProxy = null;
 	private final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
 	private final Map<String, PipeInfo> pipes = new HashMap<>();
-	
+	class QuitTimerTask extends TimerTask {
+		@Override
+		public void run() {
+			System.exit(0);
+		}
+	}
 	@Override
 	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			pluginProxy.log("Plugin " + sender + " requested application quit");
-			PluginManager.getInstance().quit();
+			Long delay=0L;
+			if(data!=null){
+				if(data instanceof Integer) delay=((Integer) data).longValue();
+				else if(data instanceof Long) delay=(Long) data;
+			}
+			if(delay>0) {
+				Timer timer = new Timer();
+				pluginProxy.log("Plugin " + sender + " requested application quit with delay: " + delay);
+				PluginManager.getInstance().unloadPlugins();
+				timer.schedule(new QuitTimerTask(), delay);
+			} else {
+				pluginProxy.log("Plugin " + sender + " requested application quit");
+				PluginManager.getInstance().unloadPlugins();
+				(new QuitTimerTask()).run();
+			}
 		});
 		pluginProxy.addMessageListener("core:register-alternative", (sender, tag, data) -> {
 			Map m = (Map) data;
