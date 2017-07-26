@@ -36,17 +36,6 @@ public class Main implements Plugin {
             });
         });
 
-        pluginProxy.sendMessage("core:add-command",TextOperations.toMap("tag: \"speech:test-command\""));
-
-        pluginProxy.addMessageListener("speech:test-command", (sender, tag, data) -> {
-            Object text=((HashMap<String,Object>)data).getOrDefault("msgData","Что ты хочещь услышать, сахарочек?");
-            pluginProxy.sendMessage("DeskChan:say",new HashMap<String,Object>(){{
-                put("text",text.toString());
-            }});
-        });
-
-        pluginProxy.sendMessage("core:set-event-link",TextOperations.toMap("eventName: \"speech:get\", commandName: \"speech:test-command\", rule: \"скажи что нибудь\""));
-
         log("loading speech to command module");
         return true;
     }
