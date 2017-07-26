@@ -362,28 +362,36 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:change-balloon-timeout", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",200));
+				Map<String, Object> m = (Map<String, Object>) data;
+				Double value=extractValue(m.getOrDefault("value",200));
 				Integer val=value.intValue();
-				Main.setProperty("balloon.default_timeout", val.toString() );
+				if((boolean) m.getOrDefault("save", false))
+					Main.setProperty("balloon.default_timeout", val.toString());
 			});
 		});
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Double value=extractValue(((Map<String,Object>) data).getOrDefault("value",100))/100;
-				Main.setProperty("balloon.opacity", value.toString());
-				if(Balloon.getInstance()!=null) Balloon.getInstance().setBalloonOpacity(value.floatValue());
+				Map<String, Object> m = (Map<String, Object>) data;
+				Double value=extractValue(m.getOrDefault("value",100))/100;
+				if((boolean) m.getOrDefault("save", false))
+					Main.setProperty("balloon.opacity", value.toString());
+				if(Balloon.getInstance()!=null)
+					Balloon.getInstance().setBalloonOpacity(value.floatValue());
 			});
 		});
 		pluginProxy.addMessageListener("gui:change-layer-mode", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				String value=(String) ((Map<String,Object>) data).getOrDefault("value","ALWAYS_TOP");
+				Map<String, Object> m = (Map<String, Object>) data;
+				String value=(String) m.getOrDefault("value","ALWAYS_TOP");
 				App.getInstance().getCharacter().setLayerMode(Character.LayerMode.valueOf(value));
-				Main.setProperty("character.layer_mode", value);
+				if((boolean) m.getOrDefault("save", false))
+					Main.setProperty("character.layer_mode", value);
 			});
 		});
 		pluginProxy.addMessageListener("gui:change-balloon-position-mode", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				String value=(String) ((Map<String,Object>) data).getOrDefault("value","AUTO");
+				Map<String, Object> m = (Map<String, Object>) data;
+				String value=(String) m.getOrDefault("value","AUTO");
 				App.getInstance().getCharacter().setBalloonPositionMode(Balloon.PositionMode.valueOf(value));
 			});
 		});

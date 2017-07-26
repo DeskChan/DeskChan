@@ -136,7 +136,8 @@ class OptionsDialog extends TemplateBox {
 			int sel=-1;
 			for(Object value : values){
 				sel++;
-				if(value.equals(App.getInstance().getCharacter().getBalloonPositionMode())) break;
+				if(value.equals(App.getInstance().getCharacter().getBalloonPositionMode()))
+					break;
 			}
 			put("msgTag","gui:change-balloon-position-mode");
 			put("values", values);
