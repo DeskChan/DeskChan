@@ -46,7 +46,7 @@ public class Main implements Plugin {
 			if (lastSeq != null)
 				stop();
 			lastSeq = pluginProxy.sendMessage("core-utils:notify-after-delay", new HashMap<String, Object>() {{
-						put("delay", Long.parseLong(properties.getProperty("messageTimeout",defaultMessageTimeout)));
+						put("delay", Long.parseLong(getProperty("messageTimeout",defaultMessageTimeout)));
 			}}, this);
 		}
 		
@@ -238,7 +238,7 @@ public class Main implements Plugin {
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
 		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
-		if(properties.getProperty("quotesAutoSync","1").equals("1")) {
+		if(getProperty("quotesAutoSync","1").equals("1")) {
 			Quotes.saveTo(MAIN_PHRASES_URL, "main");
 			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		}
@@ -377,13 +377,13 @@ public class Main implements Plugin {
 				put("min", 10);
 				put("max", 1000);
 				put("step", 1);
-				put("value", Integer.parseInt(properties.getProperty("messageTimeout",defaultMessageTimeout)) / 1000);
+				put("value", Integer.parseInt(getProperty("messageTimeout",defaultMessageTimeout)) / 1000);
 				put("label", getString("message_interval"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "autoSync");
 				put("type", "CheckBox");
-				put("value", properties.getProperty("quotesAutoSync","1").equals("1"));
+				put("value", getProperty("quotesAutoSync","1").equals("1"));
 				put("label", getString("packs_auto_sync"));
 			}});
 			list.add(new HashMap<String, Object>() {{
@@ -526,8 +526,9 @@ public class Main implements Plugin {
 		return path;
 	}
 
-	public static String getProperty(String key,String defaultValue){
-		return properties.getProperty(key,defaultValue);
+	public static String getProperty(String key, Object defaultValue){
+		if(properties==null) return defaultValue.toString();
+		return properties.getProperty(key,defaultValue.toString());
 	}
 	@Override
 	public void unload() {
