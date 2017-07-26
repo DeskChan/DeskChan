@@ -164,7 +164,7 @@ public class Main implements Plugin {
 				(sender, tag, data) -> perkContainer.getAnswerFromPerk(sender, (Map<String, Object>) data)
 		);
 		pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
-			properties.setProperty("lastConversation", Instant.now().toString());
+			setProperty("lastConversation", Instant.now());
 		});
 		pluginProxy.addMessageListener("talk:print-phrases-lack", (sender, tag, data) -> {
 			quotes.printPhrasesLack( (String) ((Map<String, Object>) data).getOrDefault("purpose","CHAT") );
@@ -452,13 +452,13 @@ public class Main implements Plugin {
 			}
 		}
 		try {
-			properties.setProperty("messageTimeout",Integer.toString((Integer) data.getOrDefault("message_interval", 40) * 1000));
+			setProperty("messageTimeout",(Integer) data.getOrDefault("message_interval", 40) * 1000);
 		} catch (Exception e) {
 			errorMessage += e.getMessage();
-			properties.setProperty("messageTimeout",defaultMessageTimeout);
+			setProperty("messageTimeout",defaultMessageTimeout);
 		}
 		boolean qas=(boolean) data.getOrDefault("autoSync", true);
-		properties.setProperty("quotesAutoSync", ( qas ? "1" : "0"));
+		setProperty("quotesAutoSync", ( qas ? "1" : "0"));
 		if(qas){
 			Quotes.saveTo(MAIN_PHRASES_URL, "main");
 			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
@@ -481,6 +481,7 @@ public class Main implements Plugin {
 	}
 
 	void saveSettings() {
+		if(properties==null) properties=new Properties();
 		properties.setProperty("characterPreset", currentPreset.toJSON().toString());
 		properties.setProperty("influenceMultiplier", String.valueOf(Influence.globalMultiplier));
 		properties.setProperty("lastConversation", Instant.now().toString());
@@ -525,7 +526,10 @@ public class Main implements Plugin {
 		}
 		return path;
 	}
-
+	public static void setProperty(String key, Object value){
+		if(properties==null) properties=new Properties();
+		properties.setProperty(key,value.toString());
+	}
 	public static String getProperty(String key, Object defaultValue){
 		if(properties==null) return defaultValue.toString();
 		return properties.getProperty(key,defaultValue.toString());
