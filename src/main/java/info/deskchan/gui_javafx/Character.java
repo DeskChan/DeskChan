@@ -339,6 +339,7 @@ class Character extends MovablePane {
 		MessageInfo(Object data) {
 			String text2;
 			int _timeout;
+			boolean partible=true;
 			if(data instanceof Map){
 				Map<String,Object> mapData = (Map<String,Object>) data;
 				String characterImage = (String) mapData.getOrDefault("characterImage", null);
@@ -350,22 +351,27 @@ class Character extends MovablePane {
 
 				Object ob = mapData.getOrDefault("skippable", true);
 				if(ob instanceof String)
-					skippable = Boolean.parseBoolean((String)ob);
+					skippable = Boolean.parseBoolean((String) ob);
 				else skippable=(Boolean) ob;
 
 				this.characterImage = characterImage;
 
 				ob = mapData.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
 				if(ob instanceof String)
-					priority = Integer.parseInt((String)ob);
+					priority = Integer.parseInt((String) ob);
 				else priority=(Integer) ob;
 
 				ob = mapData.getOrDefault("timeout", Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") ));
 				if(ob instanceof String)
-					_timeout = Integer.parseInt((String)ob);
+					_timeout = Integer.parseInt((String) ob);
 				else _timeout=(Integer) ob;
 
 				text2=(String) mapData.getOrDefault("text", "");
+
+				ob=mapData.getOrDefault("partible", true);
+				if(ob instanceof String)
+					partible=Boolean.parseBoolean((String) ob);
+				else partible=(Boolean) ob;
 			} else {
 				if(data instanceof String)
 					text2=(String) data;
@@ -377,81 +383,86 @@ class Character extends MovablePane {
 				_timeout=Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") );
 			}
 
-			ArrayList<String> list = new ArrayList<>();
-			boolean inQuotes = false;
-			ParsingState state = ParsingState.SENTENCE;
-			int start = 0, end;
-			for (int i = 0; i < text2.length(); i++){
-				switch (text2.charAt(i)) {
-					case '.': case '?': case '!':
-						if (state == ParsingState.PRE_SENTENCE || inQuotes) {
-							continue;
-						}
-						state = ParsingState.END_OF_SENTENCE;
-					    break;
-					case ' ':
-						if (state == ParsingState.SENTENCE && !inQuotes) {
-							continue;
-						}
-						state = ParsingState.PRE_SENTENCE;
-					    break;
-					case '"': case '\'':
-						if (state != ParsingState.SENTENCE) {
+			if(partible) {
+				ArrayList<String> list = new ArrayList<>();
+				boolean inQuotes = false;
+				ParsingState state = ParsingState.SENTENCE;
+				int start = 0, end;
+				for (int i = 0; i < text2.length(); i++) {
+					switch (text2.charAt(i)) {
+						case '.': case '?': case '!':
+							if (state == ParsingState.PRE_SENTENCE || inQuotes) {
+								continue;
+							}
+							state = ParsingState.END_OF_SENTENCE;
+							break;
+						case ' ':
+							if (state == ParsingState.SENTENCE && !inQuotes) {
+								continue;
+							}
+							state = ParsingState.PRE_SENTENCE;
+							break;
+						case '"': case '\'':
+							if (state != ParsingState.SENTENCE) {
+								state = ParsingState.SENTENCE;
+							}
+							inQuotes = !inQuotes;
+							break;
+						default:
+							if (state == ParsingState.SENTENCE || inQuotes) {
+								continue;
+							}
+							end = i;
+							while (text2.charAt(end) == ' ') end--;
 							state = ParsingState.SENTENCE;
-						}
-						inQuotes = !inQuotes;
-					    break;
-					default:
-						if (state == ParsingState.SENTENCE || inQuotes) {
-							continue;
-						}
-						end = i - 1;
-						state = ParsingState.SENTENCE;
-						list.add(text2.substring(start, end));
-						start = i;
-				}
-			}
-			list.add(text2.substring(start));
-			for (int i = 0; i < list.size(); i++) {
-				if (list.get(i).length() > max_length){
-					if (list.get(i).contains(",")) {
-						String[] spl = list.get(i).split(",\\s*");
-						StringBuilder left = new StringBuilder();
-						StringBuilder right = new StringBuilder();
-						left.append(spl[0]).append(",");
-						int j = 1;
-						while (left.length() + spl[j].length() < max_length) {
-							left.append(" ").append(spl[j]).append(",");
-							j++;
-						}
-						left.append("...");
-						right.append("...");
-						for (; j<spl.length; j++) {
-							right.append(" ").append(spl[j]).append(j < spl.length - 1 ? "," : "");
-						}
-						list.set(i, left.toString());
-						list.add(i + 1, right.toString());
-						continue;
-					} else {
-						int l = list.get(i).length() / 2;
-						while (list.get(i).charAt(l) != ' ') {
-							l--;
-						}
-						list.add(i + 1,"... " + list.get(i).substring(l + 1));
-						list.set(i, list.get(i).substring(0,l - 1) + "...");
-						i--;
-						continue;
+							list.add(text2.substring(start, end));
+							start = i;
 					}
 				}
-				if (i + 1 == list.size() || list.get(i).length() + list.get(i + 1).length() > max_length) {
-					continue;
+				list.add(text2.substring(start));
+				for (int i = 0; i < list.size(); i++) {
+					if (list.get(i).length() > max_length) {
+						if (list.get(i).contains(",")) {
+							String[] spl = list.get(i).split(",\\s*");
+							StringBuilder left = new StringBuilder();
+							StringBuilder right = new StringBuilder();
+							left.append(spl[0]).append(",");
+							int j = 1;
+							while (left.length() + spl[j].length() < max_length) {
+								left.append(" ").append(spl[j]).append(",");
+								j++;
+							}
+							left.append("...");
+							right.append("...");
+							for (; j < spl.length; j++) {
+								right.append(" ").append(spl[j]).append(j < spl.length - 1 ? "," : "");
+							}
+							list.set(i, left.toString());
+							list.add(i + 1, right.toString());
+							continue;
+						} else {
+							int l = list.get(i).length() / 2;
+							while (list.get(i).charAt(l) != ' ') {
+								l--;
+							}
+							list.add(i + 1, "... " + list.get(i).substring(l + 1));
+							list.set(i, list.get(i).substring(0, l - 1) + "...");
+							i--;
+							continue;
+						}
+					}
+					if (i + 1 == list.size() || list.get(i).length() + list.get(i + 1).length() > max_length) {
+						continue;
+					}
+					list.set(i, list.get(i) + " " + list.get(i + 1));
+					list.remove(i + 1);
+					i--;
 				}
-				list.set(i, list.get(i) + " " + list.get(i + 1));
-				list.remove(i + 1);
-				i--;
+				text = list.toArray(new String[list.size()]);
+			} else {
+				text=new String[1];
+				text[0]=text2;
 			}
-			text = list.toArray(new String[list.size()]);
-
 			timeout = Math.max( 3000 , text2.length()/text.length * _timeout );
 		}
 
