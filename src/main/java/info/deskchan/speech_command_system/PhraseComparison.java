@@ -1,6 +1,8 @@
 package info.deskchan.speech_command_system;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PhraseComparison {
     private static char[][] replaceable=new char[][]{
@@ -81,6 +83,15 @@ public class PhraseComparison {
         }
         if(sb.length()>0)
             str_list.add(sb.toString());
+        return str_list;
+    }
+    private static Pattern pattern = Pattern.compile("[А-яA-z0-9\\-']+|(\\{\\s*[A-z0-9]+\\s*:\\s*[A-z]+\\s*\\})");
+    public static ArrayList<String> toRuleWords(String text){
+        ArrayList<String> str_list=new ArrayList<String>();
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            str_list.add(matcher.group().replace(" ",""));
+        }
         return str_list;
     }
 }

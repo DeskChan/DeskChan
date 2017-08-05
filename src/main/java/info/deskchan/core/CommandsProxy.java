@@ -112,8 +112,8 @@ public class CommandsProxy{
     public static void removeEventLink(Map<String,Object> data){
         removeEventLink((String)data.getOrDefault("eventName",null),(String)data.getOrDefault("commandName",null));
     }
-    public static Map<String,Object> getCommandsMatch(String eventName){
-        HashMap<String,Object> ar=new HashMap<>();
+    public static ArrayList<HashMap<String,Object>> getCommandsMatch(String eventName){
+        ArrayList<HashMap<String,Object>> ar=new ArrayList<>();
         if(eventName==null)
             PluginManager.log("No event name specified for matching command list");
         else try{
@@ -121,9 +121,10 @@ public class CommandsProxy{
                 if(commands.containsKey(entry.getKey())) {
                     for (Link link : entry.getValue()) {
                         HashMap<String, Object> cpy = new HashMap<String, Object>(commands.get(entry.getKey()));
+                        cpy.put("tag",entry.getKey());
                         if (link.rule != null) cpy.put("rule", link.rule);
                         if (link.msgData != null) cpy.put("msgData", link.msgData);
-                        ar.put(entry.getKey(), cpy);
+                        ar.add(cpy);
                     }
                 }
             }

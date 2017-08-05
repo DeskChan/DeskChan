@@ -61,9 +61,13 @@ public class App extends Application {
 		initSystemTray();
 		OverlayStage normalStage = new OverlayStage("normal");
 		normalStage.show();
-		OverlayStage topStage = new OverlayStage("top");
-		topStage.setAlwaysOnTop(true);
-		topStage.show();
+		try{
+			OverlayStage topStage = new OverlayStage("top");
+			topStage.setAlwaysOnTop(true);
+			topStage.show();
+		} catch(Exception e){
+			Main.log("Top Overlay Stage is not working on your system, sorry");
+		}
 		character.setLayerMode(Character.LayerMode.valueOf(Main.getProperty("character.layer_mode", "ALWAYS_TOP")));
 		initMessageListeners();
 		Main.getInstance().getAppInitSem().release();
@@ -484,11 +488,16 @@ public class App extends Application {
 					mainMenu.add(pluginTrayMenu);
 					javafx.scene.control.Menu pluginContextMenu = new javafx.scene.control.Menu(pluginId);
 					pluginContextMenu.setMnemonicParsing(false);
-					contextMenuItems.add(pluginContextMenu);
-					for (PluginActionInfo action : actions) {
-						pluginTrayMenu.add(action.createMenuItemForTray());
-						pluginContextMenu.getItems().add(action.createMenuItemForContextMenu());
+					try{
+						contextMenuItems.add(pluginContextMenu);
+						for (PluginActionInfo action : actions) {
+							pluginTrayMenu.add(action.createMenuItemForTray());
+							pluginContextMenu.getItems().add(action.createMenuItemForContextMenu());
+						}
+					} catch(Exception e){
+						Main.log("Work with gui while it was not loaded yet");
 					}
+
 				}
 			}
 			mainMenu.add(new Separator());

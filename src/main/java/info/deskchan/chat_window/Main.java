@@ -78,7 +78,7 @@ public class Main implements Plugin {
             put("name", pluginProxy.getString("chat.open"));
             put("msgTag", "chat:setup");
         }});
-        pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("DeskChan:say", (sender, tag, data) -> {
             String text;
             if(data instanceof Map){
                 text=(String) ((HashMap<String,Object>) data).getOrDefault("text", "");

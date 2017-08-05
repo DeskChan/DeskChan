@@ -5,9 +5,18 @@ pluginName = 'testCommand'
 sendMessage("core:add-command", [ tag: pluginName+':command' ])
 
 // здесь выполняете любой код, который должна делать ваша команда
-addMessageListener(pluginName+':command', { sender, tag, data ->
-    text=((HashMap<String,Object>)data).getOrDefault('msgData','Что ты хочещь услышать, сахарочек?')
-    sendMessage("DeskChan:say", text.toString())
+addMessageListener(pluginName+':command', { sender, tag, dat ->
+    HashMap<String,Object> data = dat
+    if(data.containsKey('msgData'))
+        sendMessage('DeskChan:say', data.get('msgData').toString())
+    else {
+        sendMessage('DeskChan:say','Что ты хочешь услышать, сахарочек?')
+        sendMessage('DeskChan:request-user-speech',null, { s, d ->
+            data = d
+            sendMessage('DeskChan:say', data.get('value').toString())
+        })
+    }
+
 })
 
 // здесь мы связываем команду и событие

@@ -10,7 +10,7 @@ public class Main implements Plugin {
 	private static PluginProxyInterface pluginProxy;
 	private final List<MyTimerTask> timerTasks = new LinkedList<>();
 	private final Timer timer = new Timer();
-	
+
 	@Override
 	public boolean initialize(PluginProxyInterface proxy) {
 		pluginProxy = proxy;
@@ -55,6 +55,7 @@ public class Main implements Plugin {
 			put("dstTag", "core-utils:notify-after-delay-default-impl");
 			put("priority", 1);
 		}});
+		UserSpeechRequest.initialize(pluginProxy);
 		return true;
 	}
 	
