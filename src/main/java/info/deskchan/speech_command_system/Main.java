@@ -1,7 +1,5 @@
 package info.deskchan.speech_command_system;
 
-import com.sun.org.apache.xpath.internal.Arg;
-import info.deskchan.core.CommandsProxy;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core_utils.TextOperations;
