@@ -27,7 +27,13 @@ public class Main implements Plugin {
 
         pluginProxy.sendMessage("core:add-event", TextOperations.toMap("tag: \"speech:get\""));
 
-        pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
+        pluginProxy.sendMessage("core:register-alternative",new HashMap<String,Object>(){{
+            put("srcTag", "DeskChan:user-said");
+            put("dstTag", "speech:get");
+            put("priority", 100);
+        }});
+
+        pluginProxy.addMessageListener("speech:get", (sender, tag, data) -> {
             String text=(String)((HashMap<String,Object>)data).getOrDefault("value","");
             ArrayList<String> words = PhraseComparison.toClearWords(text);
             //if(PhraseComparison.Similar(words.get(0),start_word)<0.7) return;
