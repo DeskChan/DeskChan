@@ -1,9 +1,7 @@
 package info.deskchan.speech_command_system;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Argument {
     private static String[] arguments = new String[]{ "text" , "word" , "list" };
