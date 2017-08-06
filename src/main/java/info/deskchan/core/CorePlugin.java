@@ -217,20 +217,22 @@ public class CorePlugin implements Plugin, MessageListener {
 		ListIterator<AlternativeInfo> iterator = l.listIterator();
 		while (iterator.hasNext()) {
 			AlternativeInfo info = iterator.next();
-			if (info.tag.equals(dstTag) && (info.priority != priority)) {
-				iterator.remove();
-				iterator = l.listIterator();
-				while (iterator.hasNext()) {
-					AlternativeInfo info2 = iterator.next();
-					if (info2.priority < priority) {
-						break;
-					}
+
+			if (!info.tag.equals(dstTag)) continue;
+			if (info.priority == priority) break;
+
+			iterator.remove();
+			iterator = l.listIterator();
+			while (iterator.hasNext()) {
+				AlternativeInfo info2 = iterator.next();
+				if (info2.priority < priority) {
+					iterator.previous();
+					break;
 				}
-				info.priority = priority;
-				if(iterator.hasPrevious()) iterator.previous();
-				iterator.add(info);
-				break;
 			}
+			info.priority = priority;
+			iterator.add(info);
+			break;
 		}
 	}
 	
