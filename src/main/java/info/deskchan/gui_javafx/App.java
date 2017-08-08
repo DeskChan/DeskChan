@@ -159,15 +159,11 @@ public class App extends Application {
 				Map<String, Object> m = (Map<String, Object>) data;
 				boolean save = (boolean) m.getOrDefault("save", false);
 				if (m.containsKey("absolute")) {
-					Double opacity = extractValue(m.get("absolute"));
+					Double opacity = getDouble(m.get("absolute"), 1);
 					character.changeOpacity(opacity.floatValue());
 				} else if (m.containsKey("relative")) {
-					Double opacityIncrement = extractValue(m.get("relative"));
+					Double opacityIncrement = getDouble(m.get("relative"), 0);
 					character.changeOpacityRelatively(opacityIncrement.floatValue());
-				} else if (m.containsKey("value")){
-					Double opacity = extractValue(m.get("value"))/100;
-					character.changeOpacity(opacity.floatValue());
-					save=true;
 				}
 
 				if (save) {
@@ -176,19 +172,26 @@ public class App extends Application {
 				}
 			});
 		});
+		pluginProxy.addMessageListener("gui:set-skin-filter", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Map<String, Object> m = (Map<String, Object>) data;
+				double red, green, blue, opacity;
+				red = getDouble(m,"red", 0.0);
+				green = getDouble(m,"green", 0.0);
+				blue = getDouble(m,"blue", 0.0);
+				opacity = getDouble(m, "opacity", 1.0);
+				character.setColorFilter(red, green, blue, opacity);
+			});
+		});
 		pluginProxy.addMessageListener("gui:resize-character", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
 				boolean save = (boolean) m.getOrDefault("save", false);
 				if (m.containsKey("scaleFactor")) {
-					Double scaleFactor = (double) m.get("scaleFactor");
+					Double scaleFactor = getDouble(m.get("scaleFactor"), 1);
 					character.resizeSkin(scaleFactor.floatValue());
-				} else if (m.containsKey("value")) {
-					Double scaleFactor = extractValue(m.get("value"))/100;
-					character.resizeSkin(scaleFactor.floatValue());
-					save=true;
 				} else if (m.containsKey("zoom")) {
-					Double zoom = (double) m.get("zoom");
+					Double zoom = getDouble(m.get("zoom"), 0);
 					character.resizeSkinRelatively(zoom.floatValue());
 				} else if (m.containsKey("width") || m.containsKey("height")) {
 					character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
@@ -367,7 +370,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-balloon-timeout", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				Double value=extractValue(m.getOrDefault("value",200));
+				Double value = getDouble(m, "value", 200);
 				Integer val=value.intValue();
 				if((boolean) m.getOrDefault("save", false))
 					Main.setProperty("balloon.default_timeout", val.toString());
@@ -376,7 +379,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				Double value=extractValue(m.getOrDefault("value",100))/100;
+				Double value = getDouble(m, "value", 100) / 100;
 				if((boolean) m.getOrDefault("save", false))
 					Main.setProperty("balloon.opacity", value.toString());
 				if(Balloon.getInstance()!=null)
@@ -438,16 +441,19 @@ public class App extends Application {
 				}}
 		));
 	}
-	private Double extractValue(Object val){
-		Double value=100d;
-		if(val instanceof Integer){
-			Integer a=(Integer)val;
-			value=a.doubleValue();
-		} else if(val instanceof Double){
-			value=(Double) val;
+
+	private Double getDouble(Object value, double defaultValue) {
+		if (value instanceof Number) {
+			return ((Number) value).doubleValue();
+		} else {
+			return defaultValue;
 		}
-		return value;
 	}
+
+	private Double getDouble(Map<String, Object> map, String key, double defaultValue) {
+		return getDouble(map.getOrDefault(key, defaultValue), defaultValue);
+	}
+
 	private void rebuildMenu() {
 		Menu mainMenu = systemTray.getMenu();
 		if (mainMenu instanceof dorkbox.systemTray.swingUI.SwingUI) {

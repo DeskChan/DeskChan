@@ -50,7 +50,11 @@ interface PluginOptionsControlItem {
 				item = new TextFieldItem();
 				break;
 			case "Spinner":
-				item = new SpinnerItem();
+			case "IntSpinner":
+				item = new IntSpinnerItem();
+				break;
+			case "FloatSpinner":
+				item = new FloatSpinnerItem();
 				break;
 			case "CheckBox":
 				item = new CheckBoxItem();
@@ -247,30 +251,53 @@ interface PluginOptionsControlItem {
 		@Override
 		public Node getNode() { return area; }
 	}
-	class SpinnerItem implements PluginOptionsControlItem {
+
+	abstract class SpinnerItem implements PluginOptionsControlItem {
+
+		protected void configureOnChangeAction(Spinner<? extends Number> spinner, Map<String, Object> configuration) {
+			if(configuration != null && configuration.containsKey("msgTag")) {
+				String msgTag = (String) configuration.get("msgTag");
+				String newValueField = (String) configuration.getOrDefault("newValueField", "value");
+				String oldValueField = (String) configuration.getOrDefault("oldValueField", "oldValue");
+				double multiplier = ((Number) configuration.getOrDefault("multiplier", 1.0)).doubleValue();
+				Map<String, Object> data;
+				if (configuration.containsKey("data")) {
+					data = (Map<String, Object>) configuration.get("data");
+				} else {
+					data = null;
+				}
+
+				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
+					Map<String, Object> eventData = new HashMap<>();
+					eventData.put(newValueField, newValue.doubleValue() * multiplier);
+					eventData.put(oldValueField, oldValue.doubleValue());
+					if (data != null) {
+						data.forEach(eventData::put);
+					}
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, eventData);
+				});
+			}
+		}
+
+	}
+
+	class IntSpinnerItem extends SpinnerItem {
 		
 		private final Spinner<Integer> spinner = new Spinner<>();
 
 		@Override
 		public void init(Map<String, Object> options) {
-			Integer min = (Integer) options.getOrDefault("min", 0);
-			Integer max = (Integer) options.getOrDefault("max", 100);
-			Integer step = (Integer) options.getOrDefault("step", 1);
+			int min = ((Number) options.getOrDefault("min", 0)).intValue();
+			int max = ((Number) options.getOrDefault("max", 100)).intValue();
+			int step = ((Number) options.getOrDefault("step", 1)).intValue();
 			spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, min, step));
-			String msgTag=(String)options.getOrDefault("msgTag",null);
-			if(msgTag!=null){
-				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
-						put("value", newValue);
-						put("oldValue", oldValue);
-					}});
-				});
-			}
+			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
+			configureOnChangeAction(spinner, onChangeMap);
 		}
 		
 		@Override
 		public void setValue(Object value) {
-			spinner.getValueFactory().setValue((Integer) value);
+			spinner.getValueFactory().setValue(((Number) value).intValue());
 		}
 		
 		@Override
@@ -283,6 +310,37 @@ interface PluginOptionsControlItem {
 			return spinner;
 		}
 		
+	}
+
+	class FloatSpinnerItem extends SpinnerItem {
+
+		private final Spinner<Double> spinner = new Spinner<>();
+
+		@Override
+		public void init(Map<String, Object> options) {
+			double min = ((Number) options.getOrDefault("min", 0)).doubleValue();
+			double max = ((Number) options.getOrDefault("max", 100)).doubleValue();
+			double step = ((Number) options.getOrDefault("step", 1)).doubleValue();
+			spinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(min, max, min, step));
+			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
+			configureOnChangeAction(spinner, onChangeMap);
+		}
+
+		@Override
+		public void setValue(Object value) {
+			spinner.getValueFactory().setValue(((Number) value).doubleValue());
+		}
+
+		@Override
+		public Object getValue() {
+			return spinner.getValue();
+		}
+
+		@Override
+		public Node getNode() {
+			return spinner;
+		}
+
 	}
 
 	class CheckBoxItem extends CheckBox implements PluginOptionsControlItem {

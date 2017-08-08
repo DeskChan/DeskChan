@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.effect.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
@@ -37,6 +38,7 @@ class Character extends MovablePane {
 	private Balloon.PositionMode balloonPositionMode;
 	private float scaleFactor = 1.0f;
 	private float skinOpacity = 1.0f;
+	private Color skinColor = null;
 
 	Character(String id, Skin skin) {
 		this.id = id;
@@ -149,6 +151,17 @@ class Character extends MovablePane {
         resize(imageView.getFitWidth(), imageView.getFitHeight());
 		imageView.setOpacity(skinOpacity);
 
+		Lighting lighting = null;
+		if (skinColor != null) {
+			lighting = new Lighting();
+			lighting.setDiffuseConstant(1.0);
+			lighting.setSpecularConstant(0.0);
+			lighting.setSpecularExponent(0.0);
+			lighting.setSurfaceScale(0.0);
+			lighting.setLight(new Light.Distant(45, 45, skinColor));
+		}
+		imageView.setEffect(lighting);
+
         Point2D oldPosition = getPosition();
         double deltaX = -(newWidth - oldWidth) / 2;
         double deltaY = -(newHeight - oldHeight) / 2;
@@ -221,6 +234,19 @@ class Character extends MovablePane {
 	 */
 	void changeOpacityRelatively(float opacityIncrement) {
 		changeOpacity(skinOpacity + opacityIncrement);
+	}
+
+	void setColorFilter(Color color) {
+		skinColor = color;
+		updateImage(false);
+	}
+
+	void setColorFilter(double red, double green, double blue, double opacity) {
+		setColorFilter(new Color(red, green, blue, opacity));
+	}
+
+	void setColorFilter(double red, double green, double blue) {
+		setColorFilter(new Color(red, green, blue, 1.0));
 	}
 
 	void setIdleImageName(String name) {

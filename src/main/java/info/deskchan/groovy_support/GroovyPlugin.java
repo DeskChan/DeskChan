@@ -34,6 +34,10 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 			runnable.run();
 		}
 	}
+
+	protected String getId() {
+		return pluginProxy.getId();
+	}
 	
 	protected void sendMessage(String tag, Object data) {
 		pluginProxy.sendMessage(tag, data);
