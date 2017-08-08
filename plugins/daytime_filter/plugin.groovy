@@ -35,6 +35,7 @@ def setSkinFilter(filter) {
     sendMessage('gui:set-skin-filter', filter)
 }
 
+addCleanupHandler { setSkinFilter(null) }
 updateSkin()
 
 

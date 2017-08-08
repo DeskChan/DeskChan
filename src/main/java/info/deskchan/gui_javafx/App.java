@@ -44,7 +44,7 @@ public class App extends Application {
 	
 	private static App instance = null;
 	static final List<SkinLoader> skinLoaders = Arrays.asList(
-			new SingleImageSkin.Loader(), new ImageSetSkin.Loader()
+			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader()
 	);
 	private SystemTray systemTray = null;
 	private ContextMenu contextMenu = new ContextMenu();
@@ -174,13 +174,17 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:set-skin-filter", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				double red, green, blue, opacity;
-				red = getDouble(m,"red", 0.0);
-				green = getDouble(m,"green", 0.0);
-				blue = getDouble(m,"blue", 0.0);
-				opacity = getDouble(m, "opacity", 1.0);
-				character.setColorFilter(red, green, blue, opacity);
+				if (data != null) {
+					Map<String, Object> m = (Map<String, Object>) data;
+					double red, green, blue, opacity;
+					red = getDouble(m, "red", 0.0);
+					green = getDouble(m, "green", 0.0);
+					blue = getDouble(m, "blue", 0.0);
+					opacity = getDouble(m, "opacity", 1.0);
+					character.setColorFilter(red, green, blue, opacity);
+				} else {
+					character.setColorFilter(null);
+				}
 			});
 		});
 		pluginProxy.addMessageListener("gui:resize-character", (sender, tag, data) -> {
