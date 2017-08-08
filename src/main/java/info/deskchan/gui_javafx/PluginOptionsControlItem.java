@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -55,6 +56,9 @@ interface PluginOptionsControlItem {
 				break;
 			case "FloatSpinner":
 				item = new FloatSpinnerItem();
+				break;
+			case "Slider":
+				item = new SliderItem();
 				break;
 			case "CheckBox":
 				item = new CheckBoxItem();
@@ -252,9 +256,9 @@ interface PluginOptionsControlItem {
 		public Node getNode() { return area; }
 	}
 
-	abstract class SpinnerItem implements PluginOptionsControlItem {
+	abstract class ChangeableItem implements PluginOptionsControlItem {
 
-		protected void configureOnChangeAction(Spinner<? extends Number> spinner, Map<String, Object> configuration) {
+		protected void configureOnChangeAction(ObservableValue<? extends Number> valueProperty, Map<String, Object> configuration) {
 			if(configuration != null && configuration.containsKey("msgTag")) {
 				String msgTag = (String) configuration.get("msgTag");
 				String newValueField = (String) configuration.getOrDefault("newValueField", "value");
@@ -267,7 +271,7 @@ interface PluginOptionsControlItem {
 					data = null;
 				}
 
-				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
+				valueProperty.addListener((obs, oldValue, newValue) -> {
 					Map<String, Object> eventData = new HashMap<>();
 					eventData.put(newValueField, newValue.doubleValue() * multiplier);
 					eventData.put(oldValueField, oldValue.doubleValue());
@@ -281,9 +285,23 @@ interface PluginOptionsControlItem {
 
 	}
 
-	class IntSpinnerItem extends SpinnerItem {
+	class ImprovedSpinner<T> extends Spinner<T> {
+		ImprovedSpinner() {
+			super();
+			setOnScroll(event -> {
+				if (event.getDeltaY() > 0) {
+					increment();
+				} else if (event.getDeltaY() < 0) {
+					decrement();
+				}
+			});
+			setEditable(true);
+		}
+	}
+
+	class IntSpinnerItem extends ChangeableItem {
 		
-		private final Spinner<Integer> spinner = new Spinner<>();
+		private final Spinner<Integer> spinner = new ImprovedSpinner<>();
 
 		@Override
 		public void init(Map<String, Object> options) {
@@ -292,7 +310,7 @@ interface PluginOptionsControlItem {
 			int step = ((Number) options.getOrDefault("step", 1)).intValue();
 			spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, min, step));
 			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
-			configureOnChangeAction(spinner, onChangeMap);
+			configureOnChangeAction(spinner.valueProperty(), onChangeMap);
 		}
 		
 		@Override
@@ -312,9 +330,9 @@ interface PluginOptionsControlItem {
 		
 	}
 
-	class FloatSpinnerItem extends SpinnerItem {
+	class FloatSpinnerItem extends ChangeableItem {
 
-		private final Spinner<Double> spinner = new Spinner<>();
+		private final Spinner<Double> spinner = new ImprovedSpinner<>();
 
 		@Override
 		public void init(Map<String, Object> options) {
@@ -323,7 +341,7 @@ interface PluginOptionsControlItem {
 			double step = ((Number) options.getOrDefault("step", 1)).doubleValue();
 			spinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(min, max, min, step));
 			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
-			configureOnChangeAction(spinner, onChangeMap);
+			configureOnChangeAction(spinner.valueProperty(), onChangeMap);
 		}
 
 		@Override
@@ -339,6 +357,56 @@ interface PluginOptionsControlItem {
 		@Override
 		public Node getNode() {
 			return spinner;
+		}
+
+	}
+
+	class SliderItem extends ChangeableItem {
+
+		private Slider slider = new Slider();
+
+		@Override
+		public void init(Map<String, Object> options) {
+			double min = ((Number) options.getOrDefault("min", 0)).doubleValue();
+			double max = ((Number) options.getOrDefault("max", 100)).doubleValue();
+			Double step = ((Number) options.getOrDefault("step", 1)).doubleValue();
+			slider.setMin(min);
+			slider.setMax(max);
+			slider.setBlockIncrement(step);
+			slider.setMinorTickCount(10);
+			slider.setMajorTickUnit(step * 10);
+			slider.setShowTickLabels(true);
+			if (step > 1) {
+				slider.setShowTickMarks(true);
+				slider.setSnapToTicks(true);
+			}
+
+			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
+			configureOnChangeAction(slider.valueProperty(), onChangeMap);
+
+			slider.setOnScroll(event -> {
+				if (event.getDeltaY() > 0) {
+					slider.increment();
+				} else if (event.getDeltaY() < 0) {
+					slider.decrement();
+				}
+			});
+		}
+
+		@Override
+		public void setValue(Object value) {
+			double val = ((Number) value).doubleValue();
+			slider.setValue(val);
+		}
+
+		@Override
+		public Object getValue() {
+			return slider.getValue();
+		}
+
+		@Override
+		public Node getNode() {
+			return slider;
 		}
 
 	}

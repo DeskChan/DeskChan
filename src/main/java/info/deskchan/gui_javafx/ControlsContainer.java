@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -105,7 +106,15 @@ public class ControlsContainer {
 		Hint(String text){
 			setText(" ❔ ");
 			setBorder(new Border(new BorderStroke(Color.BLACK,BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-			setTooltip(new Tooltip(text));
+			Tooltip tooltip = new Tooltip(text);
+			tooltip.setAutoHide(true);
+			setTooltip(tooltip);
+			setOnMouseClicked(event -> {
+				Point2D p = localToScene(0.0, 0.0);
+				getTooltip().show(this, p.getX()
+						+ getScene().getX() + getScene().getWindow().getX(), p.getY()
+						+ getScene().getY() + getScene().getWindow().getY());
+			});
 		}
 	}
 }

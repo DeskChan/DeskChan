@@ -7,7 +7,6 @@ import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -93,7 +92,7 @@ class OptionsDialog extends TemplateBox {
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "opacity");
-			put("type", "Spinner");
+			put("type", "Slider");
 			put("label", Main.getString("skin.opacity") + " (%)");
 			put("min", 5);
 			put("max", 100);
