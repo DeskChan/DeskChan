@@ -6,6 +6,7 @@ import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -60,36 +61,50 @@ class OptionsDialog extends TemplateBox {
 	}
 
 	private void initMainTab(){
-		List<Map<String, Object>> list = new LinkedList<Map<String, Object>>();
+		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id", "skin");
 			put("type", "Button");
 			put("label", Main.getString("skin"));
-			put("hint",Main.getString("help.skin"));
+			put("hint", Main.getString("help.skin"));
 			put("value", App.getInstance().getCharacter().getSkin().toString().replaceAll(
 				String.format(".*\\%c", File.separatorChar), ""));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "scale");
 			put("type", "Spinner");
-			put("label", Main.getString("skin.scale_factor"));
+			put("label", Main.getString("skin.scale_factor") + " (%)");
 			put("min", 10);
 			put("max", 1000);
 			put("step", 5);
-			put("msgTag","gui:resize-character");
-			double scaleFactorValue = Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0"));
+			Map<String, Object> onChangeMap = new HashMap<>();
+			onChangeMap.put("msgTag", "gui:resize-character");
+			onChangeMap.put("newValueField", "scaleFactor");
+			onChangeMap.put("multiplier", 0.01);
+			Map<String, Boolean> data = new HashMap<>();
+			data.put("save", true);
+			onChangeMap.put("data", data);
+			put("onChange", onChangeMap);
+			double scaleFactorValue = Double.parseDouble(Main.getProperty("skin.scale_factor", "1.0"));
 			// e.g. 1.74 -> 1.75
 			scaleFactorValue = Math.round(scaleFactorValue * 200.0f) / 2.0f;
 			put("value", (int)scaleFactorValue);
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "opacity");
-			put("type", "Spinner");
-			put("label", Main.getString("skin.opacity"));
+			put("type", "Slider");
+			put("label", Main.getString("skin.opacity") + " (%)");
 			put("min", 5);
 			put("max", 100);
 			put("step", 5);
-			put("msgTag","gui:change-skin-opacity");
+			Map<String, Object> onChangeMap = new HashMap<>();
+			onChangeMap.put("msgTag", "gui:change-skin-opacity");
+			onChangeMap.put("newValueField", "absolute");
+			onChangeMap.put("multiplier", 0.01);
+			Map<String, Boolean> data = new HashMap<>();
+			data.put("save", true);
+			onChangeMap.put("data", data);
+			put("onChange", onChangeMap);
 			double opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
 			opacity = Math.round(opacity * 200.0f) / 2.0f;
 			put("value", (int)opacity);
@@ -122,7 +137,12 @@ class OptionsDialog extends TemplateBox {
 			put("min", 0);
 			put("max", 2000);
 			put("step", 50);
-			put("msgTag","gui:change-balloon-timeout");
+			Map<String, Object> onChangeMap = new HashMap<>();
+			onChangeMap.put("msgTag", "gui:change-balloon-timeout");
+			Map<String, Boolean> data = new HashMap<>();
+			data.put("save", true);
+			onChangeMap.put("data", data);
+			put("onChange", onChangeMap);
 			put("value", Integer.parseInt(Main.getProperty("balloon.default_timeout", "200")));
 		}});
 		list.add(new HashMap<String, Object>() {{
@@ -314,6 +334,7 @@ class OptionsDialog extends TemplateBox {
 		button.setOnAction(event -> {
 			DirectoryChooser chooser = new DirectoryChooser();
 			chooser.setTitle(Main.getString("load_plugin"));
+			chooser.setInitialDirectory(PluginManager.getPluginsDirPath().toFile());
 			File file = chooser.showDialog(OptionsDialog.this.getDialogPane().getScene().getWindow());
 			if (file != null) {
 				Path path = file.toPath();

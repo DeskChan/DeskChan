@@ -199,6 +199,11 @@ public class Main implements Plugin {
 					}
 				}
 		);
+
+		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
+			phraseRequest(TextOperations.toMap("purpose: BYE, priority: 5000"));
+		});
+
 		pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
 			put("name", getString("say_phrase"));
 			put("msgTag", "talk:request");
@@ -536,7 +541,6 @@ public class Main implements Plugin {
 	@Override
 	public void unload() {
 		saveSettings();
-		phraseRequest(TextOperations.toMap("purpose: BYE, priority: 5000"));
 	}
 
 	static PluginProxyInterface getPluginProxy() {
