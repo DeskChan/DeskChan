@@ -11,36 +11,20 @@ import javafx.stage.Window;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class ControlsContainer {
 	
 	final String name;
 	List<Map<String, Object>> controls;
-	String msgTag;
+	String msgSave;
+	String msgClose;
 	private float columnGrow = 0.5f;
-	private Supplier<Window> parentSupplier;
+	private GridPane gridPane;
 
-	ControlsContainer(Supplier<Window> parentSupplier, String name, List<Map<String, Object>> controls, String msgTag) {
+	ControlsContainer(String name, List<Map<String, Object>> controls, String msgSave, String msgClose) {
 		this.name = name;
-		this.controls = controls;
-		this.msgTag = msgTag;
-		this.parentSupplier = parentSupplier;
-	}
-
-	ControlsContainer(Window parent, String name, List<Map<String, Object>> controls, String msgTag) {
-		this(() -> parent, name, controls, msgTag);
-	}
-
-	void update(List<Map<String, Object>> controls, String msgTag) {
-		this.controls = controls;
-		this.msgTag = msgTag;
-	}
-	
-	Node createControlsPane() {
-		final Map<String, PluginOptionsControlItem> namedControls = new HashMap<>();
-		BorderPane borderPane = new BorderPane();
-		GridPane gridPane = new GridPane();
+		update(controls, msgSave, msgClose);
+		gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		float columnGrowPercentage = columnGrow * 100;
 		ColumnConstraints column1 = new ColumnConstraints();
@@ -50,13 +34,23 @@ public class ControlsContainer {
 		ColumnConstraints column3 = new ColumnConstraints();
 		column3.setPercentWidth(5);
 		gridPane.getColumnConstraints().addAll(column1, column2, column3);
+	}
 
+	void update(List<Map<String, Object>> controls, String msgSave, String msgClose) {
+		this.controls = controls;
+		this.msgSave = msgSave;
+		this.msgClose = msgClose;
+	}
+	Node createControlsPane(Window parent) {
+		gridPane.getChildren().clear();
+		final Map<String, PluginOptionsControlItem> namedControls = new HashMap<>();
+		BorderPane borderPane = new BorderPane();
 		int row = 0;
 		for (Map<String, Object> controlInfo : controls) {
 			String id = (String) controlInfo.getOrDefault("id", null);
 			String label = (String) controlInfo.getOrDefault("label", null);
 			String hint = (String) controlInfo.getOrDefault("hint", null);
-			PluginOptionsControlItem item = PluginOptionsControlItem.create(parentSupplier.get(), controlInfo);
+			PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, controlInfo);
 			if (item == null) {
 				continue;
 			}
@@ -77,7 +71,7 @@ public class ControlsContainer {
 			}
 			row++;
 		}
-		if (msgTag != null) {
+		if (msgSave != null) {
 			Button saveButton = new Button(Main.getString("save"));
 			saveButton.setOnAction(event -> {
 				Map<String, Object> data = new HashMap<>();
@@ -93,9 +87,14 @@ public class ControlsContainer {
 						}
 					}
 				}
-				Main.getInstance().getPluginProxy().sendMessage(msgTag, data);
+				Main.getInstance().getPluginProxy().sendMessage(msgSave, data);
 			});
-			gridPane.add(saveButton, 0, row, 2, 1);
+			borderPane.setBottom(saveButton);
+		}
+		if (msgClose != null) {
+			parent.setOnCloseRequest(event -> {
+				Main.getInstance().getPluginProxy().sendMessage(msgClose,null);
+			});
 		}
 		borderPane.setTop(gridPane);
 		return borderPane;

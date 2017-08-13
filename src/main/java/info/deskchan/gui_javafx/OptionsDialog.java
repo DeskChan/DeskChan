@@ -6,8 +6,6 @@ import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -15,12 +13,11 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.util.Callback;
 import javafx.util.converter.DefaultStringConverter;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
@@ -39,6 +36,7 @@ class OptionsDialog extends TemplateBox {
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
 	private TableView<CommandItem> commandsTable=new TableView<>();
 	private static Map<String, List<ControlsContainer>> pluginsTabs = new HashMap<>();
+	private static Map<String, List<ControlsContainer>> pluginsSubMenus = new HashMap<>();
 
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
@@ -170,8 +168,8 @@ class OptionsDialog extends TemplateBox {
 			put("label", Main.getString("load_resource_pack"));
 			put("value", Main.getString("load"));
 		}});
-		ControlsContainer poTab = new ControlsContainer(() -> instance.getDialogPane().getScene().getWindow(), Main.getString("appearance"), list, null);
-		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane()));
+		ControlsContainer poTab = new ControlsContainer(Main.getString("appearance"), list, null, null);
+		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
 	}
 	private void initCommandsTab(){
 		BorderPane commandTab = new BorderPane();
@@ -183,7 +181,8 @@ class OptionsDialog extends TemplateBox {
 
 		TableColumn eventCol = new TableColumn(Main.getString("events"));
 		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
-		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),FXCollections.observableArrayList(CommandsProxy.getEventsList())));
+		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
+				FXCollections.observableArrayList(CommandsProxy.getEventsList())));
 		eventCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -193,7 +192,8 @@ class OptionsDialog extends TemplateBox {
 
 		TableColumn commandCol = new TableColumn(Main.getString("commands"));
 		commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
-		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),FXCollections.observableArrayList(CommandsProxy.getCommandsList())));
+		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
+				FXCollections.observableArrayList(CommandsProxy.getCommandsList())));
 		commandCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -277,6 +277,20 @@ class OptionsDialog extends TemplateBox {
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
 		pluginsList.setPrefSize(400, 300);
+		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
+			@Override
+			public ListCell<PluginListItem> call(ListView<PluginListItem> obj) {
+				ListCell<PluginListItem> cell = new ListCell<PluginListItem>(){
+					@Override
+					protected void updateItem(PluginListItem t, boolean bln) {
+						super.updateItem(t, bln);
+						if (t != null)
+							setGraphic(t.hbox);
+					}
+				};
+				return cell;
+			}
+		});
 		pluginProxy.addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				for (PluginListItem item : pluginsList.getItems()) {
@@ -311,48 +325,7 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 		hbox.getChildren().add(button);
-		Button unloadPluginButton = new Button(Main.getString("unload"));
-		Button blacklistPluginButton = new Button(Main.getString("plugin_list.blacklist"));
-		ChangeListener<PluginListItem> pluginListItemChangeListener = (observableValue, oldItem, item) -> {
-			unloadPluginButton.setDisable((item == null) || item.blacklisted || item.id.equals("core") ||
-					item.id.equals(Main.getInstance().getPluginProxy().getId()));
-			blacklistPluginButton.setDisable((item == null) || item.id.equals("core") ||
-					item.id.equals(Main.getInstance().getPluginProxy().getId()));
-			blacklistPluginButton.setText(((item != null) && item.blacklisted)
-					? Main.getString("plugin_list.unblacklist") : Main.getString("plugin_list.blacklist"));
-		};
-		unloadPluginButton.setOnAction(event -> {
-			PluginListItem item = pluginsList.getSelectionModel().getSelectedItem();
-			if (item.blacklisted) {
-				return;
-			}
-			if (item.id.equals("core")) {
-				return;
-			}
-			if (item.id.equals(Main.getInstance().getPluginProxy().getId())) {
-				return;
-			}
-			PluginManager.getInstance().unloadPlugin(item.id);
-		});
-		hbox.getChildren().add(unloadPluginButton);
-		blacklistPluginButton.setOnAction(event -> {
-			PluginListItem item = pluginsList.getSelectionModel().getSelectedItem();
-			if (item.blacklisted) {
-				item.blacklisted = false;
-				PluginManager.getInstance().removePluginFromBlacklist(item.id);
-				PluginManager.getInstance().tryLoadPluginByName(item.id);
-			} else {
-				item.blacklisted = true;
-				PluginManager.getInstance().addPluginToBlacklist(item.id);
-			}
-			pluginsList.getItems().set(pluginsList.getSelectionModel().getSelectedIndex(), item);
-			pluginListItemChangeListener.changed(pluginsList.getSelectionModel().selectedItemProperty(),
-					pluginsList.getSelectionModel().getSelectedItem(),
-					pluginsList.getSelectionModel().getSelectedItem());
-		});
-		hbox.getChildren().add(blacklistPluginButton);
 		pluginsTab.setBottom(hbox);
-		pluginsList.getSelectionModel().selectedItemProperty().addListener(pluginListItemChangeListener);
 		tabPane.getTabs().add(new Tab(Main.getString("plugins"), pluginsTab));
 
 		/// alternatives
@@ -418,7 +391,7 @@ class OptionsDialog extends TemplateBox {
 		/// plugin's tabs
 		for (Map.Entry<String, List<ControlsContainer>> entry : pluginsTabs.entrySet()) {
 			for (ControlsContainer tab : entry.getValue()) {
-				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane()));
+				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
 			}
 		}
 
@@ -511,12 +484,19 @@ class OptionsDialog extends TemplateBox {
 		updateInstanceTabs();
 		Main.setProperty("skin.name", App.getInstance().getCharacter().getSkin().getName());
 	}
-	static void registerPluginTab(String plugin, String name, List<Map<String, Object>> controls, String msgTag) {
-		List<ControlsContainer> tabs = pluginsTabs.getOrDefault(plugin, null);
-		ControlsContainer poTab = new ControlsContainer(() -> instance.getDialogPane().getScene().getWindow(), name, controls, msgTag);
+	static void registerPluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
+		Map<String, List<ControlsContainer>> menu;
+		if(isTab) menu=pluginsTabs;
+		else menu=pluginsSubMenus;
+		List<ControlsContainer> tabs = menu.getOrDefault(plugin, null);
+		String name = (String) data.getOrDefault("name", plugin);
+		List<Map<String, Object>> controls = (List<Map<String, Object>>) data.getOrDefault("controls",new LinkedList<>());
+		String msgTag = (String) data.getOrDefault("msgTag", null);
+		String msgClose = (String) data.getOrDefault("onClose", null);
+		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag, msgClose);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
-			pluginsTabs.put(plugin, tabs);
+			menu.put(plugin, tabs);
 			tabs.add(poTab);
 			return;
 		} else {
@@ -536,32 +516,88 @@ class OptionsDialog extends TemplateBox {
 		if (instance != null) {
 			for (Tab tab : instance.tabPane.getTabs()) {
 				if (tab.getText().equals(name)) {
-					tab.setContent(poTab.createControlsPane());
+					tab.setContent(poTab.createControlsPane(instance.getDialogPane().getScene().getWindow()));
 					break;
 				}
 			}
 		}
+		if(!isTab){
+			for(PluginListItem pli : instance.pluginsList.getItems())
+				pli.updateOptionsSubMenu();
+		}
 	}
-
 	static void unregisterPluginTabs(String plugin) {
 		pluginsTabs.remove(plugin);
 	}
 
 	private static class PluginListItem {
 
+		private static final String[] importantPlugins=new String[]{
+				"core", Main.getInstance().getPluginProxy().getId()
+		};
+
 		String id;
 		boolean blacklisted;
+		HBox hbox = new HBox();
+		HBox menuBox = new HBox();
+		Label label;
+		Pane pane = new Pane();
 
 		PluginListItem(String id, boolean blacklisted) {
 			this.id = id;
 			this.blacklisted = blacklisted;
+			label = new Label(toString());
+			Button unloadPluginButton = new Button("X");
+			unloadPluginButton.setOnAction(event -> {
+				for(String plname : importantPlugins){
+					if(plname.equals(id)){
+						Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+						alert.setTitle(Main.getString("default_messagebox_name"));
+						alert.setContentText(Main.getString("info.shutdown_important"));
+						Optional<ButtonType> result = alert.showAndWait();
+						if (result.get() == ButtonType.OK)
+							PluginManager.getInstance().unloadPlugin(id);
+						return;
+					}
+				}
+				PluginManager.getInstance().unloadPlugin(id);
+			});
+			Button blacklistPluginButton = new Button("\uD83D\uDCA1");
+			PluginListItem item=this;
+			blacklistPluginButton.setOnAction(event -> {
+				item.toggleBlacklisted();
+			});
+			hbox.getChildren().addAll(label, pane, menuBox, blacklistPluginButton, unloadPluginButton);
+			HBox.setHgrow(pane, Priority.ALWAYS);
+			updateOptionsSubMenu();
 		}
-
+		void updateOptionsSubMenu(){
+			List<ControlsContainer> list=pluginsSubMenus.getOrDefault(id, null);
+			menuBox.getChildren().clear();
+			if(list==null) return;
+			for(ControlsContainer container : list){
+				Button button = new Button(container.name);
+				button.setOnAction((event) -> {
+					App.getInstance().setupCustomWindow(container);
+				});
+				menuBox.getChildren().add(button);
+			}
+		}
+		void toggleBlacklisted(){
+			blacklisted=!blacklisted;
+			if (blacklisted) {
+				PluginManager.getInstance().addPluginToBlacklist(id);
+			} else {
+				PluginManager.getInstance().removePluginFromBlacklist(id);
+				PluginManager.getInstance().tryLoadPluginByName(id);
+			}
+			label.setText(toString());
+			menuBox.setVisible(!blacklisted);
+		}
 		@Override
 		public String toString() {
 			return blacklisted ? (id + " [BLACKLISTED]") : id;
 		}
-
 	}
 
 	private static class AlternativeTreeItem {

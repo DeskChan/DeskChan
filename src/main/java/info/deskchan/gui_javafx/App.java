@@ -17,6 +17,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextArea;
+import javafx.scene.media.AudioClip;
 import javafx.scene.text.Font;
 import javafx.stage.*;
 import javafx.util.Duration;
@@ -100,7 +101,28 @@ public class App extends Application {
 		systemTray.setStatus(NAME);
 		rebuildMenu();
 	}
-	
+	public void setupCustomWindow(Map<String,Object> data){
+		String name=(String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
+		setupCustomWindow(new ControlsContainer(name, (List<Map<String, Object>>) data.get("controls"),
+				(String) data.getOrDefault("msgTag", null), (String) data.getOrDefault("onClose", null)));
+
+	}
+	public void setupCustomWindow(ControlsContainer container){
+		String name=container.name;
+		for(TemplateBox window : customWindowOpened){
+			if(window.getTitle().equals(name)){
+				window.getDialogPane().setContent(container.createControlsPane(window.getDialogPane().getScene().getWindow()));
+				return;
+			}
+		}
+		TemplateBox dialog = new TemplateBox(name);
+		customWindowOpened.add(dialog);
+		Window ownerWindow = dialog.getDialogPane().getScene().getWindow();
+		dialog.getDialogPane().setContent(container.createControlsPane(ownerWindow));
+		dialog.requestFocus();
+		dialog.show();
+		dialog.setOnCloseRequest(event -> customWindowOpened.remove(dialog));
+	}
 	private void initMessageListeners() {
 		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 		pluginProxy.addMessageListener("gui:register-simple-action", (sender, tag, data) -> {
@@ -202,9 +224,12 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				OptionsDialog.registerPluginTab(sender, (String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
+				OptionsDialog.registerPluginMenu(sender, (Map<String, Object>) data, true);
+			});
+		});
+		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				OptionsDialog.registerPluginMenu(sender, (Map<String, Object>) data,false);
 			});
 		});
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
@@ -216,32 +241,29 @@ public class App extends Application {
 				dialog.show();
 			});
 		});
-		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
+		pluginProxy.addMessageListener("gui:play-sound", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				String name=(String) m.getOrDefault("name", Main.getString("default_messagebox_name"));
-				for(TemplateBox window : customWindowOpened){
-					if(window.getTitle().equals(name)){
-						ControlsContainer controlsContainer = new ControlsContainer(window.getDialogPane().getScene().getWindow(),name,
-								(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
-						window.getDialogPane().setContent(controlsContainer.createControlsPane());
-						return;
-					}
+				String filename=null;
+				if(m.containsKey("value")) filename=(String) m.get("value");
+				if(m.containsKey("file"))  filename=(String) m.get("file");
+				AudioClip clip;
+				try {
+					clip = new AudioClip(Paths.get(filename).toUri().toString());
+				} catch(Exception e){
+					Main.log(e);
+					return;
 				}
-				TemplateBox dialog = new TemplateBox(name);
-				customWindowOpened.add(dialog);
-				Window ownerWindow = dialog.getDialogPane().getScene().getWindow();
-				ControlsContainer controlsContainer = new ControlsContainer(ownerWindow, (String) m.get("name"),
-						(List<Map<String, Object>>) m.get("controls"), (String) m.getOrDefault("msgTag", null));
-				String onClose=(String) m.getOrDefault("onClose", null);
-				if(onClose!=null)
-					dialog.setOnCloseRequest(event -> {
-						customWindowOpened.remove(dialog);
-						pluginProxy.sendMessage(onClose,null);
-					});
-				dialog.getDialogPane().setContent(controlsContainer.createControlsPane());
-				dialog.requestFocus();
-				dialog.show();
+				Object volume=m.getOrDefault("volume",new Integer(100));
+				if     (volume instanceof Integer) clip.setVolume(((Integer) volume).doubleValue()/100);
+				else if(volume instanceof Double) clip.setVolume((Double) volume);
+				else if(volume instanceof String) clip.setVolume(Double.valueOf((String)volume));
+				clip.play();
+			});
+		});
+		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				setupCustomWindow((Map<String,Object>) data);
 			});
 		});
 		pluginProxy.addMessageListener("gui:choose-files", (sender, tag, data) -> {

@@ -95,9 +95,11 @@ class Character extends MovablePane {
 					y0 /= scaleFactor;
 
 					PixelReader imagePixels = imageView.getImage().getPixelReader();
-					Color pixelColor = imagePixels.getColor((int) x0, (int) y0);
-
-					return !pixelColor.equals(Color.TRANSPARENT);
+					if (imageView.getImage()!=null && x0 < imageView.getImage().getWidth() && y0 < imageView.getImage().getHeight()){
+						Color pixelColor = imagePixels.getColor((int) x0, (int) y0);
+						return !pixelColor.equals(Color.TRANSPARENT);
+					}
+					return false;
 				});
 	}
 
