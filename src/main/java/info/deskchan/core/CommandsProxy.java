@@ -52,10 +52,23 @@ public class CommandsProxy{
             commands.put(tag,data);
         }
     }
-    public static void removeCommand(String tag){
-        if(tag==null)
+    public static void removeCommand(Object data){
+        if (data == null) {
             PluginManager.log("No name specified for command to remove, recieved null");
-        else commands.remove(tag);
+        }
+        else if (data instanceof Map) {
+            Map<String, Object> m = (Map<String, Object>) data;
+            if (m.containsKey("tag")) {
+                commands.remove(m.get("tag").toString());
+            } else {
+                PluginManager.log("No name specified for command to remove, recieved null");
+            }
+        }
+        else if (data instanceof String) {
+            commands.remove(data);
+        } else {
+            PluginManager.log("Attempt to remove a command using invalid tag");
+        }
     }
     public static void addEvent(Map<String,Object> data){
         String tag=(String)data.getOrDefault("tag", null);
@@ -163,7 +176,7 @@ public class CommandsProxy{
     }
     public static void initialize(PluginProxyInterface proxy){
         proxy.addMessageListener("core:add-command", (sender, tag, data) -> addCommand((Map<String,Object>) data) );
-        proxy.addMessageListener("core:remove-command", (sender, tag, data) -> removeCommand((String) data) );
+        proxy.addMessageListener("core:remove-command", (sender, tag, data) -> removeCommand(data) );
         proxy.addMessageListener("core:add-event", (sender, tag, data) -> addEvent((Map<String,Object>) data) );
         proxy.addMessageListener("core:remove-event", (sender, tag, data) -> removeEvent((String) data) );
         proxy.addMessageListener("core:set-event-link", (sender, tag, data) -> addEventLink((Map<String,Object>) data) );
