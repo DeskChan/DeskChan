@@ -234,7 +234,15 @@ public class PluginManager {
 	}
 	
 	public boolean loadPluginByName(String name) throws Throwable {
-		return plugins.containsKey(name) || loadPluginByPath(getPluginDirPath(name));
+		try {
+			return plugins.containsKey(name) || loadPluginByPath(getPluginDirPath(name));
+		} catch(Throwable e){
+			try {
+				return loadPluginByPackageName("info.deskchan."+name);
+			} catch(Throwable e2){
+				throw e;
+			}
+		}
 	}
 	
 	public boolean tryLoadPluginByName(String name) {
