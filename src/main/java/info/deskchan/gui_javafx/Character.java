@@ -3,7 +3,8 @@ package info.deskchan.gui_javafx;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.effect.*;
+import javafx.scene.effect.Light;
+import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
@@ -394,7 +395,13 @@ class Character extends MovablePane {
 					_timeout = Integer.parseInt((String) ob);
 				else _timeout=(Integer) ob;
 
-				text2=(String) mapData.getOrDefault("text", "");
+				System.out.println(mapData);
+				if(mapData.containsKey("text"))
+					text2=(String) mapData.get("text");
+				else if(mapData.containsKey("msgData"))
+					text2=(String) mapData.get("msgData");
+				else text2="";
+				System.out.println(text2);
 
 				ob=mapData.getOrDefault("partible", true);
 				if(ob instanceof String)
@@ -404,7 +411,6 @@ class Character extends MovablePane {
 				if(data instanceof String)
 					text2=(String) data;
 				else text2=data.toString();
-
 				skippable=true;
 				characterImage = "normal";
 				priority=DEFAULT_MESSAGE_PRIORITY;

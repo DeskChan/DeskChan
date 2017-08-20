@@ -283,6 +283,7 @@ public class CommandsProxy{
             events.put("core-events:loading-complete",owner);
             events.put("core-events:plugin-load",owner);
             events.put("core-events:plugin-unload",owner);
+            commands.put("DeskChan:say",owner);
             load();
             callByTag(proxy,"core-events:loading-complete");
         });

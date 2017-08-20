@@ -5,4 +5,5 @@ public interface WeatherServer {
     DayForecast getByDay(int day);
     String checkLocation();
     String getLastUpdate();
+    int getDaysLimit();
 }

@@ -162,13 +162,19 @@ class OptionsDialog extends TemplateBox {
 			put("value", sel);
 		}});
         list.add(new HashMap<String, Object>() {{
-			put("id", "opacity");
-			put("type", "Spinner");
-			put("label", Main.getString("balloon.opacity"));
+			put("id", "balloon-opacity");
+			put("type", "Slider");
+			put("label", Main.getString("balloon.opacity") + " (%)");
 			put("min", 5);
 			put("max", 100);
 			put("step", 5);
-			put("msgTag","gui:change-balloon-opacity");
+			Map<String, Object> onChangeMap = new HashMap<>();
+			onChangeMap.put("msgTag", "gui:change-balloon-opacity");
+			onChangeMap.put("newValueField", "value");
+			Map<String, Boolean> data = new HashMap<>();
+			data.put("save", true);
+			onChangeMap.put("data", data);
+			put("onChange", onChangeMap);
 			double opacity = Float.parseFloat(Main.getProperty("balloon.opacity", "1.0"));
 			opacity = Math.round(opacity * 200.0f) / 2.0f;
 			put("value", (int)opacity);
@@ -612,6 +618,7 @@ class OptionsDialog extends TemplateBox {
 			this.blacklisted = blacklisted;
 			label = new Label(toString());
 			Button unloadPluginButton = new Button("X");
+			unloadPluginButton.setTooltip(new Tooltip(Main.getString("info.unload-plugin")));
 			unloadPluginButton.setOnAction(event -> {
 				for(String plname : importantPlugins){
 					if(plname.equals(id)){
@@ -626,6 +633,7 @@ class OptionsDialog extends TemplateBox {
 				blacklistPluginButton = new Button(locked);
 			else
 				blacklistPluginButton = new Button(unlocked);
+			blacklistPluginButton.setTooltip(new Tooltip(Main.getString("info.blacklist-plugin")));
 			PluginListItem item=this;
 			blacklistPluginButton.setOnAction(event -> {
 				for(String plname : importantPlugins) {

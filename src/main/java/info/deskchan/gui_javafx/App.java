@@ -100,12 +100,12 @@ public class App extends Application {
 		// KeyboardEventNotificator.initialize();
 		Main.getInstance().getAppInitSem().release();
 		character.say(new HashMap<String,Object>(){{
-			put("text","Подождите, я загружаюсь");
+			put("text", Main.getString("info.loading"));
 			put("priority",20000);
 			put("timeout",500000);
 		}});
 		character.say(new HashMap<String,Object>(){{
-			put("text","Если я загружаюсь слишком долго, возможно что-то не так.");
+			put("text",Main.getString("info.not-loading"));
 			put("priority",19999);
 			put("timeout",500000);
 		}});
@@ -152,12 +152,15 @@ public class App extends Application {
 				return;
 			}
 		}
-		ControlsWindow thisSialog = new ControlsWindow(name, sender, container);
-		customWindowOpened.add(thisSialog);
-		thisSialog.requestFocus();
-		thisSialog.show();
-		thisSialog.setOnCloseRequest(event -> {
-			customWindowOpened.remove(thisSialog);
+		ControlsWindow dialog = new ControlsWindow(name, sender, container);
+		customWindowOpened.add(dialog);
+		dialog.requestFocus();
+		dialog.show();
+		dialog.getDialogPane().getScene().getWindow().setOnCloseRequest(event -> {
+			customWindowOpened.remove(dialog);
+		});
+		dialog.setOnCloseRequest(event -> {
+			customWindowOpened.remove(dialog);
 		});
 	}
 	public void updateCustomWindow(String sender, Map<String,Object> data){
@@ -478,6 +481,7 @@ public class App extends Application {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
 				Double value = getDouble(m, "value", 100) / 100;
+
 				if((boolean) m.getOrDefault("save", false))
 					Main.setProperty("balloon.opacity", value.toString());
 				if(Balloon.getInstance()!=null)

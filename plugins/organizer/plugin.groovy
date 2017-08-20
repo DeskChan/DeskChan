@@ -131,6 +131,18 @@ sendMessage( 'gui:setup-options-submenu',
           ]
         ]
 )
+sendMessage('core:set-event-link', [
+        eventName: 'speech:get',
+        commandName: 'DeskChan:say',
+        rule: 'органайзер',
+        msgData: 'Прости, я ещё не умею ставить напоминания через чат. Зайди в Опции->Плагины->Расписание'
+])
+sendMessage('core:set-event-link', [
+        eventName: 'speech:get',
+        commandName: 'DeskChan:say',
+        rule: 'будильник',
+        msgData: 'Прости, я ещё не умею ставить напоминания через чат. Зайди в Опции->Плагины->Расписание'
+])
 /*sendMessage( 'gui:setup-options-submenu',
         [ 'name': 'Watch',
           'controls': [

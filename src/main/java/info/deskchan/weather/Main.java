@@ -31,7 +31,6 @@ public class Main implements Plugin {
             properties = new Properties();
             properties.setProperty("city","Nowhere");
             log("Cannot find file: " + pluginProxy.getDataDirPath().resolve("config.properties"));
-            log(e);
         }
 
         pluginProxy.setResourceBundle("info/deskchan/weather/weather-strings");
@@ -47,13 +46,13 @@ public class Main implements Plugin {
             saveOptions();
         });
         pluginProxy.sendMessage("core:add-command", TextOperations.toMap("tag: \"weather:say-weather\""));
-        String[] v=new String[]{ "сейчас", "", "сегодня", "0", "завтра", "1", "послезавтра", "2"};
-        for(int i=0;i<4;i++) {
+        String[] v=new String[]{ "", "now", " сейчас", "", " сегодня", "0", " завтра", "1", " послезавтра", "2"};
+        for(int i=0;i<5;i++) {
             Map m=new HashMap<String, String>();
             m.put("eventName", "speech:get");
             m.put("commandName", "weather:say-weather");
-            m.put("rule", "погода " + v[i * 2]);
-            if (i != 0) m.put("msgData", v[1 + i * 2]);
+            m.put("rule", "погода" + v[i * 2]);
+            if (i != 1) m.put("msgData", v[1 + i * 2]);
             pluginProxy.sendMessage("core:set-event-link",  m);
         }
         pluginProxy.addMessageListener("weather:say-weather",(sender, tag, data) -> {
@@ -82,11 +81,15 @@ public class Main implements Plugin {
                         num = Integer.valueOf(c);
                     } catch (Exception e) { }
                 }
-                say.put("text", server.getByDay(num).toString()+", "+Main.getString("lastUpdate")+": "+server.getLastUpdate());
+                if(num>=server.getDaysLimit()){
+                    say.put("text", "Ой, прости, этот день будет слишком нескоро. Я не знаю, какая будет погода.");
+                } else {
+                    say.put("text", server.getByDay(num).toString() + ", " + Main.getString("lastUpdate") + ": " + server.getLastUpdate());
+                }
             }
             pluginProxy.sendMessage("DeskChan:say",say);
         });
-        pluginProxy.addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	{
+        pluginProxy.addMessageListener("talk:reject-quote",(sender, tag, dat) -> {
             HashMap<String, Object> data = (HashMap<String, Object>) dat;
             ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
             HashMap<String, Object> ret = new HashMap<>();
@@ -94,9 +97,14 @@ public class Main implements Plugin {
             ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
             ret.put("quotes",quotes_list);
             if (list != null) {
+                TimeForecast now=server.getNow();
                 for (HashMap<String, Object> entry : list) {
                     List<String> types = (List<String>) entry.get("weather");
                     if(types==null) continue;
+                    if(now==null){
+                        quotes_list.add(entry);
+                        continue;
+                    }
                     for(String type : types){
                         if(!isWeatherMatch(type,server.getNow().weather,server.getNow().temp)){
                             quotes_list.add(entry);

@@ -92,7 +92,12 @@ public class Main implements Plugin {
         pluginProxy.addMessageListener("DeskChan:say", (sender, tag, data) -> {
             String text;
             if(data instanceof Map){
-                text=(String) ((HashMap<String,Object>) data).getOrDefault("text", "");
+                Map m=(Map) data;
+                if(m.containsKey("text"))
+                    text=(String) m.get("text");
+                else if(m.containsKey("msgData"))
+                    text=(String) m.get("msgData");
+                else text="";
             } else {
                 text=data.toString();
             }

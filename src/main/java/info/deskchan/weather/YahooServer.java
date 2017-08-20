@@ -13,8 +13,14 @@ import java.util.Date;
 
 public class YahooServer implements WeatherServer{
 
+    int limit=10;
+    public int getDaysLimit(){
+        return limit;
+    }
+
     TimeForecast now;
-    DayForecast[] forecasts=new DayForecast[10];
+    DayForecast[] forecasts=new DayForecast[limit];
+
 
     public DayForecast getByDay(int day) {
         update();
@@ -52,8 +58,13 @@ public class YahooServer implements WeatherServer{
     private void update(){
         if(lastUpdate!=null && (new Date().getTime()-lastUpdate.getTime())/60000<30) return;
 
+        now=null;
+        int i;
+        for(i=0;i<limit;i++) forecasts[i]=null;
+
         JSONObject json = getQuery();
         if(json==null) return;
+
         try{
             json=json.getJSONObject("query");
             if(!json.has("results") || !(json.get("results") instanceof JSONObject)) return;
@@ -63,7 +74,7 @@ public class YahooServer implements WeatherServer{
             Calendar cal = Calendar.getInstance();
             cal.setTime(new Date());
             JSONArray array=json.getJSONArray("forecast");
-            for(int i=0;i<10;i++){
+            for(i=0;i<limit;i++){
                 forecasts[i]=new DayForecast((Calendar) cal.clone(),array.getJSONObject(i).getInt("high"),array.getJSONObject(i).getInt("low"),getWeatherString(array.getJSONObject(i).getInt("code")));
                 cal.add(Calendar.DATE,1);
             }

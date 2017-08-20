@@ -290,11 +290,13 @@ public class PluginManager {
 		if (!name.equals("core")) {
 			blacklistedPlugins.add(name);
 			unloadPlugin(name);
+			savePluginsBlacklist();
 		}
 	}
 	
 	public void removePluginFromBlacklist(String name) {
 		blacklistedPlugins.remove(name);
+		savePluginsBlacklist();
 	}
 	
 	private void loadPluginsBlacklist() {
