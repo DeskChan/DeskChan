@@ -1,14 +1,8 @@
-@Grab(group='net.objecthunter', module='exp4j', version='0.4.8')
 import net.objecthunter.exp4j.ExpressionBuilder
 
-
 final TRIGGER_PHRASES = [
-    'вычисли',
-    'посчитай',
-    'calculate',
-    'compute'
+    'вычисли'
 ]
-
 
 def tag(tag) { "${getId()}:$tag".toString() }
 
@@ -48,14 +42,5 @@ TRIGGER_PHRASES.forEach {
         eventName: 'speech:get',
         commandName: EVALUATION_COMMAND_TAG,
         rule: it
-    ])
-}
-
-
-addCleanupHandler {
-    sendMessage('core:remove-command', [tag: EVALUATION_COMMAND_TAG])
-    sendMessage('core:remove-event-link', [
-        eventName: 'speech:get',
-        commandName: EVALUATION_COMMAND_TAG
     ])
 }
