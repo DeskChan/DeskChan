@@ -13,6 +13,7 @@ fun main(args: Array<String>) {
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.speech_command_system")
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.chat_window")
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.talking_system")
+	pluginManager.tryLoadPluginByPackageName("info.deskchan.weather")
 	try {
 		val pluginsDirPath = PluginManager.getPluginsDirPath()
 		val dirStream = Files.newDirectoryStream(pluginsDirPath)
@@ -22,4 +23,5 @@ fun main(args: Array<String>) {
 	} catch (e: IOException) {
 		PluginManager.log(e)
 	}
+	pluginManager.sendMessage("core","core-events:loading-complete",null)
 }
