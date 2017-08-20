@@ -46,9 +46,9 @@ public class Main implements Plugin {
 		void start() {
 			if (lastSeq != null)
 				stop();
-			lastSeq = pluginProxy.sendMessage("core-utils:notify-after-delay", new HashMap<String, Object>() {{
-						put("delay", Long.parseLong(getProperty("messageTimeout",defaultMessageTimeout)));
-			}}, this);
+			long delay=Long.parseLong(getProperty("messageTimeout",defaultMessageTimeout));
+			if(delay!=0)
+				lastSeq = pluginProxy.sendMessage("core-utils:notify-after-delay", TextOperations.toMap("delay: "+delay), this);
 		}
 		
 		void stop() {
@@ -247,7 +247,12 @@ public class Main implements Plugin {
 			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 		}
 		quotes.load(currentPreset.quotesBaseList);
-		phraseRequest("HELLO");
+		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
+			phraseRequest(new HashMap<String,Object>(){{
+				put("purpose","HELLO");
+				put("priority",20001);
+			}});
+		});
 		/*MeaningExtractor extractor=new MeaningExtractor();
 		for(Quote quote : quotes.toArray()){
 			extractor.teach(quote.quote,quote.purposeType);
@@ -378,9 +383,10 @@ public class Main implements Plugin {
 			list.add(new HashMap<String, Object>() {{
 				put("id", "message_interval");
 				put("type", "Spinner");
-				put("min", 10);
-				put("max", 1000);
+				put("min", 0);
+				put("max", 10000);
 				put("step", 1);
+				put("hint",getString("help.delay"));
 				put("value", Integer.parseInt(getProperty("messageTimeout",defaultMessageTimeout)) / 1000);
 				put("label", getString("message_interval"));
 			}});

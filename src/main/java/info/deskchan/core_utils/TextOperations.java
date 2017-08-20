@@ -73,13 +73,12 @@ public class TextOperations {
     private static ArrayList<String> extractWords(String phrase, int type) {
         ArrayList<String> words = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < phrase.length(); i++) {
-            if (phrase.charAt(i) == ' ' || phrase.charAt(i) == '\n') {
+        for (int i = 0; i <= phrase.length(); i++) {
+            if (i==phrase.length() || phrase.charAt(i) == ' ' || phrase.charAt(i) == '\n') {
                 if (sb.length() == 0) continue;
                 words.add(sb.toString());
                 sb = new StringBuilder();
-            }
-            if (Character.UnicodeBlock.of(phrase.charAt(i)).equals(Character.UnicodeBlock.CYRILLIC)) {
+            } else if (Character.isLetter(phrase.charAt(i)) || Character.UnicodeBlock.of(phrase.charAt(i)).equals(Character.UnicodeBlock.CYRILLIC)) {
                 switch (type) {
                     case 0:
                         sb.append(phrase.charAt(i));

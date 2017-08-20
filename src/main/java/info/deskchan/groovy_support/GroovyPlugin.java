@@ -46,7 +46,11 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	protected void sendMessage(String tag, Object data, ResponseListener responseListener) {
 		pluginProxy.sendMessage(tag, data, responseListener);
 	}
-	
+
+	protected void sendMessage(String tag, Object data, ResponseListener responseListener, ResponseListener returnListener) {
+		pluginProxy.sendMessage(tag, data, responseListener, returnListener);
+	}
+
 	protected void addMessageListener(String tag, MessageListener listener) {
 		pluginProxy.addMessageListener(tag, listener);
 	}
@@ -54,7 +58,8 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	protected void removeMessageListener(String tag, MessageListener listener) {
 		pluginProxy.removeMessageListener(tag, listener);
 	}
-	
+	protected String getString(String key){ return pluginProxy.getString(key); }
+
 	protected void addCleanupHandler(Runnable handler) {
 		cleanupHandlers.add(handler);
 	}
