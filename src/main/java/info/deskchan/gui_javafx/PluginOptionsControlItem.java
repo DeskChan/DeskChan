@@ -40,8 +40,10 @@ interface PluginOptionsControlItem {
 	static PluginOptionsControlItem create(Window parent, Map<String, Object> options) {
 		String type = (String) options.get("type");
 		Object value = options.getOrDefault("value", null);
-		Double width=(Double)options.getOrDefault("width",null);
-		Double height=(Double)options.getOrDefault("height",null);
+		Double width = App.getDouble(options.getOrDefault("width",null), null);
+		Double height = App.getDouble(options.getOrDefault("height",null), null);
+		Boolean disabled = App.getBoolean(options.getOrDefault("disabled",null), null);
+
 		PluginOptionsControlItem item = null;
 		switch (type) {
 			case "Label":
@@ -89,6 +91,7 @@ interface PluginOptionsControlItem {
 				break;
 		}
 		if (item == null) {
+			Main.log("Unknown type of item: "+type);
 			return null;
 		}
 		item.init(options);
@@ -106,6 +109,9 @@ interface PluginOptionsControlItem {
 		if(height!=null && node instanceof Region) {
 			((Region) node).setMinHeight(height);
 			((Region) node).setMaxHeight(height);
+		}
+		if(disabled!=null){
+			node.setDisable(disabled);
 		}
 		return item;
 	}
@@ -296,6 +302,11 @@ interface PluginOptionsControlItem {
 				}
 			});
 			setEditable(true);
+			focusedProperty().addListener((observable, oldValue, newValue) -> {
+				if (!newValue) {
+					increment(0); // won't change value, but will commit editor
+				}
+			});
 		}
 	}
 
@@ -480,10 +491,20 @@ interface PluginOptionsControlItem {
 		
 		@Override
 		public void init(Map<String, Object> options) {
-			List<Object> items = (List<Object>) options.get("values");
-			listView.setItems(FXCollections.observableList(items));
+			List<Object> items = (List<Object>) options.getOrDefault("values",null);
+			if(items!=null && items.size()>0)
+				listView.setItems(FXCollections.observableList(items));
 			listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 			listView.setPrefHeight(150);
+			String msgTag=(String)options.getOrDefault("msgTag",null);
+			if(msgTag!=null){
+				listView.setOnMouseClicked((event) -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+						put("value", new ArrayList<Object>(listView.getSelectionModel().getSelectedItems()));
+					}});
+				});
+
+			}
 		}
 		
 		@Override

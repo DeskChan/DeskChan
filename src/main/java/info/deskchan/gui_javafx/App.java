@@ -52,7 +52,33 @@ public class App extends Application {
 	private SortedMap<String, List<PluginActionInfo>> pluginsActions = new TreeMap<>();
 	private Character character = new Character("main", Skin.load(Main.getProperty("skin.name", null)));
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
-	private List<TemplateBox> customWindowOpened = new LinkedList<TemplateBox>();
+
+	class ControlsWindow extends TemplateBox {
+		private ControlsContainer controls;
+		private String owner;
+		public ControlsWindow(String name, String owner, ControlsContainer controls){
+			super(name);
+			this.controls=controls;
+			this.owner=owner;
+			getDialogPane().setContent(this.controls.createControlsPane(getDialogPane().getScene().getWindow()));
+		}
+		public String getOwnerName(){
+			return owner;
+		}
+		public void setControls(ControlsContainer controls) {
+			this.controls = null;
+			getDialogPane().setContent(null);
+			System.gc();
+			this.controls = controls;
+			getDialogPane().setContent(this.controls.createControlsPane(getDialogPane().getScene().getWindow()));
+		}
+		public void updateControls(List<Map<String,Object>> data){
+			if(data!=null)
+				controls.updateControlsPane(data);
+		}
+	}
+	private List<ControlsWindow> customWindowOpened = new LinkedList<>();
+
 	@Override
 	public void start(Stage primaryStage) {
 		instance = this;
@@ -71,7 +97,18 @@ public class App extends Application {
 		}
 		character.setLayerMode(Character.LayerMode.valueOf(Main.getProperty("character.layer_mode", "ALWAYS_TOP")));
 		initMessageListeners();
+		// KeyboardEventNotificator.initialize();
 		Main.getInstance().getAppInitSem().release();
+		character.say(new HashMap<String,Object>(){{
+			put("text","Подождите, я загружаюсь");
+			put("priority",20000);
+			put("timeout",500000);
+		}});
+		character.say(new HashMap<String,Object>(){{
+			put("text","Если я загружаюсь слишком долго, возможно что-то не так.");
+			put("priority",19999);
+			put("timeout",500000);
+		}});
 	}
 	
 	static App getInstance() {
@@ -101,27 +138,46 @@ public class App extends Application {
 		systemTray.setStatus(NAME);
 		rebuildMenu();
 	}
-	public void setupCustomWindow(Map<String,Object> data){
-		String name=(String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
-		setupCustomWindow(new ControlsContainer(name, (List<Map<String, Object>>) data.get("controls"),
+	public void setupCustomWindow(String sender, Map<String,Object> data){
+		String name = (String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
+		setupCustomWindow(sender, new ControlsContainer(name, (List<Map<String, Object>>) data.get("controls"),
 				(String) data.getOrDefault("msgTag", null), (String) data.getOrDefault("onClose", null)));
 
 	}
-	public void setupCustomWindow(ControlsContainer container){
-		String name=container.name;
-		for(TemplateBox window : customWindowOpened){
-			if(window.getTitle().equals(name)){
-				window.getDialogPane().setContent(container.createControlsPane(window.getDialogPane().getScene().getWindow()));
+	public void setupCustomWindow(String sender, ControlsContainer container){
+		String name = container.name;
+		for(ControlsWindow window : customWindowOpened){
+			if(window.getTitle().equals(name) && window.getOwnerName().equals(sender)){
+				window.setControls(container);
 				return;
 			}
 		}
-		TemplateBox dialog = new TemplateBox(name);
-		customWindowOpened.add(dialog);
-		Window ownerWindow = dialog.getDialogPane().getScene().getWindow();
-		dialog.getDialogPane().setContent(container.createControlsPane(ownerWindow));
-		dialog.requestFocus();
-		dialog.show();
-		dialog.setOnCloseRequest(event -> customWindowOpened.remove(dialog));
+		ControlsWindow thisSialog = new ControlsWindow(name, sender, container);
+		customWindowOpened.add(thisSialog);
+		thisSialog.requestFocus();
+		thisSialog.show();
+		thisSialog.setOnCloseRequest(event -> {
+			customWindowOpened.remove(thisSialog);
+		});
+	}
+	public void updateCustomWindow(String sender, Map<String,Object> data){
+		String name = (String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
+		List<Map<String,Object>> controls = (List<Map<String,Object>>) data.getOrDefault("controls", null);
+		if(controls==null) return;
+		for(ControlsWindow window : customWindowOpened){
+			if(window.getTitle().equals(name)){
+				window.updateControls(controls);
+				return;
+			}
+		}
+	}
+	public void updateCustomWindow(String sender, ControlsContainer container){
+		for(ControlsWindow window : customWindowOpened){
+			if(window.getTitle().equals(container.name)){
+				window.setControls(container);
+				return;
+			}
+		}
 	}
 	private void initMessageListeners() {
 		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
@@ -181,10 +237,10 @@ public class App extends Application {
 				Map<String, Object> m = (Map<String, Object>) data;
 				boolean save = (boolean) m.getOrDefault("save", false);
 				if (m.containsKey("absolute")) {
-					Double opacity = getDouble(m.get("absolute"), 1);
+					Double opacity = getDouble(m.get("absolute"), 1.);
 					character.changeOpacity(opacity.floatValue());
 				} else if (m.containsKey("relative")) {
-					Double opacityIncrement = getDouble(m.get("relative"), 0);
+					Double opacityIncrement = getDouble(m.get("relative"), 0.);
 					character.changeOpacityRelatively(opacityIncrement.floatValue());
 				}
 
@@ -214,10 +270,10 @@ public class App extends Application {
 				Map<String, Object> m = (Map<String, Object>) data;
 				boolean save = (boolean) m.getOrDefault("save", false);
 				if (m.containsKey("scaleFactor")) {
-					Double scaleFactor = getDouble(m.get("scaleFactor"), 1);
+					Double scaleFactor = getDouble(m.get("scaleFactor"), 1.);
 					character.resizeSkin(scaleFactor.floatValue());
 				} else if (m.containsKey("zoom")) {
-					Double zoom = getDouble(m.get("zoom"), 0);
+					Double zoom = getDouble(m.get("zoom"), 0.);
 					character.resizeSkinRelatively(zoom.floatValue());
 				} else if (m.containsKey("width") || m.containsKey("height")) {
 					character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
@@ -237,6 +293,16 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				OptionsDialog.registerPluginMenu(sender, (Map<String, Object>) data,false);
+			});
+		});
+		pluginProxy.addMessageListener("gui:update-options-tab", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				OptionsDialog.updatePluginMenu(sender, (Map<String, Object>) data, true);
+			});
+		});
+		pluginProxy.addMessageListener("gui:update-options-submenu", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				OptionsDialog.updatePluginMenu(sender, (Map<String, Object>) data,false);
 			});
 		});
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
@@ -265,12 +331,19 @@ public class App extends Application {
 				if     (volume instanceof Integer) clip.setVolume(((Integer) volume).doubleValue()/100);
 				else if(volume instanceof Double) clip.setVolume((Double) volume);
 				else if(volume instanceof String) clip.setVolume(Double.valueOf((String)volume));
+				//if(m.containsKey("count"))
+				///	clip.setCycleCount(2);
 				clip.play();
 			});
 		});
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				setupCustomWindow((Map<String,Object>) data);
+				setupCustomWindow(sender, (Map<String,Object>) data);
+			});
+		});
+		pluginProxy.addMessageListener("gui:update-custom-window", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				updateCustomWindow(sender, (Map<String,Object>) data);
 			});
 		});
 		pluginProxy.addMessageListener("gui:choose-files", (sender, tag, data) -> {
@@ -385,8 +458,7 @@ public class App extends Application {
 				}
 				Object delayObj = m.getOrDefault("delay", -1L);
 				long delay=1000;
-				if(delayObj instanceof Integer) delay=(long) (int) delayObj;
-				else if(delayObj instanceof Long) delay=(long) delayObj;
+				if(delayObj instanceof Number) delay=((Number) delayObj).longValue();
 				else if(delayObj instanceof String) delay=Long.valueOf((String) delayObj);
 				if (delay > 0) {
 					new DelayNotifier(sender, seq, delay);
@@ -468,12 +540,23 @@ public class App extends Application {
 		));
 	}
 
-	private Double getDouble(Object value, double defaultValue) {
-		if (value instanceof Number) {
-			return ((Number) value).doubleValue();
-		} else {
-			return defaultValue;
+	public static Double getDouble(Object value, Double defaultValue) {
+		if (value == null) return defaultValue;
+		if (value instanceof Number) return ((Number) value).doubleValue();
+		if (value instanceof String){
+			Double d;
+			try {
+				d = Double.valueOf((String) value);
+			} catch(Exception e){ return defaultValue; }
+			return d;
 		}
+		return defaultValue;
+	}
+	public static Boolean getBoolean(Object value, Boolean defaultValue) {
+		if (value == null) return defaultValue;
+		if (value instanceof Boolean) return (Boolean) value;
+		if (value instanceof String) return value.equals("true");
+		return defaultValue;
 	}
 
 	private Double getDouble(Map<String, Object> map, String key, double defaultValue) {

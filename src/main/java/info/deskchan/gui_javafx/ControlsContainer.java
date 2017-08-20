@@ -20,12 +20,30 @@ public class ControlsContainer {
 	String msgSave;
 	String msgClose;
 	private float columnGrow = 0.5f;
-	private GridPane gridPane;
+	private BorderPane borderPane;
+	private Map<String, PluginOptionsControlItem> namedControls;
 
 	ControlsContainer(String name, List<Map<String, Object>> controls, String msgSave, String msgClose) {
 		this.name = name;
 		update(controls, msgSave, msgClose);
-		gridPane = new GridPane();
+	}
+
+	private String getSaveTag(){
+		return msgSave;
+	}
+
+	private String getCloseTag(){
+		return msgClose;
+	}
+
+	void update(List<Map<String, Object>> controls, String msgSave, String msgClose) {
+		this.controls = controls;
+		this.msgSave = msgSave;
+		this.msgClose = msgClose;
+	}
+
+	Node createControlsPane(Window parent) {
+		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		float columnGrowPercentage = columnGrow * 100;
 		ColumnConstraints column1 = new ColumnConstraints();
@@ -35,17 +53,8 @@ public class ControlsContainer {
 		ColumnConstraints column3 = new ColumnConstraints();
 		column3.setPercentWidth(5);
 		gridPane.getColumnConstraints().addAll(column1, column2, column3);
-	}
-
-	void update(List<Map<String, Object>> controls, String msgSave, String msgClose) {
-		this.controls = controls;
-		this.msgSave = msgSave;
-		this.msgClose = msgClose;
-	}
-	Node createControlsPane(Window parent) {
-		gridPane.getChildren().clear();
-		final Map<String, PluginOptionsControlItem> namedControls = new HashMap<>();
-		BorderPane borderPane = new BorderPane();
+		namedControls = new HashMap<>();
+		borderPane = new BorderPane();
 		int row = 0;
 		for (Map<String, Object> controlInfo : controls) {
 			String id = (String) controlInfo.getOrDefault("id", null);
@@ -72,7 +81,7 @@ public class ControlsContainer {
 			}
 			row++;
 		}
-		if (msgSave != null) {
+		if (getSaveTag() != null) {
 			Button saveButton = new Button(Main.getString("save"));
 			saveButton.setOnAction(event -> {
 				Map<String, Object> data = new HashMap<>();
@@ -88,19 +97,28 @@ public class ControlsContainer {
 						}
 					}
 				}
-				Main.getInstance().getPluginProxy().sendMessage(msgSave, data);
+				Main.getInstance().getPluginProxy().sendMessage(getSaveTag(), data);
 			});
 			borderPane.setBottom(saveButton);
 		}
-		if (msgClose != null) {
+		if (getCloseTag() != null) {
 			parent.setOnCloseRequest(event -> {
-				Main.getInstance().getPluginProxy().sendMessage(msgClose,null);
+				Main.getInstance().getPluginProxy().sendMessage(getCloseTag(),null);
 			});
 		}
 		borderPane.setTop(gridPane);
 		return borderPane;
 	}
-
+	void updateControlsPane(List<Map<String, Object>> update) {
+		for (Map<String, Object> control : update) {
+			String id = (String) control.getOrDefault("id", null);
+			Object value=control.getOrDefault("value", null);
+			if(value!=null) namedControls.get(id).setValue(value);
+			Boolean disabled=App.getBoolean(control.getOrDefault("disabled", null),null);
+			if(disabled!=null)
+				namedControls.get(id).getNode().setDisable(disabled);
+		}
+	}
 	class Hint extends Label{
 		Hint(String text){
 			setText(" ❔ ");
