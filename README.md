@@ -2,6 +2,12 @@
 
 [Здесь](https://github.com/DeskChan/DeskChan/wiki)
  находится полный исходный код и инструкции по сборке и запуску DeskChan.
+ 
+ DeskChan - делает только то, что вы сами ей сказали делать и не лезет, куда не надо.
+ 
+ DeskChan - уникальная у каждого юзера.
+ 
+ DeskChan - имеет тело и душу!
 
 ![](https://img.shields.io/badge/Java-1.8-orange.svg)
 ![](https://img.shields.io/badge/Kotlin-1.1.2-blue.svg)
@@ -25,3 +31,8 @@
 * Microsoft Windows 7, 8, 8.1, 10
 * Debian 8-based
 * Arch Linux
+##### _Остальные системы могут иметь баги или несовместимости и не тестировались на предмет их наличия ранее. Версия для Android находится в разработке._
+
+----
+### [Инструкции по сборке](https://github.com/DeskChan/DeskChan/wiki/%D0%A1%D0%B1%D0%BE%D1%80%D0%BA%D0%B0-%D0%B8-%D0%B7%D0%B0%D0%BF%D1%83%D1%81%D0%BA)
+### [Документация API](https://github.com/DeskChan/DeskChan/wiki/DeskChan-General-API)
