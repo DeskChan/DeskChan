@@ -395,13 +395,11 @@ class Character extends MovablePane {
 					_timeout = Integer.parseInt((String) ob);
 				else _timeout=(Integer) ob;
 
-				System.out.println(mapData);
 				if(mapData.containsKey("text"))
 					text2=(String) mapData.get("text");
 				else if(mapData.containsKey("msgData"))
 					text2=(String) mapData.get("msgData");
 				else text2="";
-				System.out.println(text2);
 
 				ob=mapData.getOrDefault("partible", true);
 				if(ob instanceof String)

@@ -50,7 +50,7 @@ public class Main implements Plugin {
     private LinkedList<ChatPhrase> history;
     private ArrayList<HashMap<String,Object>> historyToChat(){
         ArrayList<HashMap<String,Object>> ret=new ArrayList<>();
-        List<ChatPhrase> list=history.subList(Math.max(history.size() - 8, 0), history.size());
+        List<ChatPhrase> list=history.subList(Math.max(history.size() - 7, 0), history.size());
         HashMap<String,Object> current;
         if(list.size()==0){
             ret.add(new ChatPhrase("История сообщений пуста",2).toMap());

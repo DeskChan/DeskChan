@@ -313,9 +313,7 @@ public class PluginManager {
 				blacklistedPlugins.add(line);
 			}
 			reader.close();
-		} catch (IOException e) {
-			blacklistedPlugins.add("random_phrases");
-		}
+		} catch (IOException e) { }
 	}
 	
 	private void savePluginsBlacklist() {
