@@ -156,6 +156,7 @@ public class App extends Application {
 		customWindowOpened.add(dialog);
 		dialog.requestFocus();
 		dialog.show();
+		dialog.getDialogPane().getChildren().get(0).requestFocus();
 		dialog.getDialogPane().getScene().getWindow().setOnCloseRequest(event -> {
 			customWindowOpened.remove(dialog);
 		});
@@ -347,6 +348,22 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:update-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				updateCustomWindow(sender, (Map<String,Object>) data);
+			});
+		});
+		pluginProxy.addMessageListener("gui:send-character-front", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				character.toFront();
+			});
+		});
+		pluginProxy.addMessageListener("gui:hide-character", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				App.getInstance().getCharacter().setLayerMode(Character.LayerMode.HIDE);
+				character.setLayerMode(Character.LayerMode.HIDE);
+			});
+		});
+		pluginProxy.addMessageListener("gui:show-character", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				App.getInstance().getCharacter().setLayerMode(Character.LayerMode.valueOf(Main.getProperty("character.layer_mode", "ALWAYS_TOP")));
 			});
 		});
 		pluginProxy.addMessageListener("gui:choose-files", (sender, tag, data) -> {
@@ -587,9 +604,20 @@ public class App extends Application {
 			}
 		};
 		mainMenu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
-		mainMenu.add(new Separator());
 		javafx.scene.control.MenuItem optionsMenuItem = new javafx.scene.control.MenuItem(Main.getString("options"));
 		optionsMenuItem.setOnAction(optionsMenuItemAction);
+
+		MenuItemAction sendToFront = new MenuItemAction() {
+			@Override
+			protected void run() {
+				character.toFront();
+			}
+		};
+		mainMenu.add(new MenuItem("front", sendToFront));
+		javafx.scene.control.MenuItem frontMenuItem = new javafx.scene.control.MenuItem("front");
+		frontMenuItem.setOnAction(sendToFront);
+
+		mainMenu.add(new Separator());
 		contextMenuItems.addAll(optionsMenuItem, new SeparatorMenuItem());
 
 		if (pluginsActions.size() > 0) {

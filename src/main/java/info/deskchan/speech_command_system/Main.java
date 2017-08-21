@@ -92,8 +92,9 @@ public class Main implements Plugin {
                 int cur_pos=-1;
                 for(int i=0;i<words.size();i++){
                     if(used[i]) continue;
-                    float r=PhraseComparison.Similar(words.get(i),rule_words.get(k));
-                    if(r>0.5 && r>cur_res){
+                    float r=PhraseComparison.Levenshtein(words.get(i),rule_words.get(k));
+                    float r2=1-r/(Math.max(words.get(i).length(),rule_words.get(k).length()));
+                    if(r<2 && r2>0.7 && r>cur_res){
                         cur_res=r;
                         cur_pos=i;
                     }

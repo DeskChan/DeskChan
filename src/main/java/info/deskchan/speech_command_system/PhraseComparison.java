@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class PhraseComparison {
     private static char[][] replaceable=new char[][]{
-        {'о','а'} , {'е','и'} , {'д','т'} , {'г','к'} , {'ж','ш'} , {'ы','и'} , {'з','с'} , {'б','п'} , {'в','ф'}
+        {'о','а'} , {'е','и'} , {'д','т'} , {'г','к'} , {'ж','ш'} , {'ы','и'} , {'з','с'} , {'б','п'} , {'в','ф'}, {'ь','й'}, {'ъ','й'}
     };
     public static int BorderedLevenshtein(String one,String two){
         try{

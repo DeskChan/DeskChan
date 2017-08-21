@@ -22,7 +22,8 @@ class Character extends MovablePane {
 	enum LayerMode {
 		ALWAYS_NORMAL,
 		TOP_IF_MESSAGE,
-		ALWAYS_TOP
+		ALWAYS_TOP,
+		HIDE
 	}
 
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
@@ -267,6 +268,7 @@ class Character extends MovablePane {
 	}
 
 	void say(Object data) {
+		if(layerMode.equals("hide")) return;
 		MessageInfo messageInfo = null;
 		if (data != null) {
 			messageInfo = new MessageInfo(data);
@@ -316,11 +318,15 @@ class Character extends MovablePane {
 			newLayerName = "top";
 		} else if (mode.equals(LayerMode.TOP_IF_MESSAGE)) {
 			newLayerName = (balloon != null) ? "top" : "normal";
+		} else if (mode.equals(LayerMode.HIDE)) {
+			OverlayStage.getInstance(layerName).getRoot().getChildren().remove(this);
+			if (balloon != null) balloon.hide();
+			return;
 		} else {
 			newLayerName = "normal";
 		}
 		if (!layerName.equals(newLayerName)) {
-			OverlayStage.getInstance(layerName).getRoot().getChildren().remove(this);
+			if(layerName!="hide") OverlayStage.getInstance(layerName).getRoot().getChildren().remove(this);
 			layerName = newLayerName;
 		}
 		if (getParent() == null) {
