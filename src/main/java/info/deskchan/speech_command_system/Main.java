@@ -48,6 +48,7 @@ public class Main implements Plugin {
 
     void operateRequest(ArrayList<String> words, List<HashMap<String,Object>> commandsInfo){
         float max_result=0;
+        int max_words_used_count=0;
         Map<String,Object> match_command_data=null;
         String match_command_name=null;
         ArrayList<Argument> match_arguments=null;
@@ -85,6 +86,7 @@ public class Main implements Plugin {
             for(int i=0;i<words.size();i++) used[i]=false;
             float result=0;
             int count=0;
+            int usedCount=0;
             for(int k=0;k<rule_words.size();k++){
                 if(rule_words.get(k).charAt(0)=='!') continue;
                 count++;
@@ -100,16 +102,18 @@ public class Main implements Plugin {
                     }
                 }
                 if(cur_pos<0) continue;
+                usedCount++;
                 result+=cur_res;
                 used[cur_pos]=true;
             }
             result/=count;
-            if(result>max_result && result>0.5){
+            if((result>max_result && result>0.5) || usedCount>max_words_used_count){
                 max_result=result;
                 match_command_name=tag;
                 match_command_data=command;
                 max_used=used;
                 match_arguments=arguments;
+                max_words_used_count=usedCount;
             }
         }
         if(match_command_name!=null) {

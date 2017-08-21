@@ -156,7 +156,7 @@ class Character extends MovablePane {
 		imageView.setOpacity(skinOpacity);
 
 		Lighting lighting = null;
-		if (skinColor != null) {
+		if (skinColor != null && !skinColor.equals(new Color(1,1,1,1))) {
 			lighting = new Lighting();
 			lighting.setDiffuseConstant(1.0);
 			lighting.setSpecularConstant(0.0);
@@ -241,7 +241,9 @@ class Character extends MovablePane {
 	}
 
 	void setColorFilter(Color color) {
-		skinColor = color;
+		if(!new Color(1,1,1,1).equals(color))
+			skinColor = color;
+		else skinColor=null;
 		updateImage(false);
 	}
 

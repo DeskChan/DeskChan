@@ -163,7 +163,7 @@ Database.DatabaseEntry.defaultSound = defaultSoundFolder.resolve("communication-
 
 addMessageListener('organizer:check-sound', { sender, tag, data ->
     sendMessage( 'gui:update-options-submenu',
-            [ 'name': 'Scheduler',
+            [ 'name': Localization.getString('shedule'),
               'controls': [[
                                    'id': 'sound',
                                    'disabled': !data.get("value")
@@ -172,7 +172,7 @@ addMessageListener('organizer:check-sound', { sender, tag, data ->
 })
 addMessageListener('organizer:check-timer-sound', { sender, tag, data ->
     sendMessage( 'gui:update-options-submenu',
-            [ 'name': 'Set Timer',
+            [ 'name': Localization.getString('timer'),
               'controls': [[
                                    'id': 'sound',
                                    'disabled': !data.get("value")
@@ -188,7 +188,6 @@ addMessageListener('organizer:delete-selected', { sender, tag, data ->
     setupEventsMenu()
 })
 addMessageListener('organizer:add-event', { sender, tag, data ->
-    println sender
     String name=data.get("name")
     if(name.length()==0){
         sendMessage( 'gui:show-notification',

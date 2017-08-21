@@ -46,7 +46,7 @@ public class Main implements Plugin {
             saveOptions();
         });
         pluginProxy.sendMessage("core:add-command", TextOperations.toMap("tag: \"weather:say-weather\""));
-        String[] v=new String[]{ "", "now", " сейчас", "", " сегодня", "0", " завтра", "1", " послезавтра", "2"};
+        String[] v=new String[]{ "", "", " сейчас", "", " сегодня", "0", " завтра", "1", " послезавтра", "2"};
         for(int i=0;i<5;i++) {
             Map m=new HashMap<String, String>();
             m.put("eventName", "speech:get");

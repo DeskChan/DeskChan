@@ -157,10 +157,16 @@ public class App extends Application {
 		dialog.requestFocus();
 		dialog.show();
 		dialog.getDialogPane().getChildren().get(0).requestFocus();
-		dialog.getDialogPane().getScene().getWindow().setOnCloseRequest(event -> {
+		dialog.setOnHiding(event -> {
 			customWindowOpened.remove(dialog);
 		});
 		dialog.setOnCloseRequest(event -> {
+			customWindowOpened.remove(dialog);
+		});
+		dialog.getDialogPane().getScene().getWindow().setOnHiding(event -> {
+			customWindowOpened.remove(dialog);
+		});
+		dialog.getDialogPane().getScene().getWindow().setOnCloseRequest(event -> {
 			customWindowOpened.remove(dialog);
 		});
 	}
