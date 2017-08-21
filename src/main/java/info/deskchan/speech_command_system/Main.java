@@ -94,8 +94,8 @@ public class Main implements Plugin {
                     if(used[i]) continue;
                     float r=PhraseComparison.Levenshtein(words.get(i),rule_words.get(k));
                     float r2=1-r/(Math.max(words.get(i).length(),rule_words.get(k).length()));
-                    if(r<2 && r2>0.7 && r>cur_res){
-                        cur_res=r;
+                    if(r<2 && r2>0.7 && r2>cur_res){
+                        cur_res=r2;
                         cur_pos=i;
                     }
                 }

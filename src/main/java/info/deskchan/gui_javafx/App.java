@@ -353,6 +353,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:send-character-front", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				character.toFront();
+				character.getParent().toFront();
 			});
 		});
 		pluginProxy.addMessageListener("gui:hide-character", (sender, tag, data) -> {
@@ -606,16 +607,6 @@ public class App extends Application {
 		mainMenu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
 		javafx.scene.control.MenuItem optionsMenuItem = new javafx.scene.control.MenuItem(Main.getString("options"));
 		optionsMenuItem.setOnAction(optionsMenuItemAction);
-
-		MenuItemAction sendToFront = new MenuItemAction() {
-			@Override
-			protected void run() {
-				character.toFront();
-			}
-		};
-		mainMenu.add(new MenuItem("front", sendToFront));
-		javafx.scene.control.MenuItem frontMenuItem = new javafx.scene.control.MenuItem("front");
-		frontMenuItem.setOnAction(sendToFront);
 
 		mainMenu.add(new Separator());
 		contextMenuItems.addAll(optionsMenuItem, new SeparatorMenuItem());
