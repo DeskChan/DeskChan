@@ -197,12 +197,18 @@ interface PluginOptionsControlItem {
 	}
 	class CustomizableTextAreaItem implements PluginOptionsControlItem {
 
+		ScrollPane scrollPane;
 		TextFlow area;
 
 		@Override
 		public void init(Map<String, Object> options) {
+			scrollPane = new ScrollPane();
 			area=new TextFlow(new Text("Пустой текст"));
-			idk();
+			scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+			scrollPane.setContent(area);
+			scrollPane.setFitToWidth(true);
+			area.prefHeightProperty().bind(scrollPane.heightProperty());
+			area.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
 		}
 
 		@Override
@@ -248,18 +254,13 @@ interface PluginOptionsControlItem {
 			}
 			area.getChildren().clear();
 			area.getChildren().addAll(list);
-			idk();
 		}
 
-		private void idk(){
-			area.setBorder(new Border(new BorderStroke(Color.BLACK,BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-			area.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
-		}
 		@Override
 		public Object getValue() { return area.getChildren(); }
 
 		@Override
-		public Node getNode() { return area; }
+		public Node getNode() { return scrollPane; }
 	}
 
 	abstract class ChangeableItem implements PluginOptionsControlItem {

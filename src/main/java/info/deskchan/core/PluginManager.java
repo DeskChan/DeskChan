@@ -56,19 +56,20 @@ public class PluginManager {
 	
 	/* Plugin initialization and unloading */
 	
-	public boolean initializePlugin(String id, Plugin plugin) {
-		if (!plugins.containsKey(id)) {
-			PluginProxy pluginProxy = new PluginProxy(plugin);
-			if (blacklistedPlugins.contains(id)) {
-				plugins.put(id, pluginProxy);
-				return false;
-			}
-			if (pluginProxy.initialize(id)) {
-				plugins.put(id, pluginProxy);
-				log("Registered plugin: " + id);
-				sendMessage("core", "core-events:plugin-load", id);
-				return true;
-			}
+	public boolean initializePlugin(String id, Plugin plugin) throws Throwable {
+		if (plugins.containsKey(id)) {
+			throw new Throwable("Cannot load plugin " + id + ": plugin with such name already exist");
+		}
+		PluginProxy pluginProxy = new PluginProxy(plugin);
+		if (blacklistedPlugins.contains(id)) {
+			plugins.put(id, pluginProxy);
+			return false;
+		}
+		if (pluginProxy.initialize(id)) {
+			plugins.put(id, pluginProxy);
+			log("Registered plugin: " + id);
+			sendMessage("core", "core-events:plugin-load", id);
+			return true;
 		}
 		return false;
 	}

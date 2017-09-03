@@ -29,7 +29,7 @@ public class Argument {
         if(lastWord instanceof String) return (String)lastWord;
         return ((Argument)lastWord).getLastWord();
     }
-    public void localize(List<String> words, boolean[] used){
+    public void localize(String text, List<String> words, boolean[] used){
         String startword=getLastWord();
         int i = 0;
         if(startword!=null) {
@@ -44,32 +44,28 @@ public class Argument {
         }
         switch(type){
             case 0: {
-                StringBuilder text=new StringBuilder();
-                for (; i < words.size(); i++)
-                    if (!used[i]){
-                        text.append(words.get(i));
-                        text.append(" ");
-                        used[i]=true;
-                        lastWord=words.get(i);
+                String textCopy=text;
+                for (int k=0; k < words.size(); k++) {
+                    if (k < i || used[k]) {
+                        textCopy=textCopy.replace(words.get(k),"");
                     }
-                if(text.length()>1){
-                    text.deleteCharAt(text.length()-1);
-                    value=text.toString();
+                    used[k] = true;
                 }
+                value=textCopy.trim();
             } break;
             case 1:{
                 value=lastWord=words.get(i);
                 used[i]=true;
             } break;
             case 2: {
-                List<String> text=new ArrayList<>();
+                List<String> list=new ArrayList<>();
                 for (; i < words.size(); i++)
                     if (!used[i]){
-                        text.add(words.get(i));
+                        list.add(words.get(i));
                         used[i]=true;
                         lastWord=words.get(i);
                     }
-                value=text;
+                value=list;
             } break;
         }
     }

@@ -33,12 +33,9 @@ public class Main implements Plugin {
 
         pluginProxy.addMessageListener("speech:get", (sender, tag, data) -> {
             String text=(String)((HashMap<String,Object>)data).getOrDefault("value","");
-            ArrayList<String> words = PhraseComparison.toClearWords(text);
-            //if(PhraseComparison.Similar(words.get(0),start_word)<0.7) return;
-            //words.remove(0);
             pluginProxy.sendMessage("core:get-commands-match",standartCommandsCoreQuery,(s, d) -> {
                 HashMap<String,Object> commands=(HashMap<String,Object>) d;
-                operateRequest(words,(List<HashMap<String,Object>>) commands.get("commands"));
+                operateRequest(text,(List<HashMap<String,Object>>) commands.get("commands"));
             });
         });
 
@@ -46,9 +43,11 @@ public class Main implements Plugin {
         return true;
     }
 
-    void operateRequest(ArrayList<String> words, List<HashMap<String,Object>> commandsInfo){
+    void operateRequest(String text, List<HashMap<String,Object>> commandsInfo){
+        ArrayList<String> words = PhraseComparison.toClearWords(text);
         float max_result=0;
         int max_words_used_count=0;
+        int global_first_word_used=words.size();
         Map<String,Object> match_command_data=null;
         String match_command_name=null;
         ArrayList<Argument> match_arguments=null;
@@ -83,6 +82,7 @@ public class Main implements Plugin {
                 rule_words.set(i,"!"+arg.name);
             }
             boolean[] used=new boolean[words.size()];
+            int first_used=words.size();
             for(int i=0;i<words.size();i++) used[i]=false;
             float result=0;
             int count=0;
@@ -105,9 +105,12 @@ public class Main implements Plugin {
                 usedCount++;
                 result+=cur_res;
                 used[cur_pos]=true;
+                if(first_used>cur_pos) first_used=cur_pos;
             }
             result/=count;
-            if((result>max_result && result>0.5) || usedCount>max_words_used_count){
+            if((result>=max_result && result>0.5) || usedCount>max_words_used_count){
+                if(first_used>=global_first_word_used) continue;
+                global_first_word_used=first_used;
                 max_result=result;
                 match_command_name=tag;
                 match_command_data=command;
@@ -118,7 +121,7 @@ public class Main implements Plugin {
         }
         if(match_command_name!=null) {
             for(Argument arg : match_arguments)
-                arg.localize(words,max_used);
+                arg.localize(text,words,max_used);
             HashMap<String,Object> ret=new HashMap<>();
             for(Argument arg : match_arguments)
                 ret.put(arg.name, arg.value);

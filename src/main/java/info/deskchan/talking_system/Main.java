@@ -59,7 +59,7 @@ public class Main implements Plugin {
 				}});
 		}
 	};
-	
+
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
 		pluginProxy = newPluginProxy;
@@ -119,6 +119,7 @@ public class Main implements Plugin {
 						(String) dat.getOrDefault("feature", "sympathy"),
 						multiplier)
 			);
+			currentPreset.inform();
 		});
 		pluginProxy.addMessageListener("talk:make-emotion-influence", (sender, tag, data) -> {
 			Map<String, Object> dat = (Map<String, Object>) data;
@@ -194,6 +195,7 @@ public class Main implements Plugin {
 							}
 						}
 						updateOptionsTab();
+						currentPreset.inform();
 					} catch(Exception e){
 						log(e);
 					}
@@ -241,7 +243,6 @@ public class Main implements Plugin {
 			}
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
-		//currentPreset=CharacterPreset.getFromFile(pluginProxy.getDataDirPath(),"preset1");
 		if(getProperty("quotesAutoSync","1").equals("1")) {
 			Quotes.saveTo(MAIN_PHRASES_URL, "main");
 			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
@@ -253,6 +254,7 @@ public class Main implements Plugin {
 				put("priority",20001);
 			}});
 		});
+		currentPreset.inform();
 		/*MeaningExtractor extractor=new MeaningExtractor();
 		for(Quote quote : quotes.toArray()){
 			extractor.teach(quote.quote,quote.purposeType);
@@ -488,6 +490,7 @@ public class Main implements Plugin {
 		quotes.setPacks(currentPreset.quotesBaseList);
 		updateOptionsTab();
 		saveSettings();
+		currentPreset.inform();
 	}
 
 	void saveSettings() {

@@ -131,7 +131,24 @@ public abstract class CharacterPreset {
 		json.put("type", this.getClass().getSimpleName());
 		return json;
 	}
-	
+	public Map<String,Object> toMap() {
+		Map map = new HashMap<String,Object>();
+		map.put("name", name);
+
+		for(int i=0;i<CharacterSystem.getFeatureCount();i++)
+			map.put(CharacterSystem.getFeatureName(i), MainCharacter.getValue(i));
+
+		List<String> ar = new ArrayList<String>();
+		ar.addAll(quotesBaseList);
+
+		Map preset_tags=new HashMap<String,Object>(tags.toMap());
+		map.put("quotes", ar);
+		map.put("tags",preset_tags);
+		return map;
+	}
+	public void inform(){
+		Main.getPluginProxy().sendMessage("talk:character-updated",toMap());
+	}
 	public void applyInfluence(ArrayList<Influence> influences) {
 		MainCharacter.applyInfluence(influences);
 	}

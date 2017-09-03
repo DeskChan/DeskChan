@@ -8,8 +8,8 @@ public class FixLayout {
     private static char[] englishConsonants="wrtp[]sdfghjkl;'zxcvbnm,.".toCharArray();
     private static char[] russianConsonants="йцкнгшщзхъфвпрлджчсмтб".toCharArray();
 
-    private static char[] englishLayout="qwertyuiop[]asdfghjkl;'zxcvbnm,./".toCharArray();
-    private static char[] russianLayout="йцукенгшщзхъфывапролджэячсмитьбю.".toCharArray();
+    private static char[] englishLayout="qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?".toCharArray();
+    private static char[] russianLayout="йцукенгшщзхъфывапролджэячсмитьбю.ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,".toCharArray();
 
     public static String fixRussianEnglish(String text){
         float a=isLayoutMissedRussian(text);
@@ -32,12 +32,15 @@ public class FixLayout {
     private static String translate(String text,char[] from, char[] to){
         StringBuilder textCopy=new StringBuilder(text);
         for(int i=0;i<text.length();i++){
+            boolean found = false;
             for(int k=0;k<from.length;k++){
                 if(text.charAt(i)==from[k]){
                     textCopy.setCharAt(i,to[k]);
+                    found = true;
                     break;
                 }
             }
+            if(found) continue;
             for(int k=0;k<to.length;k++){
                 if(text.charAt(i)==to[k]){
                     textCopy.setCharAt(i,from[k]);

@@ -15,10 +15,14 @@ public class Main implements Plugin {
     private static PluginProxyInterface pluginProxy;
     private static Properties properties;
 
+    public String characterName;
+    public String userName;
+
     private class ChatPhrase{
         public final String text;
         public final int sender;
         public final Date date;
+
         public ChatPhrase(String text,int sender){
             this.text=text;
             this.sender=sender;
@@ -31,11 +35,11 @@ public class Main implements Plugin {
             switch(sender){
                 case 0: {
                     color="#F00";
-                    senderName="Тян";
+                    senderName=characterName;
                 } break;
                 case 1: {
                     color="#00F";
-                    senderName="Юзер";
+                    senderName=userName;
                 } break;
                 case 2: color="#888"; break;
             }
@@ -48,10 +52,10 @@ public class Main implements Plugin {
     private boolean chatIsOpened=false;
 
     private LinkedList<ChatPhrase> history;
+    private int logLength=1;
     private ArrayList<HashMap<String,Object>> historyToChat(){
         ArrayList<HashMap<String,Object>> ret=new ArrayList<>();
-        List<ChatPhrase> list=history.subList(Math.max(history.size() - 7, 0), history.size());
-        HashMap<String,Object> current;
+        List<ChatPhrase> list=history.subList(Math.max(history.size() - logLength, 0), history.size());
         if(list.size()==0){
             ret.add(new ChatPhrase("История сообщений пуста",2).toMap());
             return ret;
@@ -74,10 +78,17 @@ public class Main implements Plugin {
             ip.close();
         } catch (Exception e) {
             properties = new Properties();
+            properties.setProperty("length","10");
             properties.setProperty("fixer","true");
             log("Cannot find file: " + pluginProxy.getDataDirPath().resolve("config.properties"));
         }
+        logLength = Integer.parseInt(properties.getProperty("length"));
+
         pluginProxy.setResourceBundle("info/deskchan/chat_window/strings");
+
+        characterName = "DeskChan";
+        userName = pluginProxy.getString("default-username");
+
         pluginProxy.addMessageListener("chat:setup", (sender, tag, data) -> {
             chatIsOpened=true;
             setupChat();
@@ -136,8 +147,26 @@ public class Main implements Plugin {
         pluginProxy.addMessageListener("chat:options-saved", (sender, tag, dat) -> {
             Map<String,Object> data=(Map<String,Object>) dat;
             properties.setProperty("fixer",data.get("fixer").toString());
+            properties.setProperty("length",data.get("length").toString());
+            logLength = Integer.parseInt(properties.getProperty("length"));
             setupOptions();
             saveOptions();
+        });
+        pluginProxy.addMessageListener("talk:character-updated", (sender, tag, data) -> {
+            Map map=(Map<String,Object>) data;
+            characterName = (String) map.get("name");
+            map = (Map<String,List<String>>) map.get("tags");
+            if(map!=null){
+                Object un=map.get("usernames");
+                if(un==null) return;
+                if(un instanceof String){
+                    userName = (String) un;
+                } else {
+                    List list = (List<String>) un;
+                    if(list.size()>0)
+                        userName = (String) list.get(0);
+                }
+            }
         });
         log("setup chat window completed");
         setupChat();
@@ -152,6 +181,7 @@ public class Main implements Plugin {
             list.add(new HashMap<String, Object>() {{
                 put("id", "name");
                 put("type", "TextField");
+                put("width",400d);
                 put("enterTag","chat:user-said");
             }});
             list.add(new HashMap<String, Object>() {{
@@ -176,6 +206,14 @@ public class Main implements Plugin {
                 put("type", "CheckBox");
                 put("label", pluginProxy.getString("fix-layout"));
                 put("value", properties.getProperty("fixer").equals("true"));
+            }});
+            list.add(new HashMap<String, Object>() {{
+                put("id", "length");
+                put("type", "Spinner");
+                put("min", 1);
+                put("max", 20000);
+                put("label", pluginProxy.getString("log-length"));
+                put("value", Integer.parseInt(properties.getProperty("length")));
             }});
             put("controls", list);
         }});
