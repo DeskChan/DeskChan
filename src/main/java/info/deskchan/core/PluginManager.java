@@ -1,9 +1,6 @@
 package info.deskchan.core;
 
-import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -23,10 +20,12 @@ public class PluginManager {
 	private String[] args;
 	private static OutputStream logStream = null;
 
+	private static boolean debugBuild = false;
+	private static Path corePath = null;
 	private static Path pluginsDirPath = null;
 	private static Path dataDirPath = null;
 	private static Path rootDirPath = null;
-	
+	private static Path assetsDirPath = null;
 	/* Singleton */
 	
 	private PluginManager() {
@@ -53,28 +52,44 @@ public class PluginManager {
 	public String[] getArgs() {
 		return args;
 	}
-	
+
+	public static boolean isDebugBuild() {
+		return debugBuild;
+	}
+
+	Set<String> getNamesOfLoadedPlugins() {
+		return plugins.keySet();
+	}
+
 	/* Plugin initialization and unloading */
 	
-	public boolean initializePlugin(String id, Plugin plugin) throws Throwable {
+	public boolean initializePlugin(String id, Plugin plugin, PluginConfig config) throws Throwable {
 		if (plugins.containsKey(id)) {
 			throw new Throwable("Cannot load plugin " + id + ": plugin with such name already exist");
 		}
-		PluginProxy pluginProxy = new PluginProxy(plugin);
 		if (blacklistedPlugins.contains(id)) {
-			plugins.put(id, pluginProxy);
 			return false;
 		}
-		if (pluginProxy.initialize(id)) {
-			plugins.put(id, pluginProxy);
-			log("Registered plugin: " + id);
-			sendMessage("core", "core-events:plugin-load", id);
-			return true;
+		if (!plugins.containsKey(id)) {
+			PluginProxy entity = PluginProxy.Companion.create(plugin, id, config);
+			if (entity!=null) {
+				plugins.put(id, entity);
+				if (config != null) {
+					LoaderManager.INSTANCE.registerExtensions(config.getExtensions());
+				}
+				log("Registered plugin: " + id);
+				sendMessage("core", "core-events:plugin-load", id);
+				return true;
+			}
 		}
 		return false;
 	}
-	
-	void unregisterPlugin(PluginProxy pluginProxy) {
+
+	public boolean initializeInnerPlugin(String id, Plugin plugin) throws Throwable {
+		return initializePlugin(id, plugin, PluginConfig.Companion.getInternal().clone());
+	}
+
+	void unregisterPlugin(PluginProxyInterface pluginProxy) {
 		plugins.remove(pluginProxy.getId());
 		log("Unregistered plugin: " + pluginProxy.getId());
 		sendMessage("core", "core-events:plugin-unload", pluginProxy.getId());
@@ -141,6 +156,15 @@ public class PluginManager {
 		loaders.add(loader);
 	}
 
+	public synchronized void registerPluginLoader(PluginLoader loader, String[] extensions) {
+		registerPluginLoader(loader);
+		LoaderManager.INSTANCE.registerExtensions(extensions);
+	}
+
+	public synchronized void registerPluginLoader(PluginLoader loader, String extension) {
+		registerPluginLoader(loader, new String[] {extension});
+	}
+
 	public synchronized void unregisterPluginLoader(PluginLoader loader) {
 		loaders.remove(loader);
 	}
@@ -152,7 +176,7 @@ public class PluginManager {
 			if (packageName.startsWith("info.deskchan.")) {
 				packageName = packageName.substring("info.deskchan.".length());
 			}
-			return initializePlugin(packageName, (Plugin) plugin);
+			return initializeInnerPlugin(packageName, (Plugin) plugin);
 		}
 		return false;
 	}
@@ -192,30 +216,6 @@ public class PluginManager {
 	}
 	
 	public synchronized boolean loadPluginByPath(Path path) throws Throwable {
-		if (Files.isDirectory(path)) {
-			Path manifestPath = path.resolve("manifest.json");
-			if (Files.isReadable(manifestPath)) {
-				try (final InputStream manifestInputStream = Files.newInputStream(manifestPath)) {
-					final String manifestStr = IOUtils.toString(manifestInputStream, "UTF-8");
-					manifestInputStream.close();
-					final JSONObject manifest = new JSONObject(manifestStr);
-					if (manifest.has("deps")) {
-						final JSONArray deps = manifest.getJSONArray("deps");
-						for (Object dep : deps) {
-							if (dep instanceof String) {
-								String depID = dep.toString();
-								if (!tryLoadPluginByName(depID)) {
-									throw new Exception("Failed to load dependency " + depID +
-											" of plugin " + path.toString());
-								}
-							}
-						}
-					}
-				} catch (IOException | JSONException e) {
-					e.printStackTrace();
-				}
-			}
-		}
 		for (PluginLoader loader : loaders) {
 			if (loader.matchPath(path)) {
 				loader.loadByPath(path);
@@ -235,17 +235,41 @@ public class PluginManager {
 	}
 	
 	public boolean loadPluginByName(String name) throws Throwable {
-		try {
-			return plugins.containsKey(name) || loadPluginByPath(getPluginDirPath(name));
-		} catch(Throwable e){
-			try {
-				return loadPluginByPackageName("info.deskchan."+name);
-			} catch(Throwable e2){
-				throw e;
+		// 1. Tries to find an already loaded plugin with the same name.
+		if (plugins.containsKey(name)) {
+			return true;
+		}
+
+		// 2. If the plugin can be found in the plugins directory, it's loaded.
+		Path path = getDefaultPluginDirPath(name);
+
+		if (path.toFile().exists()) {
+			for (PluginLoader loader : loaders) {
+				if (loader.matchPath(path)) {
+					loader.loadByPath(path);
+					return true;
+				}
 			}
 		}
+
+		// 3. Tries to find an already loaded plugin with a similar name.
+		if (plugins.values().stream().anyMatch(PluginProxy -> PluginProxy.isNameMatched(name))) {
+			return true;
+		}
+
+		// 4. If any plugin can be found in the plugins directory without respect to their extensions, the first one will be loaded.
+		File[] files = getPluginsDirPath().toFile().listFiles((file, s) -> FilenameUtils.removeExtension(s).equals(name));
+		if (files != null) {
+			if (files.length > 1) {
+				log("Too many plugins with similar names (" + name + ")!");
+			}
+			return loadPluginByPath(files[0].toPath());
+		}
+
+		// 5. Otherwise, the plugin cannot be loaded by name.
+		return false;
 	}
-	
+
 	public boolean tryLoadPluginByName(String name) {
 		try {
 			return loadPluginByName(name);
@@ -254,9 +278,9 @@ public class PluginManager {
 		}
 		return false;
 	}
-	
+
 	/* Application finalization */
-	
+
 	void quit() {
 		List<PluginProxy> pluginsToUnload = new ArrayList<>();
 		for (Map.Entry<String, PluginProxy> entry : plugins.entrySet()) {
@@ -336,43 +360,62 @@ public class PluginManager {
 	/* Plugins and data directories */
 	
 	public static Path getCorePath() {
-		try {
-			return Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-		} catch (URISyntaxException e) {
-			return Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+		if (corePath == null) {
+			try {
+				corePath = Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			} catch (URISyntaxException e) {
+				corePath = Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+			}
+			debugBuild = Files.isDirectory(corePath);
 		}
+		return corePath;
 	}
 
 	public static Path getPluginsDirPath() {
 		if(pluginsDirPath != null) {
 			return pluginsDirPath;
 		}
-		Path corePath = getCorePath();
-		Path path;
-		if (Files.isDirectory(corePath)) {
-			path = corePath.resolve("../../../plugins");
-		} else {
-			path = corePath.getParent().resolve("../plugins");
+		Path path = getRootDirPath();
+		if (debugBuild) {
+			path = path.resolve("build").resolve("launch4j");
 		}
+		path = path.resolve("plugins");
 		pluginsDirPath = path.normalize();
 		return pluginsDirPath;
 	}
-	
-	public static Path getPluginDirPath(String name) {
-		return getPluginsDirPath().resolve(name);
+
+	public static Path getDefaultPluginDirPath(String name) {
+		Stack<File> paths = new Stack<>();
+		paths.push(getPluginsDirPath().toFile());
+		while (!paths.empty()) {
+			File path = paths.pop();
+			File[] files = path.listFiles();
+			if(files==null || files.length==0) continue;
+			for(File file : files){
+				if(file.isFile()){
+					if(FilenameUtils.getBaseName(file.toString()).equals(name)){
+						return file.toPath();
+					}
+				} else if(file.isDirectory()){
+					if(file.getName().equals(name)){
+						return file.toPath();
+					}
+					paths.push(file);
+				}
+			}
+		}
+		return getPluginsDirPath();
 	}
 
 	public static Path getDataDirPath() {
 		if(dataDirPath != null) {
 			return dataDirPath;
 		}
-		Path corePath = getCorePath();
-		Path path;
-		if (Files.isDirectory(corePath)) {
-			path = corePath.resolve("../../data");
-		} else {
-			path = corePath.getParent().resolve("../data");
+		Path path = getRootDirPath();
+		if (debugBuild) {
+			path = path.resolve("build");
 		}
+		path = path.resolve("data");
 		if (!Files.isDirectory(path)) {
 			path.toFile().mkdir();
 			log("Created directory: " + path);
@@ -381,14 +424,28 @@ public class PluginManager {
 		return dataDirPath;
 	}
 
+	public static Path getAssetsDirPath() {
+		if(assetsDirPath != null) {
+			return assetsDirPath;
+		}
+		Path path = getRootDirPath();
+		path = path.resolve("assets");
+		if (!Files.isDirectory(path)) {
+			path.toFile().mkdir();
+			log("Created directory: " + path);
+		}
+		assetsDirPath = path.normalize();
+		return assetsDirPath;
+	}
+
 	public static Path getRootDirPath() {
 		if(rootDirPath != null) {
 			return rootDirPath;
 		}
 		Path corePath = getCorePath();
 		Path path;
-		if (Files.isDirectory(corePath)) {
-			path = corePath.resolve("../../");
+		if (debugBuild) {
+			path = corePath.resolve("../../../");
 		} else {
 			path = corePath.getParent().resolve("../");
 		}
@@ -405,7 +462,16 @@ public class PluginManager {
 		}
 		return dataDir;
 	}
-	
+
+	/* Manifest getter */
+
+	public PluginConfig getPluginConfig(String name) {
+		if (!plugins.containsKey(name)) {
+			return null;
+		}
+		return plugins.get(name).getConfig();
+	}
+
 	/* Logging */
 	
 	static void log(String id, String message) {

@@ -2,6 +2,7 @@ package info.deskchan.core;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +49,14 @@ public class CoreInfo {
 		locales=new HashMap<>();
 		locales.put("ru","Русский");
 		locales.put("en","English");
+		boolean foundDef=false;
+		for(Map.Entry<String,String> locale : locales.entrySet()){
+			if(locale.getValue().equals(Locale.getDefault().getLanguage())){
+				foundDef=true;
+				break;
+			}
+		}
+		if(!foundDef) Locale.setDefault(new Locale("en"));
 	}
 	
 }

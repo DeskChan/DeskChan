@@ -21,13 +21,14 @@ public class CorePlugin implements Plugin, MessageListener {
 					delay = ((Number) data).intValue();
 				}
 			}
-
 			Map<String, Object> m = new HashMap<>();
 			m.put("delay", delay);
 			pluginProxy.log("Plugin " + sender + " requested application quit in " + delay / 1000 + " seconds.");
-			pluginProxy.sendMessage("core-utils:notify-after-delay", m, (s, d) -> {
-				PluginManager.getInstance().quit();
-			});
+			if(delay>20)
+				pluginProxy.sendMessage("core-utils:notify-after-delay", m, (s, d) -> {
+					PluginManager.getInstance().quit();
+				});
+			else PluginManager.getInstance().quit();
 		});
 		pluginProxy.addMessageListener("core:register-alternative", (sender, tag, data) -> {
 			Map m = (Map) data;

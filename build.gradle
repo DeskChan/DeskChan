@@ -1,3 +1,5 @@
+import edu.sc.seis.launch4j.Launch4jConfiguration
+
 buildscript {
 	ext.kotlin_version = '1.1.2-4'
 	repositories {
@@ -8,11 +10,10 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.2+'
 		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
-		classpath group: 'edu.sc.seis.gradle', name: 'launch4j', version: '2.3.0+'
-		classpath 'gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.8'
-		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+		classpath group: 'edu.sc.seis.gradle', name: 'launch4j', version: '2.4.1+'
+		classpath group: 'gradle.plugin.de.fuerstenau', name: 'BuildConfigPlugin', version: '1.1.8'
+		classpath group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin', version: kotlin_version
 	}
 }
 
@@ -51,19 +52,28 @@ dependencies {
 	compile group: 'org.javassist', name: 'javassist', version: '3.22+'
 	compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12+'
 	compile group: 'com.1stleg', name: 'jnativehook', version: '2.1.0'
+	compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlin_version
 	testCompile group: 'junit', name: 'junit', version: '4.+'
-	compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 	compile group: 'net.objecthunter', name: 'exp4j', version: '0.4.8'
 }
 
-project.version = '0.2.2'
+ext.appName = 'DeskChan'
+project.version = '0.2.3'
 
 mainClassName = 'info.deskchan.core.MainKt'
+
+// A list of standard plugins that should be packed into jar files.
+ext.standardJarPlugins = [
+	'speech_command_system',
+	'chat_window',
+	'weather'
+]
 
 def gitCommitCount = '[UNOFFICIAL]'
 def gitCommitHash = 'Unknown'
 def gitBranchName = 'Unknown'
 
+// We're getting the version information about the project from our git repository.
 try {
 	def gitQueries = [
 			['rev-list', '--count', 'HEAD'],
@@ -84,23 +94,105 @@ try {
 	gitCommitHash = versionInfo[1].trim()
 	gitBranchName = versionInfo[2].trim()
 } catch (Exception e) {
-	System.err.println("Failed to get git metadata")
+	System.err.println('Failed to get git metadata')
 }
 
+ext.appVersion = "$version-r$gitCommitCount"
+ext.fullAppName = "$appName-$appVersion"
+
+// At first, the application is assembled to this directory. And only then it packs into a zip file.
+ext.launch4jDir = "${buildDir}/launch4j"
+
+// Provides an automatically generated static class consisting of the version information.
 buildConfig {
 	packageName = 'info.deskchan.core'
 	clsName = 'BuildConfig'
-	appName = project.name
-	version = "${project.version}-r${gitCommitCount}"
+	buildConfig.appName = appName
+	version = appVersion
 	buildConfigField 'String', 'GIT_COMMIT_HASH', gitCommitHash
 	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
-	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd\'T\'HH:mm:ssZ')
+	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd HH:mm:ssZ')
 	buildConfigField 'String', 'PROJECT_SITE_URL', 'http://deskchan.info/'
+	buildConfigField 'String', 'AUTHORS', 'DeskChan Project <support@deskchan.info> (http://deskchan.info)'
+}
+
+defaultTasks 'printHelpMessage'
+
+task printHelpMessage(group: 'desk-chan') {
+	doLast {
+		println 'The Desk-Chan Project greetings you!\n'
+		println 'Use the "run" task to (obviously) run the application.'
+		println 'Use the "createExeDistZip" task to assemble a distributive archive.\n'
+		println 'If you have any issues, feel free to contact us via Telegram: t.me/dc_flood'
+	}
+}
+
+task copyIconForExe(type: Copy, group: 'desk-chan') {
+	from "$projectDir/misc/appicon.ico"
+	into launch4jDir
+}
+
+task assembleCore(type: Jar, group: 'desk-chan') {
+	baseName = appName
+	from (sourceSets.main.output) {
+		include 'info/deskchan/core/*'
+		include 'info/deskchan/core_utils/**/*'
+		include 'info/deskchan/jar_loader/**/*'
+		include 'info/deskchan/gui_javafx/**/*'
+		include 'info/deskchan/groovy_support/**/*'
+		include 'info/deskchan/talking_system/**/*'
+	}
+	from (sourceSets.main.resources) {
+		include 'info/deskchan/*'
+	}
+	manifest {
+		attributes 'Main-Class': project.mainClassName, 'Implementation-Version': appVersion
+	}
+	version = null
+	classifier = null
+}
+
+task assembleProxyInterface(type: Jar, group: 'desk-chan') {
+	baseName = 'ProxyInterface'
+	from (sourceSets.main.output) {
+		include 'info/deskchan/core/ResponseListener.class'
+		include 'info/deskchan/core/ResponseInfo.class'
+		include 'info/deskchan/core/MessageListener.class'
+		include 'info/deskchan/core/PluginProxyInterface.class'
+		include 'info/deskchan/core/Plugin.class'
+	}
+	manifest {
+		attributes 'Main-Class': "info.deskchan.${baseName}.Main", 'Implementation-Version': appVersion
+	}
+	version = null
+}
+
+// Similar tasks for assembling plugins are generated dynamically.
+// For example, task GroovySupport produces groovy_support.jar file.
+// Unfortunately, IntelliJ IDEA doesn't like such code at all.
+standardJarPlugins.each { name ->
+	task "assemble$name"(type: Jar, group: 'desk-chan') {
+		baseName = name
+		from (sourceSets.main.output) {
+			include "info/deskchan/$baseName/**/*"
+		}
+		manifest {
+			def commonAttrs = [
+				'Main-Class': "info.deskchan.${baseName}.Main",
+				'Type': 'Jar',
+				'Version': appVersion,
+				'Author': 'DeskChan Project <support@deskchan.info> (http://deskchan.info)',
+				'Resources': "info/deskchan/${baseName}/strings"
+			]
+			attributes commonAttrs
+		}
+		version = null
+	}
 }
 
 jar {
 	baseName = project.name
-	
+
 	manifest {
 		attributes 'Main-Class': mainClassName
 	}
@@ -112,81 +204,87 @@ shadowJar {
 	version = null
 }
 
-distZip {
-	into(project.name) {
-		from "${projectDir}/data"
+task copyProxyLib(type: Copy, dependsOn: assembleProxyInterface, group: 'desk-chan') {
+	description 'Copies the ProxyInterface.jar into the /libs/ directory.'
+
+	from (libsDir){
+		include 'ProxyInterface*'
 	}
-	into(project.name + '/plugins') {
-		from "${projectDir}/plugins"
-	}
+	into "$launch4jDir/libs/"
 }
 
-distTar {
-	into(project.name) {
-		from "${projectDir}/data"
+task copyJarPlugins(type: Copy, group: 'desk-chan') {
+	standardJarPlugins.forEach {
+		dependsOn "assemble$it"
 	}
-	into(project.name + '/plugins') {
-		from "${projectDir}/plugins"
+	description 'Copies all *.jar files of built-in plugins into the /plugins/ directory.'
+
+	from (libsDir) {
+		exclude 'Proxy*', 'DeskChan*'
 	}
+	into "$launch4jDir/plugins/"
 }
+
+/*task copyDependencies(type: Copy, group: 'desk-chan') {
+	description 'Copies all runtime dependencies into the /libs/ directory.'
+
+	from configurations.runtime
+	into "$launch4jDir/libs/"
+}*/
+
+task copyJars(
+	dependsOn: [copyProxyLib, copyJarPlugins/*, copyDependencies*/],
+	description: 'Applies all of the previous copy tasks.',
+	group: 'desk-chan'
+)
 
 createExe {
-	outfile = "bin/${project.name}.exe"
+	dependsOn assembleCore, copyJars, copyIconForExe
+	description 'Produces an executable file containing the core plugin.'
+
+	outfile = "bin/${appName}.exe"
 	mainClassName = project.mainClassName
 	copyConfigurable = files()
+
 	jar = "${buildDir}/libs/${project.tasks.shadowJar.archiveName}"
 	icon = 'appicon.ico'
+
 	copy {
-		from "${projectDir}/data"
-		into "${buildDir}/launch4j"
+		from "${projectDir}/assets"
+		into "$launch4jDir/assets"
 	}
 	copy {
 		from "${projectDir}/plugins"
-		into "${buildDir}/launch4j/plugins"
+		into "$launch4jDir/plugins"
 	}
 	doLast {
-		delete "${buildDir}/launch4j/appicon.ico"
+		delete "$launch4jDir/appicon.ico"
 	}
 }
 
-task createStartScriptsForExe(type: CreateStartScripts) {
-	outputDir = file("${buildDir}/launch4j/bin")
-	mainClassName = createExe.mainClassName
-	applicationName = project.name
-	classpath = files(createExe.outfile)
+task createStartScriptsForExe(type: CreateStartScripts, dependsOn: createExe, group: 'desk-chan') {
+	description 'Produces the right executable batch files for Unix and Windows systems.'
+
+	outputDir = file("$launch4jDir/bin")
+	mainClassName = project.mainClassName
+	applicationName = appName
+	classpath = files(createExe.outfile)// + fileTree("$launch4jDir/libs")
 	doLast {
 		def windowsScriptFile = file getWindowsScript()
 		def unixScriptFile = file getUnixScript()
-		windowsScriptFile.text = windowsScriptFile.text.replace("lib\\${project.name}.exe", "bin\\${project.name}.exe")
-		unixScriptFile.text = unixScriptFile.text.replace("lib/${project.name}.exe", "bin/${project.name}.exe")
+		windowsScriptFile.text = windowsScriptFile.text
+				.replace("lib\\${appName}.exe", "bin\\${appName}.exe")
+				.replace('\\lib\\', '\\libs\\')		// TODO: fix the classpath without this kludge
+		unixScriptFile.text = unixScriptFile.text
+				.replace("lib/${appName}.exe", "bin/${appName}.exe")
+				.replaceAll('/lib/', '/libs/')
 	}
 }
 
-task copyIconForExe(type: Copy) {
-	from "${projectDir}/misc/appicon.ico"
-	into "${buildDir}/launch4j"
-}
-task proxyJar(type: Jar) {
-	jar {
-		from sourceSets.main.allSource
-		include "info/deskchan/core/ResponseListener.class"
-		include "info/deskchan/core/ResponseInfo.class"
-		include "info/deskchan/core/MessageListener.class"
-		include "info/deskchan/core/PluginProxyInterface.class"
-		include "info/deskchan/core/Plugin.class"
-	}
-	baseName = 'ProxyInterface'
-	with jar
-}
-task copyProxyLib(type: Copy) {
-	from ("${buildDir}/libs/"){
-		include 'Proxy*'
-	}
-	into "${buildDir}/launch4j/libs/"
-}
+task createExeDistZip(type: Zip, dependsOn: createStartScriptsForExe, group: 'build desk-chan') {
+	description 'The main task. Produces a complete and ready-to-use distributive in a zip archive.'
 
-task createExeDistZip(type: Zip) {
-	from "${buildDir}/launch4j"
+	from launch4jDir
 	include '*'
 	include '*/*'
 	include '*/*/*'
@@ -194,14 +292,23 @@ task createExeDistZip(type: Zip) {
 	include '*/*/*/*/*'
 	include '*/*/*/*/*/*'
 	include '*/*/*/*/*/*/*'
-	exclude 'data'
-	archiveName "${project.name}-full.zip"
-	destinationDir file("${buildDir}/distributions")
+
+	archiveName "${fullAppName}.zip"
+	destinationDir file(distsDir)
 }
 
-copyProxyLib.dependsOn proxyJar
-createExe.dependsOn copyProxyLib
-createExe.dependsOn createStartScriptsForExe
-createExe.dependsOn copyIconForExe
-createExeDistZip.dependsOn createExe
 
+task copyJarPluginsForRun(type: Copy) {
+	standardJarPlugins.forEach {
+		dependsOn "assemble$it"
+	}
+	description 'Copies all *.jar files of built-in plugins into the /build/plugins/ directory.'
+
+	from (libsDir) {
+		exclude 'Proxy*', 'DeskChan*'
+	}
+	from "$projectDir/plugins"
+	into "$buildDir/plugins/"
+}
+
+run.dependsOn copyJarPluginsForRun

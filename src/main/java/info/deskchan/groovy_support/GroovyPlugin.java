@@ -71,6 +71,12 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	protected Path getPluginDirPath() {
 		return pluginDirPath;
 	}
+
+	protected void setResourceBundle(String path){ pluginProxy.setResourceBundle(getPluginDirPath().resolve(path).toString()); }
+
+	protected void setConfigField(String key, Object value){ pluginProxy.setConfigField(key,value); }
+
+	protected Object getConfigField(String key){ return pluginProxy.getConfigField(key); }
 	
 	protected void log(String text) {
 		pluginProxy.log(text);
