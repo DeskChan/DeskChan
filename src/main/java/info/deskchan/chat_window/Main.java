@@ -84,8 +84,6 @@ public class Main implements Plugin {
         }
         logLength = Integer.parseInt(properties.getProperty("length"));
 
-        pluginProxy.setResourceBundle("info/deskchan/chat_window/strings");
-
         characterName = "DeskChan";
         userName = pluginProxy.getString("default-username");
 

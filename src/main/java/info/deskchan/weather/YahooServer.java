@@ -55,6 +55,9 @@ public class YahooServer implements WeatherServer{
         SimpleDateFormat format=new SimpleDateFormat("HH:mm:ss");
         return format.format(lastUpdate);
     }
+    public void drop(){
+        lastUpdate = null;
+    }
     private void update(){
         if(lastUpdate!=null && (new Date().getTime()-lastUpdate.getTime())/60000<30) return;
 

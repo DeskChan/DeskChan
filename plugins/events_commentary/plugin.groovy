@@ -3,10 +3,7 @@ drag=0
 hash=0
 
 addMessageListener("gui-events:character-left-click", { sender, tag, data ->
-	sendMessage("talk:request", [ purpose: 'CLICK', priority: 2000 ])
-})
-addMessageListener("gui-events:character-right-click", { sender, tag, data ->
-	sendMessage("talk:request", [ purpose: 'CLICK', priority: 2000 ])
+	sendMessage("talk:request", [ purpose: 'CLICK', priority: 2000, timeout: 1000 ])
 })
 addMessageListener("gui-events:character-start-drag", { sender, tag, data ->
 	if(drag>0) return

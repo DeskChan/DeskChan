@@ -53,7 +53,7 @@ class Database{
             eventId=name
             soundPath=null
             if(sound!=null){
-                if(sound.equals(Localization.getString('default')))
+                if(sound.equals(instance.getString('default')))
                     soundPath=defaultSound
                 else if(sound.length()>0)
                     soundPath=sound

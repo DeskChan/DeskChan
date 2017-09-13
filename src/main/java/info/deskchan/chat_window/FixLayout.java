@@ -15,7 +15,7 @@ public class FixLayout {
         float a=isLayoutMissedRussian(text);
         float b=isLayoutMissedEnglish(text);
         float c=Math.max(a,b);
-        if(c>0.5){
+        if(c>=0.5){
             String tr=translate(text,englishLayout,russianLayout);
             a=isLayoutMissedRussian(tr);
             b=isLayoutMissedEnglish(tr);

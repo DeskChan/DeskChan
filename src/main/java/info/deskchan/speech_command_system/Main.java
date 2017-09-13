@@ -108,8 +108,9 @@ public class Main implements Plugin {
                 if(first_used>cur_pos) first_used=cur_pos;
             }
             result/=count;
+            //System.out.println(tag+" "+rule_words+" "+result+" "+first_used+" "+max_result+" "+usedCount+" "+max_words_used_count);
             if((result>=max_result && result>0.5) || usedCount>max_words_used_count){
-                if(first_used>=global_first_word_used) continue;
+                if(first_used>global_first_word_used) continue;
                 global_first_word_used=first_used;
                 max_result=result;
                 match_command_name=tag;

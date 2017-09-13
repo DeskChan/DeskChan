@@ -33,7 +33,6 @@ public class Main implements Plugin {
             log("Cannot find file: " + pluginProxy.getDataDirPath().resolve("config.properties"));
         }
 
-        pluginProxy.setResourceBundle("info/deskchan/weather/weather-strings");
         pluginProxy.addMessageListener("weather:update-city",(sender, tag, data) -> {
             String c=(String) ((Map<String,Object>) data).get("city");
             if(c.length()<2) {
@@ -42,8 +41,10 @@ public class Main implements Plugin {
                     put("text",getString("info.no-city"));
                 }});
             } else properties.setProperty("city",c);
+            server.drop();
             updateOptionsTab();
             saveOptions();
+            System.out.println(server.getNow()+" "+getCity());
         });
         pluginProxy.sendMessage("core:add-command", TextOperations.toMap("tag: \"weather:say-weather\""));
         String[] v=new String[]{ "", "", " сейчас", "", " сегодня", "0", " завтра", "1", " послезавтра", "2"};

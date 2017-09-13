@@ -70,7 +70,9 @@ public class Main implements Plugin {
 		quotes = new Quotes();
 		currentPreset = new SimpleCharacterPreset();
 		Influence.globalMultiplier = 0.05f;
-		pluginProxy.setResourceBundle("info/deskchan/talking_system/talk-strings");
+
+		pluginProxy.setResourceBundle("info/deskchan/talking_system/strings");
+		pluginProxy.setConfigField("short-description",getString("plugin.short-description"));
 
 		try {
 			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));

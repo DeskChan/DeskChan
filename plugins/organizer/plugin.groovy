@@ -1,10 +1,11 @@
 import java.text.SimpleDateFormat
 
+setResourceBundle("resources")
+
 Database.filename=getDataDirPath().resolve('database').toString()
 database=new Database(this)
 
-Localization.instance=this
-Localization.load()
+instance=this
 
 defaultSoundFolder=getPluginDirPath().resolve("sounds")
 format = new SimpleDateFormat ('dd.MM.yyyy')
@@ -12,37 +13,37 @@ format = new SimpleDateFormat ('dd.MM.yyyy')
 void setupEventsMenu(){
     dt = new Date()
     sendMessage( 'gui:setup-options-submenu',
-        [ 'name': Localization.getString('shedule'),
+        [ 'name': getString('shedule'),
           'msgTag': 'organizer:add-event',
           'controls': [
             [
                 'type': 'ListBox',
                 'id': 'events',
-                'label': Localization.getString('sheduled'),
+                'label': getString('sheduled'),
                 'values': database.getListOfEntries(),
                 'msgTag': 'organizer:selected-changed'
             ],[
                 'type': 'Button',
                 'msgTag': 'organizer:delete-selected',
-                'value': Localization.getString('delete')
+                'value': getString('delete')
             ],[
                 'type': 'Label',
-                'label': Localization.getString('create-reminder')
+                'label': getString('create-reminder')
             ],[
                 'type': 'TextField',
                 'id': 'name',
-                'label': Localization.getString('name'),
-                'value': Localization.getString('default-reminder')
+                'label': getString('name'),
+                'value': getString('default-reminder')
             ],[
                 'type': 'DatePicker',
                 'id': 'date',
-                'label': Localization.getString('date'),
+                'label': getString('date'),
                 'format': format.toPattern(),
                 'value': new Date().format( format.toPattern() )
             ],[
                 'type': 'Spinner',
                 'id': 'hour',
-                'label': Localization.getString('hour'),
+                'label': getString('hour'),
                 'value': (Integer.parseInt(dt.format('H'))+1)%24,
                 'min': 0,
                 'max': 23,
@@ -50,7 +51,7 @@ void setupEventsMenu(){
             ],[
                 'type': 'Spinner',
                 'id': 'minute',
-                'label': Localization.getString('minute'),
+                'label': getString('minute'),
                 'value': 0,
                 'min': 0,
                 'max': 59,
@@ -58,18 +59,18 @@ void setupEventsMenu(){
             ],[
                 'type': 'CheckBox',
                 'id': 'soundEnabled',
-                'label': Localization.getString('enable-sound'),
+                'label': getString('enable-sound'),
                 'value': false,
                 'msgTag': 'organizer:check-sound'
             ],[
                 'type': 'FileField',
                 'id': 'sound',
-                'label': Localization.getString('sound'),
-                'value': Localization.getString('default'),
+                'label': getString('sound'),
+                'value': getString('default'),
                 'disabled': true,
                 'initialDirectory':  defaultSoundFolder.toString(),
                 'filters': [[
-                    'description': Localization.getString('sound'),
+                    'description': getString('sound'),
                     'extensions': ['*.mp3', '*.wav', '*.aac', '*.ogg', '*.flac']
                 ]]
             ]
@@ -78,18 +79,18 @@ void setupEventsMenu(){
     )
 }
 sendMessage( 'gui:setup-options-submenu',
-        [ 'name': Localization.getString('timer'),
+        [ 'name': getString('timer'),
           'msgTag': 'organizer:add-timer',
           'controls': [
                   [
                           'type': 'TextField',
                           'id': 'name',
-                          'label': Localization.getString('name'),
-                          'value': Localization.getString('default-timer')
+                          'label': getString('name'),
+                          'value': getString('default-timer')
                   ],[
                           'type': 'Spinner',
                           'id': 'hour',
-                          'label': Localization.getString('hour'),
+                          'label': getString('hour'),
                           'value': 0,
                           'min': 0,
                           'max': 100000,
@@ -97,7 +98,7 @@ sendMessage( 'gui:setup-options-submenu',
                   ],[
                           'type': 'Spinner',
                           'id': 'minute',
-                          'label': Localization.getString('minute'),
+                          'label': getString('minute'),
                           'value': 0,
                           'min': 0,
                           'max': 100000,
@@ -105,7 +106,7 @@ sendMessage( 'gui:setup-options-submenu',
                   ],[
                           'type': 'Spinner',
                           'id': 'second',
-                          'label': Localization.getString('second'),
+                          'label': getString('second'),
                           'value': 0,
                           'min': 0,
                           'max': 100000,
@@ -113,18 +114,18 @@ sendMessage( 'gui:setup-options-submenu',
                   ],[
                           'type': 'CheckBox',
                           'id': 'soundEnabled',
-                          'label': Localization.getString('enable-sound'),
+                          'label': getString('enable-sound'),
                           'value': false,
                           'msgTag': 'organizer:check-timer-sound'
                   ],[
                           'type': 'FileField',
                           'id': 'sound',
-                          'label': Localization.getString('sound'),
-                          'value': Localization.getString('default'),
+                          'label': getString('sound'),
+                          'value': getString('default'),
                           'disabled': true,
                           'initialDirectory': defaultSoundFolder.toString(),
                           'filters': [[
-                                              'description': Localization.getString('sound'),
+                                              'description': getString('sound'),
                                               'extensions': ['*.mp3', '*.wav', '*.aac', '*.ogg', '*.flac']
                                       ]]
                   ]
@@ -163,7 +164,7 @@ Database.DatabaseEntry.defaultSound = defaultSoundFolder.resolve("communication-
 
 addMessageListener('organizer:check-sound', { sender, tag, data ->
     sendMessage( 'gui:update-options-submenu',
-            [ 'name': Localization.getString('shedule'),
+            [ 'name': getString('shedule'),
               'controls': [[
                                    'id': 'sound',
                                    'disabled': !data.get("value")
@@ -172,7 +173,7 @@ addMessageListener('organizer:check-sound', { sender, tag, data ->
 })
 addMessageListener('organizer:check-timer-sound', { sender, tag, data ->
     sendMessage( 'gui:update-options-submenu',
-            [ 'name': Localization.getString('timer'),
+            [ 'name': getString('timer'),
               'controls': [[
                                    'id': 'sound',
                                    'disabled': !data.get("value")
@@ -191,7 +192,7 @@ addMessageListener('organizer:add-event', { sender, tag, data ->
     String name=data.get("name")
     if(name.length()==0){
         sendMessage( 'gui:show-notification',
-                [ 'name': Localization.getString('error'),
+                [ 'name': getString('error'),
                   'text': 'No name specified'
                 ])
         return
@@ -206,8 +207,8 @@ addMessageListener('organizer:add-event', { sender, tag, data ->
             break
         case 1:
             sendMessage( 'gui:show-notification',
-                    [ 'name': Localization.getString('error'),
-                      'text': Localization.getString('error.past')
+                    [ 'name': getString('error'),
+                      'text': getString('error.past')
                     ])
             break
     }
@@ -217,8 +218,8 @@ addMessageListener('organizer:add-timer', { sender, tag, data ->
     String name=data.get("name")
     if(name.length()==0){
         sendMessage( 'gui:show-notification',
-                [ 'name': Localization.getString('error'),
-                  'text': Localization.getString('error.no-name')
+                [ 'name': getString('error'),
+                  'text': getString('error.no-name')
                 ])
         return
     }
