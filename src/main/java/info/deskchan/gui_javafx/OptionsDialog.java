@@ -24,6 +24,7 @@ import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.lang.Character;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -60,7 +61,7 @@ class OptionsDialog extends TemplateBox {
 		getInstance().balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
 	}
 
-	private void initMainTab(){
+	public void initMainTab(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id", "skin");
@@ -120,11 +121,13 @@ class OptionsDialog extends TemplateBox {
 			put("type", "ComboBox");
 			put("hint",Main.getString("help.layer_mode"));
 			put("label", Main.getString("character.layer_mode"));
-			List<Object> values=FXCollections.observableList(Arrays.asList((Object[])Character.LayerMode.values()));
+			List<Object> values=FXCollections.observableList(new ArrayList<>());
+			values.addAll(OverlayStage.getStages());
 			int sel=-1;
+			OverlayStage.LayerMode mode = OverlayStage.getCurrentStage();
 			for(Object value : values){
 				sel++;
-				if(value.equals(App.getInstance().getCharacter().getLayerMode())) break;
+				if(value.equals(mode)) break;
 			}
 			put("msgTag","gui:change-layer-mode");
 			put("values", values);
@@ -319,8 +322,12 @@ class OptionsDialog extends TemplateBox {
 					@Override
 					protected void updateItem(PluginListItem t, boolean bln) {
 						super.updateItem(t, bln);
-						if (t != null)
+						if (t != null) {
 							setGraphic(t.hbox);
+							setTooltip(t.tooltip);
+						} else {
+							setTooltip(null);
+						}
 					}
 				};
 				return cell;
@@ -601,6 +608,7 @@ class OptionsDialog extends TemplateBox {
 		HBox menuBox = new HBox();
 		Button blacklistPluginButton;
 		Label label;
+		Tooltip tooltip;
 		Pane pane = new Pane();
 		String locked="🔒";
 		String unlocked="🔓";
@@ -616,7 +624,26 @@ class OptionsDialog extends TemplateBox {
 		PluginListItem(String id, boolean blacklisted) {
 			this.id = id;
 			this.blacklisted = blacklisted;
-			label = new Label(toString());
+			Object type = PluginManager.getInstance().getPluginConfig(id).get("type");
+			if(type!=null) {
+				Character c = Character.toLowerCase(type.toString().charAt(0));
+				label = new Label((char) ((int) c - 97 + 9398) +
+						"  " + toString());
+			} else label = new Label(toString());
+			hbox.getChildren().addAll(label, pane, menuBox);
+
+
+			tooltip = new Tooltip(PluginManager.getInstance().getPluginConfig(id).getShortDescription());
+			final String description = (String) PluginManager.getInstance().getPluginConfig(id).get("description");
+			if(description!=null) {
+				Button infoPluginButton = new Button("?");
+				infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
+				infoPluginButton.setOnAction(event -> {
+					App.showNotification(Main.getString("info"),description);
+				});
+				hbox.getChildren().add(infoPluginButton);
+			}
+
 			Button unloadPluginButton = new Button("X");
 			unloadPluginButton.setTooltip(new Tooltip(Main.getString("info.unload-plugin")));
 			unloadPluginButton.setOnAction(event -> {
@@ -645,8 +672,10 @@ class OptionsDialog extends TemplateBox {
 				}
 				item.toggleBlacklisted();
 			});
-			hbox.getChildren().addAll(label, pane, menuBox, blacklistPluginButton, unloadPluginButton);
+
+			hbox.getChildren().addAll(blacklistPluginButton, unloadPluginButton);
 			HBox.setHgrow(pane, Priority.ALWAYS);
+
 			updateOptionsSubMenu();
 		}
 		void updateOptionsSubMenu(){
@@ -656,10 +685,10 @@ class OptionsDialog extends TemplateBox {
 			for(ControlsContainer container : list){
 				Button button = new Button(container.name);
 				button.setOnAction((event) -> {
-					App.getInstance().setupCustomWindow(id, container);
+					ControlsWindow.setupCustomWindow(id, container);
 				});
 				menuBox.getChildren().add(button);
-				App.getInstance().updateCustomWindow(id, container);
+				ControlsWindow.updateCustomWindow(id, container);
 			}
 		}
 		void toggleBlacklisted(){

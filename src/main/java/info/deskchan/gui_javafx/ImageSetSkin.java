@@ -129,8 +129,7 @@ class ImageSetSkin implements Skin {
 	public void overridePreferredBalloonPosition(String imageName, Point2D position) {
 		try {
 			String key = "balloon_offset." + imageName;
-			String value = String.valueOf(position.getX()) + ";" +
-					String.valueOf(position.getY());
+			String value = String.valueOf(position.getX()) + ";" + String.valueOf(position.getY());
 			String oldValue = properties.getProperty(key);
 			if ((oldValue != null) && oldValue.equals(value)) {
 				return;

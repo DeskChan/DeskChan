@@ -22,9 +22,9 @@ public interface Skin {
 	void overridePreferredBalloonPosition(String imageName, Point2D position);
 	
 	static Path getSkinsPath() {
-		Path path = PluginManager.getPluginsDirPath().getParent().resolve("skins");
+		Path path = PluginManager.getAssetsDirPath().resolve("skins");
 		if (!Files.isDirectory(path)) {
-			path = PluginManager.getPluginsDirPath().getParent().resolve("data").resolve("skins");
+			path = PluginManager.getPluginsDirPath().getParent().resolve("assets").resolve("skins");
 		}
 		return path.toAbsolutePath();
 	}

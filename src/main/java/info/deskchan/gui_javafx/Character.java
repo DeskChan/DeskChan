@@ -19,13 +19,6 @@ class Character extends MovablePane {
 
 	private static final String DEFAULT_SKIN_NAME = "illia.image_set";
 
-	enum LayerMode {
-		ALWAYS_NORMAL,
-		TOP_IF_MESSAGE,
-		ALWAYS_TOP,
-		HIDE
-	}
-
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
 
 	private final String id;
@@ -35,8 +28,8 @@ class Character extends MovablePane {
 	private String idleImageName = "normal";
 	private PriorityQueue<MessageInfo> messageQueue = new PriorityQueue<>();
 	private Balloon balloon = null;
-	private String layerName = "top";
-	private LayerMode layerMode = LayerMode.ALWAYS_TOP;
+	private String layerName = "normal";
+	private String balloonLayerName = "normal";
 	private Balloon.PositionMode balloonPositionMode;
 	private float scaleFactor = 1.0f;
 	private float skinOpacity = 1.0f;
@@ -49,6 +42,7 @@ class Character extends MovablePane {
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
+
 		imageView.setMouseTransparent(true);
 		balloonPositionMode = Balloon.PositionMode.valueOf(
 				Main.getProperty("character." + id + ".balloon_position_mode",
@@ -69,7 +63,7 @@ class Character extends MovablePane {
 		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
 			boolean enabled = Main.getProperty("character.enable_context_menu", "1").equals("1");
-			ContextMenu contextMenu = App.getInstance().getContextMenu();
+			ContextMenu contextMenu = TrayMenu.getContextMenu();
 			// We need to hide menu manually in both cases to avoid showing the menu with incorrect width.
 			contextMenu.hide();
 			if (enabled && event.getButton() == MouseButton.SECONDARY && event.isStillSincePress()) {
@@ -105,6 +99,9 @@ class Character extends MovablePane {
 					}
 					return false;
 				});
+
+		layoutXProperty().addListener(Balloon.updateBalloonLayoutX);
+		layoutYProperty().addListener(Balloon.updateBalloonLayoutY);
 	}
 
 	Skin getSkin() {
@@ -143,16 +140,19 @@ class Character extends MovablePane {
 	    if (reloadImage) {
             imageView.setImage(getImage());
         }
-
         Image image = imageView.getImage();
-        double oldWidth = imageView.getFitWidth();
-        double oldHeight = imageView.getFitHeight();
-        double newWidth = image.getWidth() * scaleFactor;
-        double newHeight = image.getHeight() * scaleFactor;
+	    if(image==null){
+	    	App.showNotification(Main.getString("error"),Main.getString("error.no-image")+getImage());
+	    	return;
+		}
+		double oldWidth = imageView.getFitWidth();
+		double oldHeight = imageView.getFitHeight();
+		double newWidth = image.getWidth() * scaleFactor;
+		double newHeight = image.getHeight() * scaleFactor;
 
-        imageView.setFitWidth(newWidth);
-        imageView.setFitHeight(newHeight);
-        resize(imageView.getFitWidth(), imageView.getFitHeight());
+		imageView.setFitWidth(newWidth);
+		imageView.setFitHeight(newHeight);
+		resize(imageView.getFitWidth(), imageView.getFitHeight());
 		imageView.setOpacity(skinOpacity);
 
 		Lighting lighting = null;
@@ -270,7 +270,7 @@ class Character extends MovablePane {
 	}
 
 	void say(Object data) {
-		if(layerMode.equals("hide")) return;
+		if(OverlayStage.getCurrentStage()== OverlayStage.LayerMode.HIDE) return;
 		MessageInfo messageInfo = null;
 		if (data != null) {
 			messageInfo = new MessageInfo(data);
@@ -281,13 +281,15 @@ class Character extends MovablePane {
 			Iterator<MessageInfo> i = messageQueue.iterator();
 			while (i.hasNext()) {
 				MessageInfo s = i.next();
-				if(s.skippable && s.priority<messageInfo.priority) i.remove();
+				if(s!=messageInfo && s.skippable && s.priority<messageInfo.priority) i.remove();
 			}
 			if (messageQueue.peek() != messageInfo) {
 				return;
 			}
-		} else if(messageQueue.peek().itsTimeToStop()){
-			messageQueue.poll();
+		} else {
+			if(messageQueue.peek()!=null && messageQueue.peek().itsTimeToStop()){
+				messageQueue.poll();
+			}
 		}
 		if (balloon != null) {
 			balloon.close();
@@ -301,41 +303,7 @@ class Character extends MovablePane {
 			balloon = new Balloon(this, balloonPositionMode, messageInfo.text[messageInfo.counter]);
             messageInfo.counter++;
 			balloon.setTimeout(messageInfo.timeout);
-		}
-		setLayerMode(layerMode);
-	}
-
-	LayerMode getLayerMode() {
-		return layerMode;
-	}
-
-	String getCurrentLayerName() {
-		return layerName;
-	}
-
-	void setLayerMode(LayerMode mode) {
-		layerMode = mode;
-		String newLayerName;
-		if (mode.equals(LayerMode.ALWAYS_TOP)) {
-			newLayerName = "top";
-		} else if (mode.equals(LayerMode.TOP_IF_MESSAGE)) {
-			newLayerName = (balloon != null) ? "top" : "normal";
-		} else if (mode.equals(LayerMode.HIDE)) {
-			OverlayStage.getInstance(layerName).getRoot().getChildren().remove(this);
-			if (balloon != null) balloon.hide();
-			return;
-		} else {
-			newLayerName = "normal";
-		}
-		if (!layerName.equals(newLayerName)) {
-			if(layerName!="hide") OverlayStage.getInstance(layerName).getRoot().getChildren().remove(this);
-			layerName = newLayerName;
-		}
-		if (getParent() == null) {
-			OverlayStage.getInstance(layerName).getRoot().getChildren().add(this);
-		}
-		if (balloon != null) {
-			balloon.show(layerName);
+			balloon.show(balloonLayerName);
 		}
 	}
 

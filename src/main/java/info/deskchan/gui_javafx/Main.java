@@ -31,10 +31,10 @@ public class Main implements Plugin {
 		}
 		if(properties.containsKey("locale")) {
 			Locale.setDefault(new Locale(properties.getProperty("locale")));
-			PluginProxy.updateResourceBundle();
+			PluginProxy.Companion.updateResourceBundle();
 		}
 
-		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/gui-strings");
+		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/strings");
 
 		new Thread(() -> {
 			App.run(PluginManager.getInstance().getArgs());
@@ -74,7 +74,7 @@ public class Main implements Plugin {
 	}
 	
 	void quit() {
-		pluginProxy.sendMessage("core:quit", 2000);
+		pluginProxy.sendMessage("core:quit", 0);
 	}
 	
 	static void log(String text) {
