@@ -96,7 +96,9 @@ class OverlayStage extends Stage {
 	public static void updateStage(LayerMode mode){
 		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC){
 			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-			((Stage)alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
+			try {
+				((Stage) alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
+			} catch (Exception e){ }
 			alert.setTitle(Main.getString("default_messagebox_name"));
 			alert.setContentText(Main.getString("info.separated-stage"));
 			Optional<ButtonType> result = alert.showAndWait();
@@ -105,7 +107,9 @@ class OverlayStage extends Stage {
 			}
 		} else if(mode == LayerMode.ALWAYS_TOP && SystemUtils.IS_OS_MAC){
 			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-			((Stage)alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
+			try {
+				((Stage) alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
+			} catch (Exception e){ }
 			alert.setTitle(Main.getString("default_messagebox_name"));
 			alert.setContentText(Main.getString("info.not-separated-stage"));
 			Optional<ButtonType> result = alert.showAndWait();
@@ -197,6 +201,14 @@ class OverlayStage extends Stage {
 	public void showStage(){
 		show();
 	}
+
+	public void setAlwaysOnTop(){
+		try {
+			setAlwaysOnTop(true);
+		} catch(Throwable e){
+			Main.log("Sorry, top stage is not available on your system. Maybe it's because you didn't update Java.");
+		}
+	}
 }
 class NormalStage extends OverlayStage{
 	EventHandler<WindowEvent> handler = new EventHandler<WindowEvent>() {
@@ -256,7 +268,7 @@ class TopStage extends NormalStage{
 				HackJavaFX.setCreateTransparentPopup(stage);
 				HackJavaFX.setWindowFocusable(stage, false);
 				stage.toFront();
-				stage.setAlwaysOnTop(true);
+				stage.setAlwaysOnTop();
 			}
 		};
 		setOnShowing(handler);
@@ -364,7 +376,7 @@ class SeparatedStage extends OverlayStage{
 		root.setOnMouseDragged(startDragHandler);
 		root.setOnMouseExited(stopDragHandler);
 		root.setOnMouseReleased(stopDragHandler);
-		setAlwaysOnTop(true);
+		setAlwaysOnTop();
 		try {
 			node.setLayoutX(0);
 			node.setLayoutY(0);

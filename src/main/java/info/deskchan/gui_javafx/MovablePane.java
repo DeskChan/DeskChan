@@ -76,9 +76,11 @@ class MovablePane extends Pane {
 
 	Point2D getPosition() {
 		Bounds bounds = getLayoutBounds();
-		Bounds local = localToScreen(bounds);
-		if(local==null) local = bounds;
-		Point2D position = new Point2D(local.getMinX(), local.getMinY());
+		try {
+			Bounds local = localToScreen(bounds);
+			if (local != null) bounds = local;
+		} catch(Exception e){ }
+		Point2D position = new Point2D(bounds.getMinX(), bounds.getMinY());
 		return position;
 	}
 

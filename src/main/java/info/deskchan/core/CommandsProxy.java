@@ -311,7 +311,7 @@ public class CommandsProxy{
         try {
             reader=new FileReader(file);
         } catch(Exception e){
-            PluginManager.log("Error while locate command links file");
+            PluginManager.log("Links file is not found, using default links");
             return;
         }
         BufferedReader out=new BufferedReader(reader);
