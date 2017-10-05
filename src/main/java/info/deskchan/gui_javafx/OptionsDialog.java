@@ -634,7 +634,7 @@ class OptionsDialog extends TemplateBox {
 
 
 			tooltip = new Tooltip(PluginManager.getInstance().getPluginConfig(id).getShortDescription());
-			final String description = (String) PluginManager.getInstance().getPluginConfig(id).get("description");
+			final String description = PluginManager.getInstance().getPluginConfig(id).getDescription();
 			if(description!=null) {
 				Button infoPluginButton = new Button("?");
 				infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
