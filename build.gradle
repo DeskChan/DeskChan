@@ -113,7 +113,7 @@ buildConfig {
 	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
 	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd HH:mm:ssZ')
 	buildConfigField 'String', 'PROJECT_SITE_URL', 'http://deskchan.info/'
-	buildConfigField 'String', 'AUTHORS', 'DeskChan Project <support@deskchan.info> (http://deskchan.info)'
+	buildConfigField 'String', 'AUTHOR', 'DeskChan Project <support@deskchan.info> (http://deskchan.info)'
 }
 
 defaultTasks 'printHelpMessage'

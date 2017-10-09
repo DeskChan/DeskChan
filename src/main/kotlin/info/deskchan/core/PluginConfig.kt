@@ -5,13 +5,18 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.net.MalformedURLException
+import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
-enum class Platform { All, Desktop, Mobile, Windows, Linux, Mac, Android, iOs }
-val DEFAULT_PLATFORM = Platform.Desktop   // Sweet Dreams: change to ALL before the final release version
 
-private const val TEMPLATE_INVALID_PROPERTY = "Manifest of plugin \"%s\" has invalid property: %s"
+// enum class Platform { All, Desktop, Mobile, Windows, Linux, Mac, Android, iOs }
+// val DEFAULT_PLATFORM = Platform.Desktop   // Sweet Dreams: change to ALL before the final release version
+//
+// private const val TEMPLATE_INVALID_PROPERTY = "Manifest of plugin \"%s\" has invalid property: %s"
+
 
 class PluginConfig {
 
@@ -43,14 +48,14 @@ class PluginConfig {
             return
         }
 
-        var manifestStr: String = ""
-        try {
+        val manifestStr = try {
             Files.newInputStream(path).use { manifestInputStream ->
-                manifestStr = IOUtils.toString(manifestInputStream, "UTF-8")
+                IOUtils.toString(manifestInputStream, "UTF-8")
             }
         } catch (e: IOException) {
             PluginManager.log("Couldn't read file: $path")
             PluginManager.log(e)
+            ""
         }
 
         val json: JSONObject
@@ -63,10 +68,10 @@ class PluginConfig {
         }
         json.toMap().forEach { t, u ->
             if(u!=null && u!=""){
-                if(u is JSONArray){
-                    data[t.toLowerCase()] = u.toList()
-                } else if(u is JSONObject){
-                    data[t.toLowerCase()] = u.toMap()
+                data[t.toLowerCase()] = when (u) {
+                    is JSONArray ->  u.toList()
+                    is JSONObject -> u.toMap()
+                    else -> u
                 }
             }
         }
@@ -90,50 +95,103 @@ class PluginConfig {
             }
         }
 
-        if(value == null){
-            value = emptyList<String>()
-            data[possibleNames[0]] = value
-            return value
-        } else if(value is List<*>){
-            return value as List<String>
-        } else {
-            value = mutableListOf<String>(value.toString())
-            data[possibleNames[0]] = value
-            return value
+        return when (value) {
+            null -> {
+                value = emptyList<String>()
+                data[possibleNames[0]] = value
+                value
+            }
+            is List<*> -> value as List<String>
+            else -> {
+                value = mutableListOf<String>(value.toString())
+                data[possibleNames[0]] = value
+                value
+            }
         }
     }
 
-    fun getType() : String = PluginProxy.getString(data.get("type")?.toString() ?: "unknown")
+    fun getType() : String = PluginProxy.getString(data["type"]?.toString() ?: "unknown")
 
     fun get(key:String) : Any? = data[key]
 
     fun getShortDescription() : String {
         val sb = StringBuilder()
-        sb.append(PluginProxy.getString("plugin-type")+": "+getType()+"\n")
-        if(data.containsKey("authors"))
-            sb.append(PluginProxy.getString("authors")+": "+get("authors")+"\n")
-        if(data.containsKey("version"))
-            sb.append(PluginProxy.getString("version")+": "+get("version")+"\n")
-        if(data.containsKey("short-description"))
-            sb.append(PluginProxy.getString("description")+": "+get("short-description")+"\n")
+        sb.appendln(PluginProxy.getString("plugin-type") + ": " + getType())
+        if ("version" in data) {
+            sb.appendln(PluginProxy.getString("version") + ": " + get("version"))
+        }
+        if("authors" in data) {
+            val authors = (data["authors"] as? List<*>)?.mapNotNull { parseAuthor(it) }
+            if (authors != null && authors.isNotEmpty()) {
+                val label = PluginProxy.getString("authors")
+                val authorsStr = authors.joinToString(System.lineSeparator()) { "— $it" }
+                sb.appendln("%n$label:%n$authorsStr%n".format())
+            }
+        } else if ("author" in data) {
+            val label = PluginProxy.getString("author")
+            parseAuthor(data["author"])?.let {
+                sb.appendln("$label: $it")
+            }
+        }
+        if ("short-description" in data) {
+            sb.appendln(PluginProxy.getString("description") + ": " + get("short-description"))
+        }
 
-        return sb.toString().dropLast(1)
+        return sb.toString().trimEnd()
     }
 
-    fun print(){
-        println(data)
+    fun getDescription(): String? = if ("description" in data) {
+        val descriptionMap = data["description"] as? Map<String, String>?
+        if (descriptionMap != null) {
+            getLocalString(descriptionMap)
+        } else {
+            data["description"].toString()
+        }
+    } else {
+        null
     }
 
-    fun clone(): PluginConfig = PluginConfig(data)
+    private fun parseAuthor(obj: Any?): Author? = when (obj) {
+        is Map<*, *> -> {
+            if ("name" in obj) {
+                val name = obj["name"].toString()
+                val email = if ("email" in obj) obj["email"] as? String else null
+                val website = if ("website" in obj) {
+                    try { URL(obj["website"].toString()) }
+                    catch (e: MalformedURLException) { null }
+                } else null
+                Author(name, email, website)
+            } else {
+                null
+            }
+        }
+        is String -> Author.fromString(obj)
+        else -> null
+    }
+
+    private fun getLocalString(strings: Map<String, String>): String? {
+        val fullLang = Locale.getDefault().toLanguageTag().replace('-', '_')
+        val baseLang = fullLang.substring(0..1)
+        linkedSetOf(fullLang, baseLang, "en").forEach {
+            if (it in strings) {
+                return strings[it]
+            }
+        }
+        return null
+    }
+
+    fun print() = println(data)
+
+    fun clone() = PluginConfig(data)
 
     companion object{
-        val Internal: PluginConfig
+        val Internal = PluginConfig()
+
         init {
-            Internal = PluginConfig()
             try {
                 Internal.append("type", "Internal")
                 Internal.append("version", CoreInfo.get("VERSION"))
-                Internal.append("authors", CoreInfo.get("AUTHORS"))
+                Internal.append("author", CoreInfo.get("AUTHOR"))
             } catch (e: Exception){
                 PluginManager.log(e)
             }
@@ -250,55 +308,53 @@ class PluginConfig {
             return PluginConfig.fromManifest(manifest, dependencies.toSet(), repositories.toSet(), platform)
         }
 
-
-        object AuthorParser {
-            enum class Part { NAME, EMAIL, WEBSITE, PART_ENDED }
-
-            fun parse(authorStr: String): Author {
-                var part = Part.NAME
-                val name = StringBuilder()
-                val email = StringBuilder()
-                val website = StringBuilder()
-                for (char in authorStr) {
-                    when {
-                        char == '<'                -> part = Part.EMAIL
-                        char == '>' || char == ')' -> part = Part.PART_ENDED
-                        char == '('                -> part = Part.WEBSITE
-                        part == Part.NAME          -> name.append(char)
-                        part == Part.EMAIL         -> email.append(char)
-                        part == Part.WEBSITE       -> website.append(char)
-                    }
-                }
-
-                val (nameStr, emailStr, websiteStr) = listOf(name, email, website).map {
-                    val s = it.toString().trim()
-                    if (s.isEmpty()) {
-                        null
-                    } else {
-                        s
-                    }
-                }
-                return if (nameStr != null) {
-                    Author(nameStr, emailStr, websiteStr)
-                } else {
-                    UNKNOWN_AUTHOR
-                }
-            }
-        }
-
-
-
-        fun getLocalString(strings: Map<String, String>): String? {
-            val full_lang = Locale.getDefault().toLanguageTag()?.replace('-', '_')
-            return if (full_lang != null) {
-                val base_lang = if (full_lang.length > 2) full_lang.substring(0..1) else null
-                strings[full_lang] ?: strings[base_lang] ?: strings[DEFAULT_LANGUAGE_KEY]
-            } else {
-                strings[DEFAULT_LANGUAGE_KEY]
-            }
-        }
-
-
         fun <K, V> Map<K, V>.getNotNullOrDefault(key: K, defaultValue: V) = this.getOrDefault(key, defaultValue) ?: defaultValue
     */
+}
+
+
+private class Author(val name: String, val email: String? = null, val website: URL? = null) {
+
+    override fun toString() = "$name <$email> ($website)"
+
+    companion object Parser {
+        enum class Part { NAME, EMAIL, WEBSITE, PART_ENDED }
+
+        fun fromString(authorStr: String): Author? {
+            var part = Part.NAME
+            val name = StringBuilder()
+            val email = StringBuilder()
+            val website = StringBuilder()
+            for (char in authorStr) {
+                when {
+                    char == '<'                -> part = Part.EMAIL
+                    char == '>' || char == ')' -> part = Part.PART_ENDED
+                    char == '('                -> part = Part.WEBSITE
+                    part == Part.NAME          -> name.append(char)
+                    part == Part.EMAIL         -> email.append(char)
+                    part == Part.WEBSITE       -> website.append(char)
+                }
+            }
+
+            val (nameStr, emailStr, websiteStr) = listOf(name, email, website).map {
+                val s = it.toString().trim()
+                if (s.isEmpty()) {
+                    null
+                } else {
+                    s
+                }
+            }
+            val websiteUrl = try {
+                URL(websiteStr)
+            } catch (e: MalformedURLException) {
+                null
+            }
+            return if (nameStr != null) {
+                Author(nameStr, emailStr, websiteUrl)
+            } else {
+                null
+            }
+        }
+    }
+
 }
