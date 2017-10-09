@@ -132,17 +132,18 @@ sendMessage( 'gui:setup-options-submenu',
           ]
         ]
 )
+sendMessage('core:add-command', [ tag: 'organizer:add-event' ])
+sendMessage('core:add-command', [ tag: 'organizer:add-timer' ])
+
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
-        commandName: 'DeskChan:say',
-        rule: 'органайзер',
-        msgData: 'Прости, я ещё не умею ставить напоминания через чат. Зайди в Опции->Плагины->Расписание'
+        commandName: 'organizer:add-event',
+        rule: 'поставь будильник {datetime:DateTime}'
 ])
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
-        commandName: 'DeskChan:say',
-        rule: 'будильник',
-        msgData: 'Прости, я ещё не умею ставить напоминания через чат. Зайди в Опции->Плагины->Расписание'
+        commandName: 'organizer:add-timer',
+        rule: 'поставь таймер {delay:RelativeDateTime}'
 ])
 /*sendMessage( 'gui:setup-options-submenu',
         [ 'name': 'Watch',
@@ -190,41 +191,38 @@ addMessageListener('organizer:delete-selected', { sender, tag, data ->
 })
 addMessageListener('organizer:add-event', { sender, tag, data ->
     String name=data.get("name")
-    if(name.length()==0){
-        sendMessage( 'gui:show-notification',
-                [ 'name': getString('error'),
-                  'text': 'No name specified'
-                ])
-        return
-    }
+    if(name==null || name.length()==0)
+        name = getString('default-reminder')
+
     Calendar calendar=Calendar.instance
-    calendar.setTime(format.parse(data.get("date")))
-    calendar.set(Calendar.HOUR_OF_DAY,data.get("hour"))
-    calendar.set(Calendar.MINUTE,data.get("minute"))
-    switch(database.addEventEntry(calendar, name, data.get("soundEnabled") ? data.get("sound") : null)){
-        case 0:
-            setupEventsMenu()
-            break
-        case 1:
-            sendMessage( 'gui:show-notification',
-                    [ 'name': getString('error'),
-                      'text': getString('error.past')
-                    ])
-            break
+    if(data.get("datetime")!=null)
+        calendar.setTimeInMillis(data.get("datetime"))
+    else {
+        calendar.setTime(format.parse(data.get("date")))
+        calendar.set(Calendar.HOUR_OF_DAY, data.get("hour"))
+        calendar.set(Calendar.MINUTE, data.get("minute"))
     }
+
+    entry = database.addEventEntry(calendar, name, data.get("soundEnabled") ? data.get("sound") : null)
+    if(entry != null)
+        sendMessage("DeskChan:say","Выполнено! Поставила на "+entry.getTimeString()+". Готовься!")
+    else sendMessage("DeskChan:say", getString('error.past'))
+    setupEventsMenu()
 })
 addMessageListener('organizer:add-timer', { sender, tag, data ->
-    println sender
-    String name=data.get("name")
-    if(name.length()==0){
-        sendMessage( 'gui:show-notification',
-                [ 'name': getString('error'),
-                  'text': getString('error.no-name')
-                ])
-        return
-    }
-    int delay=data.get("second")+data.get("minute")*60+data.get("hour")*3600
-    database.addTimerEntry(delay, name, data.get("soundEnabled") ? data.get("sound") : null)
+    String name = data.get("name")
+    if(name==null || name.length()==0)
+        name = getString('default-timer')
+
+    int delay
+    if(data.get("delay") != null) {
+        delay = data.get("delay")/1000
+    } else delay = data.get("second")+data.get("minute")*60+data.get("hour")*3600
+
+    entry = database.addTimerEntry(delay, name, data.get("soundEnabled") ? data.get("sound") : null)
+    if(entry != null)
+         sendMessage("DeskChan:say","Выполнено! Поставила на "+entry.getTimeString()+". Готовься!")
+    else sendMessage("DeskChan:say", getString('error.past'))
     setupEventsMenu()
 })
 

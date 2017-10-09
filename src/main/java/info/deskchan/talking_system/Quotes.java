@@ -15,6 +15,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -324,12 +325,18 @@ public class Quotes {
 		lastUsed = new Quote[queueLength];
 	}
 
-	public static void saveTo(String URL, String filename) {
+	public static boolean saveTo(String URL, String filename) {
 		try {
-			URL DATA_URL = new URL(URL);
-			InputStream stream = DATA_URL.openStream();
-			JSONObject json = new JSONObject(IOUtils.toString(stream, "UTF-8"));
-			stream.close();
+			JSONObject json;
+			try{
+				URL DATA_URL = new URL(URL);
+				InputStream stream = DATA_URL.openStream();
+				json = new JSONObject(IOUtils.toString(stream, "UTF-8"));
+				stream.close();
+			} catch (ConnectException u) {
+				Main.log("Cannot download phrases at "+URL+", no connection.");
+				return false;
+			}
 			JSONArray array = json.getJSONArray("values"), phrase;
 			DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 			Document doc = db.newDocument();
@@ -413,8 +420,10 @@ public class Quotes {
 			}
 		} catch (Exception e) {
 			Main.log(e);
-			return;
+			return false;
 		}
+		Main.log("Phrases pack \""+filename+"\" successfully loaded");
+		return true;
 	}
 	
 	public void saveTo(Quote quote, String file) {

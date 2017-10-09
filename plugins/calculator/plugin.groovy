@@ -6,8 +6,9 @@ final EVALUATION_COMMAND_TAG = tag('evaluate-expression')
 
 def evaluateExpression(expression) {
     def exprStr = expression.toString()
+    def expr = null
     try {
-        def expr = new ExpressionBuilder(exprStr).build()
+        expr = new ExpressionBuilder(exprStr).build()
     } catch(Exception e){
         sendMessage('DeskChan:say', [text: 'Ты что мне написал? Думаешь, я вычислять это буду? Нет.', partible: false])
         return

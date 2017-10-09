@@ -98,8 +98,7 @@ class Main : Plugin, PluginLoader {
         resourceFilePath != null -> try {
             ResourceBundle.getBundle(resourceFilePath, Locale.getDefault(), loader)
         } catch (e: Exception) {
-            log("Couldn't load a resource file of plugin \"$id\"!")
-            log(e)
+            log("Couldn't load a resource file of plugin \"$id\"")
             null
         }
         else -> null

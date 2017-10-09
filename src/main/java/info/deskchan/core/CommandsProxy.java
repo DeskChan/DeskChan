@@ -290,9 +290,9 @@ public class CommandsProxy{
     }
     private static final File file=PluginManager.getDataDirPath().resolve("core").resolve("links").toFile();
     public static void save(){
-        FileWriter writer=null;
+        OutputStreamWriter writer;
         try {
-            writer=new FileWriter(file);
+           writer=new OutputStreamWriter(new FileOutputStream(file.toString()), "UTF-8");
         } catch(Exception e){
             PluginManager.log("Error while locate space for command links file");
             return;
@@ -307,9 +307,9 @@ public class CommandsProxy{
         }
     }
     public static void load(){
-        FileReader reader=null;
+        InputStreamReader reader;
         try {
-            reader=new FileReader(file);
+            reader=new InputStreamReader(new FileInputStream(file.toString()), "UTF-8");
         } catch(Exception e){
             PluginManager.log("Links file is not found, using default links");
             return;
@@ -318,7 +318,7 @@ public class CommandsProxy{
         commandLinks.clear();
         try {
             StringBuilder b=new StringBuilder();
-            out.lines().forEach(s -> b.append(s));
+            out.lines().forEach(b::append);
             JSONArray array=new JSONArray(b.toString());
             for(Object obj : array) {
                 if(!(obj instanceof JSONArray)) continue;

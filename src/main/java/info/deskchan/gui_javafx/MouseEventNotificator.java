@@ -58,6 +58,8 @@ class MouseEventNotificator {
         m.put("screenY", event.getScreenY());
         m.put("nodeX", event.getScreenX() - sender.getLayoutX());
         m.put("nodeY", event.getScreenY() - sender.getLayoutY());
+        m.put("nodeWidth", sender.getLayoutBounds().getWidth());
+        m.put("nodeHeight", sender.getLayoutBounds().getHeight());
 
         StringBuilder eventMessage = new StringBuilder("gui-events:").append(senderName).append("-");
         if (event.getButton() == MouseButton.PRIMARY) {
@@ -88,6 +90,8 @@ class MouseEventNotificator {
         m.put("screenY", event.getScreenY());
         m.put("nodeX", event.getScreenX() - sender.getLayoutX());
         m.put("nodeY", event.getScreenY() - sender.getLayoutY());
+        m.put("nodeWidth", sender.getLayoutBounds().getWidth());
+        m.put("nodeHeight", sender.getLayoutBounds().getHeight());
 
         String eventMessage = "gui-events:" + senderName + "-mouse-moved";
         Main.getInstance().getPluginProxy().sendMessage(eventMessage, m);

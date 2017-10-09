@@ -4,23 +4,23 @@ import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
 class Database{
-    int addEventEntry(Calendar date, String name, String sound){
+    DatabaseEntry addEventEntry(Calendar date, String name, String sound){
         def entry=new DatabaseEntry(0,date,name,sound)
-        if(!checkCorrectTime(entry)) return 1
+        if(!checkCorrectTime(entry)) return null
         add(entry)
         save()
         notify(entry)
-        return 0
+        return entry
     }
-    int addTimerEntry(int delay, String name, String sound){
+    DatabaseEntry addTimerEntry(int delay, String name, String sound){
         Calendar c=Calendar.instance
         c.add(Calendar.SECOND, delay)
         def entry=new DatabaseEntry(1,c,name,sound)
-        if(!checkCorrectTime(entry)) return 1
+        if(!checkCorrectTime(entry)) return null
         add(entry)
         save()
         notify(entry)
-        return 0
+        return entry
     }
     void addWatchEntry(Calendar date, String name, String sound){
         watcher=new DatabaseEntry(2,date,name,sound)
@@ -67,11 +67,14 @@ class Database{
             if(soundPath!=null) obj.put("soundPath", soundPath)
             return obj
         }
+        String getTimeString(){
+            return new Date(time).format('dd.MM.yyyy HH:mm')
+        }
     }
     static boolean checkCorrectTime(DatabaseEntry entry){
         return entry.time-Calendar.instance.getTimeInMillis()>0
     }
-    def entries
+    LinkedList entries
     DatabaseEntry watcher
     Object instance
     private static filename
@@ -83,7 +86,7 @@ class Database{
     List getListOfEntries(){
         def list=[]
         for (int i = 0; i < entries.size(); i++) {
-            list.add(entries[i].eventId+" [ "+new Date(entries[i].time).format('dd.MM.yyyy HH:mm')+" ]")
+            list.add(entries[i].eventId+" [ "+entries[i].getTimeString()+" ]")
         }
         return list
     }

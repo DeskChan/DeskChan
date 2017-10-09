@@ -246,8 +246,13 @@ public class Main implements Plugin {
 			Main.getPluginProxy().sendMessage(sender,ret);
 		});
 		if(getProperty("quotesAutoSync","1").equals("1")) {
-			Quotes.saveTo(MAIN_PHRASES_URL, "main");
-			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+			Thread syncThread = new Thread() {
+				public void run() {
+					if(Quotes.saveTo(MAIN_PHRASES_URL, "main"))
+						Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+				}
+			};
+			syncThread.start();
 		}
 		quotes.load(currentPreset.quotesBaseList);
 		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
