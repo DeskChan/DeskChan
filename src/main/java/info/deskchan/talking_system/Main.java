@@ -248,8 +248,10 @@ public class Main implements Plugin {
 		if(getProperty("quotesAutoSync","1").equals("1")) {
 			Thread syncThread = new Thread() {
 				public void run() {
-					if(Quotes.saveTo(MAIN_PHRASES_URL, "main"))
+					if(Quotes.saveTo(MAIN_PHRASES_URL, "main")) {
 						Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+						quotes.load(currentPreset.quotesBaseList);
+					}
 				}
 			};
 			syncThread.start();

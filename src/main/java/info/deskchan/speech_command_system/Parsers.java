@@ -10,22 +10,25 @@ public class Parsers {
     public static void Testing(){
         String tests1[] = new String[]{ "две тыщи", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять", "десять", "седьмое", "второе", "две тысячи шестого", "девятое прошлого", "пятьюест" , "триста миллионов семсот сорак пят тысяч двести тридать один двадцать четыре тысячи три миллиарда", "пятьбдесят", "птдесят", "пятдесчт", "пяддесят пят", "пяццот", "пятсот", "двадцат второй", "добрый день господа", "мне 70 лет", "20 тысяч 543", "тысяча 200 сорок три", "пятае", "сенадцать",
                 "тринадцать восемьдесят девять", "восемь восемьсот пять пять пять три пять три пять", "восемь восемьсот пробел пять пять пять три пять три пять", "девятьсот шестнадцать", "восемь девятьсот шестнадцать"};
-        for(int i=0;i<tests1.length;i++) {
-            ArrayList<String> words = PhraseComparison.toRuleWords(tests1[i]);
-            boolean[] ar = new boolean[words.size()];
-            System.out.println("\""+tests1[i] + "\" / " + parseInteger(words, ar));
+        for(int i=50;i<tests1.length;i++) {
+            ArrayList<String> words = PhraseComparison.toClearWords(tests1[i]);
+            System.out.println("\""+tests1[i] + "\" / " + parseInteger(new Words(words)));
             //for(int k=0; k<words.size(); k++)
             //    System.out.print(ar[k]+" ");
             //System.out.println("\n");
         }
-        String tests2[] = new String[]{ "сейчас", "сегодня в 12 30", "сегодня", "завтра", "послезавтра в 5 часов", "5 часов вечера 30 минут 29 июля", "за 50 минут до сегодня", "за три часа до завтрашнего дня", "7 марта седьмое", "2012 марта седьмое", "через месяц", "в следующий понедельник", "в следующее вторник", "вторник", "прошлый вторник", "среда", "следующая среда", "пятое июня", "после четверга" , "за 5 дней до четверга", "за 12 дней до пятого сентября", "за 2 дна до августа две тысячи шестого", "Пятое мая", "Седьмое июня следующего года",
-                "три утра", "девять вечера", "Просто седьмое июня", "через трое суток", "через четверть часа", "полторы недели назад", "30 февраля", "29 февраля прошлого года", "Второе число следующего месяца", "Девятое прошлого года следующего месяца", "шестой понедельник ноября", "Этот день в прошлом году", "Это число в следующем году", "через пятницу", "пятницу назад", "3 субботы назад", "через воскресенье", "Третья суббота июня", "послезавтра", "позапозавчера", "17 декабря этого года",
-                "за неделю до", "после послепосле послезавтра","15 02 2017", "2 15 2017", "15/02-2017 23 34 05 23", "15/02-2017 23:34:05 23", "15/02-2017 23/34/05 23", "23:34:05.23 15.02.2017", "23:30 15/08", "15 августа 23:30", "через 5 минут", "послезавтра в 20:18"};
+        String tests2[] = new String[]{ "сейчас", "сегодня в 12 30", "сегодня", "завтра", "послезавтра в 5 часов", "5 часов вечера 30 минут 29 июля", "за 50 минут до сегодня", "за три часа до завтрашнего дня", "7 марта седьмое", "2012 марта седьмое",
+                "через месяц", "в следующий понедельник", "в следующее вторник", "вторник", "прошлый вторник", "среда", "следующая среда", "пятое июня", "после четверга" , "за 5 дней до четверга",
+                "за 12 дней до пятого сентября", "за 2 дна до августа две тысячи шестого", "Пятое мая", "Седьмое июня следующего года", "три утра", "девять вечера", "Просто седьмое июня", "через трое суток", "через четверть часа", "полторы недели назад",
+                "30 февраля", "29 февраля прошлого года", "Второе число следующего месяца", "Девятое прошлого года следующего месяца", "шестой понедельник ноября", "Этот день в прошлом году", "Это число в следующем году", "через пятницу", "пятницу назад", "3 субботы назад",
+                "через воскресенье", "Третья суббота июня", "послезавтра", "позапозавчера", "17 декабря этого года", "за неделю до", "после послепосле послезавтра", "15 02 2017", "2 15 2017", "15/02-2017 23 34 05 23",
+                "15/02-2017 23:34:05 23", "15/02-2017 23/34/05 23", "23:34:05.23 15.02.2017", "23:30 15/08", "15 августа 23:30", "через 5 минут", "послезавтра в 20:18" };
         for(int i=0;i<tests2.length;i++) {
             ArrayList<String> words = PhraseComparison.toClearWords(tests2[i]);
             Calendar cal = Calendar.getInstance();
-            boolean[] ar = new boolean[words.size()];
-            cal.setTimeInMillis(parseDate(words, ar));
+            Number num = parseDate(new Words(words));
+            if(num!=null)
+                cal.setTimeInMillis(num.longValue());
             System.out.println("\""+tests2[i] + "\" / " + cal.getTime().toString());
             //for(int k=0; k<words.size(); k++)
             //    System.out.print(ar[k]+" ");
@@ -34,12 +37,6 @@ public class Parsers {
     }
 
     private static long DAY = 86400000L;
-    private static class Pair<K, V>{
-        K one; V two;
-        Pair(K key, V value){
-            one = key; two = value;
-        }
-    }
     private static class DateTimeStruct{
         static final DateTimeStruct Zero = new DateTimeStruct(null, null);
 
@@ -64,7 +61,10 @@ public class Parsers {
                             time!=null && time.equals(other.time)));
         }
 
-        long getTime(){ return (date!=null ? date : 0)+(time!=null ? time : 0); }
+        Long getTime(){
+            if(date==null && time==null) return null;
+            return (date!=null ? date : 0)+(time!=null ? time : 0);
+        }
 
         static DateTimeStruct fromTime(Calendar calendar){
             Long date = calendar.getTimeInMillis();
@@ -124,7 +124,7 @@ public class Parsers {
                 new String[] { "полночь", "утро", "полдень", "вечер", "полночь", "обед" },
                 new Integer[]{ 0 ,        8 ,     12 ,       18 ,     0 ,        12     }
         );
-        private static final String[] keywords = { "после", "поза", "с", "до", "через", "включительно", "перед", "через", "назад", "сейчас", "сегодня", "завтра", "вчера"};
+        private static final String[] keywords = { "после", "поза", "с", "до", "через", "включительно", "перед", "назад", "сейчас", "сегодня", "завтра", "вчера"};
         private enum Category { NONE, FLOAT, INTEGER, THOUSAND, MONTH, WEEKDAY, DAYTIME, CATEGORY, OFFSET, KEYWORD }
         private static class Result{
             Category category;
@@ -190,7 +190,7 @@ public class Parsers {
             for(Pair<String, Integer> of : offsets)
                 if((res = PhraseComparison.relative(word, of.one)) > max.two)
                     max = new Pair<>(new Result(Category.OFFSET, of.two), res);
-            for(int i=2; i<keywords.length; i++)
+            for(int i=0; i<keywords.length; i++)
                 if((res = PhraseComparison.relative(word, keywords[i])) > max.two)
                     max = new Pair<>(new Result(Category.KEYWORD, keywords[i]), res);
 
@@ -198,19 +198,14 @@ public class Parsers {
             return max.one;
         }
     }
-
-    public static long parseInteger(ArrayList<String> words, boolean[] used){
-        Double result = parseNumber(words, used);
-        return result!=null ? result.longValue() : null;
-    }
-    /*private static ArrayList< Pair<String, Integer> > numerals = getPairList(
-            new String[] { "вос", "вто", "дев", "дес", "два", "две", "дво", "дву", "оди", "одн", "пар", "пер", "пят", "раз", "сем", "сед", "сор", "сот", "сто", "тре", "три", "тро", "чет", "шес" },
-            new Integer[]{   8 ,    2 ,    9 ,    1 ,    2 ,    2 ,    2 ,    2 ,    1 ,    1 ,    2 ,    1 ,    5 ,    1 ,    7 ,    7 ,    4 ,    1 ,    1 ,    3 ,    3 ,    3 ,    4 ,    6   }
-    );*/
     private static boolean correctOrder(Long a, Long b){
         return a.toString().length() < b.toString().length() && !(a < 10 && b < 20);
     }
-    public static Double parseNumber(ArrayList<String> words, boolean[] used){
+    public static Long parseInteger(Words words){
+        Double result = parseNumber(words);
+        return result!=null ? result.longValue() : null;
+    }
+    public static Double parseNumber(Words words){
         // пять пять пять пять -> 5555
         ArrayList<Integer> digitUsed  = new ArrayList<>(words.size());
         ArrayList<WordFinder.Result> digitParser = new ArrayList<>();  // it's became null when we cannot parse it by single digits
@@ -225,7 +220,7 @@ public class Parsers {
 
         Number num;
         for (int i = 0; i < words.size(); i++){
-            if(used[i]) continue;
+            if(words.used[i]) continue;
 
             String word = words.get(i);
             // maybe it's not a word but an integer written in symbols
@@ -334,14 +329,14 @@ public class Parsers {
             for (WordFinder.Result i : digitParser)
                 result.append( ((Long) i.getNumber().longValue()).toString() );
             for (Integer i : digitUsed)
-                used[i] = true;
+                words.used[i] = true;
             return Double.parseDouble(result.toString());
         } else {
             if(orderParser.size()==0) return null;
             for (WordFinder.Result i : orderParser)
                 ret = ret + i.getNumber().doubleValue();
             for (Integer i : orderUsed)
-                used[i] = true;
+                words.used[i] = true;
             return ret;
         }
     }
@@ -384,24 +379,27 @@ public class Parsers {
             else return "DMYhmsl";
         }
     }
-    public static long parseDate(ArrayList<String> words, boolean[] used){
-        return parseDateImpl(words, used, false);
+    public static Long parseDate(Words words){
+        return parseDateImpl(words, false);
     }
-    public static long parseDateTime(ArrayList<String> words, boolean[] used){
-        return parseDateImpl(words, used, true);
+    public static Long parseDateTime(Words words){
+        return parseDateImpl(words, true);
     }
-    public static long parseTime(ArrayList<String> words, boolean[] used){
-        return parseDateImpl(words, used, true);
+    public static Long parseTime(Words words){
+        return parseDateImpl(words, true);
     }
-    private static long parseDateImpl(ArrayList<String> words, boolean[] used, boolean focusOnTime){
+    private static Long parseDateImpl(Words words, boolean focusOnTime){
+        int counter=0;
+        for(int i=0;i<words.size();i++) if(!words.used[i]) counter++;
+        if(counter==0) return null;
         // if input string is just numbers like "02 01 2010", "18:00" and so on
         ArrayList<Integer> dateList = new ArrayList<>();
         boolean yearSet = false;
         int timeSet = 0, dateSet = 0;
         Calendar cal = Calendar.getInstance();
-        boolean[] numbersUsage = arrayCopy(used, 0, used.length);
+        boolean[] numbersUsage = Words.arrayCopy(words.used, 0, words.size());
         for(int i=0;i<words.size();i++) {
-            if (used[i]) continue;
+            if (words.used[i]) continue;
             ArrayList<Integer> tempList = new ArrayList<>();
             if (fillArrayFromPattern(tempList, words.get(i), "^[0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}\\.[0-9]+$") ||  // hh:mm:ss, hh:mm
                     fillArrayFromPattern(tempList, words.get(i), "([0-9]{1,2}[\\:]){1,2}[0-9]{1,2}$")) {  // hh:mm:ss.lll
@@ -439,7 +437,7 @@ public class Parsers {
             }
         }
         for(int i=0;i<words.size();i++) {
-            if (used[i] || numbersUsage[i]) continue;
+            if (words.used[i] || numbersUsage[i]) continue;
             if (fillArrayFromPattern(dateList, words.get(i), "[0-9\\\\\\/\\.\\-\\s\\:]+[\\\\\\/\\.\\-\\s\\:][0-9\\\\\\/\\.\\-\\s\\:]+")){ // something looks like date, but wrong format
                 numbersUsage[i]=true;
             } else {
@@ -458,13 +456,13 @@ public class Parsers {
                         dateList.remove(i);
                     }
             if(timeSet==0) cal = fromIntegerArray(cal, dateList, "hmsl");
-            System.arraycopy(numbersUsage, 0, used, 0, used.length);
+            words.join(numbersUsage);
             return cal.getTimeInMillis();
         }
         String pattern = getDatePatternFromArray(dateList);
 
         if(dateList.size()>=2) {
-            System.arraycopy(numbersUsage, 0, used, 0, used.length);
+            words.join(numbersUsage);
             switch (dateList.size()) {
                 case 2:
                 case 3:
@@ -489,102 +487,116 @@ public class Parsers {
         // it's really words. so sad...
         int offsetWordPos=-1, offsetType=-1;  // -1 - нет / 0 - включительно / 1 - до / 2 - до включительно / 3 - после
         int lastWordUsed = words.size();
-
         for(int i=0;i<words.size();i++){
-            if(used[i]) continue;
+            if(words.used[i]) continue;
             WordFinder.Result result = WordFinder.check(words.get(i));
+            //System.out.println(result.category+" "+result.object);
             if(result.category!= WordFinder.Category.KEYWORD) continue;
 
             String word = (String) result.object;
             // offset words
-            if(word.equals("до") || word.equals("перед")){
-                if(offsetWordPos==-1 && offsetType<1){
-                    offsetWordPos=i;
-                    offsetType+=2;
-                    used[i]=true;
-                } else {
-                    lastWordUsed = i+1;
-                    break;
-                }
-            } else if(word.equals("включительно")){
-                if(offsetType==1 || offsetType==-1){
-                    offsetType++;
-                    used[i]=true;
-                } else {
-                    lastWordUsed = i+1;
-                    break;
-                }
-            } else if(word.equals("после")){
-                if(offsetWordPos==-1){
-                    offsetWordPos=i;
-                    offsetType=4;
-                    used[i]=true;
-                } else {
-                    lastWordUsed = i+1;
-                    break;
+            switch (word){
+                case "до":
+                case "перед":{
+                    if(offsetWordPos==-1 && offsetType<1){
+                        offsetWordPos=i;
+                        offsetType+=2;
+                        words.used[i]=true;
+                    } else {
+                        lastWordUsed = i;
+                        break;
+                    }
+                } break;
+                case "включительно": {
+                    if (offsetType == 1 || offsetType == -1) {
+                        offsetType++;
+                        words.used[i] = true;
+                    } else {
+                        lastWordUsed = i;
+                        break;
+                    }
+                } break;
+                case "после":{
+                    if(offsetWordPos==-1){
+                        offsetWordPos=i;
+                        offsetType=4;
+                        words.used[i]=true;
+                    } else {
+                        lastWordUsed = i;
+                        break;
+                    }
+                } break;
+                case "с":{
+                    if(offsetWordPos<0) {
+                        offsetType = 4;
+                    } else {
+                        lastWordUsed = i;
+                        break;
+                    }
+
                 }
             }
         }
-        if(offsetWordPos>=0){ // constructions like "{some time} before/after {other exact time}"
-            ArrayList<String> relativePart = new ArrayList<>(words.subList(0, offsetWordPos));
-            boolean[] relativePartUsed = arrayCopy(used,0, relativePart.size());
 
-            ArrayList<String> absolutePart = new ArrayList<>(words.subList(offsetWordPos+1, lastWordUsed));
-            boolean[] absolutePartUsed = arrayCopy(used,offsetWordPos+1, absolutePart.size());
+        if(offsetWordPos>=0){ // constructions like "{some time} before/after {other exact time}"
+            Words relativePart = new Words(words, 0, offsetWordPos);
+            Words absolutePart = new Words(words, offsetWordPos+1, lastWordUsed);
 
             int direction = (offsetType==4 ? 1 : -1);
-            DateTimeStruct exactDate = parseExactDate(absolutePart, absolutePartUsed);
-            DateTimeStruct relativeDate = parseRelativeDateImpl(relativePart, relativePartUsed, direction);
+            DateTimeStruct exactDate = parseExactDate(absolutePart);
+            DateTimeStruct relativeDate = parseRelativeDateImpl(relativePart);
 
-            System.arraycopy(relativePartUsed,0, used,0, offsetWordPos);
-            System.arraycopy(absolutePartUsed,0, used,offsetWordPos+1, lastWordUsed-offsetWordPos-1);
+            words.join(relativePart.used);
+            words.join(absolutePart.used, offsetWordPos+1);
 
             if(relativeDate.equals(DateTimeStruct.Zero)) relativeDate = new DateTimeStruct(DAY, null);
             if(dateSet>0){
-                for(int i=0;i<used.length;i++)
-                    used[i] = used[i] | numbersUsage[i];
+                for(int i=0;i<words.used.length;i++)
+                    words.used[i] = words.used[i] | numbersUsage[i];
                 Calendar cc = Calendar.getInstance();
                 cc.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0,0,0);
                 relativeDate.date = cc.getTimeInMillis();
             }
             if(timeSet>0){
-                for(int i=0;i<used.length;i++)
-                    used[i] = used[i] | numbersUsage[i];
+                for(int i=0;i<words.used.length;i++)
+                    words.used[i] = words.used[i] | numbersUsage[i];
                 Calendar cc = Calendar.getInstance();
                 cc.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0,0,0);
                 relativeDate.time = cal.getTimeInMillis() - cc.getTimeInMillis();
             }
             return exactDate.getTime() + direction * relativeDate.getTime();
         } else {
-            int i, start=0, direction=0, wlen=words.size();
+            int i = 0, start = 0, wlen=words.size();
+            boolean relativeFlag = false;
             for(i=0; i<words.size(); i++) {
                 WordFinder.Result result = WordFinder.check(words.get(i));
-                if(result.category==WordFinder.Category.KEYWORD && result.toString().equals("через")) {
-                    used[i] = true;
-                    direction = 1;
-                    i++;
-                    start = i;
-                    break;
-                }
-            }
-            if(i==words.size())
-                for(wlen--; wlen>=0; wlen--) {
-                    WordFinder.Result result = WordFinder.check(words.get(wlen));
-                    if(result.category==WordFinder.Category.KEYWORD && result.toString().equals("назад")) {
-                        used[wlen] = true;
-                        direction = -1;
-                        i = 0;
-                        wlen++;
+                if(result.category==WordFinder.Category.KEYWORD) {
+                    if (result.toString().equals("через")) {
+                        start = i;
+                        relativeFlag = true;
+                        break;
+                    } else if (result.toString().equals("назад")) {
+                        wlen = i+1;
+                        relativeFlag = true;
                         break;
                     }
                 }
+            }
             if(wlen<0) wlen = words.size();
-            if(direction==0){ // it's an exact datetime
-                ArrayList<String> absolutePart = new ArrayList<>(words.subList(start, wlen));
-                boolean[] absolutePartUsed = arrayCopy(used, start, absolutePart.size());
+            if(relativeFlag){
+                // it's a relative datetime, counting from today
+                Words relativePart = new Words(words, start, wlen);
+                DateTimeStruct number = parseRelativeDateImpl(relativePart);
+                words.join(relativePart.used, start);
 
-                DateTimeStruct number = parseExactDate(absolutePart, absolutePartUsed);
-                System.arraycopy(absolutePartUsed,0, used,start, wlen-start);
+                Long time = number.getTime();
+                if(time==null) return null;
+                return Calendar.getInstance().getTimeInMillis()+time;
+            } else { // it's an exact datetime
+                Words absolutePart = new Words(words, 0, lastWordUsed);
+                DateTimeStruct number = parseExactDate(absolutePart);
+                words.join(absolutePart.used, start);
+
                 if(dateSet>0){
                     Calendar cc = Calendar.getInstance();
                     cc.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0,0,0);
@@ -596,22 +608,15 @@ public class Parsers {
                     number.time = cal.getTimeInMillis() - cc.getTimeInMillis();
                 }
                 return number.getTime();
-            } else { // it's a relative datetime, counting from today
-                ArrayList<String> relativePart = new ArrayList<>(words.subList(start, wlen));
-                boolean[] relativePartUsed = arrayCopy(used, start, relativePart.size());
-
-                DateTimeStruct number = parseRelativeDateImpl(relativePart, relativePartUsed, direction);
-                System.arraycopy(relativePartUsed,0, used,start, wlen-start);
-                return Calendar.getInstance().getTimeInMillis()+number.getTime()*direction;
             }
         }
     };
 
-    private static Pair<Integer, Integer> parseYesterdayTomorrow(ArrayList<String> words, boolean[] used){  // послезавтра, позавчера
+    private static Pair<Integer, Integer> parseYesterdayTomorrow(Words words){  // послезавтра, позавчера
         int counter=0;
         boolean found = false;
         for(int i=0;i<words.size();i++){
-            if(used[i]) continue;
+            if(words.used[i]) continue;
 
             String word = words.get(i).toLowerCase();
             WordFinder.Result result = WordFinder.check(word);
@@ -633,11 +638,11 @@ public class Parsers {
 
             switch(result.toString()){
                 case "сейчас": {
-                    used[i] = true;
+                    words.used[i] = true;
                     return new Pair<>(1, 0);
                 }
                 case "сегодня": {
-                    used[i] = true;
+                    words.used[i] = true;
                     return new Pair<>(2, 0);
                 }
                 case "поза": {
@@ -646,7 +651,7 @@ public class Parsers {
                         if (word.length() < 5) break;
                         word = word.substring(4);
                     } while (PhraseComparison.borderedAbsolute(word, "поза") < 2);
-                    used[i] = true;
+                    words.used[i] = true;
                     if (PhraseComparison.absolute(word, "вчера") == 0) {
                         counter--;
                         i = words.size();
@@ -655,7 +660,7 @@ public class Parsers {
                 } break;
                 case "вчера": {
                     if (counter <= 0) {
-                        used[i] = true;
+                        words.used[i] = true;
                         counter--;
                         found = true;
                     }
@@ -667,7 +672,7 @@ public class Parsers {
                         if (word.length() < 6) break;
                         word = word.substring(5);
                     } while (PhraseComparison.borderedAbsolute(word, "после") < 2);
-                    used[i] = true;
+                    words.used[i] = true;
                     if (PhraseComparison.absolute(word, "завтра") < 2) {
                         counter++;
                         i = words.size();
@@ -676,7 +681,7 @@ public class Parsers {
                 } break;
                 case "завтра": {
                     if (counter >= 0) {
-                        used[i] = true;
+                        words.used[i] = true;
                         counter++;
                         found = true;
                     }
@@ -713,21 +718,20 @@ public class Parsers {
             System.out.println("position="+pos+", type="+type+", is exact="+exact);
         }
     }
-    private static DateTimeStruct parseExactDate(ArrayList<String> words, boolean[] used){ // exact day
+    private static DateTimeStruct parseExactDate(Words words){ // exact day
         if(words.size()==0) return new DateTimeStruct(Calendar.getInstance());
-        boolean[] ytused = arrayCopy(used, 0, used.length);
+        Words yt = new Words(words);
 
         OffsetWord[] offsetWords = new OffsetWord[7];  // hour, minute, second, day, weekday, month, year
-
         Calendar calendar = Calendar.getInstance();
-        Pair<Integer, Integer> n = parseYesterdayTomorrow(words,ytused);
+        Pair<Integer, Integer> n = parseYesterdayTomorrow(yt);
         switch(n.one){
             case 1:
                 return new DateTimeStruct(calendar);
             case 2:
-                for(int i=0;i<used.length;i++)
-                    if(ytused[i] && !used[i]) {
-                        System.arraycopy(ytused, 0, used, 0, used.length);
+                for(int i=0;i<words.used.length;i++)
+                    if(yt.used[i] && !words.used[i]) {
+                        words.join(yt.used);
                         calendar.add(Calendar.DATE, n.two);
                         offsetWords[3] = new OffsetWord(i, calendar.get(Calendar.DAY_OF_MONTH));
                         offsetWords[5] = new OffsetWord(i, calendar.get(Calendar.MONTH));
@@ -741,73 +745,79 @@ public class Parsers {
         Integer dayTime = null;
         // locating names of time categories
         for(int i=0;i<lastWordUsed;i++){
-            if(used[i]) continue;
+            if(words.used[i]) continue;
 
             WordFinder.Result result = WordFinder.check(words.get(i));
-
-            if(result.category == WordFinder.Category.DAYTIME) {
-                if (dayTime != null) {
+            switch(result.category){
+                case DAYTIME: {
+                    if (dayTime != null) {
+                        lastWordUsed = i;
+                        break;
+                    }
+                    dayTime = result.getNumber().intValue();
+                } break;
+                case CATEGORY: {
+                    int index = result.getNumber().intValue();
+                    if (offsetWords[index] == null) offsetWords[index] = new OffsetWord(i);
+                    else {
+                        lastWordUsed = i;
+                        break;
+                    }
+                } break;
+                case WEEKDAY: {
+                    if (offsetWords[4] == null && offsetWords[3] == null) {
+                        offsetWords[4] = new OffsetWord(i, result.getNumber().intValue());
+                        continue;
+                    }
                     lastWordUsed = i;
                     break;
                 }
-                dayTime = result.getNumber().intValue();
-            } else if(result.category == WordFinder.Category.CATEGORY) {
-                int index = result.getNumber().intValue();
-                if(offsetWords[index]==null) offsetWords[index] = new OffsetWord(i);
-                else {
+                case MONTH: {
+                    if (offsetWords[5] == null) {
+                        offsetWords[5] = new OffsetWord(i, result.getNumber().intValue());
+                        continue;
+                    }
                     lastWordUsed = i;
                     break;
                 }
-            } else if(result.category == WordFinder.Category.WEEKDAY) {
-                if (offsetWords[4] == null && offsetWords[3]==null) {
-                    offsetWords[4] = new OffsetWord(i, result.getNumber().intValue());
-                    continue;
-                }
-                lastWordUsed = i;
-                break;
-            } else if(result.category == WordFinder.Category.MONTH) {
-                if(offsetWords[5] == null){
-                    offsetWords[5] = new OffsetWord(i, result.getNumber().intValue());
-                    continue;
-                }
-                lastWordUsed=i;
-                break;
             }
         }
 
         // System.out.println(offsetWords[0]+" "+offsetWords[1]+" "+offsetWords[2]+" "+offsetWords[3]+" "+offsetWords[4]+" "+offsetWords[5]+" "+offsetWords[6]);
 
-        ArrayList<String> subwords = new ArrayList<>(words.subList(0, lastWordUsed));
-
         // locating numbers between time categories
         SortedSet<Integer> barriersSet = new TreeSet<>();
         barriersSet.add( -1 );
         barriersSet.add( lastWordUsed );
-        ArrayList<OffsetNumber> numbers=new ArrayList<>(0);
-        if(offsetWords[5]!=null && offsetWords[5].exact && offsetWords[3]==null && offsetWords[4]==null) offsetWords[3]=new OffsetWord(offsetWords[5].pos);
-        if(offsetWords[6]==null && (offsetWords[5]!=null || offsetWords[3]!=null)) offsetWords[6]=new OffsetWord(lastWordUsed);
+
+        if (offsetWords[5]!=null && offsetWords[3]==null && offsetWords[4]==null)
+            offsetWords[3] = new OffsetWord(-1);
+        if (offsetWords[6]==null && (offsetWords[5]!=null || offsetWords[3]!=null))
+            offsetWords[6] = new OffsetWord(lastWordUsed);
+
         for(int i=0; i<7; i++)
             if(offsetWords[i]!=null){
                 if(offsetWords[i].pos>=0 && offsetWords[i].pos<lastWordUsed)
-                    used[offsetWords[i].pos] = true;
+                    words.used[offsetWords[i].pos] = true;
 
                 barriersSet.add(offsetWords[i].pos);
             }
 
+        ArrayList<OffsetNumber> numbers=new ArrayList<>(0);
         Integer[] barriers = barriersSet.toArray(new Integer[barriersSet.size()]);
         for(int i=1; i<barriers.length; i++){
             int start = barriers[i-1]+1, end = barriers[i], l;
             // System.out.println("searching number between "+start+" "+end+" / "+!(start >= end || end>subwords.size()));
-            if(start >= end || end>subwords.size()) continue;
+            if(start >= end || end>lastWordUsed) continue;
 
-            ArrayList<String> sw = new ArrayList<>(subwords.subList(start, end));
             do {
-                boolean[] tu = arrayCopy(used,start, sw.size());
+                Words subwords = new Words(words, start, end);
+
                 OffsetNumber number;
                 int pos=-1;
                 WordFinder.Result result = null;
                 for(int k=start, kp=0; k<end; k++, kp++) {
-                    if(tu[kp]) continue;
+                    if(subwords.used[kp]) continue;
                     WordFinder.Result r = WordFinder.check(words.get(k));
                     if(r.category == WordFinder.Category.OFFSET){
                         result = r;
@@ -816,34 +826,24 @@ public class Parsers {
                     }
                 }
                 if(result==null) {
-                    Double num = parseNumber(sw, tu);
+                    Double num = parseNumber(subwords);
                     if(num==null) break;
                     number = new OffsetNumber(0, num, true);
                 } else {
-                    tu[pos]=true;
+                    subwords.used[pos]=true;
                     number = new OffsetNumber(0, result.getNumber().doubleValue(), false);
                 }
 
-                l=0;
-                for(int k=0;k<tu.length;k++){
-                    if(!used[k+start] && tu[k])
-                        l=k;
-                    used[k+start] = tu[k] || used[k+start];
-                }
-
-                number.pos = start+l;
+                number.pos = words.join(subwords.used, start);
                 // number.print();
                 numbers.add(number);
             } while(numbers.size()<7);
         }
 
         //linking numbers and categories
-        ArrayList<Pair<Integer, OffsetWord>> ooooh=new ArrayList<>();
 
         // System.out.println(offsetWords[0]+" "+offsetWords[1]+" "+offsetWords[2]+" "+offsetWords[3]+" "+offsetWords[4]+" "+offsetWords[5]+" "+offsetWords[6]);
-        for(int i=0;i<offsetWords.length;i++)
-            ooooh.add(new Pair<>(i,offsetWords[i]));
-        int len = ooooh.size(), nlen = numbers.size(), max=words.size()*words.size();
+        int len = offsetWords.length, nlen = numbers.size(), max=words.size()*100;
         int[] permutation=new int[len];
         int[] finalPermutation=new int[len];
         for(int i=0;i<len;i++) permutation[i]=finalPermutation[i]=i;
@@ -852,18 +852,18 @@ public class Parsers {
             int u=0, d;
             // every permutation gets score
             for(d=0;d<len && d<nlen;d++) {
-                if (ooooh.get(permutation[d]).two != null && ooooh.get(permutation[d]).two.pos>=0) {
-                    u += Math.abs(numbers.get(d).pos - ooooh.get(permutation[d]).two.pos);
-                    if (numbers.get(d).pos>ooooh.get(permutation[d]).two.pos)
+                if (offsetWords[permutation[d]] != null && offsetWords[permutation[d]].pos>=0) {
+                    u += Math.abs(numbers.get(d).pos - offsetWords[permutation[d]].pos);
+                    if (numbers.get(d).pos > offsetWords[permutation[d]].pos)
                         u++;
-                    if (ooooh.get(permutation[d]).two.exact && ooooh.get(permutation[d]).one==5)
+                    if (offsetWords[permutation[d]].exact && permutation[d]==5)
                         u+=words.size();
                 } else u+=2;
-                if (numbers.get(d).number > 50 && ooooh.get(permutation[d]).one != 6)
+                if (numbers.get(d).number > 50 && permutation[d] != 6)
                     u += max;
             }
             for(;d<len;d++)
-                if(ooooh.get(permutation[d]).two!=null && !ooooh.get(permutation[d]).two.exact) u++;
+                if(offsetWords[permutation[d]]!=null && !offsetWords[permutation[d]].exact) u++;
 
             if(u==0) break;
 
@@ -912,7 +912,7 @@ public class Parsers {
         OffsetNumber dayNumber = null, weekdayNumber = null, monthNumber = null, yearNumber = null, hourNumber = null, minuteNumber = null, secondNumber = null;
         for(int i=0;i<finalPermutation.length && i<numbers.size();i++){
             // System.out.print(finalPermutation[i]+" ");
-            switch (ooooh.get(finalPermutation[i]).one){
+            switch (finalPermutation[i]){
                 case 0:    hourNumber = numbers.get(i); break;
                 case 1:  minuteNumber = numbers.get(i); break;
                 case 2:  secondNumber = numbers.get(i); break;
@@ -1035,7 +1035,9 @@ public class Parsers {
         if(timeSet) return new DateTimeStruct(calendar);
         return DateTimeStruct.fromDate(calendar);
     }
-    private static long getMsToAdd(int type, double multiplier, int direction) {
+    private static long getMsToAdd(int type, Double multiplier, Integer direction) {
+        if(multiplier == null) multiplier = 1.0;
+        if(direction == null)  direction  = 1;
         double ticksToAdd=0;
         switch(type){
             case 0: ticksToAdd=3600000*multiplier; break;
@@ -1058,41 +1060,61 @@ public class Parsers {
         }
         return (long) ticksToAdd;
     }
-    public static long parseRelativeDateTime(ArrayList<String> words, boolean[] used){
-        return parseRelativeDateImpl(words, used, 1).getTime();
+    public static Long parseRelativeDateTime(Words words){
+        return parseRelativeDateImpl(words).getTime();
     }
-    private static DateTimeStruct parseRelativeDateImpl(ArrayList<String> words, boolean[] used, int direction){ //через
+    private static DateTimeStruct parseRelativeDateImpl(Words words){ //через
         if(words.size()==0) return DateTimeStruct.Zero;
+        Integer direction = null;
         boolean[] usedTypes=new boolean[17];
         int lastCategoryType = -1, start = 0;
         long timeToAdd = 0;
+        for(int i=0;i<words.size();i++) {
+            if (words.used[i]) continue;
+            WordFinder.Result result = WordFinder.check(words.get(i));
+            if (result.category == WordFinder.Category.KEYWORD) {
+                if (result.toString().equals("через")) {
+                    if (direction != null) break;
+                    words.used[i] = true;
+                    direction = 1;
+                } else if (result.toString().equals("назад")) {
+                    if (direction != null) break;
+                    words.used[i] = true;
+                    direction = -1;
+                }
+            }
+        }
         for(int i=0;i<words.size();i++){
-            if(used[i]) continue;
+            if(words.used[i]) continue;
 
             WordFinder.Result result = WordFinder.check(words.get(i));
-
-            int foundType;
-            if(result.category == WordFinder.Category.CATEGORY)
-                foundType = result.getNumber().intValue();
-            else if(result.category == WordFinder.Category.WEEKDAY)
-                foundType = result.getNumber().intValue()+10;
-            else if(result.category == WordFinder.Category.THOUSAND
-                    || result.category == WordFinder.Category.INTEGER
-                    || result.category == WordFinder.Category.FLOAT
-                    || result.category == WordFinder.Category.NONE)
-                continue;
-            else break;
+            int foundType = 0;
+            switch(result.category) {
+                case CATEGORY:
+                    foundType = result.getNumber().intValue();
+                    break;
+                case WEEKDAY:
+                    foundType = result.getNumber().intValue()+10;
+                    break;
+                case KEYWORD:
+                    if (!result.toString().equals("через") && !result.toString().equals("назад"))
+                        break;
+                case THOUSAND: case INTEGER: case FLOAT: case NONE:
+                    continue;
+                default:
+                    break;
+            }
 
             if(usedTypes[foundType]){
                 if(lastCategoryType<0) break;
                 foundType = -1;
             } else usedTypes[foundType]=true;
 
-            used[i]=true;
+            words.used[i]=true;
             if(i == start){
                 if(lastCategoryType>=0) {
                     //System.out.println("1: "+lastCategoryType+" "+getDaysToAdd(lastCategoryType, 1));
-                    timeToAdd += getMsToAdd(lastCategoryType, 1, direction);
+                    timeToAdd += getMsToAdd(lastCategoryType, 1.0, direction);
                 }
                 lastCategoryType=foundType;
                 start=i+1;
@@ -1109,9 +1131,8 @@ public class Parsers {
                     currentType=lastCategoryType;
                     if(len<0) len=1;
                 } else break;
-                ArrayList<String> sw = new ArrayList<>(words.subList(start, len-start));
-                boolean[] tu = arrayCopy(used, start, len);
-                num = parseNumber(sw, tu);
+                Words sub = new Words(words, start, len-start);
+                num = parseNumber(sub);
                 if(num == null){
                     if(lastCategoryType>-1) {
                         start = i + 1;
@@ -1119,14 +1140,7 @@ public class Parsers {
                     } else break;
                 }
 
-                int l=0;
-                for(int k=0;k<tu.length;k++){
-                    //System.out.print((k+start)+" "+tu[k]+" "+used[k+start]+" / ");
-                    used[k+start]=tu[k] || used[k+start];
-                    if(tu[k]) l=k;
-                }
-
-                start += l+1;
+                start = words.join(sub.used, start) + 1;
                 if(lastCategoryType<0) continue;
 
                 //System.out.println("2: "+lastCategoryType+" "+getDaysToAdd(currentType, num));
@@ -1139,25 +1153,21 @@ public class Parsers {
             start=i+1;
             if(lastCategoryType<0 && foundType>=0){
                 //System.out.println("3: "+lastCategoryType+" "+getDaysToAdd(foundType, num<0 ? 1 : num));
-                timeToAdd+=getMsToAdd(foundType, num!=null ? num : 1, direction);
+                timeToAdd+=getMsToAdd(foundType, num, direction);
             }
         }
         if(lastCategoryType>=0){
-            int len=words.size()-start;
-            ArrayList<String> sw = new ArrayList<>(words.subList(start, len+start));
-            boolean[] tu = arrayCopy(used, start, len);
-            System.arraycopy(used,start, tu,0, len);
+            Words sub = new Words(words, start, words.size());
+            Double num = parseNumber(sub);
+            words.join(sub.used);
 
-            Double num = parseNumber(sw,tu);
-
-            for(int k=0;k<tu.length;k++)
-                used[k+start]=tu[k] || used[k+start];
-            timeToAdd+=getMsToAdd(lastCategoryType, num!=null ? num : 1, direction);
+            timeToAdd+=getMsToAdd(lastCategoryType, num, direction);
         }
 
-        // System.out.println("relative: "+timeToAdd);
+        //System.out.println("relative: "+timeToAdd);
         long time = timeToAdd % DAY;
-        return new DateTimeStruct(timeToAdd - time, time);
+        if(direction==null) direction = 1;
+        return new DateTimeStruct(direction*(timeToAdd - time), direction*time);
     }
 
     private static <K, V> ArrayList< Pair<K, V> > getPairList(K[] keys, V[] values){
@@ -1194,10 +1204,5 @@ public class Parsers {
         else if(year>50) year=year+1900;
         else if(year>0) year=year+2000;
         return year;
-    }
-    private static boolean[] arrayCopy(boolean[] from, int start, int len){
-        boolean[] array = new boolean[len];
-        System.arraycopy(from, start, array, 0, len);
-        return array;
     }
 }

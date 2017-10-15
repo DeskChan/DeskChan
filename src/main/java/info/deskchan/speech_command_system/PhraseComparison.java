@@ -6,54 +6,54 @@ import java.util.regex.Pattern;
 
 public class PhraseComparison {
     private static String[][] replaceable=new String[][]{
-            {"о","а"} , {"е","и"} , {"д","т"} , {"г","к"} , {"ж","ш"} , {"ы","и"} , {"з","с"} , {"б","п"} , {"в","ф"}, {"ь",""}, {"ъ",""}, {"тс","ц"}, {"тщ","ч"}
+            {"о","а"} , {"е","и"} , {"д","т"} , {"г","к"} , {"ж","ш"} , {"ы","и"} , {"з","с"} , {"б","п"} , {"в","ф"}, {"ь",""}, {"ъ",""}, {"тс","ц"}, {"тщ","ч"}, {"я", "а"}, {"ю", "у"}
     };
     private static String suffixes = "аеюиэйуъыояью";
+    private static class WordPair{
+        String one;
+        String two;
+        WordPair(String o, String t){
+            one = o;
+            two = t;
+            for(int k=0;k<replaceable.length;k++){
+                one = one.replaceAll(replaceable[k][0], replaceable[k][1]);
+                two = two.replaceAll(replaceable[k][0], replaceable[k][1]);
+            }
+        }
+    }
     public static String removeSuffix(String word){
-        int i=0, len = word.length()-1;
-        for(i=0; i<3; i++)
+        int i, len = word.length()-1;
+        for(i=0; i<3 && len-i >= 0; i++)
             if(suffixes.indexOf(word.charAt(len-i))<0) break;
-        return len+1-i>1 ? word.substring(0, len+1-i) : word;
+        return len-i>1 ? word.substring(0, len+1-i) : word;
     }
     public static int borderedAbsolute(String one, String two, int border){
-        int L=4;
+        int L=border;
         if(one.length()>L) one = one.substring(0, L);
         if(two.length()>L) two = two.substring(0, L);
-        for(int k=0;k<replaceable.length;k++){
-            one = one.replaceAll(replaceable[k][0], replaceable[k][1]);
-            two = two.replaceAll(replaceable[k][0], replaceable[k][1]);
-        }
-        return Levenshtein(one, two);
+        WordPair pair = new WordPair(one, two);
+        return Levenshtein(pair.one, pair.two);
     }
     public static int borderedAbsolute(String one, String two){
         int L=Math.min(one.length(),two.length());
         if(one.substring(0,L).equals(two.substring(0,L))) return 0;
-        for(int k=0;k<replaceable.length;k++){
-            one = one.replaceAll(replaceable[k][0], replaceable[k][1]);
-            two = two.replaceAll(replaceable[k][0], replaceable[k][1]);
-        }
+        WordPair pair = new WordPair(one, two);
         L=Math.min(one.length(),two.length());
-        return Levenshtein(one.substring(0, L), two.substring(0, L));
+        return Levenshtein(pair.one.substring(0, L), pair.two.substring(0, L));
     }
     public static int absolute(String one, String two){
         if(one.equals(two)) return 0;
         one = removeSuffix(one);
         two = removeSuffix(two);
-        for(int k=0;k<replaceable.length;k++){
-            one = one.replaceAll(replaceable[k][0], replaceable[k][1]);
-            two = two.replaceAll(replaceable[k][0], replaceable[k][1]);
-        }
-        return Levenshtein(one, two);
+        WordPair pair = new WordPair(one, two);
+        return Levenshtein(pair.one, pair.two);
     }
     public static float relative(String one,String two){
         if(one.equals(two)) return 1;
         one = removeSuffix(one);
         two = removeSuffix(two);
-        for(int k=0;k<replaceable.length;k++){
-            one = one.replaceAll(replaceable[k][0], replaceable[k][1]);
-            two = two.replaceAll(replaceable[k][0], replaceable[k][1]);
-        }
-        return 1 - (float)Levenshtein(one,two)*2/(one.length()+two.length());
+        WordPair pair = new WordPair(one, two);
+        return 1 - (float)Levenshtein(pair.one,pair.two)*2/(pair.one.length()+pair.two.length());
     }
     private static int Levenshtein(String one, String two){
         int L1=one.length()+1,L2=two.length()+1;

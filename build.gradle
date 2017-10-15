@@ -308,7 +308,7 @@ task copyJarPluginsForRun(type: Copy) {
 		exclude 'Proxy*', 'DeskChan*'
 	}
 	from "$projectDir/plugins"
-	into "$buildDir/plugins/"
+	into "$launch4jDir/plugins/"
 }
 
 run.dependsOn copyJarPluginsForRun

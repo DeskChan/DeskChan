@@ -13,8 +13,8 @@ import java.util.Map;
 public class Main implements Plugin {
     private static PluginProxyInterface pluginProxy;
     private String start_word="пожалуйста";
-    private static LimitHashMap<String, TextRule> cachedRules = new LimitHashMap<>(100);
-    private static final HashMap<String,Object> standartCommandsCoreQuery=new HashMap<String,Object>(){{
+    private static LimitHashMap<String, RegularRule> cachedRules = new LimitHashMap<>(100);
+    private static final HashMap<String,Object> standartCommandsCoreQuery = new HashMap<String,Object>(){{
         put("eventName","speech:get");
     }};
 
@@ -46,16 +46,22 @@ public class Main implements Plugin {
     static class Command{
         String tag;
         Map<String,Object> data;
-        TextRule rule = null;
+        RegularRule rule;
+        RegularRule.MatchResult result;
         public Command(Map<String,Object> map){
             tag=(String) map.get("tag");
             data = map;
             String r = (String) map.getOrDefault("rule",null);
-            if(r!=null)
-                rule = new TextRule(r);
+            if(r!=null) {
+                try {
+                    rule = new RegularRule(r);
+                } catch (Exception e) {
+                    Main.log(e);
+                }
+            }
         }
         public boolean better(Command other){
-            return rule.result.better(other.rule.result);
+            return result.better(other.result);
         }
     }
     void operateRequest(String text, List<HashMap<String,Object>> commandsInfo){
@@ -71,12 +77,15 @@ public class Main implements Plugin {
                 }});
                 continue;
             }
-            command.rule.match(words);
-            if(command.rule.result.matchPercentage>0.5 && (best == null || command.better(best)))
+
+            command.result = command.rule.parse(text, words);
+            // System.out.println(command.tag+" "+command.result);
+            if(command.result.matchPercentage>0.7 && (best == null || command.better(best)))
                 best = command;
         }
         if(best!=null) {
-            HashMap<String,Object> ret = best.rule.getArguments(text, words);
+            // System.out.println("best: "+best.tag+" "+best.result);
+            HashMap<String,Object> ret = best.rule.getArguments();
             if(best.data.containsKey("msgData"))
                 ret.put("msgData",best.data.get("msgData"));
             pluginProxy.sendMessage( best.tag, ret);

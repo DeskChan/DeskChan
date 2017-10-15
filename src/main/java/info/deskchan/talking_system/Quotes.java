@@ -189,7 +189,7 @@ public class Quotes {
 	public void load(List<String> files){
         for(int i=0;i<files.size();i++){
             QuotePack p;
-            try{
+            try {
                 p=new QuotePack(files.get(i));
             } catch (Exception e){
                 Main.log("Error while reading file "+files.get(i)+": "+e.getMessage());
@@ -208,10 +208,6 @@ public class Quotes {
                 files.set(i,p.getFileName());
                 Main.log("Loaded quotes: " + p.getFileName()+" "+ p.size());
             }
-        }
-        files.clear();
-        for(QuotePack pack : packs){
-            files.add(pack.getFileName());
         }
         update();
     }
