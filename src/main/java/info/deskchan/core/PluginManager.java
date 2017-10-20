@@ -71,16 +71,21 @@ public class PluginManager {
 			return false;
 		}
 		if (!plugins.containsKey(id)) {
-			PluginProxy entity = PluginProxy.Companion.create(plugin, id, config);
-			if (entity!=null) {
-				plugins.put(id, entity);
-				if (config != null) {
-					LoaderManager.INSTANCE.registerExtensions(config.getExtensions());
+			Debug.TimeTest initializer = new Debug.TimeTest(){
+				@Override
+				void run(){
+					PluginProxy entity = PluginProxy.Companion.create(plugin, id, config);
+					if (entity!=null) {
+						plugins.put(id, entity);
+						if (config != null) {
+							LoaderManager.INSTANCE.registerExtensions(config.getExtensions());
+						}
+						log("Registered plugin: " + id);
+						sendMessage("core", "core-events:plugin-load", id);
+					}
 				}
-				log("Registered plugin: " + id);
-				sendMessage("core", "core-events:plugin-load", id);
-				return true;
-			}
+			};
+			return true;
 		}
 		return false;
 	}
@@ -141,7 +146,10 @@ public class PluginManager {
 		if (listeners != null) {
 			for (MessageListener listener : listeners) {
 				try {
-					listener.handleMessage(sender, tag, data);
+					Debug.TimeTest send = new Debug.TimeTest() {
+						@Override
+						void run() { listener.handleMessage(sender, tag, data); }
+					};
 				} catch (Exception e){
 					log("Error while calling "+tag+", called by "+sender);
 					log(e);

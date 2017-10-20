@@ -93,30 +93,23 @@ class OverlayStage extends Stage {
 		}
 		updateStage(mode);
 	}
-	public static void updateStage(LayerMode mode){
-		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC){
-			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-			try {
-				((Stage) alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
-			} catch (Exception e){ }
-			alert.setTitle(Main.getString("default_messagebox_name"));
-			alert.setContentText(Main.getString("info.separated-stage"));
-			Optional<ButtonType> result = alert.showAndWait();
-			if(result.get() != ButtonType.OK){
-				return;
-			}
-		} else if(mode == LayerMode.ALWAYS_TOP && SystemUtils.IS_OS_MAC){
-			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-			try {
-				((Stage) alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
-			} catch (Exception e){ }
-			alert.setTitle(Main.getString("default_messagebox_name"));
-			alert.setContentText(Main.getString("info.not-separated-stage"));
-			Optional<ButtonType> result = alert.showAndWait();
-			if(result.get() != ButtonType.OK){
-				return;
-			}
+	private static void showConfirmation(String text){
+		Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+		try {
+			((Stage) alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
+		} catch (Exception e){ }
+		alert.setTitle(Main.getString("default_messagebox_name"));
+		alert.setContentText(Main.getString(text));
+		Optional<ButtonType> result = alert.showAndWait();
+		if(result.get() != ButtonType.OK){
+			return;
 		}
+	}
+	public static void updateStage(LayerMode mode){
+		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC)
+			showConfirmation("info.separated-stage");
+		else if(mode == LayerMode.ALWAYS_TOP && SystemUtils.IS_OS_MAC)
+			showConfirmation("info.not-separated-stage");
 		if(mode == currentMode) return;
 		try {
 			OverlayStage nextInstance = (OverlayStage) instances.get(mode).newInstance();
@@ -194,8 +187,8 @@ class OverlayStage extends Stage {
 	synchronized void hideBalloons() {}
 
 	void relocate(Node node, double x, double y){
-		node.setLayoutX(x);
-		node.setLayoutY(y);
+		node.setLayoutX(x-this.getX());
+		node.setLayoutY(y-this.getY());
 	}
 
 	public void showStage(){
@@ -271,6 +264,7 @@ class TopStage extends NormalStage{
 				stage.setAlwaysOnTop();
 			}
 		};
+		toFront();
 		setOnShowing(handler);
 		setOnHiding(handler);
 	}
@@ -457,6 +451,6 @@ class SeparateStage extends OverlayStage{
 		if(new Double(x).isNaN()) x = 0;
 		if(new Double(y).isNaN()) y = 0;
 		add(node);
-		children.get(node).relocate(x,y);
+		children.get(node).relocate(x, y);
 	}
 }

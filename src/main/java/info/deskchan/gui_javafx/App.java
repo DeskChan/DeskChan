@@ -489,7 +489,6 @@ public class App extends Application {
 			for (Path fontPath : directoryStream) {
 				if (fontPath.getFileName().toString().endsWith(".ttf")) {
 					Font.loadFont(Files.newInputStream(fontPath), 10);
-					Main.log("Loaded font " + fontPath.getFileName().toString());
 				}
 			}
 		} catch (IOException e) {

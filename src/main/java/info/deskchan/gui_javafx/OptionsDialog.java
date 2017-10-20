@@ -5,7 +5,9 @@ import info.deskchan.core.CoreInfo;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -19,6 +21,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
 import org.controlsfx.dialog.FontSelectorDialog;
 import org.json.JSONObject;
@@ -232,7 +235,7 @@ class OptionsDialog extends TemplateBox {
 
 		TableColumn ruleCol = new TableColumn(Main.getString("rules"));
 		ruleCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("rule"));
-		ruleCol.setCellFactory(TextFieldTableCell.<CommandItem> forTableColumn());
+		ruleCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
 		ruleCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -242,7 +245,7 @@ class OptionsDialog extends TemplateBox {
 
 		TableColumn msgCol = new TableColumn(Main.getString("parameters"));
 		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
-		msgCol.setCellFactory(TextFieldTableCell.<CommandItem> forTableColumn());
+		msgCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
 		msgCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -257,7 +260,7 @@ class OptionsDialog extends TemplateBox {
 
 		commandsTable.setItems(list);
 
-		commandsTable.getColumns().addAll(eventCol,commandCol,ruleCol,msgCol);
+		commandsTable.getColumns().addAll(eventCol, ruleCol, commandCol, msgCol);
 
 		Button deleteButton = new Button(Main.getString("delete"));
 		deleteButton.setOnAction(event -> {
@@ -760,6 +763,46 @@ class OptionsDialog extends TemplateBox {
 			if(rule!=null && rule.length()>0) data.put("rule",rule);
 			if(msgData!=null) data.put("msgData",msgData);
 			return data;
+		}
+	}
+	static class TooltippedTableCell<S, T> extends TextFieldTableCell<S, T> {
+		public static <S> Callback<TableColumn<S, String>, TableCell<S, String>> forTableColumn() {
+			return forTableColumn(new DefaultStringConverter());
+		}
+		public static <S, T> Callback<TableColumn<S, T>, TableCell<S, T>> forTableColumn(final StringConverter<T> converter) {
+			return list -> new TooltippedTableCell<>(converter);
+		}
+		private static <T> String getItemText(Cell<T> cell, StringConverter<T> converter) {
+			return converter == null ? cell.getItem() == null ? "" : cell.getItem()
+					.toString() : converter.toString(cell.getItem());
+		}
+		private void updateItem(final Cell<T> cell, final StringConverter<T> converter) {
+			if (cell.isEmpty()) {
+				cell.setText(null);
+				cell.setTooltip(null);
+			} else {
+				cell.setText(getItemText(cell, converter));
+				//Add text as tooltip so that user can read text without editing it.
+				Tooltip tooltip = new Tooltip(getItemText(cell, converter));
+				tooltip.setWrapText(true);
+				tooltip.setMaxWidth(1000);
+				tooltip.setMinWidth(300);
+				tooltip.prefWidthProperty().bind(cell.widthProperty());
+				cell.setTooltip(tooltip);
+			}
+		}
+		private ObjectProperty<StringConverter<T>> converter = new SimpleObjectProperty<>(this, "converter");
+		public TooltippedTableCell() {
+			this(null);
+		}
+		public TooltippedTableCell(StringConverter<T> converter) {
+			this.getStyleClass().add("tooltipped-table-cell");
+			setConverter(converter);
+		}
+		@Override
+		public void updateItem(T item, boolean empty) {
+			super.updateItem(item, empty);
+			updateItem(this, getConverter());
 		}
 	}
 }

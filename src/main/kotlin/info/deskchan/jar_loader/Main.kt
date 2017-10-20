@@ -32,13 +32,15 @@ class Main : Plugin, PluginLoader {
     }
 
     override fun loadByPath(path: Path) {
-        var correctedPath = path
-        if (!path.toString().endsWith(".jar"))
-            correctedPath=path.resolveSibling(path.toString() + ".jar")
-
         val jars = when {
-            Files.isDirectory(correctedPath) -> scanDirectory(correctedPath)
-            else -> listOf(correctedPath.toFile())
+            Files.isDirectory(path) -> scanDirectory(path)
+            else -> {
+                var correctedPath = path
+                if (!path.toString().endsWith(".jar"))
+                    correctedPath = path.resolveSibling(path.toString() + ".jar")
+
+                listOf(correctedPath.toFile())
+            }
         }
         val urls = jars.map { it.toURI().toURL() }.toTypedArray()
         val loader = URLClassLoader(urls, javaClass.classLoader)

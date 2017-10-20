@@ -19,9 +19,9 @@ import java.util.Map;
 
 public class TrayMenu {
 
-    private static SystemTray trayRef = null;
-    private static ArrayList<PluginMenuItem> menuItems = new ArrayList<>();
-    private static ContextMenu contextMenu = new ContextMenu();
+    private static volatile SystemTray trayRef = null;
+    private static volatile ArrayList<PluginMenuItem> menuItems = new ArrayList<>();
+    private static volatile ContextMenu contextMenu = new ContextMenu();
     
     public static void initialize(){
         SystemTray systemTray = SystemTray.get();
