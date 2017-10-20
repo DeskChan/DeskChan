@@ -27,7 +27,7 @@ public class Main implements Plugin {
 	private CharacterPreset currentPreset;
 	private EmotionsController emotionsController;
 
-	private Quotes quotes;
+	private volatile Quotes quotes;
 	private PriorityQueue<Quote> quoteQueue;
 	private PerkContainer perkContainer;
 	private static Properties properties;
@@ -252,8 +252,8 @@ public class Main implements Plugin {
 						Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 						quotes.load(currentPreset.quotesBaseList);
 					}
-				}
-			};
+		}
+	};
 			syncThread.start();
 		}
 		quotes.load(currentPreset.quotesBaseList);

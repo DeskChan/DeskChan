@@ -24,6 +24,7 @@ public class TrayMenu {
     private static volatile ContextMenu contextMenu = new ContextMenu();
     
     public static void initialize(){
+        SystemTray.DEBUG = true;
         SystemTray systemTray = SystemTray.get();
         if (SystemTray.get() == null) {
             Main.log("Failed to load SystemTray, type dorkbox");
@@ -70,10 +71,9 @@ public class TrayMenu {
     public synchronized static void update(){
         if(trayRef == null) return;
 
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(TrayMenu::update);
-            return;
-        }
+        SwingUtilities.invokeLater(TrayMenu::updateImpl);
+    }
+    private synchronized static void updateImpl(){
         dorkbox.systemTray.Menu menu = trayRef.getMenu();
 
         menu.clear();
@@ -89,8 +89,6 @@ public class TrayMenu {
         menu.add(new Separator());
 
         menu.add(new MenuItem(Main.getString("quit"),quitMenuItemAction));
-
-        Platform.runLater(() -> {
 
         ObservableList<javafx.scene.control.MenuItem> contextMenuItems = contextMenu.getItems();
         contextMenuItems.clear();
@@ -112,8 +110,6 @@ public class TrayMenu {
         item = new javafx.scene.control.MenuItem(Main.getString("quit"));
         item.setOnAction(quitMenuItemAction);
         contextMenuItems.add(item);
-
-        });
     }
 }
 abstract class MenuItemAction implements ActionListener, EventHandler<ActionEvent> {

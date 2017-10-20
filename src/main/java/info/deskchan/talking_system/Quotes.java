@@ -15,7 +15,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.InputStream;
-import java.net.ConnectException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -223,9 +222,6 @@ public class Quotes {
             packs.remove(i);
             i--;
         }
-		for(int i=0;i<packs.size();i++)
-			System.out.print(packs.get(i).getFileName()+" ");
-		System.out.println("\n"+files);
 
         load(files);
     }
@@ -329,7 +325,7 @@ public class Quotes {
 				InputStream stream = DATA_URL.openStream();
 				json = new JSONObject(IOUtils.toString(stream, "UTF-8"));
 				stream.close();
-			} catch (ConnectException u) {
+			} catch (Exception u) {
 				Main.log("Cannot download phrases at "+URL+", no connection.");
 				return false;
 			}

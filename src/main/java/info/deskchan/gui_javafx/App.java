@@ -48,10 +48,10 @@ public class App extends Application {
 		loadFonts();
 		initStylesheetOverride();
 		Platform.setImplicitExit(false);
+		TrayMenu.initialize();
 		OverlayStage.initialize();
 		OverlayStage.updateStage();
 		initMessageListeners();
-		TrayMenu.initialize();
 		// KeyboardEventNotificator.initialize();
 		Main.getInstance().getAppInitSem().release();
 		character.say(new HashMap<String,Object>(){{
@@ -501,13 +501,17 @@ public class App extends Application {
 	}
 	
 	private void initStylesheetOverride() {
-		StageHelper.getStages().addListener((ListChangeListener<Stage>) change -> {
-			while (change.next()) {
-				for (Stage stage : change.getAddedSubList()) {
-					stage.getScene().getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+		try {
+			StageHelper.getStages().addListener((ListChangeListener<Stage>) change -> {
+				while (change.next()) {
+					for (Stage stage : change.getAddedSubList()) {
+						stage.getScene().getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+					}
 				}
-			}
-		});
+			});
+		} catch (Throwable e){
+			Main.log("Stylesheets deprecated in this version of Java, we didn't fix it yet.");
+		}
 	}
 	
 	static void showThrowable(Window parent, Throwable e) {
