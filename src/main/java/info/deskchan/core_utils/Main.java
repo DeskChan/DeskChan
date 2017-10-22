@@ -56,7 +56,7 @@ public class Main implements Plugin {
 			put("priority", 1);
 		}});
 		UserSpeechRequest.initialize(pluginProxy);
-		TerminalGUI.initialize();
+		// TerminalGUI.initialize();
 		return true;
 	}
 	
