@@ -540,6 +540,7 @@ class OptionsDialog extends TemplateBox {
 		String msgTag = (String) data.getOrDefault("msgTag", null);
 		String msgClose = (String) data.getOrDefault("onClose", null);
 		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag, msgClose);
+		System.out.println(plugin);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			menu.put(plugin, tabs);

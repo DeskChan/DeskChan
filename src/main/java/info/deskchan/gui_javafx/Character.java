@@ -299,7 +299,8 @@ class Character extends MovablePane {
 		if (messageInfo == null || messageInfo.counter>=messageInfo.text.length) {
 			setImageName(idleImageName);
 		} else {
-			setImageName(messageInfo.characterImage);
+			if(messageInfo.characterImage!=null)
+				setImageName(messageInfo.characterImage);
 			balloon = new Balloon(this, balloonPositionMode, messageInfo.text[messageInfo.counter]);
             messageInfo.counter++;
 			balloon.setTimeout(messageInfo.timeout);
@@ -348,11 +349,8 @@ class Character extends MovablePane {
 			if(data instanceof Map){
 				Map<String,Object> mapData = (Map<String,Object>) data;
 				String characterImage = (String) mapData.getOrDefault("characterImage", null);
-				if (characterImage != null) {
+				if (characterImage != null)
 					characterImage = characterImage.toLowerCase();
-				} else {
-					characterImage = "normal";
-				}
 
 				Object ob = mapData.getOrDefault("skippable", true);
 				if(ob instanceof String)
@@ -386,7 +384,7 @@ class Character extends MovablePane {
 					text2=(String) data;
 				else text2=data.toString();
 				skippable=true;
-				characterImage = "normal";
+				characterImage = null;
 				priority=DEFAULT_MESSAGE_PRIORITY;
 				_timeout=Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") );
 			}

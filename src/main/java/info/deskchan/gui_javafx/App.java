@@ -120,7 +120,7 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:set-image", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				character.setIdleImageName(data.toString());
+				character.setImageName(data.toString());
 			});
 		});
 		pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {

@@ -13,6 +13,11 @@ public class Main implements Plugin, PluginLoader {
 	@Override
 	public boolean initialize(PluginProxyInterface pluginProxy) {
 		PluginManager.getInstance().registerPluginLoader(this);
+		try {
+			PluginManager.getInstance().initializePlugin("scenario", new ScenarioPlugin(), PluginConfig.Companion.getInternal());
+		} catch (Throwable e){
+			pluginProxy.log(e);
+		}
 		return true;
 	}
 	
@@ -49,5 +54,5 @@ public class Main implements Plugin, PluginLoader {
 		config.appendFromJson(path);
 		PluginManager.getInstance().initializePlugin(id, plugin, config);
 	}
-	
+
 }
