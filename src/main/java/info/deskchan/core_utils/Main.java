@@ -29,7 +29,7 @@ public class Main implements Plugin {
 						}
 					}
 					Object delayObj = m.getOrDefault("delay", -1L);
-					long delay = delayObj instanceof Integer ? (long) (int) delayObj : (long) delayObj;
+					long delay = delayObj instanceof Number ? ((Number) delayObj).longValue() : Long.valueOf(delayObj.toString());
 					if (delay > 0) {
 						MyTimerTask task = new MyTimerTask(sender, seq);
 						timer.schedule(task, delay);
@@ -56,6 +56,7 @@ public class Main implements Plugin {
 			put("priority", 1);
 		}});
 		UserSpeechRequest.initialize(pluginProxy);
+		TerminalGUI.initialize();
 		return true;
 	}
 	

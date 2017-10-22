@@ -2,7 +2,7 @@ package info.deskchan.talking_system;
 
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core.ResponseListener;
+import info.deskchan.core_utils.CoreTimerTask;
 import info.deskchan.core_utils.TextOperations;
 import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONObject;
@@ -23,7 +23,7 @@ public class Main implements Plugin {
 	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
-	private final static String defaultMessageTimeout = Integer.toString(40000);
+	private final static String defaultMessageTimeout = Integer.toString(120000);
 	private CharacterPreset currentPreset;
 	private EmotionsController emotionsController;
 
@@ -32,33 +32,7 @@ public class Main implements Plugin {
 	private PerkContainer perkContainer;
 	private static Properties properties;
 
-	private final ResponseListener chatTimerListener = new ResponseListener() {
-		
-		private Object lastSeq = null;
-		
-		@Override
-		public void handle(String sender, Object data) {
-			Main.this.phraseRequest("CHAT");
-			lastSeq = null;
-			start();
-		}
-		
-		void start() {
-			if (lastSeq != null)
-				stop();
-			long delay=Long.parseLong(getProperty("messageTimeout",defaultMessageTimeout));
-			if(delay!=0)
-				lastSeq = pluginProxy.sendMessage("core-utils:notify-after-delay", TextOperations.toMap("delay: "+delay), this);
-		}
-		
-		void stop() {
-			if (lastSeq != null)
-				pluginProxy.sendMessage("core-utils:notify-after-delay", new HashMap<String, Object>() {{
-							put("seq", lastSeq);
-							put("delay", (long) -1);
-				}});
-		}
-	};
+	private CoreTimerTask chatTimerListener;
 
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
@@ -92,11 +66,6 @@ public class Main implements Plugin {
 			} catch (Exception e) { }
 		}
 		log("Loaded options");
-		try {
-			chatTimerListener.getClass().getDeclaredMethod("start").invoke(chatTimerListener);
-		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-			log(e);
-		}
 		pluginProxy.addMessageListener("talk:request", (sender, tag, dat) -> {
 			Map<String, Object> data;
 			if(dat instanceof Map){
@@ -252,8 +221,8 @@ public class Main implements Plugin {
 						Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 						quotes.load(currentPreset.quotesBaseList);
 					}
-		}
-	};
+				}
+			};
 			syncThread.start();
 		}
 		quotes.load(currentPreset.quotesBaseList);
@@ -264,6 +233,13 @@ public class Main implements Plugin {
 			}});
 		});
 		currentPreset.inform();
+		chatTimerListener = new CoreTimerTask(pluginProxy, Long.valueOf(getProperty("messageTimeout",defaultMessageTimeout)), true) {
+			@Override
+			public void run() {
+				Main.this.phraseRequest("CHAT");
+			}
+		};
+		chatTimerListener.start();
 		/*MeaningExtractor extractor=new MeaningExtractor();
 		for(Quote quote : quotes.toArray()){
 			extractor.teach(quote.quote,quote.purposeType);
