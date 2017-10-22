@@ -257,11 +257,15 @@ class TopStage extends NormalStage{
 		super();
 		handler = new EventHandler<WindowEvent>() {
 			@Override
-			public void handle(WindowEvent event) {
-				HackJavaFX.setCreateTransparentPopup(stage);
-				HackJavaFX.setWindowFocusable(stage, false);
-				stage.toFront();
-				stage.setAlwaysOnTop();
+			public synchronized void handle(WindowEvent event) {
+				try {
+					HackJavaFX.setCreateTransparentPopup(stage);
+					HackJavaFX.setWindowFocusable(stage, false);
+					stage.toFront();
+					stage.setAlwaysOnTop();
+				} catch (Exception e){
+					Main.log("Cannot handle top stage change");
+				}
 			}
 		};
 		toFront();

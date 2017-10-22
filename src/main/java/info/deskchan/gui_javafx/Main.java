@@ -4,6 +4,7 @@ import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxy;
 import info.deskchan.core.PluginProxyInterface;
+import javafx.application.Platform;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;
@@ -60,6 +61,11 @@ public class Main implements Plugin {
 
 		if (SystemUtils.IS_OS_WINDOWS) {
 			MouseEventNotificator.disableHooks();
+		}
+		try {
+			Platform.exit();
+		} catch (Exception e){
+			log(e);
 		}
 	}
 	

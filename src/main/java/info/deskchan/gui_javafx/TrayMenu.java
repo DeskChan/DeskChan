@@ -24,7 +24,6 @@ public class TrayMenu {
     private static volatile ContextMenu contextMenu = new ContextMenu();
     
     public static void initialize(){
-        SystemTray.DEBUG = true;
         SystemTray systemTray = SystemTray.get();
         if (SystemTray.get() == null) {
             Main.log("Failed to load SystemTray, type dorkbox");
@@ -71,7 +70,10 @@ public class TrayMenu {
     public synchronized static void update(){
         if(trayRef == null) return;
 
-        SwingUtilities.invokeLater(TrayMenu::updateImpl);
+        if(trayRef.getMenu() instanceof dorkbox.systemTray.ui.swing._SwingTray ||
+           trayRef.getMenu() instanceof dorkbox.systemTray.ui.awt._AwtTray)
+            SwingUtilities.invokeLater(TrayMenu::updateImpl);
+        else Platform.runLater(TrayMenu::updateImpl);
     }
     private synchronized static void updateImpl(){
         dorkbox.systemTray.Menu menu = trayRef.getMenu();

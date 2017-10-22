@@ -21,5 +21,5 @@ class TemplateBox extends Dialog<Void> {
 	public void requestFocus() {
 		getDialogPane().getScene().getWindow().requestFocus();
 	}
-	
+
 }
