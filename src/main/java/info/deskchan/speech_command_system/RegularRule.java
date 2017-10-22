@@ -352,10 +352,10 @@ public class RegularRule{
             int leftBorder=-1, rightBorder=-1, wordsCount = parseOptions.users.wordsCount();
 
             for(int i=parseOptions.start, k, l=word.length()*2; i<wordsCount; i++){
-                String marchingWord=parseOptions.users.getWord(i);
+                String matchingWord=parseOptions.users.getWord(i);
 
-                float result = PhraseComparison.relative(word, marchingWord);
-
+                float result = PhraseComparison.relative(word, matchingWord);
+                System.out.println(word+" "+matchingWord+" "+result);
                 if(result > 0.99){   // exact match
                     parseOptions.users.addUser(i, this);
                     lastPosition = i;
@@ -363,21 +363,21 @@ public class RegularRule{
                     return new SearchResult(1, word.length());
                 }
 
-                if(result > 0.65 && result > max){  // some overlapping, but we do not sure
+                if(result > PhraseComparison.ACCURACY && result > max){  // some overlapping, but we do not sure
                     max = result;
                     leftBorder = i;
                     type = 1;
                 }
 
-                if(marchingWord.length() > word.length()*1.3){   // maybe only start or end of the word matches
-                    result = PhraseComparison.relative(marchingWord.substring(0, word.length()), word) * 0.95f;
+                if(matchingWord.length() > word.length()*1.3){   // maybe only start or end of the word matches
+                    result = PhraseComparison.relative(matchingWord.substring(0, word.length()), word) * 0.95f;
                     if(result>0.85 && result>max){   // start
                         max=result;
                         leftBorder=i;
                         rightBorder=i;
                         type=2;
                     }
-                    result = PhraseComparison.relative(marchingWord.substring(word.length()), word) * 0.95f;
+                    result = PhraseComparison.relative(matchingWord.substring(word.length()), word) * 0.95f;
                     if(result>0.85 && result>max){   // end
                         max=result;
                         leftBorder=i;
@@ -400,7 +400,7 @@ public class RegularRule{
                     }
                 }
             }
-            if(type==0 || max<0.6){
+            if(type==0 || max<PhraseComparison.ACCURACY){
                 parsed = false;
                 return new SearchResult(0,0);
             }

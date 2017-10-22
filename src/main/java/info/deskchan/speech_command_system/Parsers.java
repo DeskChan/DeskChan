@@ -10,9 +10,12 @@ public class Parsers {
     public static void Testing(){
         String tests1[] = new String[]{ "две тыщи", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять", "десять", "седьмое", "второе", "две тысячи шестого", "девятое прошлого", "пятьюест" , "триста миллионов семсот сорак пят тысяч двести тридать один двадцать четыре тысячи три миллиарда", "пятьбдесят", "птдесят", "пятдесчт", "пяддесят пят", "пяццот", "пятсот", "двадцат второй", "добрый день господа", "мне 70 лет", "20 тысяч 543", "тысяча 200 сорок три", "пятае", "сенадцать",
                 "тринадцать восемьдесят девять", "восемь восемьсот пять пять пять три пять три пять", "восемь восемьсот пробел пять пять пять три пять три пять", "девятьсот шестнадцать", "восемь девятьсот шестнадцать"};
-        for(int i=50;i<tests1.length;i++) {
+        Long results1[] = new Long[]{ 2000L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 7L, 2L, 2006L, 9L, 50L, 300745231L, 50L, 50L, 50L, 55L, 500L, 500L, 22L, null, 70L, 20543L, 1243L, 5L, 17L, 1389L, 8805553535L, 88005553535L, 916L, 8916L };
+        for(int i=0;i<tests1.length;i++) {
             ArrayList<String> words = PhraseComparison.toClearWords(tests1[i]);
-            System.out.println("\""+tests1[i] + "\" / " + parseInteger(new Words(words)));
+            Long result = parseInteger(new Words(words));
+            if((result==null && results1[i]!=null) || (result!=null && !result.equals(results1[i])))
+                System.out.println("\""+tests1[i] + "\" / " + result);
             //for(int k=0; k<words.size(); k++)
             //    System.out.print(ar[k]+" ");
             //System.out.println("\n");
@@ -56,9 +59,9 @@ public class Parsers {
 
         boolean equals(DateTimeStruct other){
             return ((date==null && other.date==null ||
-                    other.date!=null && date.equals(other.date)) &&
+                     date!=null && date.equals(other.date)) &&
                     (time==null && other.time==null ||
-                            time!=null && time.equals(other.time)));
+                     time!=null && time.equals(other.time)));
         }
 
         Long getTime(){
@@ -100,12 +103,12 @@ public class Parsers {
         private static final String[][] digits = {
                 {"ноль", "нулевой"},
                 {"один", "первый"},
-                {"два", "пара", "двойка", "второй"},
-                {"три", "тройка", "третий", "трёх"},
+                {"два", "пара", "двойка", "второй", "двое"},
+                {"три", "тройка", "третий", "трёх", "трое", "третья"},
                 {"четыре", "четвёрка", "четвёртый", "четырёх"},
-                {"пять", "пятак", "пятёрка", "пятый"},
-                {"шесть", "шестёрка", "шестой", "шестых"},
-                {"семь", "семёрка", "седьмой"},
+                {"пять", "пятак", "пятёрка", "пятый", "пятеро"},
+                {"шесть", "шестёрка", "шестой", "шестых", "шестеро"},
+                {"семь", "семёрка", "седьмой", "семеро"},
                 {"восемь", "восьмёрка", "восьмой"},
                 {"девять", "девятка", "девятый"}
         };
@@ -115,14 +118,24 @@ public class Parsers {
         );
         private static final String[] months = { "январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь" };
         private static final String[] weekdays =  { "воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "выходные" };
-        private static final String[][] timeCat = { { "час", "часов" }, { "минута" }, { "секунда" }, { "день" , "дней" , "число" , "дня", "сутки" }, { "неделя" , "недель" }, { "месяц", "месяцев" }, { "год", "лет" }, { "десятилети" }, { "век", "веков" } };
+        private static final String[][] timeCat = {
+                { "час", "часов" },
+                { "минута" },
+                { "секунда" },
+                { "день" , "дней" , "число" , "дня", "сутки", "суток" },
+                { "неделя" , "недель" },
+                { "месяц", "месяцев" },
+                { "год", "лет" },
+                { "десятилетие" },
+                { "век", "веков" }
+        };
         private static final ArrayList< Pair<String, Integer> > offsets = getPairList(
                 new String[] { "прошлый", "предыдущий", "следующий", "последующий", "этот", "текущий", "сегодняшний", "завтрашний", "вчерашний", "позавчерашний", "позапрошлый" },
                 new Integer[]{ -1 ,       -1 ,          1 ,          1 ,            0 ,     0 ,        0 ,            1 ,           -1 ,         -2 ,             -2            }
         );
         private static final ArrayList< Pair<String, Integer> > dayTime = getPairList(
-                new String[] { "полночь", "утро", "полдень", "вечер", "полночь", "обед" },
-                new Integer[]{ 0 ,        8 ,     12 ,       18 ,     0 ,        12     }
+                new String[] { "полночь", "утро", "полдень", "вечер", "обед" },
+                new Integer[]{ 0 ,        8 ,     12 ,       18 ,     12     }
         );
         private static final String[] keywords = { "после", "поза", "с", "до", "через", "включительно", "перед", "назад", "сейчас", "сегодня", "завтра", "вчера"};
         private enum Category { NONE, FLOAT, INTEGER, THOUSAND, MONTH, WEEKDAY, DAYTIME, CATEGORY, OFFSET, KEYWORD }
@@ -155,7 +168,7 @@ public class Parsers {
             Result result = cache.get(word);
             if(result!=null) return result.clone();
 
-            Pair<Result, Float> max = new Pair<>(Result.None, 0.65f);
+            Pair<Result, Float> max = new Pair<>(Result.None, PhraseComparison.ACCURACY);
             float res;
             for(int i=0; i<tenDigit.length; i++)
                 if((res = PhraseComparison.relative(word, tenDigit[i])) > max.two)
@@ -302,8 +315,8 @@ public class Parsers {
                 } break;
 
                 case FLOAT : {
-                    if(orderParser_lastOrderPos==i-1) break;
                     if(orderParser!=null){
+                        if(orderParser_lastOrderPos < orderParser.size()) break;
                         orderParser.add(result.clone());
                         orderUsed.add(i);
                     } else break;

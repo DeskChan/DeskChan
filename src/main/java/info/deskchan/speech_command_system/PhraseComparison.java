@@ -1,68 +1,132 @@
 package info.deskchan.speech_command_system;
 
+import info.deskchan.core_utils.LimitHashMap;
+
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PhraseComparison {
-    private static String[][] replaceable=new String[][]{
-            {"о","а"} , {"е","и"} , {"д","т"} , {"г","к"} , {"ж","ш"} , {"ы","и"} , {"з","с"} , {"б","п"} , {"в","ф"}, {"ь",""}, {"ъ",""}, {"тс","ц"}, {"тщ","ч"}, {"я", "а"}, {"ю", "у"}
-    };
-    private static String suffixes = "аеюиэйуъыояью";
-    private static class WordPair{
-        String one;
-        String two;
-        WordPair(String o, String t){
-            one = o;
-            two = t;
-            for(int k=0;k<replaceable.length;k++){
-                one = one.replaceAll(replaceable[k][0], replaceable[k][1]);
-                two = two.replaceAll(replaceable[k][0], replaceable[k][1]);
-            }
+    public static void Testing(){
+        String tests[][] = new String[][]{
+                {"привет", "перевод"},  {"два", "три"}, {"два", "две"}, {"один", "сотня"}, {"шесть", "шест"},
+                {"четверг", "четверть"}, {"второй", "второго"}, {"пятьсот", "пяццот"}, {"второй", "добрый"}, {"сутки", "суток"},
+                {"шестой", "шестого"}, {"две", "двести"}, {"сутки", "сутками"}, {"шестьсот", "шестого"}
+        };
+        boolean results[] = new boolean[]{ false, false, true, false, true, true, true, true, false, true, true, false, true, false };
+        for(int i=0;i<tests.length;i++) {
+            float result = relative(tests[i][0], tests[i][1]);
+            if( (result>ACCURACY) != results[i] )
+                System.out.println(tests[i][0] + " - " + tests[i][1] + " -> " + result + ", " + (result>ACCURACY));
         }
     }
+    private final static String[][] replaceable=new String[][]{
+        {"о","а"} , {"е","и"} , {"д","т"} , {"г","к"} , {"ж","ш"} , {"ы","и"} , {"з","с"} , {"б","п"} , {"в","ф"} , {"ь",""} , {"ъ",""} , {"тс","ц"} , {"тщ","ч"} , {"я", "а"} , {"ю", "у"}
+    };
+
+    protected final static float ACCURACY = 0.65f;
+
+    private final static String suffixes1 = "аеюиэйуъыояью", suffixes2 = "гмтсш";
+    private static LimitHashMap<String, String> suffixCache = new LimitHashMap<>(500);
+
     public static String removeSuffix(String word){
         int i, len = word.length()-1;
-        for(i=0; i<3 && len-i >= 0; i++)
-            if(suffixes.indexOf(word.charAt(len-i))<0) break;
+        boolean hard = false;
+        for(i=0; i<3 && len-i >= 0; i++){
+            char c = word.charAt(len-i);
+            if(suffixes1.indexOf(c)<0) break;
+            else if(i<2 || suffixes2.indexOf(c)>=0){
+                if(hard) break;
+                else hard = true;
+            }
+        }
         return len-i>1 ? word.substring(0, len+1-i) : word;
     }
+
+    private static String simplify(String word){
+        String repl = suffixCache.get(word);
+        if(repl != null) return repl;
+
+        repl = word;
+        StringBuilder sb = new StringBuilder(word);
+        for(int i=1; i<sb.length(); i++)
+            if(sb.charAt(i) == sb.charAt(i-1)){
+                sb.deleteCharAt(i);
+                i--;
+            }
+        int pos;
+        for(String[] replace : replaceable){
+            while((pos = sb.indexOf(replace[0])) >= 0)
+                sb.replace(pos, pos+replace[0].length(), replace[1]);
+        }
+
+        repl = sb.toString();
+        suffixCache.put(word, repl);
+        return repl;
+    }
+
+    private static class WordPair{
+        String one, two;
+        WordPair(String o, String t) {
+            one = new String(o); two = new String(t);
+        }
+        @Override
+        public boolean equals(Object other){
+            return other instanceof WordPair && one.equals(((WordPair) other).one) && two.equals(((WordPair) other).two);
+        }
+        WordPair getSimplified(){
+            return new WordPair(simplify(one), simplify(two));
+        }
+        WordPair getWithoutSuffixed(){
+            return new WordPair(removeSuffix(one), removeSuffix(two));
+        }
+        @Override
+        public String toString(){
+            return "["+one+", "+two+"]";
+        }
+    }
+    private static LimitHashMap<WordPair, Float> compareCache = new LimitHashMap<>(500);
+
     public static int borderedAbsolute(String one, String two, int border){
-        int L=border;
-        if(one.length()>L) one = one.substring(0, L);
-        if(two.length()>L) two = two.substring(0, L);
-        WordPair pair = new WordPair(one, two);
-        return Levenshtein(pair.one, pair.two);
+        if(one.length() > border) one = one.substring(0, border);
+        if(two.length() > border) two = two.substring(0, border);
+        return (int) complexLevenshtein(new WordPair(one, two), false);
     }
     public static int borderedAbsolute(String one, String two){
-        int L=Math.min(one.length(),two.length());
-        if(one.substring(0,L).equals(two.substring(0,L))) return 0;
-        WordPair pair = new WordPair(one, two);
-        L=Math.min(one.length(),two.length());
-        return Levenshtein(pair.one.substring(0, L), pair.two.substring(0, L));
+        int border = Math.min(one.length(),two.length());
+        return (int) complexLevenshtein(new WordPair(one.substring(0, border), two.substring(0, border)), false);
     }
     public static int absolute(String one, String two){
-        if(one.equals(two)) return 0;
-        one = removeSuffix(one);
-        two = removeSuffix(two);
-        WordPair pair = new WordPair(one, two);
-        return Levenshtein(pair.one, pair.two);
+        return (int) complexLevenshtein(new WordPair(one, two), true);
     }
     public static float relative(String one,String two){
-        if(one.equals(two)) return 1;
-        one = removeSuffix(one);
-        two = removeSuffix(two);
-        WordPair pair = new WordPair(one, two);
-        return 1 - (float)Levenshtein(pair.one,pair.two)*2/(pair.one.length()+pair.two.length());
+        int lensum = one.length()+two.length();
+        return 1 - (complexLevenshtein(new WordPair(one, two), true) * 2 / lensum);// -
+            //    Math.abs(one.length()-two.length()) / 30.0f;
     }
-    private static int Levenshtein(String one, String two){
-        int L1=one.length()+1,L2=two.length()+1;
-        int[][] mat=new int[L1][L2];
-        StringBuilder sb1=new StringBuilder(one),sb2=new StringBuilder(two);
-        for(int i=0;i<L1;i++) mat[i][0]=i;
-        for(int j=0;j<L2;j++){
+    private static float complexLevenshtein(WordPair pair, boolean removeSuffixes){
+        if(pair.one.equals(pair.two)) return 0;
+        Float repl = compareCache.get(pair);
+        if(repl != null) return repl;
+
+        int l1 = Levenshtein(pair);
+        int l2 = Levenshtein(removeSuffixes ? pair.getWithoutSuffixed().getSimplified() : pair.getSimplified());
+
+
+        float l = (l1+l2)/2.0f;
+        compareCache.put(pair, l);
+        return l;
+    }
+    private static int Levenshtein(WordPair pair){
+        StringBuilder sb1 = new StringBuilder(pair.one),
+                      sb2 = new StringBuilder(pair.two);
+        int L1 = sb1.length()+1, L2 = sb2.length()+1;
+        int[][] mat = new int[L1][L2];
+
+        for(int i=0; i<L1; i++) mat[i][0]=i;
+        for(int j=0; j<L2; j++){
             mat[0][j]=j;
-            for(int i=1;i<L1 && j>0;i++){
+            for(int i=1; i<L1 && j>0; i++){
                 char o=(i-1 < sb1.length() ? sb1.charAt(i-1) : ' ');
                 mat[i][j]=Math.min(
                         Math.min(mat[i][j-1] , mat[i-1][j]) + 1 ,
@@ -91,7 +155,7 @@ public class PhraseComparison {
             str_list.add(sb.toString());
         return str_list;
     }
-    private static Pattern pattern = Pattern.compile("[А-яA-z0-9\\-']+|(\\{\\s*[A-z0-9]+\\s*:\\s*[A-z]+\\s*\\})");
+    private final static Pattern pattern = Pattern.compile("[А-яA-z0-9\\-']+|(\\{\\s*[A-z0-9]+\\s*:\\s*[A-z]+\\s*\\})");
     public static ArrayList<String> toRuleWords(String text){
         ArrayList<String> str_list=new ArrayList<String>();
         Matcher matcher = pattern.matcher(text);

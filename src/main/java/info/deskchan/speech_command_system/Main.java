@@ -33,10 +33,13 @@ public class Main implements Plugin {
         }});
 
         pluginProxy.addMessageListener("speech:get", (sender, tag, data) -> {
-            String text=(String)((HashMap<String,Object>)data).getOrDefault("value","");
+            String text;
+            if(data instanceof Map)
+                 text = (String) ((Map) data).getOrDefault("value","");
+            else text = data.toString();
             pluginProxy.sendMessage("core:get-commands-match",standartCommandsCoreQuery,(s, d) -> {
-                HashMap<String,Object> commands=(HashMap<String,Object>) d;
-                operateRequest(text,(List<HashMap<String,Object>>) commands.get("commands"));
+                Map<String,Object> commands=(Map) d;
+                operateRequest(text,(List<Map<String,Object>>) commands.get("commands"));
             });
         });
 
@@ -64,7 +67,7 @@ public class Main implements Plugin {
             return result.better(other.result);
         }
     }
-    void operateRequest(String text, List<HashMap<String,Object>> commandsInfo){
+    void operateRequest(String text, List<Map<String,Object>> commandsInfo){
         ArrayList<String> words = PhraseComparison.toClearWords(text);
         Command best=null;
         for(Map<String,Object> comData : commandsInfo){
