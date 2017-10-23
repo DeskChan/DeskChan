@@ -124,7 +124,6 @@ class Balloon extends MovablePane {
 	private final DropShadow bubbleShadow = new DropShadow();
 	private final StackPane stackPane = new StackPane();
 	private final Group bubblesGroup;
-	private SVGPath bubbleShape = new SVGPath();
 	private final Node content;
 	private PositionMode positionMode = PositionMode.ABSOLUTE;
 	private long lastClick = -1;
@@ -134,8 +133,6 @@ class Balloon extends MovablePane {
 
 	Balloon(String id, String text) {
 		instance=this;
-
-		setBalloonOpacity(Float.parseFloat(Main.getProperty("balloon.opacity", "1.0")));
 
 		stackPane.setPrefWidth(400);
 		stackPane.setMinHeight(200);
@@ -292,7 +289,7 @@ class Balloon extends MovablePane {
 			balloonOpacity = Math.round(Math.abs(opacity) * 20.0f) / 20.0f;
 			stackPane.setEffect(null);
 		}
-		bubbleShape.setOpacity(balloonOpacity);
+		bubblesGroup.setOpacity(balloonOpacity);
 	}
         
 	@Override
