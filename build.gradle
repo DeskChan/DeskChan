@@ -57,7 +57,7 @@ dependencies {
 }
 
 ext.appName = 'DeskChan'
-project.version = '0.2.3'
+project.version = '0.2.4'
 
 mainClassName = 'info.deskchan.core.MainKt'
 
@@ -224,6 +224,11 @@ task copyJarPlugins(type: Copy, group: 'desk-chan') {
 	into "$launch4jDir/plugins/"
 }
 
+task checkPath {
+	if(buildDir.toString().matches(".*[^A-Za-z0-9,_:\\\\\\.\\-\\/]+.*"))
+		println("WARNING: Build path contains incorrect symbols. If building fails, incorrect symbols may be the cause.")
+}
+
 /*task copyDependencies(type: Copy, group: 'desk-chan') {
 	description 'Copies all runtime dependencies into the /libs/ directory.'
 
@@ -238,7 +243,7 @@ task copyJars(
 )
 
 createExe {
-	dependsOn assembleCore, copyJars, copyIconForExe
+	dependsOn checkPath, assembleCore, copyJars, copyIconForExe
 	description 'Produces an executable file containing the core plugin.'
 
 	outfile = "bin/${appName}.exe"
@@ -298,6 +303,7 @@ task createExeDistZip(type: Zip, dependsOn: createStartScriptsForExe, group: 'bu
 
 
 task copyJarPluginsForRun(type: Copy) {
+	dependsOn checkPath
 	standardJarPlugins.forEach {
 		dependsOn "assemble$it"
 	}

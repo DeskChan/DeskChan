@@ -113,14 +113,14 @@ class OverlayStage extends Stage {
 		if(mode == currentMode) return;
 		try {
 			OverlayStage nextInstance = (OverlayStage) instances.get(mode).newInstance();
-			nextInstance.showStage();
-			nextInstance.showCharacter();
 			if(instance!=null) {
 				instance.hideBalloons();
 				instance.hideCharacter();
 				instance.close();
 			}
 			instance=nextInstance;
+			nextInstance.showStage();
+			nextInstance.showCharacter();
 		} catch (Exception e){
 			Main.log(e);
 			currentMode = LayerMode.BROKEN;

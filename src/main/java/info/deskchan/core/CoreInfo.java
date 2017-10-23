@@ -1,5 +1,7 @@
 package info.deskchan.core;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Locale;
@@ -26,6 +28,7 @@ public class CoreInfo {
 		PluginManager.log("Git branch: " + CoreInfo.get("GIT_BRANCH_NAME"));
 		PluginManager.log("Git commit hash: " + CoreInfo.get("GIT_COMMIT_HASH"));
 		PluginManager.log("Build date and time: " + CoreInfo.get("BUILD_DATETIME"));
+		PluginManager.log("Operation system: " + SystemUtils.OS_NAME+"-"+SystemUtils.OS_VERSION+", "+SystemUtils.USER_LANGUAGE+", Java ver.: "+SystemUtils.JAVA_VERSION);
 	}
 	
 	static {

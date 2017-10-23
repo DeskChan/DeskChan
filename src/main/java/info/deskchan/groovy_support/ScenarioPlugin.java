@@ -5,7 +5,6 @@ import groovy.lang.Script;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
 import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -55,18 +54,24 @@ public class ScenarioPlugin implements Plugin {
             currentScenario = createScenario((String) map.get("path"));
             runScenario();
         });
+
         return true;
     }
 
+    private static int findNextBracket(String line, int start){
+        int end, level=0;
+        for(end = start; end<line.length() && !(line.charAt(end)==')' && level==0); end++) {
+            if (line.charAt(end) == '(' || line.charAt(end) == '{' || line.charAt(end) == '[') level++;
+            else if (line.charAt(end) == ')' || line.charAt(end) == '}' || line.charAt(end) == ']') level--;
+        }
+        return end;
+    }
     public static Scenario createScenario(String pathString){
         CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
         compilerConfiguration.setSourceEncoding("UTF-8");
         compilerConfiguration.setScriptBaseClass("info.deskchan.groovy_support.Scenario");
         Path path = Paths.get(pathString);
         compilerConfiguration.setClasspath(path.getParent().toString());
-        ImportCustomizer importCustomizer = new ImportCustomizer();
-        importCustomizer.addStaticStars("info.deskchan.groovy_support.Sugar");
-        compilerConfiguration.addCompilationCustomizers(importCustomizer);
         GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
         List<String> scriptLines = null;
         try {
@@ -76,6 +81,8 @@ public class ScenarioPlugin implements Plugin {
             return null;
         }
         StringBuilder scriptText = new StringBuilder();
+        String[] buffers = new String[1];
+        for(int u=0; u<buffers.length; u++) buffers[u] = null;
         for(int i = 0; i<scriptLines.size(); i++){
             String line = scriptLines.get(i).trim();
             switch (line.charAt(0)){
@@ -115,7 +122,7 @@ public class ScenarioPlugin implements Plugin {
             scriptText.append(scriptLines.get(i));
             scriptText.append("\n");
         }
-
+        System.out.println(scriptText.toString());
         Script script = groovyShell.parse(scriptText.toString());
         return (Scenario) script;
     }

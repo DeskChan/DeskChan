@@ -236,7 +236,7 @@ class Balloon extends MovablePane {
 		}
 	};
 	private void impl_updateBalloonLayoutX() {
-		if(positionMode == PositionMode.ABSOLUTE) return;
+		if(positionMode == PositionMode.ABSOLUTE || character == null) return;
 		if(positionMode == PositionMode.RELATIVE){
 			loadPositionFromStorage();
 			return;
@@ -252,7 +252,7 @@ class Balloon extends MovablePane {
 				margin.getBottom(), (!rightAlign) ? margin.getRight() : margin.getLeft()));
 	}
 	private void impl_updateBalloonLayoutY() {
-		if(positionMode == PositionMode.ABSOLUTE) return;
+		if(positionMode == PositionMode.ABSOLUTE || character == null) return;
 		if (positionMode == PositionMode.RELATIVE) {
 			loadPositionFromStorage();
 			return;

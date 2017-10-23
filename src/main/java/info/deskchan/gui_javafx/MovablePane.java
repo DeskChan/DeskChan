@@ -162,6 +162,7 @@ class MovablePane extends Pane {
 						double x = Double.parseDouble(coords[0]);
 						double y = Double.parseDouble(coords[1]);
 						Rectangle2D desktop = OverlayStage.getDesktopSize();
+						if(desktop.getWidth() == 0 || desktop.getHeight() == 0) return;
 						if (x + getHeight() > desktop.getMaxX() || x < -getHeight())
 							x = desktop.getMaxX() - getHeight();
 						if (y + getWidth() > desktop.getMaxY() || y < -getWidth()) y = desktop.getMaxY() - getWidth();

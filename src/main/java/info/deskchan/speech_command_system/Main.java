@@ -69,9 +69,9 @@ public class Main implements Plugin {
     }
     void operateRequest(String text, List<Map<String,Object>> commandsInfo){
         ArrayList<String> words = PhraseComparison.toClearWords(text);
-        Command best=null;
+        Command best = null;
         for(Map<String,Object> comData : commandsInfo){
-            Command command =  new Command(comData);
+            Command command = new Command(comData);
             if(command.rule==null) {
                 pluginProxy.sendMessage(command.tag, new HashMap<String, Object>() {{
                     put("text", words);
@@ -83,7 +83,7 @@ public class Main implements Plugin {
 
             command.result = command.rule.parse(text, words);
             // System.out.println(command.tag+" "+command.result);
-            if(command.result.matchPercentage>0.7 && (best == null || command.better(best)))
+            if(command.better(best))
                 best = command;
         }
         if(best!=null) {

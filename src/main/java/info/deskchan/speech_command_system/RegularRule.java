@@ -355,7 +355,6 @@ public class RegularRule{
                 String matchingWord=parseOptions.users.getWord(i);
 
                 float result = PhraseComparison.relative(word, matchingWord);
-                System.out.println(word+" "+matchingWord+" "+result);
                 if(result > 0.99){   // exact match
                     parseOptions.users.addUser(i, this);
                     lastPosition = i;
@@ -497,7 +496,6 @@ public class RegularRule{
                     try {
                         phraseLevel = new WordPhrase(phrase);
                     } catch (Exception e2){
-                        System.out.println(phrase+" / "+e.getMessage());
                         throw e2;
                     }
                 }
@@ -653,7 +651,8 @@ public class RegularRule{
             wordsUsed = wu;
         }
         public boolean better(MatchResult other){
-            return wordsUsed>=other.wordsUsed && matchPercentage>=other.matchPercentage && firstWordUsed<=other.firstWordUsed;
+            return matchPercentage > 0.5 && (other == null ||
+                    ( wordsUsed>=other.wordsUsed && matchPercentage>=other.matchPercentage && firstWordUsed<=other.firstWordUsed ));
         }
         @Override
         public String toString(){

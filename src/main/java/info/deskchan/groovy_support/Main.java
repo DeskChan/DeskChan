@@ -4,7 +4,6 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import info.deskchan.core.*;
 import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,9 +45,6 @@ public class Main implements Plugin, PluginLoader {
 		compilerConfiguration.setSourceEncoding("UTF-8");
 		compilerConfiguration.setScriptBaseClass("info.deskchan.groovy_support.GroovyPlugin");
 		compilerConfiguration.setClasspath(path.getParent().toString());
-		ImportCustomizer importCustomizer = new ImportCustomizer();
-		importCustomizer.addStaticStars("info.deskchan.groovy_support.Sugar");
-		compilerConfiguration.addCompilationCustomizers(importCustomizer);
 		GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
 		Script script = groovyShell.parse(path.toFile());
 		GroovyPlugin plugin = (GroovyPlugin) script;
@@ -58,5 +54,4 @@ public class Main implements Plugin, PluginLoader {
 		config.appendFromJson(path);
 		PluginManager.getInstance().initializePlugin(id, plugin, config);
 	}
-
 }
