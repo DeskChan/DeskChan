@@ -5,6 +5,7 @@ import groovy.lang.Script;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -63,6 +64,9 @@ public class ScenarioPlugin implements Plugin {
         compilerConfiguration.setScriptBaseClass("info.deskchan.groovy_support.Scenario");
         Path path = Paths.get(pathString);
         compilerConfiguration.setClasspath(path.getParent().toString());
+        ImportCustomizer importCustomizer = new ImportCustomizer();
+        importCustomizer.addStaticStars("info.deskchan.groovy_support.Sugar");
+        compilerConfiguration.addCompilationCustomizers(importCustomizer);
         GroovyShell groovyShell = new GroovyShell(compilerConfiguration);
         List<String> scriptLines = null;
         try {
