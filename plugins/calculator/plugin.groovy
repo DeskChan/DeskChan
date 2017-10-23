@@ -52,5 +52,5 @@ sendMessage('core:add-command', [tag: EVALUATION_COMMAND_TAG])
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
         commandName: EVALUATION_COMMAND_TAG,
-        rule: 'вычисли|посчитай|(забей в калькулятор) {value:text}'
+        rule: '(сколько будет)|вычисли|посчитай|(забей калькулятор) {value:text}'
 ])

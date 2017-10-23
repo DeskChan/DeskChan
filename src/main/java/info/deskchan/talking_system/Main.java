@@ -10,7 +10,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -467,11 +466,14 @@ public class Main implements Plugin {
 			pluginProxy.sendMessage("gui:show-notification", list);
 			//System.out.println(errorMessage);
 		}
-		try {
-			chatTimerListener.getClass().getDeclaredMethod("start").invoke(chatTimerListener);
-		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-			log(e);
-		}
+		chatTimerListener.stop();
+		chatTimerListener = new CoreTimerTask(pluginProxy, Long.valueOf(getProperty("messageTimeout",defaultMessageTimeout)), true) {
+			@Override
+			public void run() {
+				Main.this.phraseRequest("CHAT");
+			}
+		};
+		chatTimerListener.start();
 		quotes.setPacks(currentPreset.quotesBaseList);
 		updateOptionsTab();
 		saveSettings();

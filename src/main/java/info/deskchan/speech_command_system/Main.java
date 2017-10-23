@@ -64,7 +64,7 @@ public class Main implements Plugin {
             }
         }
         public boolean better(Command other){
-            return result.better(other.result);
+            return other==null || result.better(other.result);
         }
     }
     void operateRequest(String text, List<Map<String,Object>> commandsInfo){
@@ -82,7 +82,7 @@ public class Main implements Plugin {
             }
 
             command.result = command.rule.parse(text, words);
-            // System.out.println(command.tag+" "+command.result);
+            //System.out.println(command.tag+" "+command.result+" "+command.better(best));
             if(command.better(best))
                 best = command;
         }

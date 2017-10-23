@@ -1,8 +1,7 @@
-import jdk.nashorn.internal.runtime.JSONListAdapter
-
 import java.nio.charset.StandardCharsets
 import org.json.JSONArray
 import org.json.JSONObject
+import info.deskchan.speech_command_system.PhraseComparison
 
 class OpenCommand{
     static String filename
@@ -115,6 +114,27 @@ class OpenCommand{
         writer.write(ar.toString(2))
         writer.close()
     }
+    static boolean open(List text){
+        float result = 0.6
+        LinkEntry link = null
+        for(int i = 0; i<text.size(); i++){
+            for(int j = 0; j<entries.size(); j++){
+                entries.get(j).keywords.each{
+                    float r = PhraseComparison.relative(it, text[i])
+                    if(r > result){
+                        result = r
+                        link = entries.get(j)
+                    }
+                }
+            }
+        }
+        if(link != null){
+            link.open()
+            return true
+        }
+        return false
+    }
+
     static def data
     static void initialize(pluginName, data) {
         this.data = data
@@ -127,24 +147,23 @@ class OpenCommand{
         instance.addMessageListener(pluginName + ':open', { sender, tag, d ->
             Map m = d
             List text = (List) m.get('text')
-            if(text==null){
+            if(text==null || text.size()==0){
+                StringBuilder sb = new StringBuilder()
+                entries.each{
+                    sb.append(it.keywords.get(0)+", ")
+                }
+                sb.delete(sb.length()-2, sb.length())
+                instance.sendMessage('DeskChan:say', "Смотри: я умею открывать следующие штуки: "+sb.toString())
                 instance.sendMessage('talk:request', 'CLARIFY')
                 instance.sendMessage('DeskChan:request-user-speech', null) { s, d2 ->
                     text = (List) d2['value'].split(' ')
+                    if(!open(text))
+                        instance.sendMessage('DeskChan:say', 'Ой, а я не знаю, как это открыть...')
                 }
+                return
             }
-
-            for(int i = 0; i<text.size(); i++){
-                for(int j = 0; j<entries.size(); j++){
-                    entries.get(j).keywords.each{
-                        if(text[i].equals(it)){
-                            entries.get(j).open()
-                            return
-                        }
-                    }
-                }
-            }
-            instance.sendMessage('DeskChan:say', 'Ой, а я не знаю, как это открыть...')
+            if(!open(text))
+                instance.sendMessage('DeskChan:say', 'Ой, а я не знаю, как это открыть...')
         })
 
         instance.sendMessage("core:set-event-link",
@@ -218,6 +237,19 @@ class OpenCommand{
         entries.add(new LinkEntry("https://google.com", LinkEntry.Types.WEBLINK, ['гугл', 'google']))
         entries.add(new LinkEntry("https://yandex.ru", LinkEntry.Types.WEBLINK, ['яндекс', 'yandex']))
         entries.add(new LinkEntry("https://2ch.hk", LinkEntry.Types.WEBLINK, ['двач', '2ch']))
+        entries.add(new LinkEntry("https://youtube.com", LinkEntry.Types.WEBLINK, ['ютуб', 'youtube']))
+        entries.add(new LinkEntry("https://www.google.ru/maps", LinkEntry.Types.WEBLINK, ['карта']))
+        entries.add(new LinkEntry("https://habrahabr.ru", LinkEntry.Types.WEBLINK, ['хабрахабр', 'хабр', 'habrahabr']))
+        entries.add(new LinkEntry("https://0chan.hk", LinkEntry.Types.WEBLINK, ['нульчан', 'нульч', '0chan']))
+        entries.add(new LinkEntry("https://vk.com", LinkEntry.Types.WEBLINK, ['контакт', 'вконтакте', 'вк', 'vk']))
+        entries.add(new LinkEntry("https://www.facebook.com", LinkEntry.Types.WEBLINK, ['фэйсбук', 'fb', 'facebook']))
+        entries.add(new LinkEntry("https://twitter.com", LinkEntry.Types.WEBLINK, ['твиттер', 'twitter']))
+        entries.add(new LinkEntry("https://ru.wikipedia.org", LinkEntry.Types.WEBLINK, ['википедия', 'вики', 'wiki', 'wikipedia']))
+        entries.add(new LinkEntry("https://twitch.tv", LinkEntry.Types.WEBLINK, ['твич', 'twitch']))
+        entries.add(new LinkEntry("https://pikabu.ru", LinkEntry.Types.WEBLINK, ['пикабу', 'pikabu']))
+        entries.add(new LinkEntry("https://instagram.com", LinkEntry.Types.WEBLINK, ['инстаграмм', 'instagram']))
+        entries.add(new LinkEntry("https://online.sberbank.ru", LinkEntry.Types.WEBLINK, ['сбербанк', 'сбер', 'sberbank']))
+        entries.add(new LinkEntry("https://paypal.com", LinkEntry.Types.WEBLINK, ['пэйпал', 'paypal']))
 
         def file = new File(filename)
         file.createNewFile()

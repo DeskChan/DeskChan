@@ -282,7 +282,7 @@ public class RegularRule{
                             words.used[i]=true;
                             lastPos = i;
                         }
-                    value=list;
+                    if(list.size()>0) value=list;
                 } break;
                 case Integer:{
                     Words sub = new Words(words, i, words.size());
@@ -652,7 +652,7 @@ public class RegularRule{
         }
         public boolean better(MatchResult other){
             return matchPercentage > 0.5 && (other == null ||
-                    ( wordsUsed>=other.wordsUsed && matchPercentage>=other.matchPercentage && firstWordUsed<=other.firstWordUsed ));
+                    ( wordsUsed>=other.wordsUsed && matchPercentage>=other.matchPercentage && ( other.firstWordUsed<0 || firstWordUsed<=other.firstWordUsed )));
         }
         @Override
         public String toString(){

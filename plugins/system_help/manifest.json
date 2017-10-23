@@ -1,0 +1,4 @@
+{
+  "deps": ["groovy_support", "speech_command_system"],
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)"
+}

@@ -122,7 +122,6 @@ public class ScenarioPlugin implements Plugin {
             scriptText.append(scriptLines.get(i));
             scriptText.append("\n");
         }
-        System.out.println(scriptText.toString());
         Script script = groovyShell.parse(scriptText.toString());
         return (Scenario) script;
     }
