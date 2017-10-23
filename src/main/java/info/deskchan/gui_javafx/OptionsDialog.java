@@ -325,6 +325,7 @@ class OptionsDialog extends TemplateBox {
 					@Override
 					protected void updateItem(PluginListItem t, boolean bln) {
 						super.updateItem(t, bln);
+						setStyle("-fx-cell-size: 30");
 						if (t != null) {
 							setGraphic(t.hbox);
 							setTooltip(t.tooltip);
@@ -540,7 +541,6 @@ class OptionsDialog extends TemplateBox {
 		String msgTag = (String) data.getOrDefault("msgTag", null);
 		String msgClose = (String) data.getOrDefault("onClose", null);
 		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag, msgClose);
-		System.out.println(plugin);
 		if (tabs == null) {
 			tabs = new ArrayList<>();
 			menu.put(plugin, tabs);

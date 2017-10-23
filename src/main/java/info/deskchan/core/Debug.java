@@ -25,5 +25,4 @@ public class Debug {
         }
         abstract void run();
     }
-    //public static abstract class
 }

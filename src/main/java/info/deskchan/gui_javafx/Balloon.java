@@ -6,6 +6,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -17,6 +18,18 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.util.Duration;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+import java.nio.file.Path;
+import java.util.ArrayList;
 
 class Balloon extends MovablePane {
 
@@ -29,20 +42,89 @@ class Balloon extends MovablePane {
 		RELATIVE,
 		ABSOLUTE
 	}
-	
-	private static final String BUBBLE_SVG_PATH = "m 32.339338,-904.55632 c -355.323298,0 -643.374998,210.31657 " +
-			"-643.374998,469.78125 0,259.46468 288.0517,469.812505 643.374998,469.812505 123.404292,0 " +
-			"238.667342,-25.3559002 336.593752,-69.3438 69.80799,78.7043 181.84985,84.1354 378.90625,5.3126 " +
-			"-149.2328,-8.9191 -166.3627,-41.22 -200.6562,-124.031305 80.6876,-78.49713 128.5,-176.04496 " +
-			"128.5,-281.75 0,-259.46468 -288.0205,-469.78125 -643.343802,-469.78125 z";
-	
+
+	private static SVGPath[] bubbleShapes;
+	private static Insets margin;
+
+	static {
+		loadBubble(Main.getInstance().getPluginProxy().getAssetsDirPath().resolve("bubble.svg"));
+	}
+	public static void loadBubble(Path path){
+		try {
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document document = builder.parse(path.toString());
+			XPathFactory xpf = XPathFactory.newInstance();
+			XPath xpath = xpf.newXPath();
+
+			XPathExpression expression = xpath.compile("//margin");
+			try {
+				NamedNodeMap marginTags = ((NodeList) expression.evaluate(document, XPathConstants.NODESET)).item(0).getAttributes();
+				margin = new Insets( Double.parseDouble(marginTags.getNamedItem("top").getTextContent()),
+									 Double.parseDouble(marginTags.getNamedItem("right").getTextContent()),
+						 			 Double.parseDouble(marginTags.getNamedItem("bottom").getTextContent()),
+									 Double.parseDouble(marginTags.getNamedItem("left").getTextContent()));
+			} catch (Exception e) {
+				margin = new Insets(30, 30, 30, 30);
+			}
+
+			expression = xpath.compile("//path");
+			NodeList svgPaths = (NodeList) expression.evaluate(document, XPathConstants.NODESET);
+
+			ArrayList<SVGPath> shapes = new ArrayList<>();
+			for(int i=0; i<svgPaths.getLength(); i++) {
+				try {
+					SVGPath shape = new SVGPath();
+					NamedNodeMap map = svgPaths.item(i).getAttributes();
+					shape.setContent(map.getNamedItem("d").getTextContent());
+					if(map.getNamedItem("style")!=null) {
+						String[] styleLines = map.getNamedItem("style").getTextContent().split(";");
+						StringBuilder style = new StringBuilder();
+						for (int j = 0; j < styleLines.length; j++) {
+							style.append("-fx-");
+							style.append(styleLines[j].trim());
+							style.append("; ");
+						}
+						shape.setStyle(style.toString());
+					} else shape.setStyle("-fx-fill: white; -fx-stroke-width: 2;");
+					shapes.add(shape);
+				} catch (Exception e){
+					Main.log(e);
+				}
+			}
+			bubbleShapes = shapes.toArray(new SVGPath[shapes.size()]);
+		} catch (Exception e){
+			Main.log("Balloon file not found, using default");
+
+			String BUBBLE_SVG_PATH = "m 32.339338,-904.55632 c -355.323298,0 -643.374998,210.31657 " +
+					"-643.374998,469.78125 0,259.46468 288.0517,469.812505 643.374998,469.812505 123.404292,0 " +
+					"238.667342,-25.3559002 336.593752,-69.3438 69.80799,78.7043 181.84985,84.1354 378.90625,5.3126 " +
+					"-149.2328,-8.9191 -166.3627,-41.22 -200.6562,-124.031305 80.6876,-78.49713 128.5,-176.04496 " +
+					"128.5,-281.75 0,-259.46468 -288.0205,-469.78125 -643.343802,-469.78125 z";
+			bubbleShapes = new SVGPath[1];
+			bubbleShapes[0] = new SVGPath();
+
+			bubbleShapes[0].setContent(BUBBLE_SVG_PATH);
+			bubbleShapes[0].setFill(Color.WHITE);
+			bubbleShapes[0].setStroke(Color.BLACK);
+
+			bubbleShapes[0].setScaleX(0.3);
+			bubbleShapes[0].setScaleY(0.23);
+
+			margin = new Insets(40, 40, 20, 20);
+		}
+	}
+
+
 	private static Font defaultFont = null;
 	
 	private Character character = null;
-	private SVGPath bubbleShape = new SVGPath();
+
 	private Timeline timeoutTimeline = null;
 	private final DropShadow bubbleShadow = new DropShadow();
 	private final StackPane stackPane = new StackPane();
+	private final Group bubblesGroup;
+	private SVGPath bubbleShape = new SVGPath();
 	private final Node content;
 	private PositionMode positionMode = PositionMode.ABSOLUTE;
 	private long lastClick = -1;
@@ -54,23 +136,17 @@ class Balloon extends MovablePane {
 		instance=this;
 
 		setBalloonOpacity(Float.parseFloat(Main.getProperty("balloon.opacity", "1.0")));
-            
+
 		stackPane.setPrefWidth(400);
 		stackPane.setMinHeight(200);
-		
-		bubbleShape.setContent(BUBBLE_SVG_PATH);
-		bubbleShape.setFill(Color.WHITE);
-		bubbleShape.setStroke(Color.BLACK);
 
-		bubbleShape.setScaleX(0);
-		bubbleShape.setScaleY(0);
-                
 		bubbleShadow.setRadius(5.0);
 		bubbleShadow.setOffsetX(1.5);
 		bubbleShadow.setOffsetY(2.5);
 		bubbleShadow.setColor(Color.BLACK);
-		
+
 		Label label = new Label(text);
+		label.setAlignment(Pos.CENTER);
 		label.setWrapText(true);
 		if (defaultFont != null) {
 			label.setFont(defaultFont);
@@ -78,11 +154,16 @@ class Balloon extends MovablePane {
 		content = label;
 		StackPane contentPane = new StackPane();
 		contentPane.getChildren().add(content);
-		stackPane.getChildren().add(new Group(bubbleShape));
+
+		bubblesGroup = new Group(bubbleShapes);
+
+		stackPane.getChildren().add(bubblesGroup);
 		stackPane.getChildren().add(contentPane);
-		StackPane.setMargin(content, new Insets(40, 20, 40, 20));
-		
+		StackPane.setMargin(content, margin);
+
 		getChildren().add(stackPane);
+
+		setBalloonOpacity(Float.parseFloat(Main.getProperty("balloon.opacity", "1.0")));
 
 		setOnMousePressed(event -> {
 			lastClick = System.currentTimeMillis();
@@ -166,9 +247,9 @@ class Balloon extends MovablePane {
 		x += rightAlign ? (-width) : character.getWidth();
 		relocate(x, getPosition().getY());
 
-		bubbleShape.getParent().setScaleX((rightAlign) ? 1 : -1);
-		StackPane.setMargin(content, new Insets(40, (rightAlign) ? 40 : 20,
-				40, (rightAlign) ? 20 : 40));
+		bubblesGroup.setScaleX((rightAlign) ? 1 : -1);
+		StackPane.setMargin(content, new Insets(margin.getTop(), (rightAlign) ? margin.getRight() : margin.getLeft(),
+				margin.getBottom(), (!rightAlign) ? margin.getRight() : margin.getLeft()));
 	}
 	private void impl_updateBalloonLayoutY() {
 		if(positionMode == PositionMode.ABSOLUTE) return;
@@ -283,10 +364,7 @@ class Balloon extends MovablePane {
 	@Override
 	public void layoutChildren() {
 		super.layoutChildren();
-		if ((bubbleShape.getScaleX() == 0) && (bubbleShape.getScaleY() == 0)) {
-			bubbleShape.setScaleX(getWidth() / bubbleShape.getBoundsInLocal().getWidth());
-			bubbleShape.setScaleY(getHeight() / bubbleShape.getBoundsInLocal().getHeight());
-		}
+		//bubblesGroup.setScaleX(bubblesGroup.getBoundsInLocal().getWidth() / bubblesGroup);
 	}
 	
 	static Font getDefaultFont() {
