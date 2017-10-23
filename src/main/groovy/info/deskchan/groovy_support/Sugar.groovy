@@ -5,9 +5,8 @@ import java.util.function.Function
 
 static Object when(obj, @DelegatesTo(CaseCollector) Closure cl) {
     def caseCollector = new CaseCollector()
-    def code = cl.rehydrate(caseCollector, this, this)
-    code.resolveStrategy = Closure.DELEGATE_ONLY
-    code()
+    cl.delegate = caseCollector
+    cl()
     return caseCollector.execute(obj)
 }
 
@@ -25,8 +24,9 @@ class CaseCollector<T> {
     def match(T obj, Function<T, Object> action) {
         if (obj instanceof GroovyCallable) {
             match_impl(obj as Function, action)
+        } else {
+            match_impl({ it == obj } as Function, action)
         }
-        match_impl({ it == obj } as Function, action)
     }
 
     def otherwise(Function<T, Object> action) {
