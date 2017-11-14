@@ -181,8 +181,8 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
     }
 
     companion object {
-        fun create(plugin: Plugin, id:String, config: PluginConfig?): PluginProxy? {
-            val entity = PluginProxy(id, plugin, config?: PluginConfig())
+        fun create(plugin: Plugin, id:String, config: PluginConfigInterface?): PluginProxy? {
+            val entity = PluginProxy(id, plugin, (config as PluginConfig?) ?: PluginConfig())
             if(!entity.resolveDependencies())
                 return null
 

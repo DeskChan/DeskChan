@@ -18,7 +18,21 @@ import java.util.*
 // private const val TEMPLATE_INVALID_PROPERTY = "Manifest of plugin \"%s\" has invalid property: %s"
 
 
-class PluginConfig {
+interface PluginConfigInterface {
+    fun append(map: Map<String, Any?>)
+    fun append(key: String, value: Any)
+    fun appendFromJson(path: Path)
+
+    fun getDependencies() : List<String>
+    fun getExtensions(): List<String>
+    fun getType(): String
+    fun get(key:String): Any?
+    fun getShortDescription() : String
+    fun getDescription(): String?
+}
+
+
+class PluginConfig : PluginConfigInterface {
 
     val data: MutableMap<String, Any> = mutableMapOf<String, Any>()
 
@@ -33,17 +47,18 @@ class PluginConfig {
         append(map)
     }
 
-    fun append(map: Map<String, Any?>){
+    override fun append(map: Map<String, Any?>){
         map.forEach { t, u ->
             if(u!=null && u!="")
                 data[t.toLowerCase()]=u
         }
     }
 
-    fun append(key: String, value: Any){
+    override fun append(key: String, value: Any){
         data[key.toLowerCase()] = value
     }
-    fun appendFromJson(path: Path){
+
+    override fun appendFromJson(path: Path){
         if (!Files.isReadable(path) || Files.isDirectory(path)) {
             return
         }
@@ -77,13 +92,13 @@ class PluginConfig {
         }
     }
 
-    val dependencyNames = listOf("deps" , "dep" , "dependencies" , "dependency")
-    fun getDependencies() : List<String> = getList(dependencyNames)
+    private val dependencyNames = listOf("deps" , "dep" , "dependencies" , "dependency")
+    override fun getDependencies() : List<String> = getList(dependencyNames)
 
-    val extensionNames = listOf("extensions")
-    fun getExtensions() : List<String> = getList(extensionNames)
+    private val extensionNames = listOf("extensions")
+    override fun getExtensions() : List<String> = getList(extensionNames)
 
-    fun getList(possibleNames: List<String>) : List<String>{
+    private fun getList(possibleNames: List<String>) : List<String>{
         var value: Any? = null
         for(name in possibleNames){
             value = data[name]
@@ -110,11 +125,11 @@ class PluginConfig {
         }
     }
 
-    fun getType() : String = PluginProxy.getString(data["type"]?.toString() ?: "unknown")
+    override fun getType(): String = PluginProxy.getString(data["type"]?.toString() ?: "unknown")
 
-    fun get(key:String) : Any? = data[key]
+    override fun get(key:String): Any? = data[key]
 
-    fun getShortDescription() : String {
+    override fun getShortDescription() : String {
         val sb = StringBuilder()
         sb.appendln(PluginProxy.getString("plugin-type") + ": " + getType())
         if ("version" in data) {
@@ -140,7 +155,7 @@ class PluginConfig {
         return sb.toString().trimEnd()
     }
 
-    fun getDescription(): String? = if ("description" in data) {
+    override fun getDescription(): String? = if ("description" in data) {
         val descriptionMap = data["description"] as? Map<String, String>?
         if (descriptionMap != null) {
             getLocalString(descriptionMap)
