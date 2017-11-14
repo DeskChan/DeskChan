@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class PluginManager {
+public class PluginManager implements PluginManagerInterface {
 	
 	private static final PluginManager instance = new PluginManager();
 	private final Map<String, PluginProxy> plugins = new HashMap<>();
@@ -63,7 +63,7 @@ public class PluginManager {
 
 	/* Plugin initialization and unloading */
 	
-	public boolean initializePlugin(String id, Plugin plugin, PluginConfig config) throws Throwable {
+	public boolean initializePlugin(String id, Plugin plugin, PluginConfigInterface config) throws Throwable {
 		if (plugins.containsKey(id)) {
 			throw new Throwable("Cannot load plugin " + id + ": plugin with such name already exist");
 		}

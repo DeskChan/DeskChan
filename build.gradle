@@ -159,6 +159,11 @@ task assembleProxyInterface(type: Jar, group: 'desk-chan') {
 		include 'info/deskchan/core/MessageListener.class'
 		include 'info/deskchan/core/PluginProxyInterface.class'
 		include 'info/deskchan/core/Plugin.class'
+		include 'info/deskchan/core/PluginLoader.class'
+		include 'info/deskchan/core/PluginManagerInterface.class'
+		include 'info/deskchan/core/PluginManagerFactory.class'
+		include 'info/deskchan/core/PluginConfigInterface.class'
+		include 'info/deskchan/core/PluginUtils.class'
 	}
 	manifest {
 		attributes 'Main-Class': "info.deskchan.${baseName}.Main", 'Implementation-Version': appVersion
