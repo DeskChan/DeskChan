@@ -21,15 +21,17 @@ public class PluginManager {
 	private static OutputStream logStream = null;
 
 	private static boolean debugBuild = false;
+
+	/* Paths cache */
 	private static Path corePath = null;
 	private static Path pluginsDirPath = null;
 	private static Path dataDirPath = null;
 	private static Path rootDirPath = null;
 	private static Path assetsDirPath = null;
+
 	/* Singleton */
 	
-	private PluginManager() {
-	}
+	private PluginManager() { }
 	
 	public static PluginManager getInstance() {
 		return instance;
@@ -62,7 +64,16 @@ public class PluginManager {
 	}
 
 	/* Plugin initialization and unloading */
-	
+
+	/** Plugin initialization. Use other methods of this class if you haven't all needed components
+	 *
+	 * @param id Plugin name
+	 * @param plugin Plugin object
+	 * @param config Config (you can parse it from file, create by yourself or pass null)
+	 * @return Is initialization has started successfully.
+	 * You will not recieve any information about if plugin has loaded to program.
+	 * @throws Throwable Plugin with such name already exist
+	 */
 	public boolean initializePlugin(String id, Plugin plugin, PluginConfig config) throws Throwable {
 		if (plugins.containsKey(id)) {
 			throw new Throwable("Cannot load plugin " + id + ": plugin with such name already exist");
@@ -75,13 +86,15 @@ public class PluginManager {
 				@Override
 				void run(){
 					PluginProxy entity = PluginProxy.Companion.create(plugin, id, config);
-					if (entity!=null) {
+					if (entity != null) {
 						plugins.put(id, entity);
 						if (config != null) {
 							LoaderManager.INSTANCE.registerExtensions(config.getExtensions());
 						}
 						log("Registered plugin: " + id);
 						sendMessage("core", "core-events:plugin-load", id);
+					} else {
+						log("Plugin not registered: " + id);
 					}
 				}
 			};
@@ -90,18 +103,30 @@ public class PluginManager {
 		return false;
 	}
 
+	/** Plugin initialization. Plugin will be marked as inner plugin with default configuration. <br>
+	 * Other functional equals {@link #initializePlugin(String, Plugin, PluginConfig) this method}
+	 */
 	public boolean initializeInnerPlugin(String id, Plugin plugin) throws Throwable {
 		return initializePlugin(id, plugin, PluginConfig.Companion.getInternal().clone());
 	}
 
+	/**  Plugin will be unregistered from memory. **/
 	void unregisterPlugin(PluginProxyInterface pluginProxy) {
-		plugins.remove(pluginProxy.getId());
-		log("Unregistered plugin: " + pluginProxy.getId());
-		sendMessage("core", "core-events:plugin-unload", pluginProxy.getId());
+		unregisterPlugin(pluginProxy.getId());
 	}
-	
+
+	/**  Plugin will be unregistered from memory. **/
+	void unregisterPlugin(String id) {
+		plugins.remove(id);
+		log("Unregistered plugin: " + id);
+		sendMessage("core", "core-events:plugin-unload", id);
+	}
+
+	/**  Plugin will be unloaded from memory.
+	 * @return Is plugin has existed and has been unloaded successfully
+	 */
 	public boolean unloadPlugin(String name) {
-		PluginProxy plugin = plugins.getOrDefault(name, null);
+		PluginProxy plugin = plugins.get(name);
 		if (plugin != null) {
 			plugin.unload();
 			return true;
@@ -110,7 +135,8 @@ public class PluginManager {
 	}
 	
 	/* Message bus */
-	
+
+	/**  Register tag listener. All messages that sending to <b>tag</b> will be automatically sent to <b>listener.handle</b>.  **/
 	void registerMessageListener(String tag, MessageListener listener) {
 		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
 		if (listeners == null) {
@@ -124,7 +150,8 @@ public class PluginManager {
 		}
 		listeners.add(listener);
 	}
-	
+
+	/**  Unregister tag listener. **/
 	void unregisterMessageListener(String tag, MessageListener listener) {
 		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
 		if (listeners != null) {
@@ -134,6 +161,8 @@ public class PluginManager {
 			}
 		}
 	}
+
+	/**  Get listeners count. **/
 	int getMessageListenersCount(String tag) {
 		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
 		if (listeners != null) {
@@ -141,6 +170,14 @@ public class PluginManager {
 		}
 		return 0;
 	}
+
+	/**
+	 * Send message to tag. <br>
+	 * You cannot call this method by yourself to not falsify messages from other plugins
+	 * @param sender Name of plugin that sends message
+	 * @param tag Tag of message
+	 * @param data Additional data that will be sent with query, can be null
+	 */
 	void sendMessage(String sender, String tag, Object data) {
 		Set<MessageListener> listeners = messageListeners.getOrDefault(tag, null);
 		if (listeners != null) {
@@ -159,24 +196,39 @@ public class PluginManager {
 	}
 
 	/* Plugin loaders */
-
+	/** Register loader object that can load other plugins.
+	 * @param loader Plugin loader
+	*/
 	public synchronized void registerPluginLoader(PluginLoader loader) {
 		loaders.add(loader);
 	}
 
+	/** Register loader object that can load other plugins.
+	 * @param loader Plugin loader
+	 * @param extensions Array of file extensions that new plugin loader can work with
+	 */
 	public synchronized void registerPluginLoader(PluginLoader loader, String[] extensions) {
 		registerPluginLoader(loader);
 		LoaderManager.INSTANCE.registerExtensions(extensions);
 	}
 
+	/** Register loader object that can load other plugins.
+	 * @param loader Plugin loader
+	 * @param extension File extensions that new plugin loader can work with
+	 */
 	public synchronized void registerPluginLoader(PluginLoader loader, String extension) {
 		registerPluginLoader(loader, new String[] {extension});
 	}
 
+	/** Unregister loader from program. All plugins that loaded with this loader will stay loaded. **/
 	public synchronized void unregisterPluginLoader(PluginLoader loader) {
 		loaders.remove(loader);
 	}
 
+	/** Loading plugin by its class type.
+	 * @param cls Class type
+	 * @see #initializePlugin(String, Plugin, PluginConfig)
+	 */
 	public boolean loadPluginByClass(Class cls) throws Throwable {
 		Object plugin = cls.newInstance();
 		if (plugin instanceof Plugin) {
@@ -189,6 +241,10 @@ public class PluginManager {
 		return false;
 	}
 
+	/** Try to load plugin by its class type.
+	 * @param cls Class type
+	 * @see #loadPluginByClass(Class)
+	 */
 	public boolean tryLoadPluginByClass(Class cls) {
 		try {
 			return loadPluginByClass(cls);
@@ -197,11 +253,19 @@ public class PluginManager {
 		}
 	}
 
+	/** Load plugin by its class name.
+	 * @param className Class name
+	 * @see #loadPluginByClass(Class)
+	 */
 	public boolean loadPluginByClassName(String className) throws Throwable {
 		Class cls = getClass().getClassLoader().loadClass(className);
 		return loadPluginByClass(cls);
 	}
 
+	/** Try to load plugin by its class name.
+	 * @param className Class name
+	 * @see #loadPluginByClass(Class)
+	 */
 	public boolean tryLoadPluginByClassName(String className) {
 		try {
 			return loadPluginByClassName(className);
@@ -210,10 +274,18 @@ public class PluginManager {
 		}
 	}
 
+	/** Load plugin by its package name. Program searches package and gets Main class from it.
+	 * @param packageName Package name
+	 * @see #loadPluginByClass(Class)
+	 */
 	public boolean loadPluginByPackageName(String packageName) throws Throwable {
 		return loadPluginByClassName(packageName + ".Main");
 	}
 
+	/** Try to load plugin by its package name.
+	 * @param packageName Package name
+	 * @see #loadPluginByPackageName(String)
+	 */
 	public boolean tryLoadPluginByPackageName(String packageName) {
 		try {
 			return loadPluginByPackageName(packageName);
@@ -222,7 +294,11 @@ public class PluginManager {
 			return false;
 		}
 	}
-	
+
+	/** Load plugin by path. Program searches appropriate loader for file and gives it to loader.
+	 * @param path Path to plugin file
+	 * @throws Throwable If could not match loader for plugin
+	 */
 	public synchronized boolean loadPluginByPath(Path path) throws Throwable {
 		for (PluginLoader loader : loaders) {
 			if (loader.matchPath(path)) {
@@ -232,7 +308,11 @@ public class PluginManager {
 		}
 		throw new Exception("Could not match loader for plugin " + path.toString());
 	}
-	
+
+	/** Try to load plugin by path. Program searches appropriate loader for file and gives it to loader.
+	 * @param path Path to plugin file
+	 * @see #tryLoadPluginByPath(Path)
+	 */
 	public boolean tryLoadPluginByPath(Path path) {
 		try {
 			return loadPluginByPath(path);
@@ -241,7 +321,11 @@ public class PluginManager {
 		}
 		return false;
 	}
-	
+
+	/** Load plugin by name. Program searches 'plugins' subfolder for plugin file.
+	 * @param name Plugin name
+	 * @throws Throwable If plugin was found but cannot be loaded
+	 */
 	public boolean loadPluginByName(String name) throws Throwable {
 		// 1. Tries to find an already loaded plugin with the same name.
 		if (plugins.containsKey(name)) {
@@ -278,6 +362,10 @@ public class PluginManager {
 		return false;
 	}
 
+	/** Load plugin by name.
+	 * @param name Plugin name
+	 * @see #loadPluginByName(String)
+	 */
 	public boolean tryLoadPluginByName(String name) {
 		try {
 			return loadPluginByName(name);
@@ -289,6 +377,7 @@ public class PluginManager {
 
 	/* Application finalization */
 
+	/** Unload all plugins and close immediately. **/
 	void quit() {
 		List<PluginProxy> pluginsToUnload = new ArrayList<>();
 		for (Map.Entry<String, PluginProxy> entry : plugins.entrySet()) {
@@ -314,11 +403,13 @@ public class PluginManager {
 	}
 	
 	/* Plugins blacklist */
-	
+
+	/** Get list of plugins in blacklist **/
 	public List<String> getBlacklistedPlugins() {
 		return new ArrayList<>(blacklistedPlugins);
 	}
-	
+
+	/** Add plugin to blacklist. It will be unloaded immediately. **/
 	public void addPluginToBlacklist(String name) {
 		if (!name.equals("core")) {
 			blacklistedPlugins.add(name);
@@ -326,12 +417,14 @@ public class PluginManager {
 			savePluginsBlacklist();
 		}
 	}
-	
+
+	/** Remove plugin from blacklist. You need to load it manually if you want it to be loaded. **/
 	public void removePluginFromBlacklist(String name) {
 		blacklistedPlugins.remove(name);
 		savePluginsBlacklist();
 	}
-	
+
+	/** Load blacklist from file. **/
 	private void loadPluginsBlacklist() {
 		try {
 			BufferedReader reader = Files.newBufferedReader(
@@ -348,7 +441,8 @@ public class PluginManager {
 			reader.close();
 		} catch (IOException e) { }
 	}
-	
+
+	/** Save blacklist to file. **/
 	private void savePluginsBlacklist() {
 		try {
 			BufferedWriter writer = Files.newBufferedWriter(
@@ -366,7 +460,7 @@ public class PluginManager {
 	}
 	
 	/* Plugins and data directories */
-	
+	/** Get 'bin' folder path. **/
 	public static Path getCorePath() {
 		if (corePath == null) {
 			try {
@@ -379,6 +473,7 @@ public class PluginManager {
 		return corePath;
 	}
 
+	/** Get 'plugins' folder path. **/
 	public static Path getPluginsDirPath() {
 		if(pluginsDirPath != null) {
 			return pluginsDirPath;
@@ -392,6 +487,7 @@ public class PluginManager {
 		return pluginsDirPath;
 	}
 
+	/** Get 'plugins/%pluginName%' folder path. **/
 	public static Path getDefaultPluginDirPath(String name) {
 		Stack<File> paths = new Stack<>();
 		paths.push(getPluginsDirPath().toFile());
@@ -415,6 +511,7 @@ public class PluginManager {
 		return getPluginsDirPath();
 	}
 
+	/** Get 'data' folder path. **/
 	public static Path getDataDirPath() {
 		if(dataDirPath != null) {
 			return dataDirPath;
@@ -432,6 +529,7 @@ public class PluginManager {
 		return dataDirPath;
 	}
 
+	/** Get 'assets' folder path. **/
 	public static Path getAssetsDirPath() {
 		if(assetsDirPath != null) {
 			return assetsDirPath;
@@ -446,6 +544,7 @@ public class PluginManager {
 		return assetsDirPath;
 	}
 
+	/** Get DeskChan folder path. **/
 	public static Path getRootDirPath() {
 		if(rootDirPath != null) {
 			return rootDirPath;
@@ -461,6 +560,7 @@ public class PluginManager {
 		return rootDirPath;
 	}
 
+	/** Get 'data/%pluginName%' folder path. **/
 	public static Path getPluginDataDirPath(String id) {
 		final Path baseDir = getDataDirPath();
 		final Path dataDir = baseDir.resolve(id);
@@ -473,6 +573,7 @@ public class PluginManager {
 
 	/* Manifest getter */
 
+	/** Get plugin config by plugin name. **/
 	public PluginConfig getPluginConfig(String name) {
 		if (!plugins.containsKey(name)) {
 			return null;
@@ -481,7 +582,8 @@ public class PluginManager {
 	}
 
 	/* Logging */
-	
+
+	/** Log text to file and console. You cannot call this method, use your plugin's proxy. **/
 	static void log(String id, String message) {
 		String text = id + ": " + message;
 		System.err.println(text);
@@ -494,7 +596,9 @@ public class PluginManager {
 			}
 		}
 	}
-	
+
+	/** Log stack and text of error thrown to file and console.
+	 * You cannot call this method, use your plugin's proxy. **/
 	static void log(String id, Throwable e) {
 		StringWriter stringWriter = new StringWriter();
 		PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -508,7 +612,7 @@ public class PluginManager {
 	static void log(String message) {
 		log("core", message);
 	}
-	
+
 	static void log(Throwable e) {
 		log("core", e);
 	}

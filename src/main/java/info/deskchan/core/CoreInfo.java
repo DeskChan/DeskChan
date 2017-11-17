@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class CoreInfo {
-	
+
+	/** Map representing all build config variables. Build config is set in gradle build script. **/
 	private static final Map<String, String> info = new HashMap<>();
 	
 	public static String get(String key) {
@@ -50,16 +51,12 @@ public class CoreInfo {
 		}
 
 		locales=new HashMap<>();
-		locales.put("ru","Русский");
-		locales.put("en","English");
-		boolean foundDef=false;
-		for(Map.Entry<String,String> locale : locales.entrySet()){
-			if(locale.getValue().equals(Locale.getDefault().getLanguage())){
-				foundDef=true;
-				break;
-			}
-		}
-		if(!foundDef) Locale.setDefault(new Locale("en"));
+		locales.put("ru", "Русский");
+		locales.put("en", "English");
+
+		String language = Locale.getDefault().getLanguage();
+		if(!locales.containsValue(language))
+			Locale.setDefault(new Locale("en"));
 	}
 	
 }
