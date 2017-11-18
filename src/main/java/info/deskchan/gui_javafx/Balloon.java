@@ -6,10 +6,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -17,6 +14,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -124,12 +123,46 @@ class Balloon extends MovablePane {
 	private final DropShadow bubbleShadow = new DropShadow();
 	private final StackPane stackPane = new StackPane();
 	private final Group bubblesGroup;
-	private final Node content;
+	private final Text content;
 	private PositionMode positionMode = PositionMode.ABSOLUTE;
 	private long lastClick = -1;
 
 	private final MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "balloon");
 	private float balloonOpacity = 1.0f;
+
+	class SymbolsAdder implements EventHandler<javafx.event.ActionEvent> {
+
+		private final Timeline timeline;
+		private final String text;
+
+		SymbolsAdder(String text) {
+			this.text = text;
+			timeline = new Timeline(new KeyFrame(Duration.millis(50), this));
+			timeline.setCycleCount(Timeline.INDEFINITE);
+			timeline.play();
+		}
+
+		private boolean flag = false;
+		@Override
+		public void handle(javafx.event.ActionEvent actionEvent) {
+			if(text.length() <= content.getText().length()){
+				timeline.stop();
+				return;
+			}
+			char c = text.charAt(content.getText().length());
+			if(c == '.'){
+				if(!flag) {
+					timeline.setCycleCount(timeline.getCycleCount() + 1);
+					flag = true;
+					return;
+				}
+				flag = false;
+			}
+			content.setText(content.getText() + c);
+		}
+	}
+
+	private SymbolsAdder symbolsAdder;
 
 	Balloon(String id, String text) {
 		instance=this;
@@ -142,12 +175,16 @@ class Balloon extends MovablePane {
 		bubbleShadow.setOffsetY(2.5);
 		bubbleShadow.setColor(Color.BLACK);
 
-		Label label = new Label(text);
-		label.setAlignment(Pos.CENTER);
-		label.setWrapText(true);
+		Text label = new Text("");
+		label.setStyle("-fx-alignment: center; -fx-text-alignment: center; -fx-content-display: center;");
+		label.setTextAlignment(TextAlignment.CENTER);
+		label.setWrappingWidth(300);
 		if (defaultFont != null) {
 			label.setFont(defaultFont);
 		}
+
+		symbolsAdder = new SymbolsAdder(text);
+
 		content = label;
 		StackPane contentPane = new StackPane();
 		contentPane.getChildren().add(content);
@@ -196,7 +233,7 @@ class Balloon extends MovablePane {
 				// TODO: Figure out how to write more precise check.
 				.setOnScrollListener(event -> true);
 	}
-	
+
 	Balloon(Character character, PositionMode positionMode, String text) {
 
 		this(character.getId() + ".balloon", text);
@@ -367,9 +404,20 @@ class Balloon extends MovablePane {
 	static Font getDefaultFont() {
 		return defaultFont;
 	}
-	
+
+	private static final String DEFAULT_FONT = "PT Sans, 16.0";
+	static void setDefaultFont(String font) {
+		if (font == null)
+			font = DEFAULT_FONT;
+		setDefaultFont(LocalFont.fromString(font));
+	}
 	static void setDefaultFont(Font font) {
+		if (font == null)
+			font = LocalFont.fromString(DEFAULT_FONT);
 		defaultFont = font;
+		if (instance != null)
+			instance.content.setFont(font);
+		Main.setProperty("balloon.font", LocalFont.toString(font));
 	}
 	
 }

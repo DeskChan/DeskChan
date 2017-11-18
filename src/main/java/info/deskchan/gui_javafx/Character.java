@@ -270,7 +270,7 @@ class Character extends MovablePane {
 	}
 
 	void say(Object data) {
-		if(OverlayStage.getCurrentStage()== OverlayStage.LayerMode.HIDE) return;
+		if(OverlayStage.getCurrentStage() == OverlayStage.LayerMode.HIDE) return;
 		MessageInfo messageInfo = null;
 		if (data != null) {
 			messageInfo = new MessageInfo(data);

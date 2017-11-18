@@ -187,22 +187,33 @@ public class App extends Application {
 		});
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.registerPluginMenu(sender, (Map<String, Object>) data, true);
+				OptionsDialog.registerPluginMenu(sender, (Map) data, true);
 			});
 		});
 		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.registerPluginMenu(sender, (Map<String, Object>) data,false);
+				OptionsDialog.registerPluginMenu(sender, (Map) data, false);
 			});
 		});
 		pluginProxy.addMessageListener("gui:update-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.updatePluginMenu(sender, (Map<String, Object>) data, true);
+				OptionsDialog.updatePluginMenu(sender, (Map) data, true);
 			});
 		});
 		pluginProxy.addMessageListener("gui:update-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.updatePluginMenu(sender, (Map<String, Object>) data,false);
+				OptionsDialog.updatePluginMenu(sender, (Map) data, false);
+			});
+		});
+		pluginProxy.addMessageListener("gui:show-options-submenu", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if(data instanceof Map) {
+					Map map = (Map) data;
+					OptionsDialog.openSubMenu((String) map.get("owner"),
+											  (String) map.get("menu"));
+				} else {
+					OptionsDialog.openSubMenu(sender, data.toString());
+				}
 			});
 		});
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
@@ -258,6 +269,12 @@ public class App extends Application {
 			Platform.runLater(() -> {
 				OverlayStage.updateStage();
 			});
+		});
+		pluginProxy.addMessageListener("gui:set-balloon-font", (sender, tag, data) -> {
+			Balloon.setDefaultFont((String) data);
+		});
+		pluginProxy.addMessageListener("gui:set-interface-font", (sender, tag, data) -> {
+			LocalFont.setDefaultFont((String) data);
 		});
 		pluginProxy.addMessageListener("gui:choose-files", (sender, tag, data) -> {
 			Platform.runLater(() -> {
@@ -494,10 +511,8 @@ public class App extends Application {
 		} catch (IOException e) {
 			Main.log(e);
 		}
-		Balloon.setDefaultFont(Font.font(
-				Main.getProperty("balloon.font.family", "PT Sans"),
-				Double.parseDouble(Main.getProperty("balloon.font.size", "16.0"))
-		));
+		Balloon.setDefaultFont(Main.getProperty("balloon.font", null));
+		LocalFont.setDefaultFont(Main.getProperty("interface.font", null));
 	}
 	
 	private void initStylesheetOverride() {

@@ -41,14 +41,17 @@ public class PluginManager {
 	
 	void initialize(String[] args) {
 		this.args = args;
+		Path logFile = getDataDirPath().resolve("DeskChan.log");
 		try {
-			logStream = Files.newOutputStream(getDataDirPath().resolve("DeskChan.log"));
+			logFile.toFile().createNewFile();
+			logStream = Files.newOutputStream(logFile);
 		} catch (IOException e) {
 			log(e);
 		}
 		CoreInfo.printInfo();
 		tryLoadPluginByClass(CorePlugin.class);
 		loadPluginsBlacklist();
+		getCorePath();
 	}
 	
 	public String[] getArgs() {
@@ -552,7 +555,14 @@ public class PluginManager {
 		Path corePath = getCorePath();
 		Path path;
 		if (debugBuild) {
-			path = corePath.resolve("../../../");
+			path = corePath;
+			try {
+				while (!path.endsWith("build"))
+					path = path.getParent();
+				path = path.getParent();
+			} catch (Exception e){
+				log("Error while locating root path with path: "+corePath);
+			}
 		} else {
 			path = corePath.getParent().resolve("../");
 		}

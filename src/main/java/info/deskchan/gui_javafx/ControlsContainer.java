@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Window;
 
 import java.util.HashMap;
@@ -71,8 +72,8 @@ public class ControlsContainer {
 			if (label == null) {
 				gridPane.add(item.getNode(), 0, row, 2, 1);
 			} else {
-				Label labelNode = new Label(label + ":");
-				labelNode.setWrapText(true);
+				Text labelNode = new Text(label + ":");
+				labelNode.setFont(LocalFont.defaultFont);
 				gridPane.add(labelNode, 0, row);
 				gridPane.add(item.getNode(), 1, row);
 			}

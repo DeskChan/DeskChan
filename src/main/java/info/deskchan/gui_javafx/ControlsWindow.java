@@ -29,7 +29,7 @@ class ControlsWindow extends TemplateBox {
         if(data!=null)
             controls.updateControlsPane(data);
     }
-    public static void setupCustomWindow(String sender, Map<String,Object> data){
+    public static void setupCustomWindow(String sender, Map<String, Object> data){
         String name = (String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
         setupCustomWindow(sender, new ControlsContainer(name, (List<Map<String, Object>>) data.get("controls"),
                 (String) data.getOrDefault("msgTag", null), (String) data.getOrDefault("onClose", null)));

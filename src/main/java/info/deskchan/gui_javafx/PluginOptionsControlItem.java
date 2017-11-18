@@ -15,7 +15,9 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.controlsfx.dialog.FontSelectorDialog;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -25,24 +27,20 @@ import java.util.*;
 
 interface PluginOptionsControlItem {
 	
-	default void init(Map<String, Object> options) {
-	}
+	default void init(Map<String, Object> options) { }
 	
-	default void setValue(Object value) {
-	}
+	default void setValue(Object value) { }
 	
-	default Object getValue() {
-		return null;
-	}
+	default Object getValue() {  return null;  }
 	
 	Node getNode();
 	
 	static PluginOptionsControlItem create(Window parent, Map<String, Object> options) {
-		String type = (String) options.get("type");
-		Object value = options.getOrDefault("value", null);
-		Double width = App.getDouble(options.getOrDefault("width",null), null);
-		Double height = App.getDouble(options.getOrDefault("height",null), null);
-		Boolean disabled = App.getBoolean(options.getOrDefault("disabled",null), null);
+		String type   = (String) options.get("type");
+		Object value  = options.get("value");
+		Double width  = App.getDouble(options.get("width"), null);
+		Double height = App.getDouble(options.get("height"), null);
+		Boolean disabled = App.getBoolean(options.get("disabled"), null);
 
 		PluginOptionsControlItem item = null;
 		switch (type) {
@@ -89,7 +87,14 @@ interface PluginOptionsControlItem {
 			case "CustomizableTextArea":
 				item = new CustomizableTextAreaItem();
 				break;
+			case "ColorPicker":
+				item = new ColorPickerItem();
+				break;
+			case "FontPicker":
+				item = new FontPickerItem(parent);
+				break;
 		}
+
 		if (item == null) {
 			Main.log("Unknown type of item: "+type);
 			return null;
@@ -98,19 +103,21 @@ interface PluginOptionsControlItem {
 		if (value != null) {
 			item.setValue(value);
 		}
-		Node node=item.getNode();
-		if(width!=null && height!=null){
-			node.setClip(new Rectangle(width,height));
+
+		Node node = item.getNode();
+		if(width != null && height != null){
+			node.setClip(new Rectangle(width, height));
 		}
-		if(width!=null && node instanceof Region) {
+		if(width != null && node instanceof Region) {
 			((Region) node).setMinWidth(width);
 			((Region) node).setMaxWidth(width);
 		}
-		if(height!=null && node instanceof Region) {
+		if(height != null && node instanceof Region) {
 			((Region) node).setMinHeight(height);
 			((Region) node).setMaxHeight(height);
 		}
-		if(disabled!=null){
+
+		if(disabled != null){
 			node.setDisable(disabled);
 		}
 		return item;
@@ -126,6 +133,7 @@ interface PluginOptionsControlItem {
 		@Override
 		public void setValue(Object value) {
 			setText(value.toString());
+			setFont(LocalFont.defaultFont);
 		}
 		
 		@Override
@@ -148,8 +156,9 @@ interface PluginOptionsControlItem {
 		public void init(Map<String, Object> options) {
 			Boolean isPasswordField = (Boolean) options.getOrDefault("hideText", false);
 			textField = (isPasswordField) ? new PasswordField() : new TextField();
-			enterTag=(String)options.getOrDefault("enterTag",null);
-			if(enterTag!=null){
+
+			enterTag = (String)options.get("enterTag");
+			if(enterTag != null){
 				textField.setOnKeyReleased(event -> {
 					if (event.getCode() == KeyCode.ENTER){
 						Main.getInstance().getPluginProxy().sendMessage(enterTag,new HashMap<String,Object>(){{
@@ -181,7 +190,7 @@ interface PluginOptionsControlItem {
 		TextArea area;
 		@Override
 		public void init(Map<String, Object> options) {
-			area=new TextArea();
+			area = new TextArea();
 			Integer rowCount = (Integer) options.getOrDefault("rowCount", 5);
 			area.setPrefRowCount(rowCount);
 		}
@@ -203,10 +212,12 @@ interface PluginOptionsControlItem {
 		@Override
 		public void init(Map<String, Object> options) {
 			scrollPane = new ScrollPane();
-			area=new TextFlow(new Text("Пустой текст"));
+			area = new TextFlow(new Text("Пустой текст"));
+
 			scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 			scrollPane.setContent(area);
 			scrollPane.setFitToWidth(true);
+
 			area.prefHeightProperty().bind(scrollPane.heightProperty());
 			area.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
 		}
@@ -238,9 +249,8 @@ interface PluginOptionsControlItem {
 							t.setText((String) map.get("text"));
 						if (map.containsKey("color"))
 							t.setFill(Paint.valueOf((String) map.get("color")));
-						if (map.containsKey("size")) {
-							Font font = t.getFont();
-							font = Font.font(font.getFamily(), FontWeight.findByName(font.getStyle()), (Integer) map.get("size"));
+						if (map.containsKey("font")) {
+							Font font = Font.font((String) map.get("font"));
 							t.setFont(font);
 						}
 						if (map.containsKey("style")) {
@@ -273,7 +283,7 @@ interface PluginOptionsControlItem {
 				double multiplier = ((Number) configuration.getOrDefault("multiplier", 1.0)).doubleValue();
 				Map<String, Object> data;
 				if (configuration.containsKey("data")) {
-					data = (Map<String, Object>) configuration.get("data");
+					data = (Map) configuration.get("data");
 				} else {
 					data = null;
 				}
@@ -317,11 +327,12 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void init(Map<String, Object> options) {
-			int min = ((Number) options.getOrDefault("min", 0)).intValue();
-			int max = ((Number) options.getOrDefault("max", 100)).intValue();
-			int step = ((Number) options.getOrDefault("step", 1)).intValue();
+			int min =  ((Number) options.getOrDefault("min",   0)).intValue();
+			int max =  ((Number) options.getOrDefault("max", 100)).intValue();
+			int step = ((Number) options.getOrDefault("step",  1)).intValue();
+
 			spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, min, step));
-			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
+			Map<String, Object> onChangeMap = (Map) options.get("onChange");
 			configureOnChangeAction(spinner.valueProperty(), onChangeMap);
 		}
 		
@@ -348,11 +359,12 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void init(Map<String, Object> options) {
-			double min = ((Number) options.getOrDefault("min", 0)).doubleValue();
-			double max = ((Number) options.getOrDefault("max", 100)).doubleValue();
-			double step = ((Number) options.getOrDefault("step", 1)).doubleValue();
+			double min =  ((Number) options.getOrDefault("min",   0)).doubleValue();
+			double max =  ((Number) options.getOrDefault("max", 100)).doubleValue();
+			double step = ((Number) options.getOrDefault("step",  1)).doubleValue();
+
 			spinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(min, max, min, step));
-			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
+			Map<String, Object> onChangeMap = (Map) options.get("onChange");
 			configureOnChangeAction(spinner.valueProperty(), onChangeMap);
 		}
 
@@ -379,9 +391,10 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void init(Map<String, Object> options) {
-			double min = ((Number) options.getOrDefault("min", 0)).doubleValue();
-			double max = ((Number) options.getOrDefault("max", 100)).doubleValue();
-			Double step = ((Number) options.getOrDefault("step", 1)).doubleValue();
+			double min =  ((Number) options.getOrDefault("min",   0)).doubleValue();
+			double max =  ((Number) options.getOrDefault("max", 100)).doubleValue();
+			Double step = ((Number) options.getOrDefault("step",  1)).doubleValue();
+
 			slider.setMin(min);
 			slider.setMax(max);
 			slider.setBlockIncrement(step);
@@ -393,7 +406,7 @@ interface PluginOptionsControlItem {
 				slider.setSnapToTicks(true);
 			}
 
-			Map<String, Object> onChangeMap = (Map<String, Object>) options.getOrDefault("onChange",null);
+			Map<String, Object> onChangeMap = (Map) options.get("onChange");
 			configureOnChangeAction(slider.valueProperty(), onChangeMap);
 
 			slider.setOnScroll(event -> {
@@ -427,10 +440,10 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void init(Map<String, Object> options) {
-			String msgTag=(String)options.getOrDefault("msgTag",null);
-			if(msgTag!=null){
+			String msgTag = (String) options.get("msgTag");
+			if(msgTag != null){
 				selectedProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
 						put("value", newValue);
 					}});
 				});
@@ -457,12 +470,12 @@ interface PluginOptionsControlItem {
 		
 		@Override
 		public void init(Map<String, Object> options) {
-			List<Object> items = (List<Object>) options.get("values");
+			List<Object> items = (List) options.get("values");
 			comboBox.setItems(FXCollections.observableList(items));
-			String msgTag=(String)options.getOrDefault("msgTag",null);
+			String msgTag=(String)options.get("msgTag");
 			if(msgTag!=null){
 				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
 						put("value", newValue.toString());
 					}});
 				});
@@ -492,16 +505,16 @@ interface PluginOptionsControlItem {
 		
 		@Override
 		public void init(Map<String, Object> options) {
-			List<Object> items = (List<Object>) options.getOrDefault("values",null);
+			List<Object> items = (List) options.get("values");
 			if(items!=null && items.size()>0)
 				listView.setItems(FXCollections.observableList(items));
 			listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 			listView.setPrefHeight(150);
-			String msgTag=(String)options.getOrDefault("msgTag",null);
+			String msgTag=(String)options.get("msgTag");
 			if(msgTag!=null){
 				listView.setOnMouseClicked((event) -> {
 					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
-						put("value", new ArrayList<Object>(listView.getSelectionModel().getSelectedItems()));
+						put("value", new ArrayList<>(listView.getSelectionModel().getSelectedItems()));
 					}});
 				});
 
@@ -536,8 +549,8 @@ interface PluginOptionsControlItem {
 		
 		@Override
 		public void init(Map<String, Object> options) {
-			String msgTag = (String) options.getOrDefault("msgTag", null);
-			Object msgData = options.getOrDefault("msgData", null);
+			String msgTag = (String) options.get("msgTag");
+			Object msgData = options.get("msgData");
 			if (msgTag != null) {
 				setOnAction(event -> Main.getInstance().getPluginProxy().sendMessage(msgTag, msgData));
 			}
@@ -628,15 +641,15 @@ interface PluginOptionsControlItem {
 		
 		@Override
 		public void init(Map<String, Object> options) {
-			String path = (String) options.getOrDefault("initialDirectory", null);
+			String path = (String) options.get("initialDirectory");
 			if (path != null) {
 				chooser.setInitialDirectory(new File(path));
 			}
 
-			List<Map<String, Object>> filters = (List<Map<String, Object>>) options.getOrDefault("filters", new ArrayList<>(0));
+			List<Map<String, Object>> filters = (List) options.getOrDefault("filters", new ArrayList<>(0));
 			for (Map<String, Object> filter : filters) {
-				String description = (String) filter.getOrDefault("description", null);
-				List<String> extensions = (List<String>) filter.getOrDefault("extensions", null);
+				String description = (String) filter.get("description");
+				List<String> extensions = (List) filter.get("extensions");
 				if (description != null && extensions != null) {
 					chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description, extensions));
 				}
@@ -667,7 +680,7 @@ interface PluginOptionsControlItem {
 		
 		@Override
 		public void init(Map<String, Object> options) {
-			String format = (String) options.getOrDefault("format", null);
+			String format = (String) options.get("format");
 			if (format != null) {
 				formatter = DateTimeFormatter.ofPattern(format);
 			}
@@ -697,5 +710,96 @@ interface PluginOptionsControlItem {
 		}
 		
 	}
-	
+
+	class ColorPickerItem implements PluginOptionsControlItem {
+
+		ColorPicker picker = new ColorPicker();
+
+		@Override
+		public void init(Map<String, Object> options) {
+			String msgTag = (String) options.get("msgTag");
+			if (msgTag != null) {
+				picker.setOnAction(event -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, picker.getValue().toString());
+				});
+			}
+		}
+
+		@Override
+		public Object getValue() {
+			return picker.getValue().toString();
+		}
+
+		@Override
+		public void setValue(Object value) {
+			String colorText = (String) value;
+			colorText = colorText.toUpperCase();
+			try {
+				picker.setValue(Color.valueOf(colorText));
+			} catch (Exception e){
+				try {
+					picker.setValue(Color.web(colorText));
+				} catch (Exception e2){
+					picker.setValue(Color.BLACK);
+				}
+			}
+		}
+
+		@Override
+		public Node getNode() {
+			return picker;
+		}
+	}
+
+	class FontPickerItem extends ButtonItem {
+
+		FontSelectorDialog picker;
+		String msgTag;
+		String selectedFont;
+		private Window parent;
+
+		public FontPickerItem(Window window){
+			parent = window;
+		}
+
+		@Override
+		public void init(Map<String, Object> options) {
+			setValue(options.get("font"));
+			msgTag = (String) options.get("msgTag");
+
+			setOnAction(event -> {
+				Stage stage = (Stage) picker.getDialogPane().getScene().getWindow();
+				stage.setAlwaysOnTop(true);
+				Optional<Font> selectedFontOpt = picker.showAndWait();
+				if (selectedFontOpt.isPresent()) {
+					selectedFont = LocalFont.toString(selectedFontOpt.get());
+					setText(selectedFont);
+					if (msgTag != null)
+						Main.getInstance().getPluginProxy().sendMessage(msgTag, getValue());
+					picker = new FontSelectorDialog(selectedFontOpt.get());
+				} else {
+					picker = new FontSelectorDialog(picker.getResult());
+				}
+			});
+		}
+
+		@Override
+		public Object getValue() {
+			return selectedFont;
+		}
+
+		@Override
+		public void setValue(Object value) {
+			selectedFont = (String) value;
+			try {
+				Font font = LocalFont.fromString(selectedFont);
+				picker = new FontSelectorDialog(font);
+				setText(selectedFont);
+			} catch (Exception e){
+				picker = new FontSelectorDialog(LocalFont.defaultFont);
+				setText(Main.getString("default"));
+			}
+			picker.initOwner(parent);
+		}
+	}
 }

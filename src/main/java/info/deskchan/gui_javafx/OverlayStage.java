@@ -207,9 +207,12 @@ class NormalStage extends OverlayStage{
 	EventHandler<WindowEvent> handler = new EventHandler<WindowEvent>() {
 		@Override
 		public void handle(WindowEvent event) {
-			HackJavaFX.setCreateTransparentPopup(stage);
+			update();
 		}
 	};
+	protected synchronized void update(){
+		HackJavaFX.setCreateTransparentPopup(stage);
+	}
 	NormalStage(){
 		super();
 		setOnShowing(handler);
@@ -227,6 +230,7 @@ class NormalStage extends OverlayStage{
 		if(!root.getChildren().contains(App.getInstance().getCharacter()))
 			root.getChildren().add(App.getInstance().getCharacter());
 		App.getInstance().getCharacter().loadPositionFromStorage();
+		update();
 	}
 	@Override
 	void hideCharacter(){
@@ -237,6 +241,7 @@ class NormalStage extends OverlayStage{
 		balloon.setDefaultPosition();
 		if(!root.getChildren().contains(balloon))
 			root.getChildren().add(balloon);
+		update();
 	}
 	@Override
 	void hideBalloon(Balloon balloon){
@@ -255,22 +260,20 @@ class NormalStage extends OverlayStage{
 class TopStage extends NormalStage{
 	TopStage(){
 		super();
-		handler = new EventHandler<WindowEvent>() {
-			@Override
-			public synchronized void handle(WindowEvent event) {
-				try {
-					HackJavaFX.setCreateTransparentPopup(stage);
-					HackJavaFX.setWindowFocusable(stage, false);
-					stage.toFront();
-					stage.setAlwaysOnTop();
-				} catch (Exception e){
-					Main.log("Cannot handle top stage change");
-				}
-			}
-		};
 		toFront();
 		setOnShowing(handler);
 		setOnHiding(handler);
+	}
+	@Override
+	protected synchronized void update(){
+		try {
+			HackJavaFX.setCreateTransparentPopup(stage);
+			HackJavaFX.setWindowFocusable(stage, false);
+			stage.toFront();
+			stage.setAlwaysOnTop();
+		} catch (Exception e){
+			Main.log("Cannot handle top stage change");
+		}
 	}
 }
 class FrontNormalStage extends NormalStage{

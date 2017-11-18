@@ -12,6 +12,11 @@ class TemplateBox extends Dialog<Void> {
 	public TemplateBox(String name) {
 		setTitle(name);
 		initModality(Modality.NONE);
+		String style = LocalFont.getDefaultFontCSS();
+		getDialogPane().setStyle(
+				style
+		);
+		System.out.println(style);
 		Stage stage = (Stage) getDialogPane().getScene().getWindow();
 		stage.setAlwaysOnTop(true);
 		stage.getIcons().add(new Image(App.ICON_URL.toString()));
