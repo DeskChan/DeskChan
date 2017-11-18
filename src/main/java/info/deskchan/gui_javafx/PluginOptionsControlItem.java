@@ -250,7 +250,7 @@ interface PluginOptionsControlItem {
 						if (map.containsKey("color"))
 							t.setFill(Paint.valueOf((String) map.get("color")));
 						if (map.containsKey("font")) {
-							Font font = Font.font((String) map.get("font"));
+							Font font = LocalFont.fromString((String) map.get("font"));
 							t.setFont(font);
 						}
 						if (map.containsKey("style")) {

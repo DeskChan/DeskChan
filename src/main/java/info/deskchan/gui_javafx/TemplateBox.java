@@ -16,7 +16,6 @@ class TemplateBox extends Dialog<Void> {
 		getDialogPane().setStyle(
 				style
 		);
-		System.out.println(style);
 		Stage stage = (Stage) getDialogPane().getScene().getWindow();
 		stage.setAlwaysOnTop(true);
 		stage.getIcons().add(new Image(App.ICON_URL.toString()));

@@ -13,6 +13,7 @@ import java.util.Map;
 public class Main implements Plugin {
     private static PluginProxyInterface pluginProxy;
     private String start_word="пожалуйста";
+    private static final boolean debugBuild = false;
     private static LimitHashMap<String, RegularRule> cachedRules = new LimitHashMap<>(100);
     private static final HashMap<String,Object> standartCommandsCoreQuery = new HashMap<String,Object>(){{
         put("eventName","speech:get");
@@ -55,7 +56,7 @@ public class Main implements Plugin {
             tag=(String) map.get("tag");
             data = map;
             String r = (String) map.getOrDefault("rule",null);
-            if(r!=null) {
+            if(r != null) {
                 try {
                     rule = new RegularRule(r);
                 } catch (Exception e) {
@@ -64,7 +65,7 @@ public class Main implements Plugin {
             }
         }
         public boolean better(Command other){
-            return other==null || result.better(other.result);
+            return result.better(other != null ? other.result : null);
         }
     }
     void operateRequest(String text, List<Map<String,Object>> commandsInfo){
@@ -82,12 +83,14 @@ public class Main implements Plugin {
             }
 
             command.result = command.rule.parse(text, words);
-            //System.out.println(command.tag+" "+command.result+" "+command.better(best));
+            if(debugBuild)
+               System.out.println(command.tag+" "+command.result+" "+command.better(best));
             if(command.better(best))
                 best = command;
         }
         if(best!=null) {
-            // System.out.println("best: "+best.tag+" "+best.result);
+            if(debugBuild)
+                System.out.println("best: "+best.tag+" "+best.result);
             HashMap<String,Object> ret = best.rule.getArguments();
             if(best.data.containsKey("msgData"))
                 ret.put("msgData",best.data.get("msgData"));
