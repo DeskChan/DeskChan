@@ -2,7 +2,6 @@ package info.deskchan.speech_command_system;
 
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core_utils.LimitHashMap;
 import info.deskchan.core_utils.TextOperations;
 
 import java.util.ArrayList;
@@ -12,12 +11,9 @@ import java.util.Map;
 
 public class Main implements Plugin {
     private static PluginProxyInterface pluginProxy;
-    private String start_word="пожалуйста";
+
+    /** Check this to log all rules comparison into console. **/
     private static final boolean debugBuild = false;
-    private static LimitHashMap<String, RegularRule> cachedRules = new LimitHashMap<>(100);
-    private static final HashMap<String,Object> standartCommandsCoreQuery = new HashMap<String,Object>(){{
-        put("eventName","speech:get");
-    }};
 
     @Override
     public boolean initialize(PluginProxyInterface newPluginProxy) {
@@ -33,51 +29,74 @@ public class Main implements Plugin {
             put("priority", 100);
         }});
 
-        pluginProxy.addMessageListener("speech:get", (sender, tag, data) -> {
-            String text;
-            if(data instanceof Map)
-                 text = (String) ((Map) data).getOrDefault("value","");
-            else text = data.toString();
-            pluginProxy.sendMessage("core:get-commands-match",standartCommandsCoreQuery,(s, d) -> {
-                Map<String,Object> commands=(Map) d;
-                operateRequest(text,(List<Map<String,Object>>) commands.get("commands"));
-            });
+        pluginProxy.addMessageListener("core:update-links#speech:get", (sender, tag, data) -> {
+            updateCommandsList((List) data);
         });
 
-        log("loading speech to command module");
+        pluginProxy.addMessageListener("speech:get", (sender, tag, data) -> {
+            String text;
+            if (data instanceof Map)
+                 text = (String) ((Map) data).getOrDefault("value", "");
+            else text = data.toString();
+
+            operateRequest(text);
+        });
+
+        log("loading completed");
         return true;
     }
-    static class Command{
-        String tag;
-        Map<String,Object> data;
-        RegularRule rule;
+
+    static class Command {
+        final String tag;
+        final RegularRule rule;
+        final Object msgData;
         RegularRule.MatchResult result;
-        public Command(Map<String,Object> map){
-            tag=(String) map.get("tag");
-            data = map;
-            String r = (String) map.getOrDefault("rule",null);
+
+        public Command(Map<String, Object> map){
+            tag = (String) map.get("tag");
+            String r = (String) map.getOrDefault("rule", null);
+            msgData = map.get("msgData");
+            RegularRule rul = null;
             if(r != null) {
                 try {
-                    rule = new RegularRule(r);
+                    rul = new RegularRule(r);
                 } catch (Exception e) {
                     Main.log(e);
                 }
             }
+            rule = rul;
         }
+
         public boolean better(Command other){
             return result.better(other != null ? other.result : null);
         }
     }
-    void operateRequest(String text, List<Map<String,Object>> commandsInfo){
+
+    static Command[] commands;
+
+    /** Preparing command list for comparison. **/
+    void updateCommandsList(List<Map<String,Object>> commandsInfo){
+        try {
+            Command[] newCommands = new Command[commandsInfo.size()];
+            for (int i = 0; i < commandsInfo.size(); i++)
+                newCommands[i] = new Command(commandsInfo.get(i));
+
+            commands = newCommands;
+        } catch (Exception e){
+            Main.log("Error while updating links list");
+        }
+    }
+
+    /** Operate user speech request with commands. **/
+    void operateRequest(String text){
         ArrayList<String> words = PhraseComparison.toClearWords(text);
         Command best = null;
-        for(Map<String,Object> comData : commandsInfo){
-            Command command = new Command(comData);
-            if(command.rule==null) {
+        for(Command command : commands){
+            if(command.rule == null) {
                 pluginProxy.sendMessage(command.tag, new HashMap<String, Object>() {{
                     put("text", words);
-                    if (comData.containsKey("msgData"))
-                        put("msgData", comData.get("msgData"));
+                    if (command.msgData != null)
+                        put("msgData", command.msgData);
                 }});
                 continue;
             }
@@ -88,13 +107,16 @@ public class Main implements Plugin {
             if(command.better(best))
                 best = command;
         }
-        if(best!=null) {
+
+        if(best != null) {
             if(debugBuild)
                 System.out.println("best: "+best.tag+" "+best.result);
             HashMap<String,Object> ret = best.rule.getArguments();
-            if(best.data.containsKey("msgData"))
-                ret.put("msgData",best.data.get("msgData"));
-            pluginProxy.sendMessage( best.tag, ret);
+            ret.put("text", words);
+            if(best.msgData != null)
+                ret.put("msgData", best.msgData);
+
+            pluginProxy.sendMessage(best.tag, ret);
         }
     }
     static void log(String text) {

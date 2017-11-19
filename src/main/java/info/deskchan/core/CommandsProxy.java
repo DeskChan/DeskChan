@@ -19,36 +19,51 @@ public class CommandsProxy{
             return equals(rule, link.rule) && equals(msgData, link.msgData);
         }
 
-        private static Object getObjectOrNull(Object text){
+        static Object getObjectOrNull(Object text){
             if(text == null || text.equals("") || text.equals("null"))
                 return null;
             return text;
         }
-        private static boolean equals(Object a, Object b){
+        static boolean equals(Object a, Object b){
             return a == b || (a!=null && a.equals(b));
         }
     }
 
+    /** All events registered in program with all information about them. **/
     private static MatrixMap<String, String, Object> events   = new MatrixMap<>();
+    /** All commands registered in program with all information about them. **/
     private static MatrixMap<String, String, Object> commands = new MatrixMap<>();
 
+    /** All command links used by program (including added by user and excluding deleted by user). **/
     private static LinkContainer commandLinks = new LinkContainer();
+    /** All command links registered by plugins by default. **/
     private static LinkContainer defaultCommandLinks = new LinkContainer();
+
 
     /** Resets links list to default, set by plugins. **/
     public static void reset(){
         commandLinks = defaultCommandLinks.clone();
+        sendNotify();
+        for(String event : events.map.keySet())
+            sendUpdateByEvent(event);
     }
+
 
     /** Adds command to list, it will be visible in GUI.
      * All links that using this command will be activated. **/
     private static void addCommand(String sender, Map<String,Object> data){
         String tag = (String) data.getOrDefault("tag", null);
-        if(tag != null){
-            data.remove("tag", tag);
-            data.put("owner", sender);
-            commands.put(tag, data);
-        } else PluginManager.log("No tag specified for command to add: " + data);
+        if(tag == null) {
+            PluginManager.log("No tag specified for command to add: " + data);
+            return;
+        }
+
+        data.remove("tag", tag);
+        data.put("owner", sender);
+        commands.put(tag, data);
+
+        sendNotify();
+        sendUpdateByCommand(tag);
     }
 
     /** Remove command from list, it will be not visible in GUI.
@@ -58,22 +73,30 @@ public class CommandsProxy{
             PluginManager.log("No name specified for command to remove, recieved null");
             return;
         }
-        Map<String,Object> command = commands.get(tag);
-        if(sender.equals("core") || command.get("owner").equals(sender))
+        Map<String, Object> command = commands.get(tag);
+        if(sender.equals("core") || command.get("owner").equals(sender)) {
             commands.remove(tag);
-        else
+            sendNotify();
+            sendUpdateByCommand(tag);
+        } else
             PluginManager.log("Plugin \""+sender+"\" is not owner of command \""+tag+"\"");
     }
 
     /** Adds event to list, it will be visible in GUI.
      * All links that using this event will be activated. **/
-    private static void addEvent(String sender, Map<String,Object> data){
+    private static void addEvent(String sender, Map<String, Object> data){
         String tag = (String) data.get("tag");
-        if(tag != null){
-            data.remove("tag", tag);
-            data.put("owner", sender);
-            events.put(tag, data);
-        } else PluginManager.log("No name specified for event to add: "+data);
+        if(tag == null) {
+            PluginManager.log("No name specified for event to add: " + data);
+            return;
+        }
+
+        data.remove("tag", tag);
+        data.put("owner", sender);
+        events.put(tag, data);
+
+        sendNotify();
+        sendUpdateByEvent(tag);
     }
 
     /** Remove event from list, it will be not visible in GUI.
@@ -84,9 +107,11 @@ public class CommandsProxy{
             return;
         }
         Map<String,Object> event = events.get(tag);
-        if(sender.equals("core") || event.get("owner").equals(sender))
+        if(sender.equals("core") || event.get("owner").equals(sender)) {
             events.remove(tag);
-        else
+            sendNotify();
+            sendUpdateByEvent(tag);
+        } else
             PluginManager.log("Plugin \""+sender+"\" is not owner of event \""+tag+"\"");
     }
 
@@ -108,6 +133,9 @@ public class CommandsProxy{
         if(isDefault)
             defaultCommandLinks.add(eventName, commandName, link);
         commandLinks.add(eventName, commandName, link);
+
+        sendNotify();
+        sendUpdateByEvent(eventName);
     }
 
     /** Adds link to list, it will be visible in GUI, all plugins will be notified about this.
@@ -124,17 +152,39 @@ public class CommandsProxy{
     /** Remove link from list, all plugins will be notified about this.
      * It will be added regardless event and command specified may not exist
      * @param eventName Event name
-     * @param commandName Command name **/
+     * @param commandName Command name
+     * @param rule Rule  **/
+    public static void removeEventLink(String eventName, String commandName, String rule){
+        commandLinks.remove(eventName, commandName, rule);
+        defaultCommandLinks.remove(eventName, commandName, rule);
+
+        sendNotify();
+        sendUpdateByEvent(eventName);
+    }
+
+    /** Remove all links from list with event and command specified, all plugins will be notified about this.
+     * It will be added regardless event and command specified may not exist
+     * @param eventName Event name
+     * @param commandName Command name  **/
     public static void removeEventLink(String eventName, String commandName){
         commandLinks.remove(eventName, commandName);
         defaultCommandLinks.remove(eventName, commandName);
+
+        sendNotify();
+        sendUpdateByEvent(eventName);
     }
 
     /** Remove link from list, all plugins will be notified about this.
-     * @param data All {@link #removeEventLink(String, String) arguments} stored in Map **/
+     * @param data All {@link #removeEventLink(String, String, String) arguments} stored in Map **/
     public static void removeEventLink(Map<String, Object> data){
-        removeEventLink((String) data.get("eventName"),
-                        (String) data.get("commandName"));
+        if(data.containsKey("rule")){
+            removeEventLink((String) data.get("eventName"),
+                            (String) data.get("commandName"),
+                            (String) data.get("rule"));
+        } else {
+            removeEventLink((String) data.get("eventName"),
+                            (String) data.get("commandName"));
+        }
     }
 
     /** Get all links that subscribed to event.
@@ -188,10 +238,16 @@ public class CommandsProxy{
 
         for(Map<String,Object> data : newData)
             addEventLink(data);
+
+        sendNotify();
+        for(String event : events.map.keySet())
+            sendUpdateByEvent(event);
     }
 
+    private static PluginProxyInterface proxy = null;
+
     /** Call all commands that subscribed to <b>source</b> with data specified. **/
-    private static void callByTag(PluginProxyInterface proxy, String source){
+    private static void callByTag(String source){
         for(Map<String, Object> command : getCommandsMatch(source)) {
             String tag = (String) command.get("tag");
             proxy.sendMessage(tag, new HashMap<String, Object>() {{
@@ -201,7 +257,35 @@ public class CommandsProxy{
         }
     }
 
-    public static void initialize(PluginProxyInterface proxy){
+    /** Notify about links list update. **/
+    private static void sendNotify(){
+        proxy.sendMessage("core:update-links", null);
+    }
+
+    /** Send updated list of commands subscribed to event to plugin.
+     * @param eventName Event name
+     */
+    private static void sendUpdateByEvent(String eventName){
+        proxy.sendMessage("core:update-links#"+eventName, getCommandsMatch(eventName));
+    }
+
+    /** Send updated list of commands subscribed to event to plugin.
+     * @param commandName Command name
+     */
+    private static void sendUpdateByCommand(String commandName){
+        Set<String> toUpdate = new HashSet<>();
+        for(MatrixMap.Entry entry : commandLinks.entrySet()){
+            if(entry.key2.equals(commandName))
+                toUpdate.add((String) entry.key1);
+        }
+        for(String event : toUpdate){
+            proxy.sendMessage("core:update-links#"+event, getCommandsMatch(event));
+        }
+    }
+
+    public static void initialize(PluginProxyInterface proxyInterface){
+        proxy = proxyInterface;
+
         proxy.addMessageListener("core:add-command",        (sender, tag, data) ->    addCommand(sender, (Map) data)    );
         proxy.addMessageListener("core:remove-command",     (sender, tag, data) -> removeCommand(sender, (String) data) );
         proxy.addMessageListener("core:add-event",          (sender, tag, data) ->      addEvent(sender, (Map) data)    );
@@ -234,21 +318,21 @@ public class CommandsProxy{
                 if (map.get("owner").equals(data))
                     i.remove();
             }
-            callByTag(proxy, "core-events:plugin-unload");
+            callByTag("core-events:plugin-unload");
         } );
 
         proxy.addMessageListener("core-events:plugin-load", (sender, tag, data) ->
-                callByTag(proxy, "core-events:plugin-load") );
+                callByTag("core-events:plugin-load") );
 
         proxy.addMessageListener("core-events:loading-complete", (sender, tag, data) -> {
             Map owner = new HashMap<>();
-            owner.put("owner","core");
+            owner.put("owner", "core");
             events.put("core-events:loading-complete", owner);
             events.put("core-events:plugin-load", owner);
             events.put("core-events:plugin-unload", owner);
             commands.put("DeskChan:say", owner);
             load();
-            callByTag(proxy,"core-events:loading-complete");
+            callByTag("core-events:loading-complete");
         });
     }
 
@@ -337,10 +421,15 @@ public class CommandsProxy{
             }
         }
 
-        public TV remove(TK1 key1, TK2 key2){
+        public Object remove(TK1 key1, TK2 key2){
             try {
-                TV val = map.get(key1).remove(key2);
-                entrySet.remove(new Entry<>(key1, key2, val));
+                Object val = map.get(key1).remove(key2);
+                Iterator<Entry<TK1, TK2, TV>> it = entrySet.iterator();
+                while(it.hasNext()){
+                    Entry<TK1, TK2, TV> entry = it.next();
+                    if(entry.key1.equals(key1) && entry.key2.equals(key2))
+                        it.remove();
+                }
                 return val;
             } catch (Exception e){
                 return null;
@@ -418,6 +507,21 @@ public class CommandsProxy{
 
         public void remove(String eventName, String commandName){
             array.remove(eventName, commandName);
+        }
+
+        public void remove(String eventName, String commandName, String rule){
+            try {
+                for(Map.Entry<String, ArrayList<Link>> entry : array.get(eventName).entrySet()){
+                    Iterator<Link> it = entry.getValue().iterator();
+                    while(it.hasNext()) {
+                        Link link = it.next();
+                        if (entry.getKey().equals(commandName) &&
+                                Link.equals(Link.getObjectOrNull(rule), Link.getObjectOrNull(link.rule))){
+                            it.remove();
+                        }
+                    }
+                }
+            } catch (Exception e){ }
         }
 
         public Map<String, ArrayList<Link>> get(String eventName){

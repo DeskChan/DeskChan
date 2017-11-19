@@ -443,6 +443,7 @@ interface PluginOptionsControlItem {
 			String msgTag = (String) options.get("msgTag");
 			if(msgTag != null){
 				selectedProperty().addListener((obs, oldValue, newValue) -> {
+					if(oldValue.equals(newValue)) return;
 					Main.getInstance().getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
 						put("value", newValue);
 					}});

@@ -52,7 +52,7 @@ public class App extends Application {
 		OverlayStage.initialize();
 		OverlayStage.updateStage();
 		initMessageListeners();
-		// KeyboardEventNotificator.initialize();
+		KeyboardEventNotificator.initialize();
 		Main.getInstance().getAppInitSem().release();
 		character.say(new HashMap<String,Object>(){{
 			put("text", Main.getString("info.loading"));
