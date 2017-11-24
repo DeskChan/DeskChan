@@ -1,16 +1,10 @@
 package info.deskchan.gui_javafx;
 
-import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginManager;
-import info.deskchan.core.PluginProxy;
-import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.core.*;
 import javafx.application.Platform;
 import org.apache.commons.lang3.SystemUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.concurrent.Semaphore;
 
 public class Main implements Plugin {
@@ -18,20 +12,16 @@ public class Main implements Plugin {
 	private static Main instance;
 	private PluginProxyInterface pluginProxy;
 	private Semaphore appInitSem = new Semaphore(0);
-	private static final Properties properties = new Properties();
-	
+
 	@Override
 	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		instance = this;
 
-		try {
-			properties.load(Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties")));
-		} catch (IOException e) {
-			// Ignore
-		}
-		if(properties.containsKey("locale")) {
-			Locale.setDefault(new Locale(properties.getProperty("locale")));
+		getProperties().load();
+
+		if(getProperties().containsKey("locale")) {
+			Locale.setDefault(new Locale(getProperties().getString("locale")));
 			PluginProxy.Companion.updateResourceBundle();
 		}
 
@@ -51,12 +41,7 @@ public class Main implements Plugin {
 	@Override
 	public void unload() {
 		synchronized (this) {
-			try {
-				properties.store(Files.newOutputStream(pluginProxy.getDataDirPath().resolve("config.properties")),
-						"DeskChan JavaFX GUI plugin options");
-			} catch (IOException e) {
-				log(e);
-			}
+			getProperties().save();
 		}
 
 		if (SystemUtils.IS_OS_WINDOWS) {
@@ -95,12 +80,8 @@ public class Main implements Plugin {
 		return getInstance().pluginProxy.getString(text);
 	}
 	
-	static synchronized String getProperty(String key, String def) {
-		return properties.getProperty(key, def);
+	static synchronized PluginProperties getProperties() {
+		return getInstance().getPluginProxy().getProperties();
 	}
-	
-	static synchronized void setProperty(String key, String value) {
-		properties.setProperty(key, value);
-	}
-	
+
 }

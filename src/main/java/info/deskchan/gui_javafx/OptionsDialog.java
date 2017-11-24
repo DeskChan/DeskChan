@@ -87,7 +87,7 @@ class OptionsDialog extends TemplateBox {
 			data.put("save", true);
 			onChangeMap.put("data", data);
 			put("onChange", onChangeMap);
-			double scaleFactorValue = Double.parseDouble(Main.getProperty("skin.scale_factor", "1.0"));
+			double scaleFactorValue = Main.getProperties().getFloat("skin.scale_factor", 1.0f);
 			// e.g. 1.74 -> 1.75
 			scaleFactorValue = Math.round(scaleFactorValue * 200.0f) / 2.0f;
 			put("value", (int)scaleFactorValue);
@@ -107,7 +107,7 @@ class OptionsDialog extends TemplateBox {
 			data.put("save", true);
 			onChangeMap.put("data", data);
 			put("onChange", onChangeMap);
-			double opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
+			double opacity = Main.getProperties().getDouble("skin.opacity", 1.0);
 			opacity = Math.round(opacity * 200.0f) / 2.0f;
 			put("value", (int)opacity);
 		}});
@@ -155,7 +155,7 @@ class OptionsDialog extends TemplateBox {
 			data.put("save", true);
 			onChangeMap.put("data", data);
 			put("onChange", onChangeMap);
-			put("value", Integer.parseInt(Main.getProperty("balloon.default_timeout", "200")));
+			put("value", Main.getProperties().getInteger("balloon.default_timeout", 200));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "balloon_position_mode");
@@ -187,7 +187,7 @@ class OptionsDialog extends TemplateBox {
 			data.put("save", true);
 			onChangeMap.put("data", data);
 			put("onChange", onChangeMap);
-			double opacity = Float.parseFloat(Main.getProperty("balloon.opacity", "1.0"));
+			double opacity = Main.getProperties().getDouble("balloon.opacity", 1.0);
 			opacity = Math.round(opacity * 200.0f) / 2.0f;
 			put("value", (int)opacity);
 		}});
@@ -197,7 +197,7 @@ class OptionsDialog extends TemplateBox {
 			put("type", "CheckBox");
 			put("hint",Main.getString("help.context_menu"));
 			put("label", Main.getString("enable_context_menu"));
-			put("value", Main.getProperty("character.enable_context_menu", "1").equals("1"));
+			put("value", Main.getProperties().getBoolean("character.enable_context_menu", true));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id", "load_resource_pack");
@@ -402,10 +402,9 @@ class OptionsDialog extends TemplateBox {
 		}
 		alternativesTable.setShowRoot(false);
 		pluginProxy.sendMessage("core:query-alternatives-map", null, (sender, data) -> {
-			Map<String, List<Map<String, Object>>> m1 = (Map<String, List<Map<String, Object>>>)
-					((Map<String, Object>) data).get("map");
+			Map<String, List<Map<String, Object>>> map = (Map) data;
 			final TreeItem<AlternativeTreeItem> root = new TreeItem<>();
-			for (Map.Entry<String, List<Map<String, Object>>> entry : m1.entrySet()) {
+			for (Map.Entry<String, List<Map<String, Object>>> entry : map.entrySet()) {
 				final TreeItem<AlternativeTreeItem> group = new TreeItem<>(new AlternativeTreeItem(entry.getKey()));
 				for (Map<String, Object> m2 : entry.getValue()) {
 					final TreeItem<AlternativeTreeItem> item = new TreeItem<>(new AlternativeTreeItem(
@@ -483,7 +482,7 @@ class OptionsDialog extends TemplateBox {
 					dialog.requestFocus();
 					dialog.show();
 					Locale.setDefault(new Locale(locale.getKey()));
-					Main.setProperty("locale", locale.getKey());
+					Main.getProperties().put("locale", locale.getKey());
 					break;
 				}
 			}
@@ -502,7 +501,7 @@ class OptionsDialog extends TemplateBox {
 					balloonFontButton = (Button) node;
 				if (node.getId() != null && node.getId().equals("enable_context_menu")){
 					((CheckBox) node).selectedProperty().addListener((property, oldValue, newValue) -> {
-						Main.setProperty("character.enable_context_menu", newValue ? "1" : "0");
+						Main.getProperties().put("character.enable_context_menu", newValue);
 					});
 				}
 				if (node.getId() != null && node.getId().equals("load_resource_pack")) {
@@ -524,7 +523,7 @@ class OptionsDialog extends TemplateBox {
 		SkinManagerDialog dialog = new SkinManagerDialog(getDialogPane().getScene().getWindow());
 		dialog.showAndWait();
 		updateInstanceTabs();
-		Main.setProperty("skin.name", App.getInstance().getCharacter().getSkin().getName());
+		Main.getProperties().put("skin.name", App.getInstance().getCharacter().getSkin().getName());
 	}
 
 	protected static void openSubMenu(String pluginId, String menuId) {

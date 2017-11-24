@@ -38,7 +38,7 @@ public class LocalFont {
             defaultFont =  getSystemDefaultFont();
         else
             defaultFont = fromString(font);
-        Main.setProperty("interface.font", toString(defaultFont));
+        Main.getProperties().getString("interface.font", toString(defaultFont));
     }
 
     private static LimitHashMap<String, Font> hash = new LimitHashMap<>(10);

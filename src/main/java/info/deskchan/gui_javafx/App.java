@@ -38,7 +38,7 @@ public class App extends Application {
 			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader()
 	);
 
-	private Character character = new Character("main", Skin.load(Main.getProperty("skin.name", null)));
+	private Character character = new Character("main", Skin.load(Main.getProperties().getString("skin.name")));
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
 
 	@Override
@@ -145,8 +145,7 @@ public class App extends Application {
 				}
 
 				if (save) {
-					Float opacity = character.getSkinOpacity();
-					Main.setProperty("skin.opacity", opacity.toString());
+					Main.getProperties().put("skin.opacity", character.getSkinOpacity());
 				}
 			});
 		});
@@ -180,8 +179,7 @@ public class App extends Application {
 				}
 
 				if (save) {
-					Float scaleFactor = character.getScaleFactor();
-					Main.setProperty("skin.scale_factor", scaleFactor.toString());
+					Main.getProperties().put("skin.scale_factor", character.getScaleFactor());
 				}
 			});
 		});
@@ -320,11 +318,7 @@ public class App extends Application {
 					result = (chosenFile != null) ? chosenFile.toString() : null;
 				}
 
-				Object seq = m.get("seq");
-				Map<String, Object> response = new HashMap<>();
-				response.put("seq", seq);
-				response.put((multiple) ? "paths" : "path", result);
-				pluginProxy.sendMessage(sender, response);
+				pluginProxy.sendMessage(sender, result);
 			});
 		});
 		pluginProxy.addMessageListener("gui:supply-resource", (sender, tag, data) -> {
@@ -367,9 +361,7 @@ public class App extends Application {
 				File chosenFile = chooser.showDialog(ownerWindow);
 				String chosenFilePath = (chosenFile != null) ? chosenFile.toString() : null;
 
-				Object seq = m.get("seq");
 				Map<String, Object> response = new HashMap<>();
-				response.put("seq", seq);
 				response.put("path", chosenFilePath);
 				pluginProxy.sendMessage(sender, response);
 			});
@@ -377,21 +369,31 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:notify-after-delay", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map m = (Map) data;
-				Object seq = m.get("seq");
-				Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
-				while (iterator.hasNext()) {
-					DelayNotifier delayNotifier = iterator.next();
-					if (delayNotifier.plugin.equals(sender) && delayNotifier.seq.equals(seq)) {
-						iterator.remove();
-						delayNotifier.timeline.stop();
+
+				// canceling timer
+				Integer seq = (Integer) m.get("cancel");
+				if (seq != null) {
+					String cancelTag = sender + "$" + seq;
+					Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
+					while (iterator.hasNext()) {
+						DelayNotifier delayNotifier = iterator.next();
+						if (delayNotifier.tag.equals(cancelTag)) {
+							iterator.remove();
+							delayNotifier.timeline.stop();
+						}
 					}
+					return;
 				}
+
 				Object delayObj = m.getOrDefault("delay", -1L);
-				long delay=1000;
-				if(delayObj instanceof Number) delay=((Number) delayObj).longValue();
-				else if(delayObj instanceof String) delay=Long.valueOf((String) delayObj);
+				long delay = 1000;
+				if(delayObj instanceof Number)
+					delay = ((Number) delayObj).longValue();
+				else
+					delay = Long.valueOf(delayObj.toString());
+
 				if (delay > 0) {
-					new DelayNotifier(sender, seq, delay);
+					new DelayNotifier(sender, delay);
 				}
 			});
 		});
@@ -400,7 +402,7 @@ public class App extends Application {
 				Map<String, Object> m = (Map<String, Object>) data;
 				Double value = getDouble(m, "value", 200);
 				Integer val=value.intValue();
-				Main.setProperty("balloon.default_timeout", val.toString());
+				Main.getProperties().put("balloon.default_timeout", val.toString());
 			});
 		});
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
@@ -408,7 +410,7 @@ public class App extends Application {
 				Map<String, Object> m = (Map<String, Object>) data;
 				Double value = getDouble(m, "value", 100) / 100;
 
-				Main.setProperty("balloon.opacity", value.toString());
+				Main.getProperties().put("balloon.opacity", value.toString());
 				if(Balloon.getInstance()!=null)
 					Balloon.getInstance().setBalloonOpacity(value.floatValue());
 			});
@@ -417,7 +419,7 @@ public class App extends Application {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
 				String value=(String) m.getOrDefault("value","ALWAYS_TOP");
-				Main.setProperty("character.layer_mode", value);
+				Main.getProperties().put("character.layer_mode", value);
 				OverlayStage.updateStage();
 			});
 		});
@@ -436,7 +438,7 @@ public class App extends Application {
 				Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
 				while (iterator.hasNext()) {
 					DelayNotifier delayNotifier = iterator.next();
-					if (delayNotifier.plugin.equals((String) data)) {
+					if (delayNotifier.tag.startsWith((String) data)) {
 						iterator.remove();
 						delayNotifier.timeline.stop();
 					}
@@ -511,8 +513,8 @@ public class App extends Application {
 		} catch (IOException e) {
 			Main.log(e);
 		}
-		Balloon.setDefaultFont(Main.getProperty("balloon.font", null));
-		LocalFont.setDefaultFont(Main.getProperty("interface.font", null));
+		Balloon.setDefaultFont(Main.getProperties().getString("balloon.font"));
+		LocalFont.setDefaultFont(Main.getProperties().getString("interface.font"));
 	}
 	
 	private void initStylesheetOverride() {
@@ -553,12 +555,10 @@ public class App extends Application {
 	class DelayNotifier implements EventHandler<javafx.event.ActionEvent> {
 		
 		private final Timeline timeline;
-		private final String plugin;
-		private final Object seq;
-		
-		DelayNotifier(String plugin, Object seq, long delay) {
-			this.plugin = plugin;
-			this.seq = seq;
+		private final String tag;
+
+		DelayNotifier(String tag, long delay) {
+			this.tag = tag;
 			timeline = new Timeline(new KeyFrame(Duration.millis(delay), this));
 			delayNotifiers.add(this);
 			timeline.play();
@@ -571,9 +571,7 @@ public class App extends Application {
 		
 		@Override
 		public void handle(javafx.event.ActionEvent actionEvent) {
-			Main.getInstance().getPluginProxy().sendMessage(plugin, new HashMap<String, Object>() {{
-				put("seq", seq);
-			}});
+			Main.getInstance().getPluginProxy().sendMessage(tag, null);
 			stop();
 		}
 	}

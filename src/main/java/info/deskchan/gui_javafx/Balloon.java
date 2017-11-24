@@ -197,13 +197,12 @@ class Balloon extends MovablePane {
 
 		getChildren().add(stackPane);
 
-		setBalloonOpacity(Float.parseFloat(Main.getProperty("balloon.opacity", "1.0")));
+		setBalloonOpacity(Main.getProperties().getFloat("balloon.opacity", 1.0f));
 
 		setOnMousePressed(event -> {
 			lastClick = System.currentTimeMillis();
 			if ((positionMode != PositionMode.AUTO) && event.getButton().equals(MouseButton.PRIMARY)) {
 				startDrag(event);
-				return;
 			}
 		});
 		setOnMouseReleased(event -> {
@@ -254,7 +253,9 @@ class Balloon extends MovablePane {
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 			if(getInstance()!=null) {
 				javafx.application.Platform.runLater(() -> {
-					getInstance().impl_updateBalloonLayoutX();
+					try {
+						getInstance().impl_updateBalloonLayoutX();
+					} catch (Exception e){ }
 				});
 			}
 		}
@@ -264,7 +265,9 @@ class Balloon extends MovablePane {
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 			if(getInstance()!=null) {
 				javafx.application.Platform.runLater(() -> {
-					getInstance().impl_updateBalloonLayoutY();
+					try {
+						getInstance().impl_updateBalloonLayoutY();
+					} catch (Exception e){ }
 				});
 			}
 		}
@@ -417,7 +420,7 @@ class Balloon extends MovablePane {
 		defaultFont = font;
 		if (instance != null)
 			instance.content.setFont(font);
-		Main.setProperty("balloon.font", LocalFont.toString(font));
+		Main.getProperties().put("balloon.font", LocalFont.toString(font));
 	}
 	
 }

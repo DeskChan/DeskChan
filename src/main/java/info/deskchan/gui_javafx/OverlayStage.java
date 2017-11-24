@@ -76,7 +76,7 @@ class OverlayStage extends Stage {
 		}
 	}
 	public static void updateStage(){
-		String mode = Main.getProperty("character.layer_mode", null);
+		String mode = Main.getProperties().getString("character.layer_mode");
 		if(mode == null){
 			if(SystemUtils.IS_OS_MAC) mode = "SEPARATE";
 			else mode = "ALWAYS_TOP";

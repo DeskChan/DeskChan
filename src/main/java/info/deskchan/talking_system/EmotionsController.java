@@ -1,6 +1,5 @@
 package info.deskchan.talking_system;
 
-import info.deskchan.core.ResponseListener;
 import info.deskchan.core_utils.TextOperations;
 
 import java.util.HashMap;
@@ -14,13 +13,7 @@ public class EmotionsController {
 	
 	EmotionsController() {
 		Reset();
-		(new RaiseNewEmotion()).start();
-	}
-	
-	class RaiseNewEmotion implements ResponseListener {
-		
-		@Override
-		public void handle(String sender, Object data) {
+		Main.getPluginProxy().setTimer(100000, -1, (sender, data) -> {
 			if (new Random().nextFloat() > 0.8) {
 				if (emotionValue > 0) {
 					emotionValue += (new Random().nextFloat() > 0.5 ? 1 : -1);
@@ -34,19 +27,12 @@ public class EmotionsController {
 					Generate();
 				}
 			}
-			if (emotionIndex >= 0) {
-				Main.sendToProxy("talk:request", "EMOTION");
-			} else {
+			if (emotionIndex < 0) {
 				Reset();
 			}
-			start();
-		}
-		
-		void start() {
-			Main.getPluginProxy().sendMessage("core-utils:notify-after-delay", TextOperations.toMap("delay: 100000"),this);
-		}
-		
+		});
 	}
+
 	
 	void Reset() {
 		emotionValue = 0;

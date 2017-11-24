@@ -3,7 +3,6 @@ package info.deskchan.talking_system;
 import java.awt.*;
 
 public class Influence {
-	public static float globalMultiplier;
 	private int featureID;
 	private float multiplier;
 	

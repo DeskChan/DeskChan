@@ -1,19 +1,16 @@
 package info.deskchan.chat_window;
 
 import info.deskchan.core.Plugin;
+import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 
 public class Main implements Plugin {
     private static PluginProxyInterface pluginProxy;
-    private static Properties properties;
+    private static PluginProperties properties;
 
     public String characterName;
     public String userName;
@@ -36,14 +33,14 @@ public class Main implements Plugin {
             String dateString = "(" + new SimpleDateFormat("HH:mm:ss").format(date) + ") ";
             switch(sender){
                 case 0: {
-                    color = properties.getProperty("deskchan-color");
+                    color = properties.getString("deskchan-color");
+                    font  = properties.getString("deskchan-font");
                     senderName = characterName;
-                    font = properties.getProperty("deskchan-font");
                 } break;
                 case 1: {
-                    color = properties.getProperty("user-color");
+                    color = properties.getString("user-color");
+                    font  = properties.getString("user-font");
                     senderName = userName;
-                    font = properties.getProperty("user-font");
                 } break;
                 case 2: {
                     color = "#888";
@@ -82,20 +79,14 @@ public class Main implements Plugin {
         log("setup chat window started");
         history = new LinkedList<>();
 
-        properties = new Properties();
-        try {
-            InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
-            properties.load(ip);
-            ip.close();
-        } catch (Exception e) {
-            properties = new Properties();
-            properties.setProperty("length", "10");
-            properties.setProperty("fixer",  "true");
-            properties.setProperty("deskchan-color", "red");
-            properties.setProperty("user-color",  "#00A");
-            log("Cannot find file: " + pluginProxy.getDataDirPath().resolve("config.properties"));
-        }
-        logLength = Integer.parseInt(properties.getProperty("length"));
+        properties = pluginProxy.getProperties();
+        properties.load();
+        properties.putIfNull("length", 10);
+        properties.putIfNull("fixer", true);
+        properties.putIfNull("deskchan-color", "red");
+        properties.putIfNull("user-color",  "#00A");
+
+        logLength = properties.getInteger("length").intValue();
 
         characterName = "DeskChan";
         userName = pluginProxy.getString("default-username");
@@ -115,12 +106,12 @@ public class Main implements Plugin {
         });
 
         pluginProxy.addMessageListener("chat:set-user-color", (sender, tag, data) -> {
-            properties.setProperty("user-color", data.toString());
+            properties.put("user-color", data.toString());
             setupChat();
         });
 
         pluginProxy.addMessageListener("chat:set-deskchan-color", (sender, tag, data) -> {
-            properties.setProperty("deskchan-color", data.toString());
+            properties.put("deskchan-color", data.toString());
             setupChat();
         });
 
@@ -141,9 +132,8 @@ public class Main implements Plugin {
             } else {
                 text=data.toString();
             }
-            Map<String, Object> delayData = new HashMap<>();
-            delayData.put("delay", 1);
-            pluginProxy.sendMessage("core-utils:notify-after-delay", delayData, (s, d) -> {
+
+            pluginProxy.setTimer(20, (s, d) -> {
                 history.add(new ChatPhrase(text, 0));
                 if (!chatIsOpened) return;
 
@@ -157,6 +147,7 @@ public class Main implements Plugin {
                     put("name",pluginProxy.getString("chat"));
                 }});
             });
+
         });
 
         pluginProxy.addMessageListener("chat:user-said", (sender, tag, dat) -> {
@@ -164,7 +155,7 @@ public class Main implements Plugin {
             String value = (String) data.getOrDefault("value", "");
             history.add(new ChatPhrase(value, 1));
 
-            if(properties.getProperty("fixer").equals("true")){
+            if(properties.getBoolean("fixer", true)){
                 String translate = FixLayout.fixRussianEnglish(value);
                 if (!translate.equals(value)) {
                     history.add(new ChatPhrase(pluginProxy.getString("wrong-layout") + " " + translate, 2));
@@ -179,17 +170,17 @@ public class Main implements Plugin {
 
         pluginProxy.addMessageListener("chat:options-saved", (sender, tag, dat) -> {
             Map<String,Object> data = (Map) dat;
-            properties.setProperty("fixer",  data.get("fixer").toString());
-            properties.setProperty("length", data.get("length").toString());
-            logLength = Integer.parseInt(properties.getProperty("length"));
-            properties.setProperty("user-color",     data.get("user-color").toString());
-            properties.setProperty("deskchan-color", data.get("deskchan-color").toString());
+            properties.put("fixer",  data.get("fixer"));
+            properties.put("length", data.get("length"));
+            logLength = properties.getInteger("length").intValue();
+            properties.put("user-color",     data.get("user-color"));
+            properties.put("deskchan-color", data.get("deskchan-color"));
             String font = (String) data.get("user-font");
             if(font != null)
-                properties.setProperty("user-font", font);
+                properties.put("user-font", font);
             font = (String) data.get("deskchan-font");
             if(font != null)
-                properties.setProperty("deskchan-font", font);
+                properties.put("deskchan-font", font);
             setupOptions();
             saveOptions();
             setupChat();
@@ -259,7 +250,7 @@ public class Main implements Plugin {
                 put("id", "fixer");
                 put("type", "CheckBox");
                 put("label", pluginProxy.getString("fix-layout"));
-                put("value", properties.getProperty("fixer").equals("true"));
+                put("value", properties.getBoolean("fixer", true));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "length");
@@ -267,33 +258,33 @@ public class Main implements Plugin {
                 put("min", 1);
                 put("max", 20000);
                 put("label", pluginProxy.getString("log-length"));
-                put("value", Integer.parseInt(properties.getProperty("length")));
+                put("value", properties.getInteger("length"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "user-color");
                 put("type", "ColorPicker");
                 put("msgTag", "chat:set-user-color");
                 put("label", pluginProxy.getString("user-color"));
-                put("value", properties.getProperty("user-color"));
+                put("value", properties.getString("user-color"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "deskchan-color");
                 put("type", "ColorPicker");
                 put("msgTag", "chat:set-deskchan-color");
                 put("label", pluginProxy.getString("deskchan-color"));
-                put("value", properties.getProperty("deskchan-color"));
+                put("value", properties.getString("deskchan-color"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "user-font");
                 put("type", "FontPicker");
                 put("label", pluginProxy.getString("user-font"));
-                put("value", properties.getProperty("user-font"));
+                put("value", properties.getString("user-font"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "deskchan-font");
                 put("type", "FontPicker");
                 put("label", pluginProxy.getString("deskchan-font"));
-                put("value", properties.getProperty("deskchan-font"));
+                put("value", properties.getString("deskchan-font"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "clear");
@@ -305,13 +296,7 @@ public class Main implements Plugin {
         }});
     }
     void saveOptions(){
-        try {
-            OutputStream ip = Files.newOutputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
-            properties.store(ip, "config fot weather plugin");
-            ip.close();
-        } catch (IOException e) {
-            log(e);
-        }
+        properties.save();
     }
     static void log(String text) {
         pluginProxy.log(text);

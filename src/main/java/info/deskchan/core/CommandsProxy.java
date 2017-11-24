@@ -293,14 +293,9 @@ public class CommandsProxy{
         proxy.addMessageListener("core:set-event-link",     (sender, tag, data) ->     addEventLink((Map) data)         );
         proxy.addMessageListener("core:remove-event-link",  (sender, tag, data) ->  removeEventLink((Map) data)         );
 
-        proxy.addMessageListener("core:get-commands-match", (sender, tag, dat) -> {
-            Map<String,Object> data = (Map) dat;
-            String eventName = (String) data.get("eventName");
-            Integer seq = (Integer) data.get("seq");
-            data = new HashMap<>();
-            data.put("seq", seq);
-            data.put("commands", getCommandsMatch(eventName));
-            proxy.sendMessage(sender,data);
+        proxy.addMessageListener("core:get-commands-match", (sender, tag, data) -> {
+            String eventName = data.toString();
+            proxy.sendMessage(sender, getCommandsMatch(eventName));
         });
 
         proxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
@@ -332,6 +327,7 @@ public class CommandsProxy{
             events.put("core-events:plugin-unload", owner);
             commands.put("DeskChan:say", owner);
             load();
+            PluginManager.log("Loading completed");
             callByTag("core-events:loading-complete");
         });
     }

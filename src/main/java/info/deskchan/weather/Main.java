@@ -1,50 +1,39 @@
 package info.deskchan.weather;
 
 import info.deskchan.core.Plugin;
+import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core_utils.TextOperations;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.util.*;
 
 public class Main implements Plugin {
 
     private static PluginProxyInterface pluginProxy;
-
-    private static Properties properties;
     public static String getCity(){
-        return properties.getProperty("city");
+        return pluginProxy.getProperties().getString("city");
     }
     private WeatherServer server = new YahooServer();
+
     @Override
     public boolean initialize(PluginProxyInterface pluginProxyIn) {
-        pluginProxy=pluginProxyIn;
-        properties=new Properties();
-        try {
-            InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
-            properties.load(ip);
-            ip.close();
-        } catch (Exception e) {
-            properties = new Properties();
-            properties.setProperty("city","Nowhere");
-            log("Cannot find file: " + pluginProxy.getDataDirPath().resolve("config.properties"));
-        }
+        pluginProxy = pluginProxyIn;
+
+        PluginProperties properties = pluginProxy.getProperties();
+        properties.load();
+        properties.putIfNull("city", "Nowhere");
 
         pluginProxy.addMessageListener("weather:update-city",(sender, tag, data) -> {
-            String c=(String) ((Map<String,Object>) data).get("city");
-            if(c.length()<2) {
+            String city = (String) ((Map) data).get("city");
+            if(city.length()<2) {
                 pluginProxy.sendMessage("gui:show-notification", new HashMap<String,Object>(){{
                     put("name",getString("error"));
                     put("text",getString("info.no-city"));
                 }});
-            } else properties.setProperty("city",c);
+            } else properties.put("city", city);
             server.drop();
             updateOptionsTab();
             saveOptions();
-            System.out.println(server.getNow()+" "+getCity());
         });
         pluginProxy.sendMessage("core:add-command", TextOperations.toMap("tag: \"weather:say-weather\""));
         String[] v=new String[]{ "", "", " сейчас", "", " сегодня", "0", " завтра", "1", " послезавтра", "2"};
@@ -90,13 +79,9 @@ public class Main implements Plugin {
             }
             pluginProxy.sendMessage("DeskChan:say",say);
         });
-        pluginProxy.addMessageListener("talk:reject-quote",(sender, tag, dat) -> {
-            HashMap<String, Object> data = (HashMap<String, Object>) dat;
-            ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
-            HashMap<String, Object> ret = new HashMap<>();
-            ret.put("seq", data.get("seq"));
+        pluginProxy.addMessageListener("talk:reject-quote",(sender, tag, data) -> {
+            ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data;
             ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
-            ret.put("quotes",quotes_list);
             if (list != null) {
                 TimeForecast now=server.getNow();
                 for (HashMap<String, Object> entry : list) {
@@ -114,7 +99,7 @@ public class Main implements Plugin {
                     }
                 }
             }
-            pluginProxy.sendMessage(sender,ret);
+            pluginProxy.sendMessage(sender, quotes_list);
         });
         setupOptionsTab();
         return true;
@@ -164,13 +149,7 @@ public class Main implements Plugin {
         }});
     }
     void saveOptions(){
-        try {
-            OutputStream ip = Files.newOutputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
-            properties.store(ip, "config fot weather plugin");
-            ip.close();
-        } catch (IOException e) {
-            log(e);
-        }
+       pluginProxy.getProperties().save();
     }
     @Override
     public void unload(){

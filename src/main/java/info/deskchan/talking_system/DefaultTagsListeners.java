@@ -7,15 +7,11 @@ import java.time.Instant;
 import java.util.*;
 
 public class DefaultTagsListeners {
-    public static void parseForTagsRemove(String sender, String messagetag, Object dat) {
-        HashMap<String, Object> data = (HashMap<String, Object>) dat;
-        ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
-        HashMap<String, Object> ret = new HashMap<>();
-        ret.put("seq", data.get("seq"));
+    public static void parseForTagsRemove(String sender, String messagetag, Object data) {
+        ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data;
         ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
-        ret.put("quotes",quotes_list);
         if (list == null) {
-            Main.getPluginProxy().sendMessage(sender, ret);
+            Main.getPluginProxy().sendMessage(sender, quotes_list);
             return;
         }
         for(HashMap<String,Object> entry : list) {
@@ -42,19 +38,15 @@ public class DefaultTagsListeners {
                 }
             } catch(Exception e){ }
         }
-        Main.getPluginProxy().sendMessage(sender,ret);
+        Main.getPluginProxy().sendMessage(sender, quotes_list);
     }
-    public static void parseForTagsReject(String sender, String messagetag, Object dat){
-        HashMap<String,Object> data=(HashMap<String,Object>) dat;
-        ArrayList<HashMap<String,Object>> list=(ArrayList<HashMap<String,Object>>) data.getOrDefault("quotes",null);
-        HashMap<String,Object> ret=new HashMap<>();
-        ret.put("seq",data.get("seq"));
+    public static void parseForTagsReject(String sender, String messagetag, Object data){
+        ArrayList<HashMap<String,Object>> list = (ArrayList<HashMap<String,Object>>) data;
         ArrayList<HashMap<String,Object>> quotes_list=new ArrayList<>();
         if(list==null){
-            Main.getPluginProxy().sendMessage(sender,ret);
+            Main.getPluginProxy().sendMessage(sender, quotes_list);
             return;
         }
-        ret.put("quotes",quotes_list);
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
 
@@ -142,16 +134,14 @@ public class DefaultTagsListeners {
                             right_barrier = Integer.valueOf(di[1]);
                         } else left_barrier = Integer.parseInt(tag.get(0));
                     } catch (Exception e) { }
-                    Instant lastConversation=Instant.parse(Main.getProperty("lastConversation","0"));
-                    long length=Duration.between(lastConversation,Instant.now()).toMinutes();
+                    Instant lastConversation = Instant.ofEpochMilli(Main.getProperties().getLong("lastConversation", 0));
+                    long length = Duration.between(lastConversation,Instant.now()).toMinutes();
                     if(length<left_barrier || (right_barrier>=left_barrier && length>=right_barrier))
                         quotes_list.add(entry);
                 }
             } catch(Exception e){ }
         }
-        Main.getPluginProxy().sendMessage(sender,ret);
-            //if(list==null)
-            //for()
+        Main.getPluginProxy().sendMessage(sender,quotes_list);
     }
 }
 

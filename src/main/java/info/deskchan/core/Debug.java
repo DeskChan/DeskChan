@@ -25,4 +25,9 @@ public class Debug {
         }
         abstract void run();
     }
+    public static void printTraceBack(){
+        StackTraceElement[] traceback = Thread.currentThread().getStackTrace();
+        for(StackTraceElement element : traceback)
+            PluginManager.log(element.toString());
+    }
 }

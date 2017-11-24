@@ -1,15 +1,12 @@
 package info.deskchan.talking_system;
 
 import info.deskchan.core.Plugin;
+import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core_utils.CoreTimerTask;
 import info.deskchan.core_utils.TextOperations;
 import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,48 +19,32 @@ public class Main implements Plugin {
 	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
-	private final static String defaultMessageTimeout = Integer.toString(120000);
+	private final static Integer DEFAULT_MESSAGE_TIMEOUT = 120000;
 	private CharacterPreset currentPreset;
 	private EmotionsController emotionsController;
 
 	private volatile Quotes quotes;
 	private PriorityQueue<Quote> quoteQueue;
 	private PerkContainer perkContainer;
-	private static Properties properties;
 
-	private CoreTimerTask chatTimerListener;
+	private int timerId = 0;
 
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
 		pluginProxy = newPluginProxy;
-		properties = new Properties();
 		emotionsController = new EmotionsController();
 		quoteQueue = new PriorityQueue<>();
 		perkContainer = new PerkContainer();
 		quotes = new Quotes();
 		currentPreset = new SimpleCharacterPreset();
-		Influence.globalMultiplier = 0.05f;
 
 		pluginProxy.setResourceBundle("info/deskchan/talking_system/strings");
 		pluginProxy.setConfigField("short-description",getString("plugin.short-description"));
 
-		try {
-			InputStream ip = Files.newInputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
-			properties.load(ip);
-			ip.close();
-		} catch (Exception e) {
-			properties = null;
-			log("Cannot find file: " + pluginProxy.getDataDirPath().resolve("config.properties"));
-			//log(e);
-		}
-		if (properties != null) {
-			try {
-				currentPreset = CharacterPreset.getFromJSON(new JSONObject(properties.getProperty("characterPreset")));
-			} catch (Exception e) { }
-			try {
-				Influence.globalMultiplier = Float.valueOf(properties.getProperty("influenceMultiplier"));
-			} catch (Exception e) { }
-		}
+		pluginProxy.getProperties().load();
+		currentPreset = CharacterPreset.getFromJSON(new JSONObject(getProperties().getString("characterPreset", "{}")));
+		getProperties().putIfNull("quotesAutoSync", true);
+
 		log("Loaded options");
 		pluginProxy.addMessageListener("talk:request", (sender, tag, dat) -> {
 			Map<String, Object> data;
@@ -134,7 +115,7 @@ public class Main implements Plugin {
 				(sender, tag, data) -> perkContainer.getAnswerFromPerk(sender, (Map<String, Object>) data)
 		);
 		pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
-			setProperty("lastConversation", Instant.now());
+			getProperties().put("lastConversation", Instant.now().toEpochMilli());
 		});
 		pluginProxy.addMessageListener("talk:print-phrases-lack", (sender, tag, data) -> {
 			quotes.printPhrasesLack( (String) ((Map<String, Object>) data).getOrDefault("purpose","CHAT") );
@@ -181,39 +162,31 @@ public class Main implements Plugin {
 			put("msgTag", "talk:request");
 		}});
 		updateOptionsTab();
-		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsRemove(sender,tag,dat));
-		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	DefaultTagsListeners.parseForTagsReject(sender,tag,dat));
-		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, dat) -> 	{
-			HashMap<String, Object> data = (HashMap<String, Object>) dat;
-			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
-			HashMap<String, Object> ret = new HashMap<>();
-			ret.put("seq", data.get("seq"));
+		Main.getPluginProxy().addMessageListener("talk:remove-quote", DefaultTagsListeners::parseForTagsRemove);
+		Main.getPluginProxy().addMessageListener("talk:reject-quote", DefaultTagsListeners::parseForTagsReject);
+		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, data) -> 	{
+			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data;
 			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
-			ret.put("quotes",quotes_list);
 			if (list != null) {
 				for (HashMap<String, Object> entry : list) {
 					if (!currentPreset.isTagsMatch(entry))
 						quotes_list.add(entry);
 				}
 			}
-			Main.getPluginProxy().sendMessage(sender,ret);
+			Main.getPluginProxy().sendMessage(sender, quotes_list);
 		});
-		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, dat) -> 	{
-			HashMap<String, Object> data = (HashMap<String, Object>) dat;
-			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data.getOrDefault("quotes", null);
-			HashMap<String, Object> ret = new HashMap<>();
-			ret.put("seq", data.get("seq"));
+		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, data) -> 	{
+			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data;
 			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
-			ret.put("quotes",quotes_list);
 			if (list != null) {
 				for (HashMap<String, Object> entry : list) {
 					if (!emotionsController.isTagsMatch(entry))
 						quotes_list.add(entry);
 				}
 			}
-			Main.getPluginProxy().sendMessage(sender,ret);
+			Main.getPluginProxy().sendMessage(sender, quotes_list);
 		});
-		if(getProperty("quotesAutoSync","1").equals("1")) {
+		if(getProperties().getBoolean("quotesAutoSync", true)) {
 			Thread syncThread = new Thread() {
 				public void run() {
 					if(Quotes.saveTo(MAIN_PHRASES_URL, "main")) {
@@ -232,13 +205,7 @@ public class Main implements Plugin {
 			}});
 		});
 		currentPreset.inform();
-		chatTimerListener = new CoreTimerTask(pluginProxy, Long.valueOf(getProperty("messageTimeout",defaultMessageTimeout)), true) {
-			@Override
-			public void run() {
-				Main.this.phraseRequest("CHAT");
-			}
-		};
-		chatTimerListener.start();
+
 		/*MeaningExtractor extractor=new MeaningExtractor();
 		for(Quote quote : quotes.toArray()){
 			extractor.teach(quote.quote,quote.purposeType);
@@ -256,17 +223,18 @@ public class Main implements Plugin {
 			if (np != null) purpose = np;
 		}
 		quotes.update(currentPreset.getCharacter(emotionsController));
-		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
+		quotes.requestRandomQuote(purpose, new Quotes.GetQuoteCallback(){
 			public void call(Quote quote){ sendPhrase(quote,data); }
 		});
 	}
 
 	public void phraseRequest(String purpose) {
 		quotes.update(currentPreset.getCharacter(emotionsController));
-		quotes.requestRandomQuote(purpose,new Quotes.GetQuoteCallback(){
+		quotes.requestRandomQuote(purpose, new Quotes.GetQuoteCallback(){
 			public void call(Quote quote){ sendPhrase(quote,null); }
 		});
 	}
+
 	void sendPhrase(Quote quote,Map<String, Object> data){
 		HashMap<String,Object> ret=quote.toMap();
 		if (ret.get("characterImage").equals("AUTO")) {
@@ -298,6 +266,12 @@ public class Main implements Plugin {
 		}
 	}
 
+	void resetTimer(){
+		pluginProxy.cancelTimer(timerId);
+		timerId = pluginProxy.setTimer(getProperties().getLong("messageTimeout", DEFAULT_MESSAGE_TIMEOUT), -1, (sender, data) -> {
+			Main.this.phraseRequest("CHAT");
+		});
+	}
 	void updateOptionsTab() {
 		pluginProxy.sendMessage("gui:setup-options-tab", new HashMap<String, Object>() {{
 			put("name", getString("character"));
@@ -373,13 +347,13 @@ public class Main implements Plugin {
 				put("max", 10000);
 				put("step", 1);
 				put("hint",getString("help.delay"));
-				put("value", Integer.parseInt(getProperty("messageTimeout",defaultMessageTimeout)) / 1000);
+				put("value", getProperties().getLong("messageTimeout", DEFAULT_MESSAGE_TIMEOUT) / 1000);
 				put("label", getString("message_interval"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "autoSync");
 				put("type", "CheckBox");
-				put("value", getProperty("quotesAutoSync","1").equals("1"));
+				put("value", getProperties().getBoolean("quotesAutoSync", true));
 				put("label", getString("packs_auto_sync"));
 			}});
 			list.add(new HashMap<String, Object>() {{
@@ -448,17 +422,11 @@ public class Main implements Plugin {
 			}
 		}
 		try {
-			setProperty("messageTimeout",(Integer) data.getOrDefault("message_interval", 40) * 1000);
+			getProperties().put("messageTimeout", (Integer) data.getOrDefault("message_interval", 40) * 1000);
 		} catch (Exception e) {
 			errorMessage += e.getMessage();
-			setProperty("messageTimeout",defaultMessageTimeout);
 		}
-		boolean qas=(boolean) data.getOrDefault("autoSync", true);
-		setProperty("quotesAutoSync", ( qas ? "1" : "0"));
-		if(qas){
-			Quotes.saveTo(MAIN_PHRASES_URL, "main");
-			Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
-		}
+		getProperties().put("quotesAutoSync", data.getOrDefault("autoSync", true));
 		if (errorMessage.length() > 1) {
 			HashMap<String, Object> list = new HashMap<String, Object>();
 			list.put("name", getString("error"));
@@ -466,14 +434,9 @@ public class Main implements Plugin {
 			pluginProxy.sendMessage("gui:show-notification", list);
 			//System.out.println(errorMessage);
 		}
-		chatTimerListener.stop();
-		chatTimerListener = new CoreTimerTask(pluginProxy, Long.valueOf(getProperty("messageTimeout",defaultMessageTimeout)), true) {
-			@Override
-			public void run() {
-				Main.this.phraseRequest("CHAT");
-			}
-		};
-		chatTimerListener.start();
+
+		resetTimer();
+
 		quotes.setPacks(currentPreset.quotesBaseList);
 		updateOptionsTab();
 		saveSettings();
@@ -481,17 +444,8 @@ public class Main implements Plugin {
 	}
 
 	void saveSettings() {
-		if(properties==null) properties=new Properties();
-		properties.setProperty("characterPreset", currentPreset.toJSON().toString());
-		properties.setProperty("influenceMultiplier", String.valueOf(Influence.globalMultiplier));
-		properties.setProperty("lastConversation", Instant.now().toString());
-		try {
-			OutputStream ip = Files.newOutputStream(pluginProxy.getDataDirPath().resolve("config.properties"));
-			properties.store(ip, "config fot talking system");
-			ip.close();
-		} catch (IOException e) {
-			log(e);
-		}
+		getProperties().put("characterPreset", currentPreset.toJSON().toString());
+		getProperties().save();
 	}
 
 	public static String getString(String text){
@@ -526,14 +480,7 @@ public class Main implements Plugin {
 		}
 		return path;
 	}
-	public static void setProperty(String key, Object value){
-		if(properties==null) properties=new Properties();
-		properties.setProperty(key,value.toString());
-	}
-	public static String getProperty(String key, Object defaultValue){
-		if(properties==null) return defaultValue.toString();
-		return properties.getProperty(key,defaultValue.toString());
-	}
+
 	@Override
 	public void unload() {
 		saveSettings();
@@ -543,4 +490,5 @@ public class Main implements Plugin {
 		return pluginProxy;
 	}
 
+	static PluginProperties getProperties() { return getPluginProxy().getProperties(); }
 }

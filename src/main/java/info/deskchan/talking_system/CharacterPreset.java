@@ -63,24 +63,30 @@ public abstract class CharacterPreset {
 		tags=new TextOperations.TagsContainer(text);
 	}
 	public void fillFromJSON(JSONObject json) {
-		name = json.getString("name");
-		if (name.isEmpty()) {
+		if (json.has("name"))
+			name = json.getString("name");
+		else
 			name = Main.getString("default_name");
-		}
-		MainCharacter = new CharacterDefinite(json.getJSONObject("main"));
-		quotesBaseList = listFromJSON(json, "quotes");
+
+		if (json.has("main"))
+			MainCharacter = new CharacterDefinite(json.getJSONObject("main"));
+		else
+			MainCharacter = new CharacterDefinite();
+
+		if (json.has("quotes"))
+			quotesBaseList = listFromJSON(json, "quotes");
+
 		if (quotesBaseList.size() == 0) {
 			quotesBaseList = new ArrayList<>();
 			quotesBaseList.add("main");
 		}
-		try {
-			json=json.getJSONObject("tags");
-		} catch(Exception e){
-			return;
-		}
-		tags=new TextOperations.TagsContainer();
-		for(HashMap.Entry<String,Object> obj : json.toMap().entrySet()){
-			tags.put(obj.getKey(),(String)obj.getValue());
+
+		if (json.has("tags")) {
+			json = json.getJSONObject("tags");
+			tags = new TextOperations.TagsContainer();
+			for (HashMap.Entry<String, Object> obj : json.toMap().entrySet()) {
+				tags.put(obj.getKey(), (String) obj.getValue());
+			}
 		}
 	}
 	

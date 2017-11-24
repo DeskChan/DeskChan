@@ -52,11 +52,7 @@ public class CorePlugin implements Plugin, MessageListener {
 					(Integer) m.get("priority"));
 		});
 		pluginProxy.addMessageListener("core:query-alternatives-map", (sender, tag, data) -> {
-			Object seq = ((Map) data).get("seq");
-			pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
-				put("seq", seq);
-				put("map", getAlternativesMap());
-			}});
+			pluginProxy.sendMessage(sender, getAlternativesMap());
 		});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			if(data==null) {
@@ -102,11 +98,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		});
 		pluginProxy.addMessageListener("core:get-plugin-data-dir", (sender, tag, data) -> {
 			Path pluginDataDirPath = PluginManager.getPluginDataDirPath(sender);
-			Object seq = ((Map) data).get("seq");
-			pluginProxy.sendMessage(sender, new HashMap<String, Object>() {{
-				put("seq", seq);
-				put("path", pluginDataDirPath.toString());
-			}});
+			pluginProxy.sendMessage(sender, pluginDataDirPath.toString());
 		});
 		pluginProxy.addMessageListener("core:create-pipe", (sender, tag, data) -> {
 			String name = data.toString();

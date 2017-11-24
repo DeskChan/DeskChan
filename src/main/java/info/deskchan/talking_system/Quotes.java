@@ -152,9 +152,7 @@ public class Quotes {
 	
 	public void update() {
 		suitableQuotes = new ArrayList<Quote>();
-		HashMap<String,Object> quotesToSend=new HashMap<>();
 		ArrayList<HashMap<String,Object>> list=new ArrayList<>();
-		quotesToSend.put("quotes",list);
 		for (QuotePack pack : packs) {
 			for (int i = 0, l = pack.size(); i < l; i++)
 				if (pack.get(i).matchToCharacter(current)){
@@ -162,10 +160,9 @@ public class Quotes {
 					list.add(pack.get(i).toMap());
 				}
 		}
-		Main.getPluginProxy().sendMessage("talk:remove-quote",quotesToSend,
-		(sender, dat) -> {
-			HashMap<String,Object> data=(HashMap<String,Object>)dat;
-			ArrayList<HashMap<String,Object>> quotes_list=(ArrayList<HashMap<String,Object>>)data.getOrDefault("quotes",null);
+		Main.getPluginProxy().sendMessage("talk:remove-quote", list,
+		(sender, data) -> {
+			ArrayList<HashMap<String,Object>> quotes_list = (ArrayList<HashMap<String,Object>>) data;
 			if(quotes_list==null) return;
 			for (HashMap<String,Object> map : quotes_list) {
 				int hash=(int)map.getOrDefault("hash",0);
@@ -234,9 +231,7 @@ public class Quotes {
 		purpose = purpose.toUpperCase();
 		LinkedList<Quote> sq = new LinkedList<>();
 
-		HashMap<String,Object> quotesToSend=new HashMap<>();
 		ArrayList<HashMap<String,Object>> list=new ArrayList<>();
-		quotesToSend.put("quotes",list);
 		Quote q;
 		for (int i = 0; i < suitableQuotes.size(); i++) {
 			q = suitableQuotes.get(i);
@@ -245,10 +240,9 @@ public class Quotes {
 				list.add(q.toMap());
 			}
 		}
-		Main.getPluginProxy().sendMessage("talk:reject-quote",quotesToSend,
-				(sender, dat) -> {
-  					HashMap<String,Object> data=(HashMap<String,Object>)dat;
-					ArrayList<HashMap<String,Object>> quotes_list=(ArrayList<HashMap<String,Object>>)data.getOrDefault("quotes",null);
+		Main.getPluginProxy().sendMessage("talk:reject-quote", list,
+				(sender, data) -> {
+					ArrayList<HashMap<String,Object>> quotes_list = (ArrayList<HashMap<String,Object>>) data;
 					if(quotes_list==null) return;
 					for (HashMap<String,Object> map : quotes_list) {
 						int hash=(int)map.getOrDefault("hash",0);

@@ -1,10 +1,7 @@
 package info.deskchan.groovy_support;
 
 import groovy.lang.Script;
-import info.deskchan.core.MessageListener;
-import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core.ResponseListener;
+import info.deskchan.core.*;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -54,16 +51,33 @@ public abstract class GroovyPlugin extends Script implements Plugin {
 	protected void addMessageListener(String tag, MessageListener listener) {
 		pluginProxy.addMessageListener(tag, listener);
 	}
-	
+
 	protected void removeMessageListener(String tag, MessageListener listener) {
 		pluginProxy.removeMessageListener(tag, listener);
 	}
+
+	protected int setTimer(long delay, ResponseListener listener) {
+		return pluginProxy.setTimer(delay, listener);
+	}
+
+	protected int setTimer(long delay, int count, ResponseListener listener) {
+		return pluginProxy.setTimer(delay, count, listener);
+	}
+
+	protected void cancelTimer(int id) {
+		pluginProxy.cancelTimer(id);
+	}
+
 	protected String getString(String key){ return pluginProxy.getString(key); }
 
 	protected void addCleanupHandler(Runnable handler) {
 		cleanupHandlers.add(handler);
 	}
-	
+
+	protected PluginProperties getProperties() {
+		return pluginProxy.getProperties();
+	}
+
 	protected Path getDataDirPath() {
 		return pluginProxy.getDataDirPath();
 	}

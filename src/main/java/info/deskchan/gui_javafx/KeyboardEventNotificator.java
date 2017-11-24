@@ -42,7 +42,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
         setSubmenu();
         pluginProxy.addMessageListener("gui:keyboard-submenu-save", (sender, tag, data) -> {
-            Main.setProperty("keyboard.delay_handle", ((Map) data).get("delay").toString());
+            Main.getProperties().put("keyboard.delay_handle", ((Map) data).get("delay").toString());
             handler.updateDefaultDelay();
             setSubmenu();
         });
@@ -54,7 +54,6 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
                 String raw = "";
                 String keys = "";
-                System.out.println(currentPressed);
                 if(currentPressed.size() > 0) {
                     for (int keyCode : currentPressed)
                         raw += keyCode + " + ";
@@ -135,7 +134,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
     /** Key pressed event (called every tick you press the button, not once). **/
     public void nativeKeyPressed(NativeKeyEvent e) {
-        if(currentPressed.add(e.getRawCode()) && commands.length > 0) {
+        if(currentPressed.add(e.getRawCode()) && commands != null && commands.length > 0) {
             setChanged = true;
             handler.start();
         }
@@ -238,13 +237,13 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             }
         }
 
-        private static final String DEFAULT_DELAY = "50";
+        private static final Integer DEFAULT_DELAY = 50;
         static int getDefaultDelay(){
             try {
-                return Integer.parseInt(Main.getProperty("keyboard.delay_handle", DEFAULT_DELAY));
+                return (int) Main.getProperties().getInteger("keyboard.delay_handle", DEFAULT_DELAY);
             } catch (Exception e){
-                Main.setProperty("keyboard.delay_handle", DEFAULT_DELAY);
-                return Integer.parseInt(DEFAULT_DELAY);
+                Main.getProperties().put("keyboard.delay_handle", DEFAULT_DELAY);
+                return DEFAULT_DELAY;
             }
         }
     }

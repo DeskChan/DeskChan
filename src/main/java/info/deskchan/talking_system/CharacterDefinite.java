@@ -212,7 +212,7 @@ public class CharacterDefinite extends CharacterSystem {
 	public void applyInfluence(ArrayList<Influence> influences) {
 		float val;
 		for (Influence in : influences) {
-			setValue(in.getFeatureID(), value[in.getFeatureID()][1] + in.getMultiplier() * Influence.globalMultiplier);
+			setValue(in.getFeatureID(), value[in.getFeatureID()][1] + in.getMultiplier());
 		}
 	}
 	
@@ -220,7 +220,7 @@ public class CharacterDefinite extends CharacterSystem {
 		if (in == null) {
 			return;
 		}
-		setValue(in.getFeatureID(), value[in.getFeatureID()][1] + in.getMultiplier() * Influence.globalMultiplier);
+		setValue(in.getFeatureID(), value[in.getFeatureID()][1] + in.getMultiplier());
 	}
 	
 	public String getSpriteType() {

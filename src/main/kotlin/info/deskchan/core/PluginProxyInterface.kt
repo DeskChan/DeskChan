@@ -38,6 +38,25 @@ interface PluginProxyInterface : MessageListener {
     /** Remove listener to tag. */
     fun removeMessageListener(tag: String, listener: MessageListener)
 
+    /** Set timer.
+     * @param delay Delay, ms
+     * @param responseListener Function that will be called after delay
+     * @return Id of timer  **/
+    fun setTimer(delay: Long, responseListener: ResponseListener) : Int
+
+    /** Set cycled timer.
+     * @param delay Delay, ms
+     * @param count Count of cycles, -1 to infinite
+     * @param responseListener Function that will be called after delay
+     * @return Id of timer  **/
+    fun setTimer(delay: Long, count: Int, responseListener: ResponseListener) : Int
+
+    /** Cancel timer by id. **/
+    fun cancelTimer(id: Int)
+
+    /** Properties of plugin **/
+    fun getProperties() : PluginProperties
+
     /** Set path to resource bundle that you want to be used by your plugin.
      * @param path Path to resources folder
      */

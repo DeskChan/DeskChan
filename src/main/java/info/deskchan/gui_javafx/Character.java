@@ -37,15 +37,15 @@ class Character extends MovablePane {
 
 	Character(String id, Skin skin) {
 		this.id = id;
-		setScaleFactor(Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0")));
-		setSkinOpacity(Float.parseFloat(Main.getProperty("skin.opacity", "1.0")));
+		setScaleFactor(Main.getProperties().getFloat("skin.scale_factor", 1.0f));
+		setSkinOpacity(Main.getProperties().getFloat("skin.opacity", 1.0f));
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
 
 		imageView.setMouseTransparent(true);
 		balloonPositionMode = Balloon.PositionMode.valueOf(
-				Main.getProperty("character." + id + ".balloon_position_mode",
+				Main.getProperties().getString("character." + id + ".balloon_position_mode",
 						Balloon.PositionMode.AUTO.toString())
 		);
 		addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
@@ -62,7 +62,7 @@ class Character extends MovablePane {
 			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-stop-drag",m);
 		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-			boolean enabled = Main.getProperty("character.enable_context_menu", "1").equals("1");
+			boolean enabled = Main.getProperties().getBoolean("character.enable_context_menu", true);
 			ContextMenu contextMenu = TrayMenu.getContextMenu();
 			// We need to hide menu manually in both cases to avoid showing the menu with incorrect width.
 			contextMenu.hide();
@@ -266,7 +266,7 @@ class Character extends MovablePane {
 
 	void setBalloonPositionMode(Balloon.PositionMode mode) {
 		balloonPositionMode = mode;
-		Main.setProperty("character." + id + ".balloon_position_mode", mode.toString());
+		Main.getProperties().put("character." + id + ".balloon_position_mode", mode.toString());
 	}
 
 	void say(Object data) {
@@ -355,38 +355,38 @@ class Character extends MovablePane {
 				Object ob = mapData.getOrDefault("skippable", true);
 				if(ob instanceof String)
 					skippable = Boolean.parseBoolean((String) ob);
-				else skippable=(Boolean) ob;
+				else skippable = (Boolean) ob;
 
 				this.characterImage = characterImage;
 
 				ob = mapData.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-				if(ob instanceof String)
-					priority = Integer.parseInt((String) ob);
-				else priority=(Integer) ob;
+				if(ob instanceof Number)
+					 priority = ((Number) ob).intValue();
+				else priority = Integer.parseInt((String) ob);
 
-				ob = mapData.getOrDefault("timeout", Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") ));
-				if(ob instanceof String)
-					_timeout = Integer.parseInt((String) ob);
-				else _timeout=(Integer) ob;
+				ob = mapData.getOrDefault("timeout", Main.getProperties().getInteger("balloon.default_timeout", 200) );
+				if(ob instanceof Number)
+					 _timeout = ((Number) ob).intValue();
+				else _timeout = Integer.parseInt((String) ob);
 
 				if(mapData.containsKey("text"))
-					text2=(String) mapData.get("text");
+					text2 = (String) mapData.get("text");
 				else if(mapData.containsKey("msgData"))
-					text2=(String) mapData.get("msgData");
+					text2 = (String) mapData.get("msgData");
 				else text2="";
 
-				ob=mapData.getOrDefault("partible", true);
+				ob = mapData.getOrDefault("partible", true);
 				if(ob instanceof String)
-					partible=Boolean.parseBoolean((String) ob);
-				else partible=(Boolean) ob;
+					partible = Boolean.parseBoolean((String) ob);
+				else partible = (Boolean) ob;
 			} else {
 				if(data instanceof String)
-					text2=(String) data;
-				else text2=data.toString();
+					text2 = (String) data;
+				else text2 = data.toString();
 				skippable=true;
 				characterImage = null;
 				priority=DEFAULT_MESSAGE_PRIORITY;
-				_timeout=Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") );
+				_timeout = (int) Main.getProperties().getInteger("balloon.default_timeout", 200);
 			}
 
 			if(partible) {
