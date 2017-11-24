@@ -33,6 +33,7 @@ class PluginConfig {
         append(map)
     }
 
+    /** Append fields from map. **/
     fun append(map: Map<String, Any?>){
         map.forEach { t, u ->
             if(u!=null && u!="")
@@ -40,9 +41,12 @@ class PluginConfig {
         }
     }
 
+    /** Append field. **/
     fun append(key: String, value: Any){
         data[key.toLowerCase()] = value
     }
+
+    /** Append fields from json file by its path. **/
     fun appendFromJson(path: Path){
         if (!Files.isReadable(path) || Files.isDirectory(path)) {
             return
@@ -77,13 +81,18 @@ class PluginConfig {
         }
     }
 
-    val dependencyNames = listOf("deps" , "dep" , "dependencies" , "dependency")
+    private val dependencyNames = listOf("deps" , "dep" , "dependencies" , "dependency")
+
+    /** Get plugin's dependencies list. **/
     fun getDependencies() : List<String> = getList(dependencyNames)
 
-    val extensionNames = listOf("extensions")
+    private val extensionNames = listOf("extensions")
+
+    /** Get plugin's loadable extensions list. **/
     fun getExtensions() : List<String> = getList(extensionNames)
 
-    fun getList(possibleNames: List<String>) : List<String>{
+    /** Tries to get string list by list of keys. **/
+    private fun getList(possibleNames: List<String>) : List<String>{
         var value: Any? = null
         for(name in possibleNames){
             value = data[name]
@@ -110,10 +119,13 @@ class PluginConfig {
         }
     }
 
+    /** Get plugin type. **/
     fun getType() : String = PluginProxy.getString(data["type"]?.toString() ?: "unknown")
 
+    /** Get field. **/
     fun get(key:String) : Any? = data[key]
 
+    /** Get formatted short description of plugin. **/
     fun getShortDescription() : String {
         val sb = StringBuilder()
         sb.appendln(PluginProxy.getString("plugin-type") + ": " + getType())
@@ -140,6 +152,7 @@ class PluginConfig {
         return sb.toString().trimEnd()
     }
 
+    /** Get full description of plugin. **/
     fun getDescription(): String? = if ("description" in data) {
         val descriptionMap = data["description"] as? Map<String, String>?
         if (descriptionMap != null) {
@@ -151,6 +164,7 @@ class PluginConfig {
         null
     }
 
+    /** Tries to parse string to Author fields. **/
     private fun parseAuthor(obj: Any?): Author? = when (obj) {
         is Map<*, *> -> {
             if ("name" in obj) {
@@ -180,11 +194,13 @@ class PluginConfig {
         return null
     }
 
+    /** Print all fields to console. **/
     fun print() = println(data)
 
     fun clone() = PluginConfig(data)
 
     companion object{
+        /** Default config representing internal java plugin. **/
         val Internal = PluginConfig()
 
         init {

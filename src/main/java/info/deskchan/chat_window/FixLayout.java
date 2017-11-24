@@ -4,32 +4,37 @@ import info.deskchan.core_utils.TextOperations;
 
 import java.util.List;
 
+/** Layout fixing class. Use fix* function to automatically fix it. Use isLayoutMissed* to check, is layout missed.  **/
 public class FixLayout {
-    private static char[] englishConsonants="wrtp[]sdfghjkl;'zxcvbnm,.".toCharArray();
-    private static char[] russianConsonants="йцкнгшщзхъфвпрлджчсмтб".toCharArray();
+    private static final char[] ENGLISH_CONSONANTS ="wrtp[]sdfghjkl;'zxcvbnm,.".toCharArray();
+    private static final char[] RUSSIAN_CONSONANTS ="йцкнгшщзхъфвпрлджчсмтб".toCharArray();
 
-    private static char[] englishLayout="qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?".toCharArray();
-    private static char[] russianLayout="йцукенгшщзхъфывапролджэячсмитьбю.ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,".toCharArray();
+    private static final char[] ENGLISH_LAYOUT ="qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?".toCharArray();
+    private static final char[] RUSSIAN_LAYOUT ="йцукенгшщзхъфывапролджэячсмитьбю.ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,".toCharArray();
 
+    /** Automatically find wrong layout and fix it. **/
     public static String fixRussianEnglish(String text){
-        float a=isLayoutMissedRussian(text);
-        float b=isLayoutMissedEnglish(text);
-        float c=Math.max(a,b);
+        float a = isLayoutMissedRussian(text);
+        float b = isLayoutMissedEnglish(text);
+        float c = Math.max(a,b);
+
+        // we know, that layout missed, so we change it
         if(c>=0.5){
-            String tr=translate(text,englishLayout,russianLayout);
-            a=isLayoutMissedRussian(tr);
-            b=isLayoutMissedEnglish(tr);
-            if(c>Math.max(a,b)) text=tr;
+            String tr = translate(text, ENGLISH_LAYOUT, RUSSIAN_LAYOUT);
+            a = isLayoutMissedRussian(tr);
+            b = isLayoutMissedEnglish(tr);
+            if(c > Math.max(a, b)) text=tr;
         }
         return text;
     }
+
     public static float isLayoutMissedRussian(String text){
-        return isLayoutMissed(text,russianConsonants);
+        return isLayoutMissed(text, RUSSIAN_CONSONANTS);
     }
     public static float isLayoutMissedEnglish(String text){
-        return isLayoutMissed(text,englishConsonants);
+        return isLayoutMissed(text, ENGLISH_CONSONANTS);
     }
-    private static String translate(String text,char[] from, char[] to){
+    private static String translate(String text, char[] from, char[] to){
         StringBuilder textCopy=new StringBuilder(text);
         for(int i=0;i<text.length();i++){
             boolean found = false;

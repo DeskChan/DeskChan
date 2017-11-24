@@ -4,6 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Debug {
+    /** Track time of function work. Prints current stack trace if work time above 10 seconds. **/
     public static abstract class TimeTest{
         private Thread thread;
         private class TestTask extends TimerTask {
@@ -25,6 +26,8 @@ public class Debug {
         }
         abstract void run();
     }
+
+    /** Print current traceback to console. **/
     public static void printTraceBack(){
         StackTraceElement[] traceback = Thread.currentThread().getStackTrace();
         for(StackTraceElement element : traceback)

@@ -12,6 +12,11 @@ public class CorePlugin implements Plugin, MessageListener {
 	@Override
 	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
+
+		/* Quit program.
+		* Public message
+        * Params: delay: Long? - delay in ms program will quit after, default - 0
+        * Returns: None */
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
 			int delay = 0;
 			if (data != null) {
@@ -24,17 +29,32 @@ public class CorePlugin implements Plugin, MessageListener {
 			Map<String, Object> m = new HashMap<>();
 			m.put("delay", delay);
 			pluginProxy.log("Plugin " + sender + " requested application quit in " + delay / 1000 + " seconds.");
-			if(delay>20)
-				pluginProxy.sendMessage("core-utils:notify-after-delay", m, (s, d) -> {
-					PluginManager.getInstance().quit();
-				});
-			else PluginManager.getInstance().quit();
+			if(delay > 20)
+				pluginProxy.sendMessage("core-utils:notify-after-delay", m, (s, d) -> PluginManager.getInstance().quit() );
+			else
+				PluginManager.getInstance().quit();
 		});
+
+		/* Registers alternative to tag. All messages sent to srcTag will be redirected to dstTag
+		   if dstTag priority is max.
+		* Public message
+        * Params: srcTag: String! - source tag to redirect
+        *         dstTag: String! - destination tag
+        *         priority: String! - priority of alternative
+        * Returns: None */
 		pluginProxy.addMessageListener("core:register-alternative", (sender, tag, data) -> {
 			Map m = (Map) data;
 			registerAlternative(m.get("srcTag").toString(), m.get("dstTag").toString(),
 					sender, (Integer) m.get("priority"));
 		});
+
+		/* Registers alternatives. Look for core:register-alternative
+		* Public message
+        * Params: List of Map
+        * 		    srcTag: String! - source tag to redirect
+        *           dstTag: String! - destination tag
+        *           priority: String! - priority of alternative
+        * Returns: None */
 		pluginProxy.addMessageListener("core:register-alternatives", (sender, tag, data) -> {
 			List<Map> alternativeList = (List<Map>) data;
 			for (Map m : alternativeList) {
@@ -42,18 +62,44 @@ public class CorePlugin implements Plugin, MessageListener {
 						sender, (Integer) m.get("priority"));
 			}
 		});
+
+		/* Unregisters alternative. Look for core:register-alternative
+		* Public message
+        * Params: srcTag: String! - source tag to redirect
+        *         dstTag: String! - destination tag
+        * Returns: None */
 		pluginProxy.addMessageListener("core:unregister-alternative", (sender, tag, data) -> {
 			Map m = (Map) data;
 			unregisterAlternative(m.get("srcTag").toString(), m.get("dstTag").toString(), sender);
 		});
+
+		/* Change alternative priority. Look for core:register-alternative
+		* Public message
+        * Params: srcTag: String! - source tag to redirect
+        *         dstTag: String! - destination tag
+        *         priority: String! - priority of alternative
+        * Returns: None */
 		pluginProxy.addMessageListener("core:change-alternative-priority", (sender, tag, data) -> {
 			Map m = (Map) data;
 			changeAlternativePriority(m.get("srcTag").toString(), m.get("dstTag").toString(),
 					(Integer) m.get("priority"));
 		});
+
+		/* Get alternatives map.
+		* Public message
+        * Params: None
+        * Returns: Map of Lists of Maps, "source" -> "alternatives", every list descending by priority
+        *            tag: String - destination tag
+        *            plugin: String - owner of destination tag
+        *            priority: Int - priority of alternative*/
 		pluginProxy.addMessageListener("core:query-alternatives-map", (sender, tag, data) -> {
 			pluginProxy.sendMessage(sender, getAlternativesMap());
 		});
+
+		/* Clearing all dependencies of unloaded plugin.
+		 * Technical message
+		 * Params: name: String - name of plugin
+		 * Returns: None  */
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			if(data==null) {
 				PluginManager.log("attempt to unload null plugin");
@@ -96,10 +142,17 @@ public class CorePlugin implements Plugin, MessageListener {
 				}
 			}
 		});
+
+		/* Get plugin data directory.
+		 * Public message
+		 * Params: None
+		 * Returns: String - path to directory  */
 		pluginProxy.addMessageListener("core:get-plugin-data-dir", (sender, tag, data) -> {
 			Path pluginDataDirPath = PluginManager.getPluginDataDirPath(sender);
 			pluginProxy.sendMessage(sender, pluginDataDirPath.toString());
 		});
+
+
 		pluginProxy.addMessageListener("core:create-pipe", (sender, tag, data) -> {
 			String name = data.toString();
 			if (!pipes.containsKey(name)) {

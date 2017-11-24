@@ -15,6 +15,7 @@ public class Main implements Plugin {
     public String characterName;
     public String userName;
 
+    /** Single phrase in chat. **/
     private class ChatPhrase{
         public final String text;
         public final int sender;
@@ -28,17 +29,17 @@ public class Main implements Plugin {
         public HashMap<String,Object> toMap(){
             HashMap<String,Object> map = new HashMap<>();
             String color = null;
-            String senderName = "";
+            String senderName = null;
             String font = null;
             String dateString = "(" + new SimpleDateFormat("HH:mm:ss").format(date) + ") ";
             switch(sender){
                 case 0: {
-                    color = properties.getString("deskchan-color");
+                    color = properties.getString("deskchan-color", "red");
                     font  = properties.getString("deskchan-font");
                     senderName = characterName;
                 } break;
                 case 1: {
-                    color = properties.getString("user-color");
+                    color = properties.getString("user-color", "#00A");
                     font  = properties.getString("user-font");
                     senderName = userName;
                 } break;
@@ -58,10 +59,11 @@ public class Main implements Plugin {
 
     private boolean chatIsOpened = false;
 
-    private LinkedList<ChatPhrase> history;
+    private LinkedList<ChatPhrase> history = new LinkedList<>();;
     private int logLength = 1;
-    private ArrayList<HashMap<String,Object>> historyToChat(){
-        ArrayList <HashMap<String,Object>> ret = new ArrayList<>();
+
+    private ArrayList<HashMap> historyToChat(){
+        ArrayList<HashMap> ret = new ArrayList<>();
         List<ChatPhrase> list = history.subList(Math.max(history.size() - logLength, 0), history.size());
         if(list.size() == 0){
             ret.add(new ChatPhrase("История сообщений пуста", 2).toMap());
@@ -77,49 +79,63 @@ public class Main implements Plugin {
     public boolean initialize(PluginProxyInterface newPluginProxy) {
         pluginProxy = newPluginProxy;
         log("setup chat window started");
-        history = new LinkedList<>();
 
+        // setting default properties
         properties = pluginProxy.getProperties();
         properties.load();
-        properties.putIfNull("length", 10);
-        properties.putIfNull("fixer", true);
-        properties.putIfNull("deskchan-color", "red");
-        properties.putIfNull("user-color",  "#00A");
+        properties.putIfHasNot("length", 10);
+        properties.putIfHasNot("fixer", true);
 
-        logLength = properties.getInteger("length").intValue();
+        logLength = properties.getInteger("length");
 
         characterName = "DeskChan";
         userName = pluginProxy.getString("default-username");
 
+        /* Open chat request.
+        * Public message
+        * Params: None
+        * Returns: None */
         pluginProxy.addMessageListener("chat:setup", (sender, tag, data) -> {
             chatIsOpened = true;
             setupChat();
         });
 
+        /* Chat has been closed through GUI.
+        * Technical message
+        * Params: None
+        * Returns: None */
         pluginProxy.addMessageListener("chat:closed", (sender, tag, data) -> {
             chatIsOpened = false;
         });
 
+        /* Someone made request to clear all messages from chat. We're clearing it.
+        * Public message
+        * Params: None
+        * Returns: None */
         pluginProxy.addMessageListener("chat:clear", (sender, tag, data) -> {
             history.clear();
             setupChat();
         });
 
+        /* Someone made request to change user phrases color in chat.
+        * Public message
+        * Params: color: String? or null to reset
+        * Returns: None */
         pluginProxy.addMessageListener("chat:set-user-color", (sender, tag, data) -> {
             properties.put("user-color", data.toString());
             setupChat();
         });
 
+        /* Someone made request to change user DeskChan color in chat.
+        * Public message
+        * Params: color: String? or null to reset
+        * Returns: None */
         pluginProxy.addMessageListener("chat:set-deskchan-color", (sender, tag, data) -> {
-            properties.put("deskchan-color", data.toString());
+            properties.putIfNotNull("deskchan-color", data.toString());
             setupChat();
         });
 
-        pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
-            put("name", pluginProxy.getString("chat.open"));
-            put("msgTag", "chat:setup");
-        }});
-
+        /* Listening all DeskChan speech to show it in chat. */
         pluginProxy.addMessageListener("DeskChan:say", (sender, tag, data) -> {
             String text;
             if(data instanceof Map){
@@ -130,9 +146,10 @@ public class Main implements Plugin {
                     text = (String) m.get("msgData");
                 else text="";
             } else {
-                text=data.toString();
+                text = data.toString();
             }
 
+            // very small timer to run this func in other thread
             pluginProxy.setTimer(20, (s, d) -> {
                 history.add(new ChatPhrase(text, 0));
                 if (!chatIsOpened) return;
@@ -141,21 +158,25 @@ public class Main implements Plugin {
                     LinkedList<HashMap<String, Object>> list = new LinkedList<>();
                     list.add(new HashMap<String, Object>() {{
                         put("id", "textname");
-                        put("value",historyToChat());
+                        put("value", historyToChat());
                     }});
                     put("controls", list);
-                    put("name",pluginProxy.getString("chat"));
+                    put("name", pluginProxy.getString("chat"));
                 }});
             });
-
         });
 
+        /* Listening all user speech to show it in chat.
+        * Technical message
+        * Params: value: String! - user speech text
+        * Returns: None */
         pluginProxy.addMessageListener("chat:user-said", (sender, tag, dat) -> {
             Map<String,Object> data = (Map) dat;
             String value = (String) data.getOrDefault("value", "");
             history.add(new ChatPhrase(value, 1));
 
             if(properties.getBoolean("fixer", true)){
+                // if user missed layout, we're trying to fix it and resend user speech again
                 String translate = FixLayout.fixRussianEnglish(value);
                 if (!translate.equals(value)) {
                     history.add(new ChatPhrase(pluginProxy.getString("wrong-layout") + " " + translate, 2));
@@ -168,24 +189,31 @@ public class Main implements Plugin {
             setupChat();
         });
 
-        pluginProxy.addMessageListener("chat:options-saved", (sender, tag, dat) -> {
-            Map<String,Object> data = (Map) dat;
-            properties.put("fixer",  data.get("fixer"));
-            properties.put("length", data.get("length"));
-            logLength = properties.getInteger("length").intValue();
-            properties.put("user-color",     data.get("user-color"));
-            properties.put("deskchan-color", data.get("deskchan-color"));
-            String font = (String) data.get("user-font");
-            if(font != null)
-                properties.put("user-font", font);
-            font = (String) data.get("deskchan-font");
-            if(font != null)
-                properties.put("deskchan-font", font);
+        /* Saving options changed in options window.
+        * Public message
+        * Params: fixer: Boolean? - turn layout fixed on/off
+        *         length: Int? - history length
+        *         user-color: String? - user color
+        *         deskchan-color: String? - deskchan color
+        *         user-font: String? - user font in inner format
+        *         deskchan-fontr: String? - deskchan font in inner format
+        * Returns: None */
+        pluginProxy.addMessageListener("chat:save-options", (sender, tag, dat) -> {
+            Map data = (Map) dat;
+            properties.putIfNotNull("fixer",  data.get("fixer"));
+            properties.putIfNotNull("length", data.get("length"));
+            properties.putIfNotNull("user-color",     data.get("user-color"));
+            properties.putIfNotNull("deskchan-color", data.get("deskchan-color"));
+            properties.putIfNotNull("user-font", data.get("user-font"));
+            properties.putIfNotNull("deskchan-font", data.get("deskchan-font"));
+
+            logLength = properties.getInteger("length", logLength);
             setupOptions();
             saveOptions();
             setupChat();
         });
 
+        /* Character was updated, so we changing his name and username in chat. */
         pluginProxy.addMessageListener("talk:character-updated", (sender, tag, data) -> {
             Map map = (Map) data;
             characterName = (String) map.get("name");
@@ -203,12 +231,19 @@ public class Main implements Plugin {
             }
         });
 
+        /* Registering "Open chat" button in menu. */
+        pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
+            put("name", pluginProxy.getString("chat.open"));
+            put("msgTag", "chat:setup");
+        }});
+
         log("setup chat window completed");
         setupChat();
         setupOptions();
         return true;
     }
 
+    /** Chat drawing. **/
     void setupChat() {
         if(!chatIsOpened) return;
         pluginProxy.sendMessage("gui:show-custom-window", new HashMap<String, Object>() {{
@@ -241,10 +276,12 @@ public class Main implements Plugin {
             put("onClose","chat:closed");
         }});
     }
+
+    /** Options window drawing. **/
     void setupOptions(){
         pluginProxy.sendMessage("gui:setup-options-submenu", new HashMap<String, Object>() {{
             put("name", pluginProxy.getString("options"));
-            put("msgTag", "chat:options-saved");
+            put("msgTag", "chat:save-options");
             List<HashMap<String, Object>> list = new LinkedList<>();
             list.add(new HashMap<String, Object>() {{
                 put("id", "fixer");
@@ -295,14 +332,12 @@ public class Main implements Plugin {
             put("controls", list);
         }});
     }
+
     void saveOptions(){
         properties.save();
     }
-    static void log(String text) {
-        pluginProxy.log(text);
-    }
 
-    static void log(Throwable e) {
-        pluginProxy.log(e);
-    }
+    static void log(String text) { pluginProxy.log(text); }
+
+    static void log(Throwable e) { pluginProxy.log(e);    }
 }

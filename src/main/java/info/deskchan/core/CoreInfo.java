@@ -8,21 +8,26 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+/** Class containg all build info. **/
 public class CoreInfo {
 
 	/** Map representing all build config variables. Build config is set in gradle build script. **/
 	private static final Map<String, String> info = new HashMap<>();
-	
+
+	/** Get config variable by key. **/
 	public static String get(String key) {
 		return info.getOrDefault(key, null);
 	}
-	
+
+	/** Get all variables names. **/
 	public static Set<String> keys() {
 		return info.keySet();
 	}
 
+	/** Locales dictionary, "code" -> "name". **/
 	public static Map<String,String> locales;
 
+	/** Print formatted info about build. **/
 	public static void printInfo() {
 		PluginManager.log((!CoreInfo.get("NAME").equals("DeskChan") ? "Unofficial build: " : "")+CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
 		PluginManager.log("Go to " + CoreInfo.get("PROJECT_SITE_URL") + " for more information");
@@ -50,7 +55,7 @@ public class CoreInfo {
 			info.put("NAME", "DeskChan");
 		}
 
-		locales=new HashMap<>();
+		locales = new HashMap<>();
 		locales.put("ru", "Русский");
 		locales.put("en", "English");
 

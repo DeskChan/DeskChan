@@ -5,10 +5,13 @@ import java.util.*
 
 class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashMap<String, Any>(){
 
+    /** Get value converted to string or null if no such key found. **/
     fun getString(key:String) : String? = get(key)?.toString()
 
+    /** Get value converted to string or default if no such key found. **/
     fun getString(key:String, default: String) = getString(key) ?: default
 
+    /** Get value converted to long or null if no such key found or cannot convert it to long. **/
     fun getLong(key:String) : Long?{
         try {
             val obj:Any? = get(key)
@@ -20,11 +23,14 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
         return null
     }
 
+    /** Get value converted to long or default if no such key found or cannot convert it to long. **/
     fun getLong(key: String, default: Long) : Long = getInteger(key)?.toLong() ?: default
 
+    /** Get value converted to integer or null if no such key found or cannot convert it to long. **/
     fun getInteger(key: String) : Int? = getLong(key)?.toInt()
 
-    fun getInteger(key: String, default: Int) = getLong(key) ?: default
+    /** Get value converted to integer or default if no such key found or cannot convert it to long. **/
+    fun getInteger(key: String, default: Int) : Int = getLong(key)?.toInt() ?: default
 
     fun getDouble(key:String) : Double?{
         try {
@@ -37,12 +43,16 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
         return null
     }
 
+    /** Get value converted to double or default if no such key found or cannot convert it to long. **/
     fun getDouble(key:String, default:Double) : Double = getDouble(key) ?: default
 
+    /** Get value converted to double or null if no such key found or cannot convert it to long. **/
     fun getFloat(key: String) : Float? = getDouble(key)?.toFloat()
 
+    /** Get value converted to float or default if no such key found or cannot convert it to long. **/
     fun getFloat(key: String, default: Float) : Float = getDouble(key)?.toFloat() ?: default
 
+    /** Get value converted to boolean or null if no such key found. **/
     fun getBoolean(key:String) : Boolean?{
         try {
             val obj:Any? = get(key)
@@ -54,16 +64,25 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
         return null
     }
 
+    /** Get value converted to boolean or default if no such key found . **/
     fun getBoolean(key:String, default:Boolean) : Boolean = getBoolean(key) ?: default
 
-    fun putIfNull(key: String, value:Any?){
+    /** Put value if there is no such key in properties and value is not null. **/
+    fun putIfHasNot(key: String, value:Any?){
         if (value != null && get(key) == null) put(key, value)
     }
 
+    /** Put value if value is not null. **/
+    fun putIfNotNull(key: String, value:Any?){
+        if (value != null) put(key, value)
+    }
+
+    /** Loads properties from default location and overwrites current properties map. **/
     fun load(){
         load_impl(true)
     }
 
+    /** Loads properties from default location and merges current properties map. **/
     fun merge(){
         load_impl(false)
     }
@@ -99,6 +118,7 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
         }
     }
 
+    /** Saves properties to default location. **/
     fun save(){
         val configPath = proxyInterface.dataDirPath.resolve("config.properties")
         try {

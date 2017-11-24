@@ -43,7 +43,7 @@ public class Main implements Plugin {
 
 		pluginProxy.getProperties().load();
 		currentPreset = CharacterPreset.getFromJSON(new JSONObject(getProperties().getString("characterPreset", "{}")));
-		getProperties().putIfNull("quotesAutoSync", true);
+		getProperties().putIfNotNull("quotesAutoSync", true);
 
 		log("Loaded options");
 		pluginProxy.addMessageListener("talk:request", (sender, tag, dat) -> {
