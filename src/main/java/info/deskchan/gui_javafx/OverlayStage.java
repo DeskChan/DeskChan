@@ -85,6 +85,10 @@ class OverlayStage extends Stage {
 	}
 	public static void updateStage(String name){
 		LayerMode mode;
+		if (name == null){
+			updateStage();
+			return;
+		}
 		try {
 			mode = LayerMode.valueOf(name);
 		} catch (Exception e){
@@ -128,6 +132,7 @@ class OverlayStage extends Stage {
 		}
 		currentMode = mode;
 		instance.toFront();
+		Main.getProperties().put("character.layer_mode", mode);
 	}
 
 	public static LayerMode getCurrentStage(){

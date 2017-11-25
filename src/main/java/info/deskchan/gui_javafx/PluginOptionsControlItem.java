@@ -1,6 +1,5 @@
 package info.deskchan.gui_javafx;
 
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -191,6 +190,7 @@ interface PluginOptionsControlItem {
 		@Override
 		public void init(Map<String, Object> options) {
 			area = new TextArea();
+			area.setPadding(new Insets(5,5,5,5));
 			Integer rowCount = (Integer) options.getOrDefault("rowCount", 5);
 			area.setPrefRowCount(rowCount);
 		}
@@ -213,7 +213,7 @@ interface PluginOptionsControlItem {
 		public void init(Map<String, Object> options) {
 			scrollPane = new ScrollPane();
 			area = new TextFlow(new Text("Пустой текст"));
-
+			area.setPadding(new Insets(0, 5, 0, 5));
 			scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 			scrollPane.setContent(area);
 			scrollPane.setFitToWidth(true);
@@ -224,9 +224,10 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void setValue(Object value) {
+			area.getChildren().clear();
 			if(value instanceof String){
-				Text t=new Text((String)value);
-				area=new TextFlow(t);
+				Text t = new Text((String) value);
+				area.getChildren().add(t);
 				return;
 			}
 			List<Object> values;
@@ -262,7 +263,6 @@ interface PluginOptionsControlItem {
 					} catch (Exception e){ }
 				}
 			}
-			area.getChildren().clear();
 			area.getChildren().addAll(list);
 		}
 
@@ -271,35 +271,6 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public Node getNode() { return scrollPane; }
-	}
-
-	abstract class ChangeableItem implements PluginOptionsControlItem {
-
-		protected void configureOnChangeAction(ObservableValue<? extends Number> valueProperty, Map<String, Object> configuration) {
-			if(configuration != null && configuration.containsKey("msgTag")) {
-				String msgTag = (String) configuration.get("msgTag");
-				String newValueField = (String) configuration.getOrDefault("newValueField", "value");
-				String oldValueField = (String) configuration.getOrDefault("oldValueField", "oldValue");
-				double multiplier = ((Number) configuration.getOrDefault("multiplier", 1.0)).doubleValue();
-				Map<String, Object> data;
-				if (configuration.containsKey("data")) {
-					data = (Map) configuration.get("data");
-				} else {
-					data = null;
-				}
-
-				valueProperty.addListener((obs, oldValue, newValue) -> {
-					Map<String, Object> eventData = new HashMap<>();
-					eventData.put(newValueField, newValue.doubleValue() * multiplier);
-					eventData.put(oldValueField, oldValue.doubleValue());
-					if (data != null) {
-						data.forEach(eventData::put);
-					}
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, eventData);
-				});
-			}
-		}
-
 	}
 
 	class ImprovedSpinner<T> extends Spinner<T> {
@@ -321,7 +292,7 @@ interface PluginOptionsControlItem {
 		}
 	}
 
-	class IntSpinnerItem extends ChangeableItem {
+	class IntSpinnerItem implements PluginOptionsControlItem {
 		
 		private final Spinner<Integer> spinner = new ImprovedSpinner<>();
 
@@ -330,10 +301,14 @@ interface PluginOptionsControlItem {
 			int min =  ((Number) options.getOrDefault("min",   0)).intValue();
 			int max =  ((Number) options.getOrDefault("max", 100)).intValue();
 			int step = ((Number) options.getOrDefault("step",  1)).intValue();
-
 			spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, min, step));
-			Map<String, Object> onChangeMap = (Map) options.get("onChange");
-			configureOnChangeAction(spinner.valueProperty(), onChangeMap);
+
+			if (options.get("msgTag") != null){
+				String msgTag = options.get("msgTag").toString();
+				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
+				});
+			}
 		}
 		
 		@Override
@@ -353,7 +328,7 @@ interface PluginOptionsControlItem {
 		
 	}
 
-	class FloatSpinnerItem extends ChangeableItem {
+	class FloatSpinnerItem implements PluginOptionsControlItem {
 
 		private final Spinner<Double> spinner = new ImprovedSpinner<>();
 
@@ -364,8 +339,12 @@ interface PluginOptionsControlItem {
 			double step = ((Number) options.getOrDefault("step",  1)).doubleValue();
 
 			spinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(min, max, min, step));
-			Map<String, Object> onChangeMap = (Map) options.get("onChange");
-			configureOnChangeAction(spinner.valueProperty(), onChangeMap);
+			if (options.get("msgTag") != null){
+				String msgTag = options.get("msgTag").toString();
+				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
+				});
+			}
 		}
 
 		@Override
@@ -385,7 +364,7 @@ interface PluginOptionsControlItem {
 
 	}
 
-	class SliderItem extends ChangeableItem {
+	class SliderItem implements PluginOptionsControlItem {
 
 		private Slider slider = new Slider();
 
@@ -393,7 +372,7 @@ interface PluginOptionsControlItem {
 		public void init(Map<String, Object> options) {
 			double min =  ((Number) options.getOrDefault("min",   0)).doubleValue();
 			double max =  ((Number) options.getOrDefault("max", 100)).doubleValue();
-			Double step = ((Number) options.getOrDefault("step",  1)).doubleValue();
+			Double step = ((Number) options.getOrDefault("step",  (max-min) / 20.0)).doubleValue();
 
 			slider.setMin(min);
 			slider.setMax(max);
@@ -406,8 +385,12 @@ interface PluginOptionsControlItem {
 				slider.setSnapToTicks(true);
 			}
 
-			Map<String, Object> onChangeMap = (Map) options.get("onChange");
-			configureOnChangeAction(slider.valueProperty(), onChangeMap);
+			if (options.get("msgTag") != null){
+				String msgTag = options.get("msgTag").toString();
+				slider.valueProperty().addListener((obs, oldValue, newValue) -> {
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
+				});
+			}
 
 			slider.setOnScroll(event -> {
 				if (event.getDeltaY() > 0) {
@@ -444,9 +427,7 @@ interface PluginOptionsControlItem {
 			if(msgTag != null){
 				selectedProperty().addListener((obs, oldValue, newValue) -> {
 					if(oldValue.equals(newValue)) return;
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
-						put("value", newValue);
-					}});
+					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
 				});
 			}
 		}
@@ -516,6 +497,7 @@ interface PluginOptionsControlItem {
 				listView.setOnMouseClicked((event) -> {
 					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
 						put("value", new ArrayList<>(listView.getSelectionModel().getSelectedItems()));
+						put("index", new ArrayList<>(listView.getSelectionModel().getSelectedIndex()));
 					}});
 				});
 
@@ -793,13 +775,17 @@ interface PluginOptionsControlItem {
 		public void setValue(Object value) {
 			selectedFont = (String) value;
 			try {
-				Font font = LocalFont.fromString(selectedFont);
-				picker = new FontSelectorDialog(font);
-				setText(selectedFont);
-			} catch (Exception e){
-				picker = new FontSelectorDialog(LocalFont.defaultFont);
-				setText(Main.getString("default"));
-			}
+				if (selectedFont != null) {
+					Font font = LocalFont.fromString(selectedFont);
+					picker = new FontSelectorDialog(font);
+					setText(selectedFont);
+					picker.initOwner(parent);
+					return;
+				}
+			} catch (Exception e){ }
+
+			picker = new FontSelectorDialog(LocalFont.defaultFont);
+			setText(Main.getString("default"));
 			picker.initOwner(parent);
 		}
 	}

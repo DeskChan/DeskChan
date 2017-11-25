@@ -6,6 +6,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseButton;
@@ -132,12 +133,20 @@ class Balloon extends MovablePane {
 
 	class SymbolsAdder implements EventHandler<javafx.event.ActionEvent> {
 
+		private static final int delayLimit = 40;
 		private final Timeline timeline;
 		private final String text;
+		private final int addCount;
 
-		SymbolsAdder(String text) {
+		SymbolsAdder(String text, Integer delay) {
 			this.text = text;
-			timeline = new Timeline(new KeyFrame(Duration.millis(50), this));
+			if (delay < delayLimit){
+				addCount = delayLimit / delay;
+				delay = delayLimit;
+			} else
+				addCount = 1;
+
+			timeline = new Timeline(new KeyFrame(Duration.millis(delay), this));
 			timeline.setCycleCount(Timeline.INDEFINITE);
 			timeline.play();
 		}
@@ -145,20 +154,24 @@ class Balloon extends MovablePane {
 		private boolean flag = false;
 		@Override
 		public void handle(javafx.event.ActionEvent actionEvent) {
-			if(text.length() <= content.getText().length()){
-				timeline.stop();
-				return;
-			}
-			char c = text.charAt(content.getText().length());
-			if(c == '.'){
-				if(!flag) {
-					timeline.setCycleCount(timeline.getCycleCount() + 1);
-					flag = true;
+			int counter = addCount;
+			while (counter > 0) {
+				if(text.length() <= content.getText().length()){
+					timeline.stop();
 					return;
 				}
-				flag = false;
+				char c = text.charAt(content.getText().length());
+				if (c == '.') {
+					if (!flag) {
+						timeline.setCycleCount(timeline.getCycleCount() + 1);
+						flag = true;
+						return;
+					}
+					flag = false;
+				}
+				content.setText(content.getText() + c);
+				counter--;
 			}
-			content.setText(content.getText() + c);
 		}
 	}
 
@@ -170,10 +183,10 @@ class Balloon extends MovablePane {
 		stackPane.setPrefWidth(400);
 		stackPane.setMinHeight(200);
 
-		bubbleShadow.setRadius(5.0);
+		bubbleShadow.setRadius(10.0);
 		bubbleShadow.setOffsetX(1.5);
 		bubbleShadow.setOffsetY(2.5);
-		bubbleShadow.setColor(Color.BLACK);
+		bubbleShadow.setColor(Color.color(0, 0, 0, Main.getProperties().getFloat("balloon.shadow-opacity", 1.0f)));
 
 		Text label = new Text("");
 		label.setStyle("-fx-alignment: center; -fx-text-alignment: center; -fx-content-display: center;");
@@ -183,7 +196,11 @@ class Balloon extends MovablePane {
 			label.setFont(defaultFont);
 		}
 
-		symbolsAdder = new SymbolsAdder(text);
+		Integer animation_delay = Main.getProperties().getInteger("balloon.text-animation-delay", 50);
+		if (animation_delay > 0)
+			symbolsAdder = new SymbolsAdder(text, animation_delay);
+		else
+			label.setText(text);
 
 		content = label;
 		StackPane contentPane = new StackPane();
@@ -275,8 +292,10 @@ class Balloon extends MovablePane {
 	private void impl_updateBalloonLayoutX() {
 		if(positionMode == PositionMode.ABSOLUTE || character == null) return;
 		if(positionMode == PositionMode.RELATIVE){
-			loadPositionFromStorage();
-			return;
+			try{
+				loadPositionFromStorage();
+				return;
+			} catch (Exception e){ }
 		}
 		double width = prefWidth(-1);
 		double x = character.localToScreen(character.getBoundsInLocal()).getMinX();
@@ -291,8 +310,10 @@ class Balloon extends MovablePane {
 	private void impl_updateBalloonLayoutY() {
 		if(positionMode == PositionMode.ABSOLUTE || character == null) return;
 		if (positionMode == PositionMode.RELATIVE) {
-			loadPositionFromStorage();
-			return;
+			try{
+				loadPositionFromStorage();
+				return;
+			} catch (Exception e){ }
 		}
 		double y = character.localToScreen(character.getBoundsInLocal()).getMinY();
 		relocate(getPosition().getX(), y);
@@ -322,14 +343,23 @@ class Balloon extends MovablePane {
 	}
         
 	public void setBalloonOpacity(float opacity) {
-		if (opacity == 0 || opacity > 0.99) {
+		if (opacity > 0.99) {
 			balloonOpacity = 1.0f;
 			stackPane.setEffect(bubbleShadow);
 		} else {
-			balloonOpacity = Math.round(Math.abs(opacity) * 20.0f) / 20.0f;
+			balloonOpacity = Math.round(Math.abs(opacity) * 100.0f) / 100.0f;
 			stackPane.setEffect(null);
 		}
 		bubblesGroup.setOpacity(balloonOpacity);
+		Main.getProperties().getFloat("balloon.opacity", balloonOpacity);
+	}
+
+	public void setShadowOpacity(float opacity) {
+		if (opacity > 0.99)
+			opacity = 1.0f;
+
+		bubbleShadow.setColor(Color.color(0, 0, 0, opacity));
+		Main.getProperties().getFloat("balloon.shadow-opacity", opacity);
 	}
         
 	@Override
@@ -343,10 +373,11 @@ class Balloon extends MovablePane {
 	}
 	
 	@Override
-	protected void loadPositionFromStorage() {
+	protected void loadPositionFromStorage(){
 		if (positionMode == PositionMode.RELATIVE) {
 			assert character != null;
-			setPosition(character.getPosition().add(character.getSkin().getPreferredBalloonPosition(character.getImageName())));
+			Point2D position = character.getSkin().getPreferredBalloonPosition(character.getImageName());
+			setPosition(character.getPosition().add(position));
 		} else if (positionMode == PositionMode.ABSOLUTE) {
 			super.loadPositionFromStorage();
 		} else setDefaultPosition();

@@ -125,7 +125,11 @@ class MovablePane extends Pane {
 	void setPositionStorageID(String id) {
 		assert positionStorageID == null;
 		positionStorageID = id;
-		loadPositionFromStorage();
+		try {
+			loadPositionFromStorage();
+		} catch (Exception e){
+			setDefaultPosition();
+		}
 		if (positionRelativeToDesktopSize) {
 			Screen.getScreens().addListener((ListChangeListener<Screen>) change -> loadPositionFromStorage());
 		}

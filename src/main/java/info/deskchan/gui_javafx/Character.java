@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
@@ -26,9 +27,9 @@ class Character extends MovablePane {
 	private Skin skin = null;
 	private String imageName = "normal";
 	private String idleImageName = "normal";
+	private final DropShadow imageShadow = new DropShadow();
 	private PriorityQueue<MessageInfo> messageQueue = new PriorityQueue<>();
 	private Balloon balloon = null;
-	private String layerName = "normal";
 	private String balloonLayerName = "normal";
 	private Balloon.PositionMode balloonPositionMode;
 	private float scaleFactor = 1.0f;
@@ -37,6 +38,11 @@ class Character extends MovablePane {
 
 	Character(String id, Skin skin) {
 		this.id = id;
+
+		imageShadow.setRadius(10.0);
+		imageShadow.setOffsetX(1.5);
+		imageShadow.setOffsetY(2.5);
+
 		setScaleFactor(Main.getProperties().getFloat("skin.scale_factor", 1.0f));
 		setSkinOpacity(Main.getProperties().getFloat("skin.opacity", 1.0f));
 		getChildren().add(imageView);
@@ -44,6 +50,7 @@ class Character extends MovablePane {
 		setPositionStorageID("character." + id);
 
 		imageView.setMouseTransparent(true);
+
 		balloonPositionMode = Balloon.PositionMode.valueOf(
 				Main.getProperties().getString("character." + id + ".balloon_position_mode",
 						Balloon.PositionMode.AUTO.toString())
@@ -142,7 +149,7 @@ class Character extends MovablePane {
         }
         Image image = imageView.getImage();
 	    if(image==null){
-	    	App.showNotification(Main.getString("error"),Main.getString("error.no-image")+getImage());
+	    	App.showNotification(Main.getString("error"), Main.getString("error.no-image")+getImage());
 	    	return;
 		}
 		double oldWidth = imageView.getFitWidth();
@@ -153,7 +160,6 @@ class Character extends MovablePane {
 		imageView.setFitWidth(newWidth);
 		imageView.setFitHeight(newHeight);
 		resize(imageView.getFitWidth(), imageView.getFitHeight());
-		imageView.setOpacity(skinOpacity);
 
 		Lighting lighting = null;
 		if (skinColor != null && !skinColor.equals(new Color(1,1,1,1))) {
@@ -171,6 +177,7 @@ class Character extends MovablePane {
         double deltaY = -(newHeight - oldHeight) / 2;
         Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
         setPosition(newPosition);
+        setShadowOpacity(Main.getProperties().getFloat("skin.shadow-opacity", 1.0f));
 	}
 
 	private void updateImage() {
@@ -316,7 +323,7 @@ class Character extends MovablePane {
 		if (scaleFactor == 0) {
 			this.scaleFactor = 1.0f;
 		} else {
-			this.scaleFactor = Math.round(Math.abs(scaleFactor) * 20.0f) / 20.0f;
+			this.scaleFactor = Math.round(Math.abs(scaleFactor) * 100.0f) / 100.0f;
 		}
 	}
 
@@ -324,12 +331,23 @@ class Character extends MovablePane {
 		return skinOpacity;
 	}
 
-	private void setSkinOpacity(float opacity) {
-		if (opacity == 0 || opacity > 1.0) {
+	public void setSkinOpacity(float opacity) {
+		if (opacity == 0 || opacity > 0.99) {
 			skinOpacity = 1.0f;
+			imageView.setEffect(imageShadow);
 		} else {
-			skinOpacity = Math.round(Math.abs(opacity) * 20.0f) / 20.0f;
+			skinOpacity = Math.round(Math.abs(opacity) * 100.0f) / 100.0f;
+			imageView.setEffect(null);
 		}
+		imageView.setOpacity(skinOpacity);
+	}
+
+	public void setShadowOpacity(float opacity) {
+		if (opacity > 0.99)
+			opacity = 1.0f;
+
+		imageShadow.setColor(Color.color(0, 0, 0, opacity));
+		imageView.setEffect(imageShadow);
 	}
 
 	private static class MessageInfo implements Comparable<MessageInfo> {

@@ -21,7 +21,7 @@ public class Main implements Plugin {
 
         PluginProperties properties = pluginProxy.getProperties();
         properties.load();
-        properties.putIfNull("city", "Nowhere");
+        properties.putIfHasNot("city", "Nowhere");
 
         pluginProxy.addMessageListener("weather:update-city",(sender, tag, data) -> {
             String city = (String) ((Map) data).get("city");

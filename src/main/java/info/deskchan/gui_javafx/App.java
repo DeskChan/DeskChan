@@ -193,27 +193,33 @@ public class App extends Application {
 
 		/* Change skin opacity.
         * Public message
-        * Params: Map
-        *             absolute: Float! - received absolute value
+        * Params: value:Float! - absolute value, integer percent
+        *       or
+        *         Map
+        *             absolute: Float! - absolute value, float percent
         *           or
-        *             relative: Float! - received value relative from current
-        *           save: Boolean? - option will be saved if true
+        *             relative: Float! - value relative from current, float percent
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-skin-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				boolean save = (boolean) m.getOrDefault("save", false);
-				if (m.containsKey("absolute")) {
-					Double opacity = getDouble(m.get("absolute"), 1.);
-					character.changeOpacity(opacity.floatValue());
-				} else if (m.containsKey("relative")) {
-					Double opacityIncrement = getDouble(m.get("relative"), 0.);
-					character.changeOpacityRelatively(opacityIncrement.floatValue());
+				double opacity = 1;
+				if (data instanceof Map) {
+					Map<String, Object> m = (Map<String, Object>) data;
+					if (m.containsKey("absolute")) {
+						opacity = getDouble(m.get("absolute"), 1.);
+					} else if (m.containsKey("relative")) {
+						Double opacityIncrement = getDouble(m.get("relative"), 0.);
+						character.changeOpacityRelatively(opacityIncrement.floatValue());
+						return;
+					}
+				} else if (data instanceof Number){
+					opacity = ((Number) data).floatValue() / 100;
+				} else {
+					opacity = Float.parseFloat(data.toString()) / 100;
 				}
 
-				if (save) {
-					Main.getProperties().put("skin.opacity", character.getSkinOpacity());
-				}
+				Main.getProperties().put("balloon.opacity", opacity);
+				character.changeOpacity((float) opacity);
 			});
 		});
 
@@ -230,9 +236,9 @@ public class App extends Application {
 				if (data != null) {
 					Map<String, Object> m = (Map<String, Object>) data;
 					double red, green, blue, opacity;
-					red = getDouble(m, "red", 0.0);
-					green = getDouble(m, "green", 0.0);
-					blue = getDouble(m, "blue", 0.0);
+					red =     getDouble(m, "red",     0.0);
+					green =   getDouble(m, "green",   0.0);
+					blue =    getDouble(m, "blue",    0.0);
 					opacity = getDouble(m, "opacity", 1.0);
 					character.setColorFilter(red, green, blue, opacity);
 				} else {
@@ -243,32 +249,36 @@ public class App extends Application {
 
 		/* Resize character.
         * Public message
-        * Params: Map
-        *             scaleFactor: Double! - received absolute scaling value
+        * Params: value:Float - absolute scaling value, integer percents
+        *       or
+        *         Map
+        *             scaleFactor: Double! - absolute scaling value, float percents
         *           or
-        *             zoom: Float! - received scaling value relative from current
+        *             zoom: Float! - scaling value relative from current, float percents
         *           or
         *             width: Integer! - width of image
         *             height: Integer! - height of image
-        *           save: Boolean? - option will be saved if true
         * Returns: None */
 		pluginProxy.addMessageListener("gui:resize-character", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				boolean save = (boolean) m.getOrDefault("save", false);
-				if (m.containsKey("scaleFactor")) {
-					Double scaleFactor = getDouble(m.get("scaleFactor"), 1.);
-					character.resizeSkin(scaleFactor.floatValue());
-				} else if (m.containsKey("zoom")) {
-					Double zoom = getDouble(m.get("zoom"), 0.);
-					character.resizeSkinRelatively(zoom.floatValue());
-				} else if (m.containsKey("width") || m.containsKey("height")) {
-					character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
+				if (data instanceof Map) {
+					Map<String, Object> m = (Map<String, Object>) data;
+					if (m.containsKey("scaleFactor")) {
+						Double scaleFactor = getDouble(m.get("scaleFactor"), 1.);
+						character.resizeSkin(scaleFactor.floatValue());
+					} else if (m.containsKey("zoom")) {
+						Double zoom = getDouble(m.get("zoom"), 0.);
+						character.resizeSkinRelatively(zoom.floatValue());
+					} else if (m.containsKey("width") || m.containsKey("height")) {
+						character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
+					}
+				} else if (data instanceof Number){
+					character.resizeSkin(((Number) data).floatValue() / 100);
+				} else {
+					character.resizeSkin(Float.parseFloat(data.toString()) / 100);
 				}
 
-				if (save) {
-					Main.getProperties().put("skin.scale_factor", character.getScaleFactor());
-				}
+				Main.getProperties().put("skin.scale_factor", character.getScaleFactor());
 			});
 		});
 
@@ -454,6 +464,40 @@ public class App extends Application {
 			LocalFont.setDefaultFont((String) data);
 		});
 
+		/* Set balloon shadow opacity.
+        * Public message
+        * Params: opacity: Integer! - opacity, 0-100
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-balloon-shadow-opacity", (sender, tag, data) -> {
+			float opacity = ((Number) data).floatValue() / 100;
+			Main.getProperties().getFloat("skin.shadow-opacity", opacity);
+
+			if (Balloon.getInstance() != null)
+				Balloon.getInstance().setShadowOpacity(opacity);
+		});
+
+		/* Set skin shadow opacity.
+        * Public message
+        * Params: opacity: Integer! - opacity, 0-100
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-skin-shadow-opacity", (sender, tag, data) -> {
+			float opacity = ((Number) data).floatValue() / 100;
+			Main.getProperties().getFloat("balloon.shadow-opacity", opacity);
+
+			if (character != null)
+				character.setShadowOpacity(opacity);
+		});
+
+		/* Open skin dialog.
+        * Public message
+        * Params: None
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:open-skin-dialog", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				OptionsDialog.getInstance().openSkinManager();
+			});
+		});
+
 		/* Open file choosing dialog.
         * Public message
         * Params: Map
@@ -536,7 +580,6 @@ public class App extends Application {
 						type = newPath.toString();
 					}
 					character.setSkin(Skin.load(type));
-					OptionsDialog.updateInstanceTabs();
 				}
 			} catch(Exception e){
 				Main.log(e);
@@ -616,29 +659,24 @@ public class App extends Application {
 
 		/* Change multiplier for balloon timeout, in ms/symbol
         * Public message
-        * Params: Map
-        *           value: Integer? - multiplier
+        * Params: value: Integer? - multiplier
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-balloon-timeout", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				Double value = getDouble(m, "value", 200);
-				Integer val=value.intValue();
-				Main.getProperties().put("balloon.default_timeout", val.toString());
+				Integer value = getDouble(data, 200.0).intValue();
+				Main.getProperties().put("balloon.default_timeout", value);
 			});
 		});
 
 		/* Change balloon opacity
         * Public message
-        * Params: Map
-        *           value: Integer? - opacity, 0-100
+        * Params: value: Integer? - opacity, 0-100
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				Double value = getDouble(m, "value", 100) / 100;
-
+				Double value = getDouble(data, 100.0) / 100;
 				Main.getProperties().put("balloon.opacity", value.toString());
+
 				if(Balloon.getInstance() != null)
 					Balloon.getInstance().setBalloonOpacity(value.floatValue());
 			});
@@ -652,9 +690,8 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-layer-mode", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				String value=(String) m.getOrDefault("value","ALWAYS_TOP");
-				Main.getProperties().put("character.layer_mode", value);
-				OverlayStage.updateStage();
+				String value = (String) m.get("value");
+				OverlayStage.updateStage(value);
 			});
 		});
 
@@ -666,8 +703,30 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-balloon-position-mode", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				String value=(String) m.getOrDefault("value","AUTO");
+				String value = (String) m.getOrDefault("value", "AUTO");
 				App.getInstance().getCharacter().setBalloonPositionMode(Balloon.PositionMode.valueOf(value));
+			});
+		});
+
+		/* Switch text animation in balloon
+        * Public message
+        * Params: check: Boolean! - turn animation on/off
+        *       or
+        *         delay: Integer! - animation delay in ms, 0 to turn off
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:switch-balloon-animation", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (data instanceof Boolean){
+					Main.getProperties().put("balloon.text-animation-delay", (Boolean) data ? 50 : 0);
+				} else if (data instanceof Number){
+					Main.getProperties().put("balloon.text-animation-delay", ((Number) data).intValue());
+				} else if (data instanceof String){
+					try {
+						Main.getProperties().put("balloon.text-animation-delay", ((Float) Float.parseFloat(data.toString())).intValue());
+					} catch (Exception e){
+						Main.getProperties().put("balloon.text-animation-delay", data.toString().equals("true"));
+					}
+				}
 			});
 		});
 

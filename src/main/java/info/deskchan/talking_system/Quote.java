@@ -21,7 +21,7 @@ public class Quote {
 	public String spriteType;
 	
 	public Quote(String quote) {
-		this.quote = quote;
+		this.quote = quote.replace("\n", "");
 		purposeType = "CHAT";
 		character = new CharacterRange();
 		spriteType = "AUTO";

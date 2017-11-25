@@ -17,6 +17,8 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
             val obj:Any? = get(key)
             if (obj is Number)
                 return obj.toLong()
+            else if (obj == null)
+                return null
             else
                 return obj.toString().toLong()
         } catch (e: Exception){ }
@@ -37,6 +39,8 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
             val obj:Any? = get(key)
             if (obj is Number)
                 return obj.toDouble()
+            else if (obj == null)
+                return null
             else
                 return obj.toString().toDouble()
         } catch (e: Exception){ }
@@ -58,9 +62,13 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
             val obj:Any? = get(key)
             if (obj is Boolean)
                 return obj
-            else
-                return obj.toString().toLowerCase().equals("true")
-        } catch (e: Exception){ }
+            else if (obj == null)
+                return null
+            else {
+                val bool:String = obj.toString().toLowerCase()
+                return bool == "true" || bool == "1"
+            }
+        } catch (e: Exception){  }
         return null
     }
 

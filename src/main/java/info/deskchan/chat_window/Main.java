@@ -3,6 +3,7 @@ package info.deskchan.chat_window;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.core_utils.TextOperations;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -95,10 +96,17 @@ public class Main implements Plugin {
         * Public message
         * Params: None
         * Returns: None */
-        pluginProxy.addMessageListener("chat:setup", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("chat:open", (sender, tag, data) -> {
             chatIsOpened = true;
             setupChat();
         });
+
+        pluginProxy.sendMessage("core:add-command", TextOperations.toMap("tag: \"chat:open\""));
+        pluginProxy.sendMessage("core:set-event-link", new HashMap<String, Object>(){{
+            put("eventName", "gui:keyboard-handle");
+            put("commandName", "chat:open");
+            put("rule", "ALT+C");
+        }});
 
         /* Chat has been closed through GUI.
         * Technical message
@@ -119,7 +127,7 @@ public class Main implements Plugin {
 
         /* Someone made request to change user phrases color in chat.
         * Public message
-        * Params: color: String? or null to reset
+        * Params: color:String? or null to reset
         * Returns: None */
         pluginProxy.addMessageListener("chat:set-user-color", (sender, tag, data) -> {
             properties.put("user-color", data.toString());
@@ -128,7 +136,7 @@ public class Main implements Plugin {
 
         /* Someone made request to change user DeskChan color in chat.
         * Public message
-        * Params: color: String? or null to reset
+        * Params: color:String? or null to reset
         * Returns: None */
         pluginProxy.addMessageListener("chat:set-deskchan-color", (sender, tag, data) -> {
             properties.putIfNotNull("deskchan-color", data.toString());
@@ -199,18 +207,22 @@ public class Main implements Plugin {
         *         deskchan-fontr: String? - deskchan font in inner format
         * Returns: None */
         pluginProxy.addMessageListener("chat:save-options", (sender, tag, dat) -> {
-            Map data = (Map) dat;
-            properties.putIfNotNull("fixer",  data.get("fixer"));
-            properties.putIfNotNull("length", data.get("length"));
-            properties.putIfNotNull("user-color",     data.get("user-color"));
-            properties.putIfNotNull("deskchan-color", data.get("deskchan-color"));
-            properties.putIfNotNull("user-font", data.get("user-font"));
-            properties.putIfNotNull("deskchan-font", data.get("deskchan-font"));
+            try {
+                Map data = (Map) dat;
+                properties.putIfNotNull("fixer", data.get("fixer"));
+                properties.putIfNotNull("length", data.get("length"));
+                properties.putIfNotNull("user-color", data.get("user-color"));
+                properties.putIfNotNull("deskchan-color", data.get("deskchan-color"));
+                properties.putIfNotNull("user-font", data.get("user-font"));
+                properties.putIfNotNull("deskchan-font", data.get("deskchan-font"));
 
-            logLength = properties.getInteger("length", logLength);
-            setupOptions();
-            saveOptions();
-            setupChat();
+                logLength = properties.getInteger("length", logLength);
+                setupOptions();
+                saveOptions();
+                setupChat();
+            } catch (Exception e){
+
+            }
         });
 
         /* Character was updated, so we changing his name and username in chat. */
@@ -234,7 +246,7 @@ public class Main implements Plugin {
         /* Registering "Open chat" button in menu. */
         pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
             put("name", pluginProxy.getString("chat.open"));
-            put("msgTag", "chat:setup");
+            put("msgTag", "chat:open");
         }});
 
         log("setup chat window completed");
