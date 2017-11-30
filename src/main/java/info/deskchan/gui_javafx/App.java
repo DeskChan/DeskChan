@@ -734,7 +734,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				String pluginId = (String) data;
-				OptionsDialog.unregisterPluginTabs(pluginId);
+				OptionsDialog.unregisterPluginMenus(pluginId);
 				TrayMenu.remove(pluginId);
 				Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
 				while (iterator.hasNext()) {
