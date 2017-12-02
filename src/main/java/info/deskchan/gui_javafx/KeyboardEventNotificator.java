@@ -36,7 +36,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         // registering event
         pluginProxy.sendMessage("core:add-event", TextOperations.toMap("tag: \"gui:keyboard-handle\""));
 
-        pluginProxy.addMessageListener("core:update-links#gui:keyboard-handle", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("core:update-links:gui:keyboard-handle", (sender, tag, data) -> {
             updateCommandsList((List) data);
         });
 

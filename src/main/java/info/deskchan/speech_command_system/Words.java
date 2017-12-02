@@ -9,6 +9,8 @@ class Pair<K, V>{
     }
 }
 
+/** Class representing words array with info about their usage.
+ * 'Usage' means that word was already parsed and interpreted as it should be so we do not parse it again. **/
 public class Words {
     ArrayList<String> words;
     boolean[] used;

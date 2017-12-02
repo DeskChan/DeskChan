@@ -21,18 +21,22 @@ public class Main implements Plugin {
 
         log("loading speech to command module");
 
+        // Adding event information to core
         pluginProxy.sendMessage("core:add-event", TextOperations.toMap("tag: \"speech:get\""));
 
+        // Registering as alternative
         pluginProxy.sendMessage("core:register-alternative",new HashMap<String,Object>(){{
             put("srcTag", "DeskChan:user-said");
             put("dstTag", "speech:get");
             put("priority", 100);
         }});
 
-        pluginProxy.addMessageListener("core:update-links#speech:get", (sender, tag, data) -> {
+        // Transforming rules to Command every time commands list updates
+        pluginProxy.addMessageListener("core:update-links:speech:get", (sender, tag, data) -> {
             updateCommandsList((List) data);
         });
 
+        // Getting text from everywhere
         pluginProxy.addMessageListener("speech:get", (sender, tag, data) -> {
             String text;
             if (data instanceof Map)

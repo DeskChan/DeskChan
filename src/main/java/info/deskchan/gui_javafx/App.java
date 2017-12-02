@@ -632,7 +632,7 @@ public class App extends Application {
 				// canceling timer
 				Integer seq = (Integer) m.get("cancel");
 				if (seq != null) {
-					String cancelTag = sender + "$" + seq;
+					String cancelTag = sender + "#" + seq;
 					Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
 					while (iterator.hasNext()) {
 						DelayNotifier delayNotifier = iterator.next();

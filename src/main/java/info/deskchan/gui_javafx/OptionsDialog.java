@@ -734,29 +734,36 @@ class OptionsDialog extends TemplateBox {
 		PluginListItem(String id, boolean blacklisted) {
 			this.id = id;
 			this.blacklisted = blacklisted;
+			setInfo();
+		}
 
+		void setInfo(){
 			// Adding char in circle to plugin name if we know its type
-			Object type = PluginManager.getInstance().getPluginConfig(id).get("type");
-			if(type != null) {
-				Character c = Character.toLowerCase(type.toString().charAt(0));
-				label = new Label((char) ((int) c - 97 + 9398) +
-						"  " + toString());
-			} else label = new Label(toString());
+			label = new Label(toString());
 
 			// Filling row content
+			hbox.getChildren().clear();
 			hbox.getChildren().addAll(label, pane, menuBox);
 
 			// Adding tooltip with plugin information
-			tooltip = new Tooltip(PluginManager.getInstance().getPluginConfig(id).getShortDescription());
-			final String description = PluginManager.getInstance().getPluginConfig(id).getDescription();
-			if(description != null) {
-				Button infoPluginButton = new Button("?");
-				infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
-				infoPluginButton.setOnAction(event -> {
-					App.showNotification(Main.getString("info"),description);
-				});
-				hbox.getChildren().add(infoPluginButton);
+			try {
+				tooltip = new Tooltip(PluginManager.getInstance().getPluginConfig(id).getShortDescription());
+			} catch (Exception e){
+				tooltip = new Tooltip(Main.getString("no-info"));
 			}
+
+			try {
+				final String description = PluginManager.getInstance().getPluginConfig(id).getDescription();
+				if(description != null) {
+					Button infoPluginButton = new Button("?");
+					infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
+					infoPluginButton.setOnAction(event -> {
+						App.showNotification(Main.getString("info"),description);
+					});
+					hbox.getChildren().add(infoPluginButton);
+				}
+			} catch (Exception e){ }
+
 
 			// 'Unload' button
 			Button unloadPluginButton = new Button("X");
@@ -819,6 +826,7 @@ class OptionsDialog extends TemplateBox {
 				PluginManager.getInstance().removePluginFromBlacklist(id);
 				PluginManager.getInstance().tryLoadPluginByName(id);
 				blacklistPluginButton.setText(unlocked);
+				setInfo();
 			}
 			label.setText(toString());
 			menuBox.setVisible(!blacklisted);
@@ -826,7 +834,7 @@ class OptionsDialog extends TemplateBox {
 
 		@Override
 		public String toString() {
-			return blacklisted ? (id + " ["+Main.getString("blacklisted")+"]") : id;
+			return getPluginTypeLetter() + id + (blacklisted ? (" ["+Main.getString("blacklisted")+"]") : "");
 		}
 
 		/** Alert about removing important plugin. **/
@@ -838,6 +846,16 @@ class OptionsDialog extends TemplateBox {
 			alert.setContentText(Main.getString("info.shutdown_important"));
 			Optional<ButtonType> result = alert.showAndWait();
 			return (result.get() == ButtonType.OK);
+		}
+
+		private String getPluginTypeLetter(){
+			try {
+				Object type = PluginManager.getInstance().getPluginConfig(id).get("type");
+				Character c = Character.toLowerCase(type.toString().charAt(0));
+				return (char) ((int) c - 97 + 9398) + " ";
+			} catch (Exception e) {
+				return "";
+			}
 		}
 	}
 

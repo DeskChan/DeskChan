@@ -60,7 +60,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
         seq++
         responseListeners.put(seq, ResponseInfo(responseListener, count, returnListener))
-        PluginManager.getInstance().sendMessage(id + "$" + seq, tag, data)
+        PluginManager.getInstance().sendMessage(id + "#" + seq, tag, data)
         return seq
     }
 
@@ -72,7 +72,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
         seq++
         responseListeners.put(seq, ResponseInfo(responseListener, count))
-        PluginManager.getInstance().sendMessage(id + "$" + seq, tag, data)
+        PluginManager.getInstance().sendMessage(id + "#" + seq, tag, data)
         return seq
     }
 
@@ -98,7 +98,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
     }
 
     override fun handleMessage(sender: String, tag: String, data: Any?) {
-        val delimiterPas = tag.indexOf('$')
+        val delimiterPas = tag.indexOf('#')
         if (delimiterPas >= 0 && tag.startsWith(id)){
             val seq = Integer.parseInt(tag.substring(delimiterPas + 1))
             val listener = responseListeners[seq] ?: return

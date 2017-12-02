@@ -22,7 +22,7 @@ public class Main implements Plugin {
 					Integer seq = (Integer) m.get("cancel");
 					if (seq != null) {
 						synchronized (timerTasks) {
-							String cancelTag = sender + "$" + seq;
+							String cancelTag = sender + "#" + seq;
 							Iterator<DelayNotifier> iterator = timerTasks.iterator();
 							while (iterator.hasNext()) {
 								DelayNotifier task = iterator.next();

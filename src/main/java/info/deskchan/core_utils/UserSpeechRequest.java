@@ -22,7 +22,7 @@ public class UserSpeechRequest {
             ppi.setTimer(200, (s, d) -> {
                 requests.addLast(new UserSpeechRequest(sender));
                 priorityChanger.put("priority", 1000);
-                ppi.sendMessage("core:change-alternative-priority", priorityChanger);
+                ppi.sendMessage("core:register-alternative", priorityChanger);
             });
         });
 
@@ -35,7 +35,7 @@ public class UserSpeechRequest {
            ppi.sendMessage(toSend.sender, null);
            if(requests.size()==0){
                priorityChanger.put("priority", 1);
-               ppi.sendMessage("core:change-alternative-priority", priorityChanger);
+               ppi.sendMessage("core:register-alternative", priorityChanger);
            }
         });
     }

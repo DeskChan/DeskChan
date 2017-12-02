@@ -23,8 +23,8 @@ public class PluginManager {
 
 	private static boolean debugBuild = false;
 
-	Set<MessageListener> getMessageListenets(String key){
-		int delimiterPas = key.indexOf('$');
+	Set<MessageListener> getMessageListeners(String key){
+		int delimiterPas = key.indexOf('#');
 		if (delimiterPas >= 0)
 			key = key.substring(0, delimiterPas);
 
@@ -95,7 +95,7 @@ public class PluginManager {
 			return false;
 		}
 		if (!plugins.containsKey(id)) {
-			Debug.TimeTest initializer = new Debug.TimeTest(){
+			new Debug.TimeTest(){
 				@Override
 				void run(){
 					PluginProxy entity = PluginProxy.Companion.create(plugin, id, config);
@@ -151,7 +151,7 @@ public class PluginManager {
 
 	/**  Register tag listener. All messages that sending to <b>tag</b> will be automatically sent to <b>listener.handle</b>.  **/
 	void registerMessageListener(String tag, MessageListener listener) {
-		Set<MessageListener> listeners = getMessageListenets(tag);
+		Set<MessageListener> listeners = getMessageListeners(tag);
 		if (listeners == null) {
 			listeners = new HashSet<>();
 			messageListeners.put(tag, listeners);
@@ -166,7 +166,7 @@ public class PluginManager {
 
 	/**  Unregister tag listener. **/
 	void unregisterMessageListener(String tag, MessageListener listener) {
-		Set<MessageListener> listeners = getMessageListenets(tag);
+		Set<MessageListener> listeners = getMessageListeners(tag);
 		if (listeners != null) {
 			listeners.remove(listener);
 			if (listeners.size() == 0) {
@@ -177,7 +177,7 @@ public class PluginManager {
 
 	/**  Get listeners count. **/
 	int getMessageListenersCount(String tag) {
-		Set<MessageListener> listeners = getMessageListenets(tag);
+		Set<MessageListener> listeners = getMessageListeners(tag);
 		if (listeners != null) {
 			return listeners.size();
 		}
@@ -192,7 +192,7 @@ public class PluginManager {
 	 * @param data Additional data that will be sent with query, can be null
 	 */
 	void sendMessage(String sender, String tag, Object data) {
-		Set<MessageListener> listeners = getMessageListenets(tag);
+		Set<MessageListener> listeners = getMessageListeners(tag);
 		if (listeners != null) {
 			for (MessageListener listener : listeners) {
 				try {

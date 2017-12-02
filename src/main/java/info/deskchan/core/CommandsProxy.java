@@ -266,7 +266,7 @@ public class CommandsProxy{
      * @param eventName Event name
      */
     private static void sendUpdateByEvent(String eventName){
-        proxy.sendMessage("core:update-links#"+eventName, getCommandsMatch(eventName));
+        proxy.sendMessage("core:update-links:"+eventName, getCommandsMatch(eventName));
     }
 
     /** Send updated list of commands subscribed to event to plugin.
@@ -279,7 +279,7 @@ public class CommandsProxy{
                 toUpdate.add((String) entry.key1);
         }
         for(String event : toUpdate){
-            proxy.sendMessage("core:update-links#"+event, getCommandsMatch(event));
+            proxy.sendMessage("core:update-links:"+event, getCommandsMatch(event));
         }
     }
 

@@ -50,7 +50,7 @@ class OpenCommand{
                             value.execute()
                             break
                         default:
-                            ('cmd /c start '+wrap(value)).execute()
+                            ('cmd /c start "" ' + wrap(value)).execute()
                             break
                     }
                     break
@@ -60,7 +60,7 @@ class OpenCommand{
                             value.execute()
                             break
                         default:
-                            ('xdg-open '+wrap(value)).execute()
+                            ('xdg-open ' + wrap(value)).execute()
                             break
                     }
                     break
@@ -70,7 +70,7 @@ class OpenCommand{
                             value.execute()
                             break
                         default:
-                            ('open '+wrap(value)).execute()
+                            ('open ' + wrap(value)).execute()
                             break
                     }
                     break
@@ -143,6 +143,12 @@ class OpenCommand{
         load()
         instance.sendMessage("core:add-command", [tag: pluginName + ':run'])
         instance.sendMessage("core:add-command", [tag: pluginName + ':open'])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':open-file'])
+
+        instance.addMessageListener(pluginName + ':open-link', { sender, tag, d ->
+            println(d.toString())
+            new LinkEntry(d.toString(), LinkEntry.Types.FILE, []).open()
+        })
 
         instance.addMessageListener(pluginName + ':open', { sender, tag, d ->
             Map m = d

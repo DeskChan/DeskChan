@@ -2,6 +2,7 @@ package info.deskchan.speech_command_system;
 
 import java.util.*;
 
+/** Modified fuzzy regular expression turned into state machine. **/
 public class RegularRule{
     public static void Testing(){
         String[] correct_rules = {"погода", "поставь таймер {datetime:RelativeDateTime}", "(открой|запусти) браузер", "включи компьютер", "запусти   будильник {datetime:RelativeDateTime}", "(перейди|открой) ?ярлык (папку|файл)",
@@ -43,9 +44,14 @@ public class RegularRule{
 
     }
 
-    protected int max_word_length=0;
-    public boolean orderDependent=false;
-    public boolean fullMatch=false;
+    /** So I wanted to use it somewhere but do not remember where. Let it float here. **/
+    protected int max_word_length = 0;
+
+    /** If you want to interpret rule with order dependence, so 'hello hi' will not be equal to 'hi hello'. **/
+    public boolean orderDependent = false;
+
+    /** Decrease matching percent if some words was not found in rule. **/
+    public boolean fullMatch = false;
 
     private class ParseOptions{
         public int start;
@@ -662,8 +668,12 @@ public class RegularRule{
     public MatchResult parse(String phrase, ArrayList<String> words){
         parseOptions = new ParseOptions(phrase, words, max_word_length, orderDependent);
         SearchResult result = start.parse();
-        int mass=0;
-        for(int i=0,le;i<words.size();i++){
+
+        // whole symbols count in text
+        int mass = 0;
+
+        // trying to resolve situations where some words was used more than once, like text 'hi hello' with rule 'hi hello hi'
+        for(int i = 0, le; i < words.size(); i++){
             le = parseOptions.users.usersCount(i);
             mass += words.get(i).length();
             if(le > 1){
@@ -672,11 +682,13 @@ public class RegularRule{
                         parseOptions.users.getWordUsers(i).remove(i);
                         break;
                     }
+
+                // cannot resolve
                 if(!start.parsed) return new MatchResult();
             }
         }
         if(fullMatch && result.result>0.5)
-            result.result *= 0.5f+(float)result.wordSequenceLength/mass/2.0f;
+            result.result *= 0.5f + (float) result.wordSequenceLength / mass / 2.0f;
 
         return new MatchResult(result, parseOptions);
     }
