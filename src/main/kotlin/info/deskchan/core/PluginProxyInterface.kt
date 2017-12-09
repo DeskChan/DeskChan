@@ -72,10 +72,13 @@ interface PluginProxyInterface : MessageListener {
      * but also in main bundle. */
     fun getString(key: String): String
 
+    /** Use this to get path to 'DeskChan' directory. **/
     val rootDirPath: Path
 
+    /** Use this to get path where plugin should store temporary user data. **/
     val dataDirPath: Path
 
+    /** Use this to get path to 'assets' folder, where stored program assets. **/
     val assetsDirPath: Path
 
     /** Log text to file and console. **/

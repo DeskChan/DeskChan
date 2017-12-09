@@ -95,67 +95,73 @@ public class TextOperations {
         return words;
     }
 
+    /** Converts text to map. <br> Example: 'key1: value1, key2: "value 22" value21' **/
     public static Map<String,Object> toMap(String text){
-        TagsContainer tags=new TagsContainer(text);
-        Map<String,Object> map=new HashMap<>();
+        TagsMap tags = new TagsMap(text);
+        Map<String,Object> map = new HashMap<>();
+
         for(HashMap.Entry<String, List<String>> entry : tags.entrySet()){
-            if(entry.getValue().size()==0) continue;
-            if(entry.getValue().size()==1)
-                map.put(entry.getKey(),entry.getValue().get(0));
+            if(entry.getValue().size() == 0) continue;
+            if(entry.getValue().size() == 1)
+                map.put(entry.getKey(), entry.getValue().get(0));
             else
-                map.put(entry.getKey(),entry.getValue());
+                map.put(entry.getKey(), entry.getValue());
         }
         return map;
     }
-    public static class TagsContainer {
-        private HashMap<String, List<String>> tags;
 
-        public TagsContainer() {
+    public static class TagsMap{
+
+        private Map<String, List<String>> tags;
+
+        public TagsMap() {
             tags = new HashMap<>();
         }
 
-        public TagsContainer(String text) {
-            tags = new HashMap<>();
+        public TagsMap(String text) {
+            this();
             put(text);
         }
 
-        public boolean put(String tag, List<String> args) {
-            tags.put(tag, args);
-            return true;
+        public void put(String tag, List<String> args) {
+            if (args.size() > 0) tags.put(tag, args);
         }
 
+        /** Split input values string to list. **/
         private static ArrayList<String> split(String text) {
             ArrayList<String> args = new ArrayList<String>();
+            if (text == null || text.length() < 3) return args;
+
             boolean inQuoteMarks = false;
-            int st = 0;
+            int startPos = 0;
             for (int c = 0; c < text.length(); c++) {
                 if (text.charAt(c) == '"') inQuoteMarks = !inQuoteMarks;
                 else if (text.charAt(c) == ' ' && !inQuoteMarks) {
-                    if (st == c) {
-                        st = c + 1;
+                    if (startPos == c) {
+                        startPos = c + 1;
                         continue;
                     }
-                    if (text.charAt(st) == '"' && text.charAt(c - 1) == '"')
-                        args.add(text.substring(st + 1, c - 1));
+                    if (text.charAt(startPos) == '"' && text.charAt(c - 1) == '"')
+                        args.add(text.substring(startPos + 1, c - 1));
                     else
-                        args.add(text.substring(st, c));
-                    st = c + 1;
+                        args.add(text.substring(startPos, c));
+                    startPos = c + 1;
                 }
             }
-            if (st < text.length()) {
-                int a = st + (text.charAt(st) == '"' ? 1 : 0);
+            if (startPos < text.length()) {
+                int a = startPos + (text.charAt(startPos) == '"' ? 1 : 0);
                 int b = text.length() - (text.charAt(text.length() - 1) == '"' ? 1 : 0);
                 args.add(text.substring(a, b));
             }
             return args;
         }
 
-        public boolean put(String tag, String args) {
+        public void put(String tag, String args) {
             try {
-                tags.put(tag, split(args));
-                return true;
+                List<String> list = split(args);
+                if (list.size() > 0) tags.put(tag, list);
             } catch (Exception e) {
-                return false;
+                throw new IllegalArgumentException(args);
             }
         }
 
@@ -164,7 +170,7 @@ public class TextOperations {
             boolean inQuoteMarks = false;
             boolean before = true;
             text = text.replace("\n", "") + ",";
-            String tagname = new String();
+            String tagname = "";
             int st = 0;
             for (int c = 0; c < text.length(); c++) {
                 if (!before) {
@@ -172,7 +178,7 @@ public class TextOperations {
                         ArrayList<String> list = new ArrayList<>();
                         tags.put(tagname, split(text.substring(st, c)));
                         st = c + 1;
-                        tagname = new String();
+                        tagname = "";
                         before = true;
                     }
                 } else if (text.charAt(c) == '"') inQuoteMarks = !inQuoteMarks;
@@ -193,72 +199,68 @@ public class TextOperations {
         }
 
         public String getAsString(String tag) {
-            if (tags.containsKey(tag)) {
-                StringBuilder sb = new StringBuilder();
-                for (String arg : tags.get(tag))
-                    sb.append("\"" + arg + "\" ");
-                sb.setLength(sb.length() - 1);
-                return sb.toString();
+            if (!tags.containsKey(tag)) return "";
+
+            StringBuilder sb = new StringBuilder();
+            for (String arg : tags.get(tag)) {
+                sb.append("\"");
+                sb.append(arg);
+                sb.append("\" ");
             }
-            return "";
+            sb.setLength(sb.length() - 1);
+            return sb.toString();
         }
 
-        public List<String> get(String tag) {
-            if (tags.containsKey(tag)) return tags.get(tag);
-            return null;
-        }
+        public List<String> get(String tag) { return tags.get(tag); }
 
         public void remove(String tag) {
             tags.remove(tag);
+        }
+
+        public Set<String> keySet() {
+            return tags.keySet();
         }
 
         public Set<HashMap.Entry<String, List<String>>> entrySet() {
             return tags.entrySet();
         }
 
-        public boolean isMatch(String tag, List<String> args) {
+        public boolean match(String tag, List<String> args) {
             List<String> targs = get(tag);
             if (targs == null)
                 return (args.size() == 0);
-            for (int i = 0; i < args.size(); i++) {
-                boolean found = false;
-                for (int j = 0; j < targs.size() && !found; j++)
-                    if (args.get(i).equals(targs.get(j))) found = true;
-                if (!found) return false;
-            }
+
+            for (String arg : args)
+                if (!targs.contains(arg)) return false;
+
             return true;
         }
 
-        public boolean isMatch(String tag, String argstext) {
-            List<String> targs = get(tag);
-            if (targs == null)
-                return (argstext.length() == 0);
-            List<String> args = split(argstext);
-            for (int i = 0; i < args.size(); i++) {
-                boolean found = false;
-                for (int j = 0; j < targs.size() && !found; j++)
-                    if (args.get(i).equals(targs.get(j))) found = true;
-                if (!found) return false;
-            }
-            return true;
+        public boolean match(String tag, String argstext) {
+            return match(tag, split(argstext));
         }
 
         public Map<String, List<String>> toMap() {
-            return tags;
+            return new HashMap<>(tags);
         }
 
         @Override
         public String toString() {
             if (tags.size() == 0) return "";
+
             StringBuilder sb = new StringBuilder();
-            for (HashMap.Entry<String, List<String>> entry : tags.entrySet()) {
-                sb.append(entry.getKey() + ":");
-                for (String arg : entry.getValue())
-                    sb.append(" \"" + arg + '"');
+            for (String key : tags.keySet()) {
+                sb.append(key);
+                sb.append(":");
+                sb.append(getAsString(key));
                 sb.append(", ");
             }
             sb.setLength(sb.length() - 2);
             return sb.toString();
+        }
+
+        public void clear(){
+            tags.clear();
         }
     }
 }

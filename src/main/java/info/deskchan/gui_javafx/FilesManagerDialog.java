@@ -22,7 +22,7 @@ public class FilesManagerDialog extends TemplateBox{
         super(Main.getString("file_manager"));
         initOwner(parent);
         for (String file : files) {
-            if(file!=null)
+            if(file != null)
                 filesList.getItems().add(file);
         }
         getDialogPane().setContent(filesList);

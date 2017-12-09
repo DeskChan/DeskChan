@@ -42,7 +42,7 @@ public abstract class Scenario extends Script{
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:say", text);
     }
     protected void requestPhrase(String text){
-        ScenarioPlugin.pluginProxy.sendMessage("talk:request", text);
+        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-say", text);
     }
 
     protected void sprite(String text){

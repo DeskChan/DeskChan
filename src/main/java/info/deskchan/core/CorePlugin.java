@@ -44,7 +44,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		pluginProxy.addMessageListener("core:register-alternative", (sender, tag, data) -> {
 			Map m = (Map) data;
 			registerAlternative(m.get("srcTag").toString(), m.get("dstTag").toString(),
-					sender, (Integer) m.get("priority"));
+					sender, m.get("priority"));
 		});
 
 		/* Registers alternatives. Look for core:register-alternative
@@ -58,7 +58,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			List<Map> alternativeList = (List<Map>) data;
 			for (Map m : alternativeList) {
 				registerAlternative(m.get("srcTag").toString(), m.get("dstTag").toString(),
-						sender, (Integer) m.get("priority"));
+						sender, m.get("priority"));
 			}
 		});
 
@@ -131,7 +131,19 @@ public class CorePlugin implements Plugin, MessageListener {
 		return true;
 	}
 
-	private void registerAlternative(String srcTag, String dstTag, String plugin, int priority) {
+	private void registerAlternative(String srcTag, String dstTag, String plugin, Object priority) {
+		int _priority;
+		if (priority instanceof Number)
+			_priority = ((Number) priority).intValue();
+		else {
+			try {
+				_priority = Integer.parseInt(priority.toString());
+			} catch (Exception e){
+				throw new ClassCastException(
+						"Cannot cast '" + priority.toString() + "', type=" + priority.getClass() + "  to integer");
+			}
+		}
+
 		Queue<AlternativeInfo> queue = alternatives.get(srcTag);
 		if (queue == null) {
 			queue = new PriorityQueue<>(new Comparator<AlternativeInfo>() {
@@ -153,7 +165,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			}
 		}
 
-		queue.add(new AlternativeInfo(dstTag, plugin, priority));
+		queue.add(new AlternativeInfo(dstTag, plugin, _priority));
 
 		pluginProxy.log("Registered alternative " + dstTag + " for tag " + srcTag + " by plugin " + plugin);
 	}
@@ -196,30 +208,29 @@ public class CorePlugin implements Plugin, MessageListener {
 		return m;
 	}
 
-	private Map<String, Iterator<AlternativeInfo>> pipePositions = new HashMap<>();
-
 	@Override
 	public void handleMessage(String sender, String tag, Object data) {
-		boolean next = false;
-		if (tag.endsWith("#next")) {
-			next = true;
-			tag = tag.substring(0, tag.length() - 5);
+		int delimiter = tag.indexOf("#");
+		String senderTag = null;
+		if (delimiter > 0) {
+			senderTag = tag.substring(delimiter + 1);
+			tag = tag.substring(0, delimiter);
 		}
 
 		Queue<AlternativeInfo> queue = alternatives.get(tag);
 		if (queue == null || queue.isEmpty())
 			return;
 
-		Iterator<AlternativeInfo> iterator;
-
-		if (next)
-			iterator = pipePositions.getOrDefault(tag, queue.iterator());
-		else
-			iterator = queue.iterator();
+		Iterator<AlternativeInfo> iterator = queue.iterator();
+		if (senderTag != null){
+			do {
+				AlternativeInfo nextInfo = iterator.next();
+				if (nextInfo.tag.equals(senderTag)) break;
+			} while (true);
+		}
 
 		try {
 			AlternativeInfo info = iterator.next();
-			pipePositions.put(tag, iterator);
 			PluginManager.getInstance().sendMessage(sender, info.tag, data);
 		} catch (NoSuchElementException e) { }
 	}
@@ -249,12 +260,12 @@ public class CorePlugin implements Plugin, MessageListener {
 	void Testing(){
 		pluginProxy.addMessageListener("core:test1", (sender, tag, data) -> {
 			System.out.println("test 1");
-			pluginProxy.sendMessage("DeskChan:test#next", null);
+			pluginProxy.sendMessage("DeskChan:test#core:test1", null);
 		});
 
 		pluginProxy.addMessageListener("core:test2", (sender, tag, data) -> {
 			System.out.println("test 2");
-			pluginProxy.sendMessage("DeskChan:test#next", null);
+			pluginProxy.sendMessage("DeskChan:test#core:test2", null);
 		});
 
 		pluginProxy.addMessageListener("core:test3", (sender, tag, data) -> {

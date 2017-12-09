@@ -609,16 +609,16 @@ interface PluginOptionsControlItem {
 		
 		FileFieldItem(Window parent) {
 			textField.setEditable(false);
-			setCenter(textField);
+			setLeft(textField);
 			clearButton.setOnAction(event -> textField.clear());
-			setLeft(clearButton);
+			setRight(clearButton);
 			selectButton.setOnAction(event -> {
 				File file = chooser.showOpenDialog(parent);
 				if (file != null) {
 					textField.setText(file.getAbsolutePath());
 				}
 			});
-			setRight(selectButton);
+			setCenter(selectButton);
 			setMaxHeight(textField.getHeight());
 		}
 		

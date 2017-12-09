@@ -37,10 +37,10 @@ class OptionsDialog extends TemplateBox {
 	private TabPane tabPane = new TabPane();
 
 	/** Skin options sub menu, 'Appearance' tab. **/
-	private ControlsContainer skinOptions;
+	private ControlsPane skinOptions;
 
 	/** Balloon options sub menu, 'Appearance' tab. **/
-	private ControlsContainer balloonOptions;
+	private ControlsPane balloonOptions;
 
 	/** List of rows representing registered plugins in the core, 'Plugins' tab. **/
 	private ListView<PluginListItem> pluginsList = new ListView<>();
@@ -52,10 +52,10 @@ class OptionsDialog extends TemplateBox {
 	private TableView<CommandItem> commandsTable=new TableView<>();
 
 	/** All tabs registered by plugins, plugin -> list of tabs. **/
-	private static Map<String, List<ControlsContainer>> pluginsTabs = new HashMap<>();
+	private static Map<String, List<ControlsPane>> pluginsTabs = new HashMap<>();
 
 	/** All submenus registered by plugins, plugin -> list of menus. **/
-	private static Map<String, List<ControlsContainer>> pluginsSubMenus = new HashMap<>();
+	private static Map<String, List<ControlsPane>> pluginsSubMenus = new HashMap<>();
 
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
@@ -125,12 +125,12 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
 		}});
-		ControlsContainer poTab = new ControlsContainer(Main.getString("appearance"), list, null, null);
+		ControlsPane poTab = new ControlsPane(Main.getString("appearance"), list, null, null);
 		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
 	}
 
 	/** Creating 'Skin' options submenu. **/
-	private ControlsContainer characterOptions(){
+	private ControlsPane characterOptions(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "skin");
@@ -167,12 +167,12 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		skinOptions = new ControlsContainer(Main.getString("character"), list, null, null);
+		skinOptions = new ControlsPane(Main.getString("character"), list, null, null);
 		return skinOptions;
 	}
 
 	/** Creating 'Balloon' options submenu. **/
-	private ControlsContainer balloonOptions(){
+	private ControlsPane balloonOptions(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_font");
@@ -244,7 +244,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-balloon-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
-		balloonOptions = new ControlsContainer(Main.getString("balloon"), list, null, null);
+		balloonOptions = new ControlsPane(Main.getString("balloon"), list, null, null);
 		return balloonOptions;
 	}
 
@@ -516,8 +516,8 @@ class OptionsDialog extends TemplateBox {
 
 
 		/// Creating top tabs from registered tabs list
-		for (Map.Entry<String, List<ControlsContainer>> entry : pluginsTabs.entrySet()) {
-			for (ControlsContainer tab : entry.getValue()) {
+		for (Map.Entry<String, List<ControlsPane>> entry : pluginsTabs.entrySet()) {
+			for (ControlsPane tab : entry.getValue()) {
 				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
 			}
 		}
@@ -617,7 +617,7 @@ class OptionsDialog extends TemplateBox {
 
 	protected static void openSubMenu(String pluginId, String menuId) {
 		try {
-			for (ControlsContainer container : pluginsSubMenus.get(pluginId)) {
+			for (ControlsPane container : pluginsSubMenus.get(pluginId)) {
 				if (container.name.equals(menuId)) {
 					ControlsWindow.setupCustomWindow(pluginId, container);
 				}
@@ -633,15 +633,15 @@ class OptionsDialog extends TemplateBox {
 	 * @param isTab True - will be shown as top tab, False - will be shown as submenu button in 'Plugins' tab
 	 */
 	static void registerPluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
-		Map<String, List<ControlsContainer>> menu = isTab ? pluginsTabs : pluginsSubMenus;
-		List<ControlsContainer> tabs = menu.get(plugin);
+		Map<String, List<ControlsPane>> menu = isTab ? pluginsTabs : pluginsSubMenus;
+		List<ControlsPane> tabs = menu.get(plugin);
 
 		String name = (String) data.getOrDefault("name", plugin);
 		List<Map<String, Object>> controls = (List) data.getOrDefault("controls", new LinkedList<>());
 		String msgTag = (String) data.get("msgTag");
 		String msgClose = (String) data.get("onClose");
 
-		ControlsContainer pluginMenuContainer = new ControlsContainer(name, controls, msgTag, msgClose);
+		ControlsPane pluginMenuContainer = new ControlsPane(name, controls, msgTag, msgClose);
 
 		if (tabs == null) {  // No menus registered by plugin
 			tabs = new ArrayList<>();
@@ -684,9 +684,9 @@ class OptionsDialog extends TemplateBox {
 	 * @param isTab True - will be shown as top tab, False - will be shown as submenu button in 'Plugins' tab
 	 */
 	static void updatePluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
-		Map<String, List<ControlsContainer>> menu = isTab ? pluginsTabs : pluginsSubMenus;
+		Map<String, List<ControlsPane>> menu = isTab ? pluginsTabs : pluginsSubMenus;
 
-		List<ControlsContainer> tabs = menu.get(plugin);
+		List<ControlsPane> tabs = menu.get(plugin);
 		String name = (String) data.getOrDefault("name", plugin);
 		List<Map<String, Object>> controls = (List) data.getOrDefault("controls", new LinkedList<>());
 		String msgTag   = (String) data.get("msgTag");
@@ -803,10 +803,10 @@ class OptionsDialog extends TemplateBox {
 
 		/** Update all submenus content. **/
 		void updateOptionsSubMenu(){
-			List<ControlsContainer> list = pluginsSubMenus.get(id);
+			List<ControlsPane> list = pluginsSubMenus.get(id);
 			menuBox.getChildren().clear();
 			if(list == null) return;
-			for(ControlsContainer container : list){
+			for(ControlsPane container : list){
 				Button button = new Button(container.name);
 				button.setOnAction((event) -> {
 					ControlsWindow.setupCustomWindow(id, container);
