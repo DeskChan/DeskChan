@@ -16,7 +16,6 @@ import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -447,10 +446,10 @@ class OptionsDialog extends TemplateBox {
 		HBox hbox = new HBox();
 		Button button = new Button(Main.getString("load"));
 		button.setOnAction(event -> {
-			DirectoryChooser chooser = new DirectoryChooser();
+			FileChooser chooser = new FileChooser();
 			chooser.setTitle(Main.getString("load_plugin"));
 			chooser.setInitialDirectory(PluginManager.getPluginsDirPath().toFile());
-			File file = chooser.showDialog(OptionsDialog.this.getDialogPane().getScene().getWindow());
+			File file = chooser.showOpenDialog(OptionsDialog.this.getDialogPane().getScene().getWindow());
 			if (file != null) {
 				Path path = file.toPath();
 				try {
@@ -537,7 +536,6 @@ class OptionsDialog extends TemplateBox {
 		gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-		label.getStyleClass().add("header");
 		gridPane.add(label, 0, 0, 2, 1);
 		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
 		Hyperlink hyperlink = new Hyperlink();

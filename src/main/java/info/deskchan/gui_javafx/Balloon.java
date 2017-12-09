@@ -194,6 +194,8 @@ class Balloon extends MovablePane {
 		label.setWrappingWidth(300);
 		if (defaultFont != null) {
 			label.setFont(defaultFont);
+		} else {
+			label.setFont(LocalFont.defaultFont);
 		}
 
 		Integer animation_delay = Main.getProperties().getInteger("balloon.text-animation-delay", 50);

@@ -15,6 +15,7 @@ import org.jnativehook.keyboard.NativeKeyListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.PrintStream;
 import java.lang.Character;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,6 +28,8 @@ public class KeyboardEventNotificator implements NativeKeyListener {
     private static KeyboardEventNotificator instance;
 
     public static void initialize() {
+        PrintStream originalOut = System.out;
+        System.setOut(null);
         instance = new KeyboardEventNotificator();
         try {
             GlobalScreen.registerNativeHook();
@@ -87,7 +90,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         });
 
         GlobalScreen.addNativeKeyListener(instance);
-
+        System.setOut(originalOut);
         // testing keywords parsing
         KeyboardCommand.test();
     }
@@ -142,16 +145,16 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         @Override
         public boolean equals(Object other){
             if (other instanceof String) return toString().equals(other);
-            if (other instanceof Number) return rawCode == ((Number) other).intValue();
+            if (other instanceof Number) return keyCode == ((Number) other).intValue();
             try {
-                return rawCode == ((KeyPair) other).rawCode;
+                return keyCode == ((KeyPair) other).keyCode;
             } catch (Exception e) {
                 return false;
             }
         }
         @Override
         public int hashCode(){
-            return rawCode;
+            return keyCode;
         }
         @Override
         public String toString(){
@@ -170,9 +173,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
     /** Key pressed event (called every tick you press the button, not once). **/
     public void nativeKeyPressed(NativeKeyEvent e) {
-        System.out.println(Thread.currentThread());
         if(currentPressed.add(new KeyPair(e)) && commands != null && commands.length > 0) {
-            System.out.println("added: " + e.getKeyCode() + " " + e.getRawCode() + " " + currentPressed);
             setChanged = true;
             handler.start();
         }
@@ -181,7 +182,6 @@ public class KeyboardEventNotificator implements NativeKeyListener {
     /** Key released event. **/
     public void nativeKeyReleased(NativeKeyEvent e) {
         currentPressed.remove(new KeyPair(e));
-        System.out.println("removed: " + e.getKeyCode() + " " + e.getRawCode() + " " + currentPressed);
         setChanged = true;
         if(currentPressed.size() == 0)
             handler.stop();

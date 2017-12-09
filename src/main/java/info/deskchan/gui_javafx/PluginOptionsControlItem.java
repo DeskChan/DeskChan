@@ -803,6 +803,9 @@ interface PluginOptionsControlItem {
 				} else {
 					picker = new FontSelectorDialog(picker.getResult());
 				}
+				picker.setResizable(true);
+				picker.getDialogPane().setStyle(LocalFont.getDefaultFontCSS());
+
 			});
 		}
 
@@ -827,6 +830,8 @@ interface PluginOptionsControlItem {
 			picker = new FontSelectorDialog(LocalFont.defaultFont);
 			setText(Main.getString("default"));
 			picker.initOwner(parent);
+			picker.setResizable(true);
+			picker.getDialogPane().setStyle(LocalFont.getDefaultFontCSS());
 		}
 	}
 }

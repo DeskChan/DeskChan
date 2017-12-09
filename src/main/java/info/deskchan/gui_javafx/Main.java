@@ -23,7 +23,7 @@ public class Main implements Plugin {
 
 		// Get the logger for "org.jnativehook" and set the level to warning.
 		Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-		logger.setLevel(Level.WARNING);
+		logger.setLevel(Level.OFF);
 
 		// Don't forget to disable the parent handlers.
 		logger.setUseParentHandlers(false);
