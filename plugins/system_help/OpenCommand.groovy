@@ -160,7 +160,7 @@ class OpenCommand{
                 }
                 sb.delete(sb.length()-2, sb.length())
                 instance.sendMessage('DeskChan:say', "Смотри: я умею открывать следующие штуки: "+sb.toString())
-                instance.sendMessage('talk:request', 'CLARIFY')
+                instance.sendMessage('DeskChan:request-say', 'CLARIFY')
                 instance.sendMessage('DeskChan:request-user-speech', null) { s, d2 ->
                     text = (List) d2['value'].split(' ')
                     if(!open(text))

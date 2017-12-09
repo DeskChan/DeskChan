@@ -4,7 +4,6 @@ import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core_utils.TextOperations;
-import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONObject;
 
 import java.nio.file.Files;
@@ -15,82 +14,173 @@ import java.util.*;
 
 public class Main implements Plugin {
 	private static PluginProxyInterface pluginProxy;
-	
-	private final static String MAIN_PHRASES_URL = "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82!A3:N800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+
+	/** Major phrases pack. **/
+	private final static String MAIN_PHRASES_URL =
+			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/phrases_ru!A20:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+
+	/** Not official pack from developers. **/
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
-	private final static Integer DEFAULT_MESSAGE_TIMEOUT = 120000;
-	private CharacterPreset currentPreset;
-	private EmotionsController emotionsController;
 
-	private volatile Quotes quotes;
-	private PriorityQueue<Quote> quoteQueue;
-	private PerkContainer perkContainer;
 
+	/** Current character preset. **/
+	private CharacterPreset currentCharacter;
+
+	/** Default delay between chat phrases. **/
+	private final static Integer DEFAULT_CHATTING_TIMEOUT = 120000;
+
+	/** Chat timer id given by plugin proxy. **/
 	private int timerId = 0;
 
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
 		pluginProxy = newPluginProxy;
-		emotionsController = new EmotionsController();
-		quoteQueue = new PriorityQueue<>();
-		perkContainer = new PerkContainer();
-		quotes = new Quotes();
-		currentPreset = new SimpleCharacterPreset();
-
-		pluginProxy.setResourceBundle("info/deskchan/talking_system/strings");
-		pluginProxy.setConfigField("short-description",getString("plugin.short-description"));
-
 		pluginProxy.getProperties().load();
-		currentPreset = CharacterPreset.getFromJSON(new JSONObject(getProperties().getString("characterPreset", "{}")));
+		pluginProxy.setResourceBundle("info/deskchan/talking_system/strings");
+		pluginProxy.setConfigField("short-description", getString("plugin.short-description"));
+
+		// initializing main components
+		currentCharacter = new CharacterPreset(new JSONObject(getProperties().getString("characterPreset", "{}")));
 		getProperties().putIfNotNull("quotesAutoSync", true);
 
-		log("Loaded options");
-		pluginProxy.addMessageListener("talk:request", (sender, tag, dat) -> {
-			Map<String, Object> data;
-			if(dat instanceof Map){
-				data=(Map<String, Object>) dat;
-			} else {
-				data=new HashMap<>();
-				if(dat!=null)
-					data.put("purpose",dat.toString());
-			}
-			data.put("sender",sender);
+		// synchronize phrases with server
+		if(getProperties().getBoolean("quotesAutoSync", true)) {
+			Thread syncThread = new Thread() {
+				public void run() {
+					if(PhrasesList.saveTo(MAIN_PHRASES_URL, "main")) {
+						PhrasesList.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+						currentCharacter.phrases.reload();
+					}
+				}
+			};
+			syncThread.start();
+		}
+
+		log("options loaded");
+
+		/* Building DeskChan:request-say chain. */
+		pluginProxy.sendMessage("core:register-alternatives", new ArrayList<Map<String, Object>>(){{
+			add(TextOperations.toMap("srcTag: DeskChan:request-say, dstTag: talk:request-say, priority: 10000"));
+			add(TextOperations.toMap("srcTag: DeskChan:request-say, dstTag: talk:replace-by-preset-fields, priority: 9990"));
+			add(TextOperations.toMap("srcTag: DeskChan:request-say, dstTag: talk:send-phrase, priority: 10"));
+		}});
+
+		/* Request a phrase with certain purpose. If answer is not requested, automatically send it to DeskChan:say.
+        * Public message
+        * Params: purpose: String?
+        *      or
+        *         Map
+        *           purpose: String
+        * Returns: Phrase if requested, else None */
+		pluginProxy.addMessageListener("talk:request-say", (sender, tag, dat) -> {
+			Map data = createMapFromObject(dat, "purpose");
+			if (sender.contains("#"))
+				data.put("sender", sender);
+
 			phraseRequest(data);
 		});
-		pluginProxy.addMessageListener("talk:make-character-influence", (sender, tag, data) -> {
-			Map<String, Object> dat = (Map<String, Object>) data;
+
+		/* Replacing fields in brackets to values set in preset
+        * Technical message */
+		pluginProxy.addMessageListener("talk:replace-by-preset-fields", (sender, tag, dat) -> {
+			Map data = (Map) dat;
+
+			data.replace("text", currentCharacter.replaceTags((String) data.get("text")));
+
+			pluginProxy.sendMessage("DeskChan:request-say#talk:replace-by-preset-fields", data);
+		});
+
+		/* End of alternatives chain, sending phrase.
+        * Technical message */
+		pluginProxy.addMessageListener("talk:send-phrase", (sender, tag, dat) -> {
+			Map data = (Map) dat;
+			String dst = (String) data.remove("dstTag");
+			if (dst == null)
+				dst = "DeskChan:say";
+
+			pluginProxy.sendMessage(dst, data);
+		});
+
+		/* Make an influence on character features
+        * Public message
+        * Params: Map
+        * 			feature: String? - name of feature
+        *           value: Float? - influence strength
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:make-character-influence", (sender, tag, dat) -> {
+			Map<String, Object> data = (Map) dat;
+			Object obj = data.get("feature");
+			if (obj == null) return;
+
+			int feature;
 			float multiplier = 1;
-			Object obj = dat.getOrDefault("multiplier", 1);
+			if (obj instanceof String)
+				feature = CharacterFeatures.getFeatureIndex((String) obj);
+			else if (obj instanceof Number)
+				feature = ((Number) obj).intValue();
+			else return;
+
+			obj = data.getOrDefault("value", 1);
 			if (obj instanceof String)
 				multiplier = Float.valueOf((String) obj);
-			if (obj instanceof Float)
-				multiplier = (Float) obj;
-			currentPreset.applyInfluence(Influence.CreateCharacterInfluence(
-						(String) dat.getOrDefault("feature", "sympathy"),
-						multiplier)
-			);
-			currentPreset.inform();
+			else if (obj instanceof Number)
+				multiplier = ((Number) obj).floatValue();
+
+			currentCharacter.character.setValue(feature, multiplier);
 		});
-		pluginProxy.addMessageListener("talk:make-emotion-influence", (sender, tag, data) -> {
-			Map<String, Object> dat = (Map<String, Object>) data;
+
+		/* Make an influence on character emotion state
+        * Public message
+        * Params: Map
+        *           emotion: String? - name of emotion
+        *           value: Float? - influence strength
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:make-emotion-influence", (sender, tag, dat) -> {
+			Map<String, Object> data = (Map) dat;
+			Object obj = data.get("feature");
+			if (obj == null) return;
+
+			int emotion;
 			float multiplier = 1;
-			Object obj = dat.getOrDefault("multiplier", 1);
+			if (obj instanceof String)
+				emotion = CharacterFeatures.getFeatureIndex((String) obj);
+			else if (obj instanceof Number)
+				emotion = ((Number) obj).intValue();
+			else return;
+
+			obj = data.getOrDefault("value", 1);
 			if (obj instanceof String)
 				multiplier = Float.valueOf((String) obj);
-			if (obj instanceof Float)
-				multiplier = (Float) obj;
-			emotionsController.applyInfluence(Influence.CreateEmotionInfluence(
-						(String) dat.getOrDefault("emotion", "happiness"),
-						multiplier)
-			);
+			else if (obj instanceof Number)
+				multiplier = ((Number) obj).floatValue();
+
+			currentCharacter.character.setValue(emotion, multiplier);
 		});
-		pluginProxy.addMessageListener("talk:options-saved", (sender, tag, data) -> {
-			saveOptions((Map<String, Object>) data);
+
+		/* Save options
+        * Technical message
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:save-options", (sender, tag, data) -> {
+			saveOptions((Map) data);
 		});
-		pluginProxy.addMessageListener("talk:save_preset", (sender, tag, data) -> {
+
+		/* Reset preset
+        * Technical message
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:reset-preset", (sender, tag, data) -> {
+			currentCharacter = new CharacterPreset();
+			updateOptionsTab();
+			saveSettings();
+		});
+
+		/* Save preset to file by character name
+        * Technical message
+        * Params: None
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:save-preset", (sender, tag, data) -> {
 			try {
-				currentPreset.saveInFile(getPresetsPath());
+				currentCharacter.saveInFile(getPresetsPath());
 				pluginProxy.sendMessage("gui:show-notification", TextOperations.toMap("text: "+getString("done")));
 			} catch (Exception e) {
 				HashMap<String, Object> list = new HashMap<String, Object>();
@@ -99,40 +189,44 @@ public class Main implements Plugin {
 				pluginProxy.sendMessage("gui:show-notification", list);
 			}
 		});
-		pluginProxy.addMessageListener("talk:register-perk",
-				(sender, tag, data) -> perkContainer.add((String) sender, (Map<String, Object>) data)
-		);
-		pluginProxy.addMessageListener("talk:create-quotes-base",
-				(sender, tag, data) -> {
-					Map<String, Object> da = (Map<String, Object>) data;
-					Quotes.saveTo((String) da.getOrDefault("url", MAIN_PHRASES_URL), (String) da.getOrDefault("filename", "new_quotes"));
-				}
-		);
-		pluginProxy.addMessageListener("talk:unregister-perk",
-				(sender, tag, data) -> perkContainer.remove((String) sender)
-		);
-		pluginProxy.addMessageListener("talk:perk-answer",
-				(sender, tag, data) -> perkContainer.getAnswerFromPerk(sender, (Map<String, Object>) data)
-		);
-		pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
-			getProperties().put("lastConversation", Instant.now().toEpochMilli());
-		});
-		pluginProxy.addMessageListener("talk:print-phrases-lack", (sender, tag, data) -> {
-			quotes.printPhrasesLack( (String) ((Map<String, Object>) data).getOrDefault("purpose","CHAT") );
+
+		/* Download phrases from JSON at url and save them to file
+        * Technical message
+        * Params: Map
+        *           url: String? - url to download
+        *           filename: String? - filename
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:create-phrases-base", (sender, tag, dat) -> {
+			Map<String, Object> data = (Map) dat;
+			PhrasesList.saveTo((String) data.getOrDefault("url", MAIN_PHRASES_URL), (String) data.getOrDefault("filename", "new_quotes"));
 		});
 
+		/* Print to screen character combinations with the lowest count of suitable phrases.
+        * Technical message
+        * Params: Map
+        *           purpose: String? - purpose
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:print-phrases-lack", (sender, tag, data) -> {
+			currentCharacter.phrases.printPhrasesLack( (String) ((Map) data).getOrDefault("purpose", "CHAT") );
+		});
+
+		/* Supply resources.
+        * Technical message
+        * Params: Map
+        *           preset: String? - preset file
+        *           phrases: String? - phrases file
+        * Returns: None */
 		pluginProxy.addMessageListener("talk:supply-resource",
 				(sender, tag, data) -> {
 					try {
-						Map<String, Object> map = (Map<String, Object>) data;
+						Map<String, Object> map = (Map) data;
 						if (map.containsKey("preset")) {
-							currentPreset = CharacterPreset.getFromFileUnsafe(Paths.get((String) map.get("preset")));
+							currentCharacter = CharacterPreset.getFromFileUnsafe(Paths.get((String) map.get("preset")));
 						}
-						String type = (String) map.getOrDefault("quotes", null);
+						String type = (String) map.getOrDefault("phrases", null);
 						if (type != null && type.length() > 0) {
 							if (type.equals("#default")) {
-								currentPreset.quotesBaseList = new ArrayList<>();
-								currentPreset.quotesBaseList.add("main");
+								currentCharacter.phrases = PhrasesList.getDefault(currentCharacter.character);
 							} else {
 								if(!type.startsWith(pluginProxy.getDataDirPath().toString())){
 									Path resFile=Paths.get(type);
@@ -141,197 +235,155 @@ public class Main implements Plugin {
 										Files.copy(resFile,newPath);
 									type=newPath.toString();
 								}
-								currentPreset.quotesBaseList.add(type);
-								quotes.load(currentPreset.quotesBaseList);
+								currentCharacter.phrases.add(type);
+								currentCharacter.updatePhrases();
 							}
 						}
 						updateOptionsTab();
-						currentPreset.inform();
 					} catch(Exception e){
 						log(e);
 					}
 				}
 		);
 
-		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			phraseRequest(TextOperations.toMap("purpose: BYE, priority: 5000"));
+		/* Reload phrases and check for matching
+		* Public message
+        * Params: None
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:update-phrases", (sender, tag, data) -> {
+			currentCharacter.updatePhrases();
 		});
 
+		/* Saying 'Hello' at launch. */
+		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
+			phraseRequest(TextOperations.toMap("purpose: HELLO, priority: 20001"));
+		});
+
+		/* Saying 'Bye' when someone requests quit. */
+		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
+			phraseRequest(TextOperations.toMap("purpose: BYE, priority: 10000"));
+		});
+
+		/* Adding "Say something" button to menu. */
 		pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
 			put("name", getString("say_phrase"));
-			put("msgTag", "talk:request");
+			put("msgTag", "DeskChan:request-say");
 		}});
-		updateOptionsTab();
-		Main.getPluginProxy().addMessageListener("talk:remove-quote", DefaultTagsListeners::parseForTagsRemove);
-		Main.getPluginProxy().addMessageListener("talk:reject-quote", DefaultTagsListeners::parseForTagsReject);
-		Main.getPluginProxy().addMessageListener("talk:remove-quote",(sender, tag, data) -> 	{
-			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data;
-			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
-			if (list != null) {
-				for (HashMap<String, Object> entry : list) {
-					if (!currentPreset.isTagsMatch(entry))
-						quotes_list.add(entry);
-				}
-			}
-			Main.getPluginProxy().sendMessage(sender, quotes_list);
-		});
-		Main.getPluginProxy().addMessageListener("talk:reject-quote",(sender, tag, data) -> 	{
-			ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data;
-			ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
-			if (list != null) {
-				for (HashMap<String, Object> entry : list) {
-					if (!emotionsController.isTagsMatch(entry))
-						quotes_list.add(entry);
-				}
-			}
-			Main.getPluginProxy().sendMessage(sender, quotes_list);
-		});
-		if(getProperties().getBoolean("quotesAutoSync", true)) {
-			Thread syncThread = new Thread() {
-				public void run() {
-					if(Quotes.saveTo(MAIN_PHRASES_URL, "main")) {
-						Quotes.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
-						quotes.load(currentPreset.quotesBaseList);
-					}
-				}
-			};
-			syncThread.start();
-		}
-		quotes.load(currentPreset.quotesBaseList);
-		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
-			phraseRequest(new HashMap<String,Object>(){{
-				put("purpose","HELLO");
-				put("priority",20001);
-			}});
-		});
-		currentPreset.inform();
 
-		/*MeaningExtractor extractor=new MeaningExtractor();
-		for(Quote quote : quotes.toArray()){
-			extractor.teach(quote.quote,quote.purposeType);
-		}
-		extractor.print();*/
+		/* Saving last conversation timestamp every time user writes us something. */
+		pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
+			getProperties().put("lastConversation", Instant.now().toEpochMilli());
+		});
+
+		updateOptionsTab();
+
+		// Standard phrases parsers
+		/// OS
+		Main.getPluginProxy().addMessageListener("talk:remove-quote", DefaultTagsListeners::parseForTagsRemove);
+		/// Time
+		Main.getPluginProxy().addMessageListener("talk:reject-quote", DefaultTagsListeners::parseForTagsReject);
+
+		/// Character preset
+		Main.getPluginProxy().addMessageListener("talk:remove-quote", (sender, tag, data) ->
+			DefaultTagsListeners.checkCondition(sender, data, quote -> !currentCharacter.tagsMatch(quote))
+		);
+
 		return true;
 	}
 
-	private static final int defaultPriority=1100;
+	/** Default messages priority. **/
+	private static final int DEFAULT_PRIORITY = 1100;
 
+	/** Request phrase with any data. **/
 	public void phraseRequest(Map<String, Object> data) {
 		String purpose = "CHAT";
-		if (data != null) {
-			String np = (String) data.getOrDefault("purpose", null);
-			if (np != null) purpose = np;
-		}
-		quotes.update(currentPreset.getCharacter(emotionsController));
-		quotes.requestRandomQuote(purpose, new Quotes.GetQuoteCallback(){
-			public void call(Quote quote){ sendPhrase(quote,data); }
-		});
+		if (data != null)
+			purpose = data.getOrDefault("purpose", purpose).toString();
+
+		currentCharacter.phrases.requestRandomQuote( purpose, quote -> sendPhrase(quote, data) );
 	}
 
+	/** Request phrase with purpose. **/
 	public void phraseRequest(String purpose) {
-		quotes.update(currentPreset.getCharacter(emotionsController));
-		quotes.requestRandomQuote(purpose, new Quotes.GetQuoteCallback(){
-			public void call(Quote quote){ sendPhrase(quote,null); }
-		});
+		currentCharacter.phrases.requestRandomQuote( purpose, quote -> sendPhrase(quote, null) );
 	}
 
-	void sendPhrase(Quote quote,Map<String, Object> data){
-		HashMap<String,Object> ret=quote.toMap();
+	/** Convert phrase to map format and send to DeskChan:say or sender. **/
+	void sendPhrase(Phrase phrase, Map<String, Object> data){
+		Map<String, Object> ret = phrase.toMap();
+
 		if (ret.get("characterImage").equals("AUTO")) {
-			String ci = emotionsController.getSpriteType();
-			if (ci == null) {
-				ci = currentPreset.getCharacter(emotionsController).getSpriteType();
-			}
-			if (ci == null) {
-				ci = "NORMAL";
-			}
-			ret.replace("characterImage", ci);
+			String characterImage = currentCharacter.getDefaultSpriteType();
+
+			if (characterImage == null)
+				characterImage = "NORMAL";
+
+			ret.replace("characterImage", characterImage);
 		}
-		ret.replace("text", currentPreset.replaceTags((String) ret.get("text")));
-		String t = perkContainer.send("text", (String) ret.get("text"));
-		if (t != null) {
-			ret.replace("text", t);
-		}
-		if(data!=null){
-			ret.put("priority", data.getOrDefault("priority",defaultPriority));
-			if(data.containsKey("seq")){
-				ret.put("seq",data.get("seq"));
-				pluginProxy.sendMessage((String) data.get("sender"), ret);
-			} else {
-				pluginProxy.sendMessage("DeskChan:say", ret);
-			}
+
+		if(data != null){
+			ret.put("priority", data.getOrDefault("priority", DEFAULT_PRIORITY));
+			ret.put("dstTag", data.getOrDefault("sender", "DeskChan:say"));
 		} else {
-			ret.put("priority", defaultPriority);
-			pluginProxy.sendMessage("DeskChan:say", ret);
+			ret.put("priority", DEFAULT_PRIORITY);
+			ret.put("dstTag", "DeskChan:say");
 		}
+
+		pluginProxy.sendMessage("DeskChan:request-say#talk:request-say", ret);
 	}
 
 	void resetTimer(){
 		pluginProxy.cancelTimer(timerId);
-		timerId = pluginProxy.setTimer(getProperties().getLong("messageTimeout", DEFAULT_MESSAGE_TIMEOUT), -1, (sender, data) -> {
-			Main.this.phraseRequest("CHAT");
-		});
+		timerId = pluginProxy.setTimer(getProperties().getLong("messageTimeout", DEFAULT_CHATTING_TIMEOUT), -1,
+				(sender, data) -> Main.this.phraseRequest("CHAT")
+		);
 	}
+
 	void updateOptionsTab() {
 		pluginProxy.sendMessage("gui:setup-options-tab", new HashMap<String, Object>() {{
 			put("name", getString("character"));
-			put("msgTag", "talk:options-saved");
-			List<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
+			put("msgTag", "talk:save-options");
+			List<Map<String, Object>> list = new LinkedList<>();
 			list.add(new HashMap<String, Object>() {{
 				put("id", "name");
 				put("type", "TextField");
 				put("label", getString("name"));
-				put("value", currentPreset.name);
+				put("value", currentCharacter.name);
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "usernames");
 				put("type", "TextField");
 				put("label", getString("usernames_list"));
-				put("value", currentPreset.tags.getAsString("usernames"));
+				put("value", currentCharacter.tags.getAsString("usernames"));
 			}});
 			list.add(new HashMap<String, Object>() {{
-				put("id", "quotes");
+				put("id", "phrases");
 				put("type", "FilesManager");
 				put("label", getString("quotes_list"));
-				put("value", new ArrayList<String>(currentPreset.quotesBaseList));
+				put("value", currentCharacter.phrases.toList());
 				put("hint",getString("help.quotes_pack"));
-			}});
-			list.add(new HashMap<String, Object>() {{
-				put("id", "type");
-				put("type", "ComboBox");
-				put("label", getString("character_type"));
-				String className = currentPreset.getClass().getSimpleName();
-				int i = 0;
-				for (i = 0; i < CharacterPreset.presetTypeList.size(); i++) {
-					if (CharacterPreset.presetTypeList.get(i).equals(className)) {
-						break;
-					}
-				}
-				if (i >= CharacterPreset.presetTypeList.size()) {
-					CharacterPreset.presetTypeList.add(className);
-				}
-				put("values", CharacterPreset.presetTypeList);
-				put("value", i);
-				put("hint",getString("help.character_type"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "tags");
 				put("type", "TextField");
 				put("label", getString("tags"));
-				put("value", currentPreset.tags.toString());
+				put("value", currentCharacter.tags.toString());
 				put("hint",getString("help.tags"));
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("type", "Label");
 				put("label", getString("primary_character_values"));
 			}});
-			for (int i = 0; i < CharacterSystem.getFeatureCount(); i++) {
+			for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
 				HashMap<String, Object> ch = new HashMap<>();
-				ch.put("id", CharacterSystem.getFeatureName(i));
-				ch.put("label", getString(CharacterSystem.getFeatureName(i)));
-				ch.put("value", currentPreset.MainCharacter.getValueString(i));
-				ch.put("type", "TextField");
-				ch.put("hint",getString("help."+CharacterSystem.getFeatureName(i)));
+				ch.put("id", CharacterFeatures.getFeatureName(i));
+				ch.put("label", getString(CharacterFeatures.getFeatureName(i)));
+				ch.put("value", currentCharacter.character.getValue(i));
+				ch.put("type", "Spinner");
+				ch.put("min", -CharacterFeatures.BORDER);
+				ch.put("max", CharacterFeatures.BORDER);
+				ch.put("step", 1);
+				ch.put("hint", getString("help."+ CharacterFeatures.getFeatureName(i)));
 				list.add(ch);
 			}
 			list.add(new HashMap<String, Object>() {{
@@ -347,7 +399,7 @@ public class Main implements Plugin {
 				put("max", 10000);
 				put("step", 1);
 				put("hint",getString("help.delay"));
-				put("value", getProperties().getLong("messageTimeout", DEFAULT_MESSAGE_TIMEOUT) / 1000);
+				put("value", getProperties().getLong("messageTimeout", DEFAULT_CHATTING_TIMEOUT) / 1000);
 				put("label", getString("message_interval"));
 			}});
 			list.add(new HashMap<String, Object>() {{
@@ -356,12 +408,20 @@ public class Main implements Plugin {
 				put("value", getProperties().getBoolean("quotesAutoSync", true));
 				put("label", getString("packs_auto_sync"));
 			}});
-			list.add(new HashMap<String, Object>() {{
-				put("id", "save_preset");
-				put("type", "Button");
-				put("value", getString("save_preset"));
-				put("msgTag", "talk:save_preset");
+			Map buttons = new HashMap<String, Object>();
+			buttons.put("elements", new ArrayList<Map>(){{
+				add(new HashMap<String, Object>() {{
+					put("type", "Button");
+					put("value", getString("save_preset"));
+					put("msgTag", "talk:save-preset");
+				}});
+				add(new HashMap<String, Object>() {{
+					put("type", "Button");
+					put("value", getString("reset"));
+					put("msgTag", "talk:reset-preset");
+				}});
 			}});
+			list.add(buttons);
 			put("controls", list);
 		}});
 	}
@@ -371,44 +431,35 @@ public class Main implements Plugin {
 		String errorMessage = "";
 		if (val.isEmpty()) {
 			try {
-				currentPreset = CharacterPreset.getFromTypeName(
-						CharacterPreset.presetTypeList.get((Integer) data.get("type"))
-				);
-			} catch (Exception e) {
-				errorMessage += e.getMessage() + "\n";
-			}
-			try {
 				val = (String) data.getOrDefault("name", "");
 				if (!val.isEmpty()) {
-					currentPreset.name = val;
+					currentCharacter.name = val;
 				}
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentPreset.quotesBaseList=new ArrayList<String>((List<String>)data.get("quotes"));
+				currentCharacter.phrases.set((List<String>) data.get("phrases"));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentPreset.setTags((String)data.getOrDefault("tags",null));
+				currentCharacter.setTags((String) data.getOrDefault("tags", null));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
 			try {
 				val = (String) data.getOrDefault("usernames", "");
 				if (!val.isEmpty()) {
-					currentPreset.tags.put("usernames",val);
+					currentCharacter.tags.put("usernames", val);
 				}
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try {
-				for (int i = 0; i < CharacterSystem.getFeatureCount(); i++) {
-					val = (String) data.getOrDefault(CharacterSystem.getFeatureName(i), "");
-					if (!val.isEmpty()) {
-						currentPreset.MainCharacter.setValues(i, val);
-					}
+				for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
+					Number k = (Number) data.getOrDefault(CharacterFeatures.getFeatureName(i), 0);
+					currentCharacter.character.setValue(i, k.intValue());
 				}
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
@@ -418,9 +469,11 @@ public class Main implements Plugin {
 			if (newPreset == null) {
 				errorMessage = "Wrong or corrupted file!";
 			} else {
-				currentPreset = newPreset;
+				currentCharacter = newPreset;
 			}
 		}
+		currentCharacter.updatePhrases();
+
 		try {
 			getProperties().put("messageTimeout", (Integer) data.getOrDefault("message_interval", 40) * 1000);
 		} catch (Exception e) {
@@ -437,14 +490,12 @@ public class Main implements Plugin {
 
 		resetTimer();
 
-		quotes.setPacks(currentPreset.quotesBaseList);
 		updateOptionsTab();
 		saveSettings();
-		currentPreset.inform();
 	}
 
 	void saveSettings() {
-		getProperties().put("characterPreset", currentPreset.toJSON().toString());
+		getProperties().put("characterPreset", currentCharacter.toJSON().toString());
 		getProperties().save();
 	}
 
@@ -460,16 +511,12 @@ public class Main implements Plugin {
 		pluginProxy.log(e);
 	}
 
-	public static void sendToProxy(String tag, Object data) {
-		pluginProxy.sendMessage(tag, data);
-	}
-
 	public static Path getDataDirPath() {
 		return pluginProxy.getDataDirPath();
 	}
 
 	public static Path getPresetsPath() {
-		Path path = pluginProxy.getRootDirPath().resolve("presets/");
+		Path path = pluginProxy.getAssetsDirPath().resolve("presets/");
 		if (!Files.isDirectory(path)) {
 			try {
 				Files.createDirectories(path);
@@ -491,4 +538,16 @@ public class Main implements Plugin {
 	}
 
 	static PluginProperties getProperties() { return getPluginProxy().getProperties(); }
+
+	static Map createMapFromObject(Object object, String key){
+		Map<String, Object> data;
+		if(object instanceof Map){
+			data = (Map) object;
+		} else {
+			data = new HashMap<>();
+			if(object != null)
+				data.put("purpose", object.toString());
+		}
+		return data;
+	}
 }
