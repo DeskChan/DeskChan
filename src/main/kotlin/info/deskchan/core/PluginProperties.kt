@@ -20,13 +20,13 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
             else if (obj == null)
                 return null
             else
-                return obj.toString().toLong()
+                return obj.toString().toDouble().toLong()
         } catch (e: Exception){ }
         return null
     }
 
     /** Get value converted to long or default if no such key found or cannot convert it to long. **/
-    fun getLong(key: String, default: Long) : Long = getInteger(key)?.toLong() ?: default
+    fun getLong(key: String, default: Long) : Long = getLong(key) ?: default
 
     /** Get value converted to integer or null if no such key found or cannot convert it to long. **/
     fun getInteger(key: String) : Int? = getLong(key)?.toInt()
@@ -124,6 +124,7 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
                 put(key.toString(), value.toString())
             }
         }
+        proxyInterface.log("Properties loaded")
     }
 
     /** Saves properties to default location. **/

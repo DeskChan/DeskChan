@@ -193,7 +193,7 @@ public class App extends Application {
 
 		/* Change skin opacity.
         * Public message
-        * Params: value:Float! - absolute value, integer percent
+        * Params: value:Float! - absolute value, in percents (x100)
         *       or
         *         Map
         *             absolute: Float! - absolute value, float percent
@@ -202,7 +202,8 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-skin-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				double opacity = 1;
+				System.out.println(data);
+				double opacity = 100;
 				if (data instanceof Map) {
 					Map<String, Object> m = (Map<String, Object>) data;
 					if (m.containsKey("absolute")) {
@@ -213,12 +214,12 @@ public class App extends Application {
 						return;
 					}
 				} else if (data instanceof Number){
-					opacity = ((Number) data).floatValue() / 100;
+					opacity = ((Number) data).floatValue();
 				} else {
-					opacity = Float.parseFloat(data.toString()) / 100;
+					opacity = Float.parseFloat(data.toString());
 				}
 
-				Main.getProperties().put("balloon.opacity", opacity);
+				Main.getProperties().put("skin.opacity", opacity);
 				character.changeOpacity((float) opacity);
 			});
 		});
@@ -273,9 +274,9 @@ public class App extends Application {
 						character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
 					}
 				} else if (data instanceof Number){
-					character.resizeSkin(((Number) data).floatValue() / 100);
+					character.resizeSkin(((Number) data).floatValue());
 				} else {
-					character.resizeSkin(Float.parseFloat(data.toString()) / 100);
+					character.resizeSkin(Float.parseFloat(data.toString()));
 				}
 
 				Main.getProperties().put("skin.scale_factor", character.getScaleFactor());
@@ -474,10 +475,10 @@ public class App extends Application {
 
 		/* Set balloon shadow opacity.
         * Public message
-        * Params: opacity: Integer! - opacity, 0-100
+        * Params: opacity: Integer! - opacity, in percents (x100)
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-balloon-shadow-opacity", (sender, tag, data) -> {
-			float opacity = ((Number) data).floatValue() / 100;
+			float opacity = ((Number) data).floatValue();
 			Main.getProperties().getFloat("skin.shadow-opacity", opacity);
 
 			if (Balloon.getInstance() != null)
@@ -486,10 +487,10 @@ public class App extends Application {
 
 		/* Set skin shadow opacity.
         * Public message
-        * Params: opacity: Integer! - opacity, 0-100
+        * Params: opacity: Integer! - opacity, in percents (x100)
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-skin-shadow-opacity", (sender, tag, data) -> {
-			float opacity = ((Number) data).floatValue() / 100;
+			float opacity = ((Number) data).floatValue();
 			Main.getProperties().getFloat("balloon.shadow-opacity", opacity);
 
 			if (character != null)
@@ -682,7 +683,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Double value = getDouble(data, 100.0) / 100;
+				Double value = getDouble(data, 100.0);
 				Main.getProperties().put("balloon.opacity", value.toString());
 
 				if(Balloon.getInstance() != null)

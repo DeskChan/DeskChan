@@ -149,6 +149,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:open-skin-dialog");
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
+		System.out.println(Main.getProperties().getInteger("skin.scale_factor"));
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "scale");
 			put("type",  "Spinner");
@@ -223,9 +224,7 @@ class OptionsDialog extends TemplateBox {
 			put("min",    0);
 			put("max",    100);
 			put("msgTag","gui:change-balloon-opacity");
-			double opacity = Main.getProperties().getDouble("balloon.opacity", 1.0);
-			opacity = Math.round(opacity * 200.0f) / 2.0f;
-			put("value",   opacity);
+			put("value",   Main.getProperties().getDouble("balloon.opacity", 100));
 		}});
 		list.add(new HashMap<String, Object>(){{
 			put("id",    "balloon-text-animation");

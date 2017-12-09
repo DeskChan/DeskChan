@@ -50,7 +50,7 @@ dependencies {
 	compile group: 'com.dorkbox', name: 'SystemTray', version: '3.10'
 	compile group: 'org.javassist', name: 'javassist', version: '3.22+'
 	compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12+'
-	compile group: 'com.1stleg', name: 'jnativehook', version: '2.1.0'
+	compile group: 'com.1stleg', name: 'jnativehook', version: '2.0.2'
 	compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlin_version
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 	compile group: 'net.objecthunter', name: 'exp4j', version: '0.4.8'

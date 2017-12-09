@@ -129,7 +129,7 @@ class Balloon extends MovablePane {
 	private long lastClick = -1;
 
 	private final MouseEventNotificator mouseEventNotificator = new MouseEventNotificator(this, "balloon");
-	private float balloonOpacity = 1.0f;
+	private float balloonOpacity = 100;
 
 	class SymbolsAdder implements EventHandler<javafx.event.ActionEvent> {
 
@@ -214,7 +214,7 @@ class Balloon extends MovablePane {
 
 		getChildren().add(stackPane);
 
-		setBalloonOpacity(Main.getProperties().getFloat("balloon.opacity", 1.0f));
+		setBalloonOpacity(Main.getProperties().getFloat("balloon.opacity", 100));
 
 		setOnMousePressed(event -> {
 			lastClick = System.currentTimeMillis();
@@ -341,17 +341,18 @@ class Balloon extends MovablePane {
 	float getSkinOpacity() {
         return balloonOpacity;
 	}
-        
+
 	public void setBalloonOpacity(float opacity) {
+		opacity /= 100;
 		if (opacity > 0.99) {
 			balloonOpacity = 1.0f;
 			stackPane.setEffect(bubbleShadow);
 		} else {
-			balloonOpacity = Math.round(Math.abs(opacity) * 100.0f) / 100.0f;
+			balloonOpacity = opacity;
 			stackPane.setEffect(null);
 		}
 		bubblesGroup.setOpacity(balloonOpacity);
-		Main.getProperties().getFloat("balloon.opacity", balloonOpacity);
+		Main.getProperties().getFloat("balloon.opacity", balloonOpacity * 100);
 	}
 
 	public void setShadowOpacity(float opacity) {
@@ -398,7 +399,7 @@ class Balloon extends MovablePane {
 		return character;
 	}
 	
-	void show(String layer) {
+	void show() {
 		OverlayStage.getInstance().showBalloon(this);
 		setPositionStorageID(character.getId() + ".balloon");
 	}

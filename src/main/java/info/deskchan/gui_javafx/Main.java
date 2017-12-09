@@ -3,9 +3,12 @@ package info.deskchan.gui_javafx;
 import info.deskchan.core.*;
 import javafx.application.Platform;
 import org.apache.commons.lang3.SystemUtils;
+import org.jnativehook.GlobalScreen;
 
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main implements Plugin {
 	
@@ -17,6 +20,13 @@ public class Main implements Plugin {
 	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 		instance = this;
+
+		// Get the logger for "org.jnativehook" and set the level to warning.
+		Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+		logger.setLevel(Level.WARNING);
+
+		// Don't forget to disable the parent handlers.
+		logger.setUseParentHandlers(false);
 
 		getProperties().load();
 

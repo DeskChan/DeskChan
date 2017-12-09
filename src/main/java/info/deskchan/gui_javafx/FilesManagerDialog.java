@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ListView;
@@ -33,16 +34,21 @@ public class FilesManagerDialog extends TemplateBox{
         getDialogPane().lookupButton(addButton).addEventFilter(ActionEvent.ACTION, (event) -> {
             event.consume();
             try {
-                FileChooser chooser=new FileChooser();
-                chooser.setInitialDirectory(Main.getInstance().getPluginProxy().getRootDirPath().toFile());
-                File newFile = chooser.showOpenDialog(getDialogPane().getScene().getWindow());
-                filesList.getItems().add(newFile.toString());
+                Platform.runLater(() -> {
+                    FileChooser chooser = new FileChooser();
+                    chooser.setInitialDirectory(Main.getInstance().getPluginProxy().getRootDirPath().toFile());
+                    System.out.println(Thread.currentThread());
+                    File newFile = chooser.showOpenDialog(getDialogPane().getScene().getWindow());
+                    filesList.getItems().add(newFile.toString());
+                });
             } catch(Exception e){ };
         });
         getDialogPane().lookupButton(removeButton).addEventFilter(ActionEvent.ACTION, (event) -> {
             event.consume();
             try {
-                filesList.getItems().remove(filesList.getSelectionModel().getSelectedIndex());
+                Platform.runLater(() -> {
+                    filesList.getItems().remove(filesList.getSelectionModel().getSelectedIndex());
+                });
             } catch(Exception e){ };
         });
     }

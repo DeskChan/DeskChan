@@ -110,7 +110,7 @@ class OverlayStage extends Stage {
 		}
 	}
 	public static void updateStage(LayerMode mode){
-		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC)
+		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC && instance != null)
 			showConfirmation("info.separated-stage");
 		else if(mode == LayerMode.ALWAYS_TOP && SystemUtils.IS_OS_MAC)
 			showConfirmation("info.not-separated-stage");
@@ -192,8 +192,8 @@ class OverlayStage extends Stage {
 	synchronized void hideBalloons() {}
 
 	void relocate(Node node, double x, double y){
-		node.setLayoutX(x-this.getX());
-		node.setLayoutY(y-this.getY());
+		node.setLayoutX(x - this.getX());
+		node.setLayoutY(y - this.getY());
 	}
 
 	public void showStage(){

@@ -4,6 +4,7 @@ import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core_utils.TextOperations;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
@@ -14,15 +15,19 @@ import org.jnativehook.keyboard.NativeKeyListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.Character;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class KeyboardEventNotificator implements NativeKeyListener {
 
-    private static KeyboardEventNotificator instance = new KeyboardEventNotificator();
+    private static KeyboardEventNotificator instance;
 
     public static void initialize() {
+        instance = new KeyboardEventNotificator();
         try {
             GlobalScreen.registerNativeHook();
         } catch (NativeHookException ex) {
@@ -47,6 +52,10 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             setSubmenu();
         });
 
+        /* Print key names in options window
+         * Technical message
+         * Returns: none
+         */
         pluginProxy.addMessageListener("gui:keyboard-get-keycodes", (sender, tag, data) -> {
             pluginProxy.sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
                 put("name", pluginProxy.getString("hotkeys"));
@@ -55,8 +64,8 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                 String raw = "";
                 String keys = "";
                 if(currentPressed.size() > 0) {
-                    for (int keyCode : currentPressed)
-                        raw += keyCode + " + ";
+                    for (KeyPair keyCode : currentPressed)
+                        raw += "R" + keyCode.rawCode + " + ";
                     raw = raw.substring(0, raw.length()-3);
 
                     keys = KeyboardCommand.getKeyNames(currentPressed);
@@ -78,8 +87,9 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         });
 
         GlobalScreen.addNativeKeyListener(instance);
+
         // testing keywords parsing
-        // KeyboardCommand.test();
+        KeyboardCommand.test();
     }
 
     private static void setSubmenu(){
@@ -123,8 +133,34 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         }});
     }
 
+    class KeyPair{
+        final int keyCode;
+        final int rawCode;
+        KeyPair(NativeKeyEvent e){
+            keyCode = e.getKeyCode(); rawCode = e.getRawCode();
+        }
+        @Override
+        public boolean equals(Object other){
+            if (other instanceof String) return toString().equals(other);
+            if (other instanceof Number) return rawCode == ((Number) other).intValue();
+            try {
+                return rawCode == ((KeyPair) other).rawCode;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        @Override
+        public int hashCode(){
+            return rawCode;
+        }
+        @Override
+        public String toString(){
+            return Integer.toString(keyCode) + (KeyboardCommand.isDuplicate(this) ? "-" + (rawCode%2) : "");
+        }
+    }
+
     /** Currently pressed keys as raw code. **/
-    private static HashSet<Integer> currentPressed = new HashSet<>();
+    private static Set<KeyPair> currentPressed = new HashSet<>();
 
     /** {@link #currentPressed} was changed recently. **/
     private static boolean setChanged = false;
@@ -134,7 +170,9 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
     /** Key pressed event (called every tick you press the button, not once). **/
     public void nativeKeyPressed(NativeKeyEvent e) {
-        if(currentPressed.add(e.getRawCode()) && commands != null && commands.length > 0) {
+        System.out.println(Thread.currentThread());
+        if(currentPressed.add(new KeyPair(e)) && commands != null && commands.length > 0) {
+            System.out.println("added: " + e.getKeyCode() + " " + e.getRawCode() + " " + currentPressed);
             setChanged = true;
             handler.start();
         }
@@ -142,18 +180,15 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
     /** Key released event. **/
     public void nativeKeyReleased(NativeKeyEvent e) {
-        currentPressed.remove(e.getRawCode());
+        currentPressed.remove(new KeyPair(e));
+        System.out.println("removed: " + e.getKeyCode() + " " + e.getRawCode() + " " + currentPressed);
         setChanged = true;
         if(currentPressed.size() == 0)
             handler.stop();
     }
 
-    /** I dunno when this called. **/
-    public void nativeKeyTyped(NativeKeyEvent e) {
-        System.out.println("If you see this message - you have just found some new secret DeskChan function. " +
-                        "Tell developers about it as soon as possible.");
-        System.out.println("Key Typed: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
-    }
+    /** It does nothing but needs to me implemented. **/
+    public void nativeKeyTyped(NativeKeyEvent e) { }
 
     /** Pre-parsed commands and rules. **/
     static KeyboardCommand[] commands;
@@ -225,8 +260,16 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                 if(command.keyCodes.length < size) continue;
 
                 boolean contains = true;
-                for(Integer keyCode : command.keyCodes) {
-                    if (!currentPressed.contains(keyCode)) {
+                for(Object keyCode : command.keyCodes) {
+                    Iterator<KeyPair> it = currentPressed.iterator();
+                    while (it.hasNext()){
+                        KeyPair key = it.next();
+                        if (key.equals(keyCode)) {
+                            it = null;
+                            break;
+                        }
+                    }
+                    if (it != null){
                         contains = false;
                         break;
                     }
@@ -240,7 +283,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         private static final Integer DEFAULT_DELAY = 50;
         static int getDefaultDelay(){
             try {
-                return (int) Main.getProperties().getInteger("keyboard.delay_handle", DEFAULT_DELAY);
+                return Main.getProperties().getInteger("keyboard.delay_handle", DEFAULT_DELAY);
             } catch (Exception e){
                 Main.getProperties().put("keyboard.delay_handle", DEFAULT_DELAY);
                 return DEFAULT_DELAY;
@@ -250,24 +293,29 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
     static class KeyboardCommand {
         final String tag;
-        final Integer[] keyCodes;
+        final Object[] keyCodes;
         final Object msgData;
 
         // Map for keywords. Didn't find proper keywords by myself.
-        private static final Map<String, Integer> keyMap = new HashMap<>();
-        private static final Map<Integer, String> keyNames = new HashMap<>();
+        // various string representation of key -> key code
+        private static final Map<String, String> keyMap = new HashMap<>();
+        // key code -> key name
+        private static final Map<String, String> keyNames = new HashMap<>();
+        // contains key codes for duplicating keys like Alt and Ctrl
+        private static final List<Integer> duplicates = new ArrayList<>();
         static {
             try {
                 String keycodes = new String(Files.readAllBytes(Paths.get(App.class.getResource("keycodes.json").toURI())));
                 JSONObject map = new JSONObject(keycodes);
                 for(String entry : map.keySet()){
-                    Integer code = Integer.parseInt(entry);
                     JSONArray array = map.getJSONArray(entry);
 
-                    keyNames.put(code, array.getString(0));
+                    keyNames.put(entry, array.getString(0));
                     for(Object name : array.toList()){
-                        keyMap.put(name.toString(), code);
+                        keyMap.put(name.toString(), entry);
                     }
+                    if (entry.contains("-"))
+                        duplicates.add(Integer.parseInt(entry.substring(0, entry.indexOf('-'))));
                 }
             } catch (Exception e){
                 Main.log("Error while parsing keycodes map from file");
@@ -275,12 +323,16 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             }
         }
 
-        public static String getKeyNames(Set<Integer> keyCodes){
+        static boolean isDuplicate(KeyPair pair){
+            return duplicates.contains(pair.keyCode);
+        }
+
+        public static String getKeyNames(Set<KeyPair> keyCodes){
             String result = "";
             if(keyCodes.size() == 0) return result;
 
-            for(Integer keyCode : keyCodes)
-                result += keyNames.get(keyCode) + " + ";
+            for(KeyPair keyCode : keyCodes)
+                result += keyNames.get(keyCode.toString()) + " + ";
             return result.substring(0, result.length()-3);
         }
 
@@ -288,14 +340,13 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         /** Testing keywords parsing. **/
         public static void test(){
             String[] keyStrings = {"A", "b", "+", "Space", "ALT", "Left ALT", "right Alt", "@", "2", "NUMPAD 2",
-                    "PrtScr", "PAUSE BREAK", "$", "№", "П", "ъ", "ПРОБЕЛ", "АльТ", "капс лок", "Эск", "ф5", "f6", "F7"};
-            Integer[] keyCodes  = {65, 66, 187, 32, 164, 164, 165, 50, 50, 98,
-                44, 19, 52, 51, 71, 221, 32, 164, 20, 27, 116, 117, 118};
+                    "PrtScr", "PAUSE BREAK", "$", "№", "П", "ъ", "ПРОБЕЛ", "АльТ", "капс лок", "Эск", "ф5", "f6", "F7", "C"};
+            String[] keyCodes  = {"30", "48", "13", "57", "56-1", "56-1", "56-0", "3", "3", "3",
+                    "3639-1", "3653", "5", "4", "34", "27", "57", "56-1", "58", "1", "63", "64", "65", "46"};
 
             for(int i = 0; i < keyCodes.length; i++) {
-                Integer code = parseKey(keyStrings[i]);
-                if(!keyCodes[i].equals(code)){
-                    System.out.println(keyStrings[i] + ", " + keyCodes[i] + "!=" + code);
+                if(!keyCodes[i].equals(parseKey(keyStrings[i]))){
+                    System.out.println(keyStrings[i] + ", " + parseKey(keyStrings[i]) + "!=" + keyCodes[i]);
                 }
             }
         }
@@ -304,15 +355,17 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         private static Set<String> errors = new HashSet<>();
 
         /** Parsing keyword to raw key code. **/
-        public static Integer parseKey(String key){
+        public static Object parseKey(String key){
+            // note that parse algorithm makes all words upper case and removes spaces and duplicating symbols
             try {
-                if(key.length() > 1)
-                    return Integer.parseInt(key);
+                if (key.length() > 1 && Character.toUpperCase(key.charAt(0)) == 'R' && Character.isDigit(key.charAt(1)))
+                    return Integer.parseInt(key.substring(1));
             } catch (Exception e){ }
+
             StringBuilder sb = new StringBuilder(key.toUpperCase());
 
             // Ф1-24 -> F1-24
-            if(sb.length() > 1 && sb.charAt(0) == 'Ф' && (sb.charAt(1) >= '0' && sb.charAt(1) <= '9'))
+            if(sb.length() > 1 && sb.charAt(0) == 'Ф' && Character.isDigit(sb.charAt(1)))
                 sb.setCharAt(0, 'F');
 
             if (sb.length()>1 && sb.charAt(0) == 'Э')  sb.setCharAt(0, 'Е');
@@ -326,7 +379,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                 }
             }
 
-            Integer code = keyMap.get(sb.toString());
+            String code = keyMap.get(sb.toString());
             if(code == null)
                 errors.add(key);
 
@@ -338,21 +391,54 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             msgData = map.get("msgData");
             String rule = (String) map.getOrDefault("rule", "");
             if (rule == null){
-                keyCodes = new Integer[0];
+                keyCodes = new Object[0];
                 return;
             }
 
             String[] keys = rule.toUpperCase().split("\\+");
-            HashSet<Integer> keySet = new HashSet<>();
+            Set<Object> keySet = new HashSet<>();
             for(String keyName : keys){
                 keyName = keyName.trim();
                 if(keyName.length() == 0) continue;
 
-                Integer keyCode = parseKey(keyName);
+                Object keyCode = parseKey(keyName);
                 if(keyCode != null)
                     keySet.add(keyCode);
             }
-            keyCodes = keySet.toArray(new Integer[keySet.size()]);
+            keyCodes = keySet.toArray(new Object[keySet.size()]);
+        }
+    }
+
+    public static class JavaFxDispatchService extends AbstractExecutorService {
+        private boolean running = false;
+
+        public JavaFxDispatchService() {
+            running = true;
+        }
+
+        public void shutdown() {
+            running = false;
+        }
+
+        public List<Runnable> shutdownNow() {
+            running = false;
+            return new ArrayList<Runnable>(0);
+        }
+
+        public boolean isShutdown() {
+            return !running;
+        }
+
+        public boolean isTerminated() {
+            return !running;
+        }
+
+        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+            return true;
+        }
+
+        public void execute(Runnable r) {
+            Platform.runLater(r);
         }
     }
 }

@@ -30,7 +30,6 @@ class Character extends MovablePane {
 	private final DropShadow imageShadow = new DropShadow();
 	private PriorityQueue<MessageInfo> messageQueue = new PriorityQueue<>();
 	private Balloon balloon = null;
-	private String balloonLayerName = "normal";
 	private Balloon.PositionMode balloonPositionMode;
 	private float scaleFactor = 1.0f;
 	private float skinOpacity = 1.0f;
@@ -43,8 +42,8 @@ class Character extends MovablePane {
 		imageShadow.setOffsetX(1.5);
 		imageShadow.setOffsetY(2.5);
 
-		setScaleFactor(Main.getProperties().getFloat("skin.scale_factor", 1.0f));
-		setSkinOpacity(Main.getProperties().getFloat("skin.opacity", 1.0f));
+		setScaleFactor(Main.getProperties().getFloat("skin.scale_factor", 100));
+		setSkinOpacity(Main.getProperties().getFloat("skin.opacity", 100));
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
@@ -228,13 +227,19 @@ class Character extends MovablePane {
 
 	/**
 	 * Changes the absolute value of the opacity of the image.
-	 * @param opacity a value in the range of (0.0; 1.0]
+	 * @param opacity a value in percents (x100)
 	 */
 	void changeOpacity(float opacity) {
-		if (opacity == 0 || opacity > 1.0) {
-			return;
+		opacity /= 100;
+
+		if (opacity < 0 || opacity > 0.99) {
+			skinOpacity = 1.0f;
+			imageView.setEffect(imageShadow);
+		} else {
+			skinOpacity = opacity;
+			imageView.setEffect(null);
 		}
-		setSkinOpacity(opacity);
+		imageView.setOpacity(skinOpacity);
 		updateImage(false);
 	}
 
@@ -311,38 +316,43 @@ class Character extends MovablePane {
 			balloon = new Balloon(this, balloonPositionMode, messageInfo.text[messageInfo.counter]);
             messageInfo.counter++;
 			balloon.setTimeout(messageInfo.timeout);
-			balloon.show(balloonLayerName);
+			balloon.show();
 		}
 	}
 
 	float getScaleFactor() {
-	    return scaleFactor;
+	    return scaleFactor * 100;
     }
 
+	/** Set scaling, in percents (x100). **/
     private void setScaleFactor(float scaleFactor) {
 		if (scaleFactor == 0) {
 			this.scaleFactor = 1.0f;
 		} else {
-			this.scaleFactor = Math.round(Math.abs(scaleFactor) * 100.0f) / 100.0f;
+			this.scaleFactor = Math.round(Math.abs(scaleFactor)) / 100.0f;
 		}
 	}
 
 	float getSkinOpacity() {
-		return skinOpacity;
+		return skinOpacity * 100;
 	}
 
+	/** Set opacity, in percents (x100). **/
 	public void setSkinOpacity(float opacity) {
+		opacity /= 100;
 		if (opacity == 0 || opacity > 0.99) {
 			skinOpacity = 1.0f;
 			imageView.setEffect(imageShadow);
 		} else {
-			skinOpacity = Math.round(Math.abs(opacity) * 100.0f) / 100.0f;
+			skinOpacity = opacity;
 			imageView.setEffect(null);
 		}
 		imageView.setOpacity(skinOpacity);
 	}
 
+	/** Set shadow opacity, in percents (x100). **/
 	public void setShadowOpacity(float opacity) {
+		opacity /= 100;
 		if (opacity > 0.99)
 			opacity = 1.0f;
 
