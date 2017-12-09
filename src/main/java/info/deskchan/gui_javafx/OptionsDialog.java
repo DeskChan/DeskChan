@@ -87,6 +87,15 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("balloon.options"));
 			put("value",  Main.getString("open"));
 		}});
+		/*list.add(new HashMap<String, Object>() {{
+			put("id",    "interface_size");
+			put("type",  "Slider");
+			put("min",    0.1);
+			put("max",    5);
+			put("msgTag","gui:set-interface-size");
+			put("label",  Main.getString("interface_size"));
+			put("value",  App.getInterfaceMultiplierSize());
+		}});*/
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "interface_font");
 			put("type",  "FontPicker");
@@ -373,6 +382,8 @@ class OptionsDialog extends TemplateBox {
 		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
+		double prefWidth  = 400 * App.getInterfaceMultiplierSize(),
+			   prefHeight = 300 * App.getInterfaceMultiplierSize();
 
 
 		/// appearance
@@ -386,7 +397,7 @@ class OptionsDialog extends TemplateBox {
 		/// plugins
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
-		pluginsList.setPrefSize(400, 300);
+		pluginsList.setPrefSize(prefWidth, prefHeight);
 
 		// Setting row style
 		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
@@ -396,7 +407,7 @@ class OptionsDialog extends TemplateBox {
 					@Override
 					protected void updateItem(PluginListItem t, boolean bln) {
 						super.updateItem(t, bln);
-						setStyle("-fx-cell-size: 30");
+						setStyle("-fx-cell-size: " + LocalFont.defaultFont.getSize()*2.5);
 						if (t != null) {
 							setGraphic(t.hbox);
 							setTooltip(t.tooltip);
@@ -458,7 +469,7 @@ class OptionsDialog extends TemplateBox {
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
 		alternativesTab.setCenter(alternativesTable);
-		alternativesTable.setPrefSize(400, 300);
+		alternativesTable.setPrefSize(prefWidth, prefHeight);
 		{
 			TreeTableColumn<AlternativeTreeItem, String> column = new TreeTableColumn<>(Main.getString("tag"));
 			column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getValue().tag));

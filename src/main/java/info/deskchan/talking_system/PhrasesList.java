@@ -183,19 +183,13 @@ public class PhrasesList {
 		matchingPhrases = new ArrayList<>();
 		ArrayList<Map<String,Object>> checkList = new ArrayList<>();
 
-		System.out.println("current: "+current);
-		for (PhrasesPack pack : packs) {
-			System.out.println(pack.size());
-			for (Phrase phrase : pack.phrases) {
-				System.out.println(phrase+" "+ phrase.matchToCharacter(current));
+		for (PhrasesPack pack : packs)
+			for (Phrase phrase : pack.phrases)
 				if (phrase.matchToCharacter(current)) {
-					//System.out.println(phrase);
 					matchingPhrases.add(phrase);
 					checkList.add(phrase.toMap());
 				}
-			}
-		}
-		System.out.println(matchingPhrases.size());
+
 		Main.getPluginProxy().sendMessage("talk:remove-quote", checkList, (sender, data) -> {
 			List<Map<String, Object>> phrasesList = (ArrayList) data;
 			if(phrasesList == null) return;

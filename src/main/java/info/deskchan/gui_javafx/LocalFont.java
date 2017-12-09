@@ -2,7 +2,6 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core_utils.LimitHashMap;
 import javafx.scene.text.Font;
-import javafx.stage.Screen;
 
 public class LocalFont {
     private LocalFont(){ }
@@ -10,7 +9,7 @@ public class LocalFont {
     static Font defaultFont =  getSystemDefaultFont();
 
     private static Font getSystemDefaultFont(){
-        return Font.font(Font.getDefault().getName(), Font.getDefault().getSize() * Screen.getPrimary().getDpi() / 96);
+        return Font.font(Font.getDefault().getName(), Font.getDefault().getSize() * App.getInterfaceMultiplierSize());
     }
 
     public static String getDefaultFontCSS(){
@@ -39,6 +38,7 @@ public class LocalFont {
         else
             defaultFont = fromString(font);
         Main.getProperties().getString("interface.font", toString(defaultFont));
+        TrayMenu.getContextMenu().setStyle(getDefaultFontCSS());
     }
 
     private static LimitHashMap<String, Font> hash = new LimitHashMap<>(10);

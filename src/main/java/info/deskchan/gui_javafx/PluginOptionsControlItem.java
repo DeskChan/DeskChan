@@ -105,6 +105,8 @@ interface PluginOptionsControlItem {
 
 		Node node = item.getNode();
 		if(width != null && height != null){
+			width *= App.getInterfaceMultiplierSize();
+			height *= App.getInterfaceMultiplierSize();
 			node.setClip(new Rectangle(width, height));
 		}
 		if(width != null && node instanceof Region) {

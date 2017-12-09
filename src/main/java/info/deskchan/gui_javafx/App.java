@@ -456,6 +456,14 @@ public class App extends Application {
 			Balloon.setDefaultFont((String) data);
 		});
 
+		/* Set interface size.
+        * Public message
+        * Params: size: Float! - size multiplier
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-interface-size", (sender, tag, data) -> {
+			Main.getProperties().put("interface-size", data);
+		});
+
 		/* Set interface font.
         * Public message
         * Params: font: String! - font in inner format
@@ -839,6 +847,11 @@ public class App extends Application {
 		} catch (Throwable e){
 			Main.log("Stylesheets deprecated in this version of Java, we didn't fix it yet.");
 		}
+	}
+
+	/** Get interface size multiplier. **/
+	static double getInterfaceMultiplierSize(){
+		return Main.getProperties().getDouble("interface-size", Screen.getPrimary().getDpi() / 96);
 	}
 
 	/** Show error dialog. **/
