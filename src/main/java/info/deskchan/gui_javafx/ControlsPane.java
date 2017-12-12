@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ControlsContainer {
+public class ControlsPane {
 	
 	final String name;
 	List<Map<String, Object>> controls;
@@ -24,7 +24,7 @@ public class ControlsContainer {
 	private BorderPane borderPane;
 	private Map<String, PluginOptionsControlItem> namedControls;
 
-	ControlsContainer(String name, List<Map<String, Object>> controls, String msgSave, String msgClose) {
+	ControlsPane(String name, List<Map<String, Object>> controls, String msgSave, String msgClose) {
 		this.name = name;
 		update(controls, msgSave, msgClose);
 	}
@@ -58,24 +58,40 @@ public class ControlsContainer {
 		borderPane = new BorderPane();
 		int row = 0;
 		for (Map<String, Object> controlInfo : controls) {
-			String id = (String) controlInfo.getOrDefault("id", null);
-			String label = (String) controlInfo.getOrDefault("label", null);
-			String hint = (String) controlInfo.getOrDefault("hint", null);
-			PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, controlInfo);
-			if (item == null) {
-				continue;
-			}
-			if (id != null) {
-				namedControls.put(id, item);
-				item.getNode().setId(id);
+			String label = (String) controlInfo.get("label");
+			String hint = (String) controlInfo.get("hint");
+
+			Node node;
+			if (controlInfo.containsKey("elements")){
+				HBox box = new HBox();
+				node = box;
+				for (Map element : (List<Map>) controlInfo.get("elements")) {
+					PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, element);
+					if (item == null) continue;
+					String id = (String) controlInfo.get("id");
+					if (id != null) {
+						namedControls.put(id, item);
+						item.getNode().setId(id);
+					}
+					box.getChildren().add(item.getNode());
+				}
+			} else {
+				PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, controlInfo);
+				if (item == null) continue;
+				String id = (String) controlInfo.getOrDefault("id", null);
+				if (id != null) {
+					namedControls.put(id, item);
+					item.getNode().setId(id);
+				}
+				node = item.getNode();
 			}
 			if (label == null) {
-				gridPane.add(item.getNode(), 0, row, 2, 1);
+				gridPane.add(node, 0, row, 2, 1);
 			} else {
 				Text labelNode = new Text(label + ":");
 				labelNode.setFont(LocalFont.defaultFont);
 				gridPane.add(labelNode, 0, row);
-				gridPane.add(item.getNode(), 1, row);
+				gridPane.add(node, 1, row);
 			}
 			if(hint!=null){
 				gridPane.add(new Hint(hint),2,row);

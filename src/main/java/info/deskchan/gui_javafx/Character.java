@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
@@ -26,10 +27,9 @@ class Character extends MovablePane {
 	private Skin skin = null;
 	private String imageName = "normal";
 	private String idleImageName = "normal";
+	private final DropShadow imageShadow = new DropShadow();
 	private PriorityQueue<MessageInfo> messageQueue = new PriorityQueue<>();
 	private Balloon balloon = null;
-	private String layerName = "normal";
-	private String balloonLayerName = "normal";
 	private Balloon.PositionMode balloonPositionMode;
 	private float scaleFactor = 1.0f;
 	private float skinOpacity = 1.0f;
@@ -37,15 +37,21 @@ class Character extends MovablePane {
 
 	Character(String id, Skin skin) {
 		this.id = id;
-		setScaleFactor(Float.parseFloat(Main.getProperty("skin.scale_factor", "1.0")));
-		setSkinOpacity(Float.parseFloat(Main.getProperty("skin.opacity", "1.0")));
+
+		imageShadow.setRadius(10.0);
+		imageShadow.setOffsetX(1.5);
+		imageShadow.setOffsetY(2.5);
+
+		setScaleFactor(Main.getProperties().getFloat("skin.scale_factor", 100));
+		setSkinOpacity(Main.getProperties().getFloat("skin.opacity", 100));
 		getChildren().add(imageView);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
 
 		imageView.setMouseTransparent(true);
+
 		balloonPositionMode = Balloon.PositionMode.valueOf(
-				Main.getProperty("character." + id + ".balloon_position_mode",
+				Main.getProperties().getString("character." + id + ".balloon_position_mode",
 						Balloon.PositionMode.AUTO.toString())
 		);
 		addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
@@ -62,7 +68,7 @@ class Character extends MovablePane {
 			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-stop-drag",m);
 		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-			boolean enabled = Main.getProperty("character.enable_context_menu", "1").equals("1");
+			boolean enabled = Main.getProperties().getBoolean("character.enable_context_menu", true);
 			ContextMenu contextMenu = TrayMenu.getContextMenu();
 			// We need to hide menu manually in both cases to avoid showing the menu with incorrect width.
 			contextMenu.hide();
@@ -93,9 +99,13 @@ class Character extends MovablePane {
 					y0 /= scaleFactor;
 
 					PixelReader imagePixels = imageView.getImage().getPixelReader();
-					if (imageView.getImage()!=null && x0 < imageView.getImage().getWidth() && y0 < imageView.getImage().getHeight()){
-						Color pixelColor = imagePixels.getColor((int) x0, (int) y0);
-						return !pixelColor.equals(Color.TRANSPARENT);
+					if (imageView.getImage() != null && x0 < imageView.getImage().getWidth() && y0 < imageView.getImage().getHeight()){
+						try {
+							Color pixelColor = imagePixels.getColor((int) x0, (int) y0);
+							return !pixelColor.equals(Color.TRANSPARENT);
+						} catch (Exception e){
+							return true;
+						}
 					}
 					return false;
 				});
@@ -142,7 +152,7 @@ class Character extends MovablePane {
         }
         Image image = imageView.getImage();
 	    if(image==null){
-	    	App.showNotification(Main.getString("error"),Main.getString("error.no-image")+getImage());
+	    	App.showNotification(Main.getString("error"), Main.getString("error.no-image")+getImage());
 	    	return;
 		}
 		double oldWidth = imageView.getFitWidth();
@@ -153,7 +163,6 @@ class Character extends MovablePane {
 		imageView.setFitWidth(newWidth);
 		imageView.setFitHeight(newHeight);
 		resize(imageView.getFitWidth(), imageView.getFitHeight());
-		imageView.setOpacity(skinOpacity);
 
 		Lighting lighting = null;
 		if (skinColor != null && !skinColor.equals(new Color(1,1,1,1))) {
@@ -171,6 +180,7 @@ class Character extends MovablePane {
         double deltaY = -(newHeight - oldHeight) / 2;
         Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
         setPosition(newPosition);
+        setShadowOpacity(Main.getProperties().getFloat("skin.shadow-opacity", 1.0f));
 	}
 
 	private void updateImage() {
@@ -221,13 +231,19 @@ class Character extends MovablePane {
 
 	/**
 	 * Changes the absolute value of the opacity of the image.
-	 * @param opacity a value in the range of (0.0; 1.0]
+	 * @param opacity a value in percents (x100)
 	 */
 	void changeOpacity(float opacity) {
-		if (opacity == 0 || opacity > 1.0) {
-			return;
+		opacity /= 100;
+
+		if (opacity < 0 || opacity > 0.99) {
+			skinOpacity = 1.0f;
+			imageView.setEffect(imageShadow);
+		} else {
+			skinOpacity = opacity;
+			imageView.setEffect(null);
 		}
-		setSkinOpacity(opacity);
+		imageView.setOpacity(skinOpacity);
 		updateImage(false);
 	}
 
@@ -266,7 +282,7 @@ class Character extends MovablePane {
 
 	void setBalloonPositionMode(Balloon.PositionMode mode) {
 		balloonPositionMode = mode;
-		Main.setProperty("character." + id + ".balloon_position_mode", mode.toString());
+		Main.getProperties().put("character." + id + ".balloon_position_mode", mode.toString());
 	}
 
 	void say(Object data) {
@@ -304,32 +320,48 @@ class Character extends MovablePane {
 			balloon = new Balloon(this, balloonPositionMode, messageInfo.text[messageInfo.counter]);
             messageInfo.counter++;
 			balloon.setTimeout(messageInfo.timeout);
-			balloon.show(balloonLayerName);
+			balloon.show();
 		}
 	}
 
 	float getScaleFactor() {
-	    return scaleFactor;
+	    return scaleFactor * 100;
     }
 
+	/** Set scaling, in percents (x100). **/
     private void setScaleFactor(float scaleFactor) {
 		if (scaleFactor == 0) {
 			this.scaleFactor = 1.0f;
 		} else {
-			this.scaleFactor = Math.round(Math.abs(scaleFactor) * 20.0f) / 20.0f;
+			this.scaleFactor = Math.round(Math.abs(scaleFactor)) / 100.0f;
 		}
 	}
 
 	float getSkinOpacity() {
-		return skinOpacity;
+		return skinOpacity * 100;
 	}
 
-	private void setSkinOpacity(float opacity) {
-		if (opacity == 0 || opacity > 1.0) {
+	/** Set opacity, in percents (x100). **/
+	public void setSkinOpacity(float opacity) {
+		opacity /= 100;
+		if (opacity == 0 || opacity > 0.99) {
 			skinOpacity = 1.0f;
+			imageView.setEffect(imageShadow);
 		} else {
-			skinOpacity = Math.round(Math.abs(opacity) * 20.0f) / 20.0f;
+			skinOpacity = opacity;
+			imageView.setEffect(null);
 		}
+		imageView.setOpacity(skinOpacity);
+	}
+
+	/** Set shadow opacity, in percents (x100). **/
+	public void setShadowOpacity(float opacity) {
+		opacity /= 100;
+		if (opacity > 0.99)
+			opacity = 1.0f;
+
+		imageShadow.setColor(Color.color(0, 0, 0, opacity));
+		imageView.setEffect(imageShadow);
 	}
 
 	private static class MessageInfo implements Comparable<MessageInfo> {
@@ -355,38 +387,38 @@ class Character extends MovablePane {
 				Object ob = mapData.getOrDefault("skippable", true);
 				if(ob instanceof String)
 					skippable = Boolean.parseBoolean((String) ob);
-				else skippable=(Boolean) ob;
+				else skippable = (Boolean) ob;
 
 				this.characterImage = characterImage;
 
 				ob = mapData.getOrDefault("priority", DEFAULT_MESSAGE_PRIORITY);
-				if(ob instanceof String)
-					priority = Integer.parseInt((String) ob);
-				else priority=(Integer) ob;
+				if(ob instanceof Number)
+					 priority = ((Number) ob).intValue();
+				else priority = Integer.parseInt((String) ob);
 
-				ob = mapData.getOrDefault("timeout", Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") ));
-				if(ob instanceof String)
-					_timeout = Integer.parseInt((String) ob);
-				else _timeout=(Integer) ob;
+				ob = mapData.getOrDefault("timeout", Main.getProperties().getInteger("balloon.default_timeout", 200) );
+				if(ob instanceof Number)
+					 _timeout = ((Number) ob).intValue();
+				else _timeout = Integer.parseInt((String) ob);
 
 				if(mapData.containsKey("text"))
-					text2=(String) mapData.get("text");
+					text2 = (String) mapData.get("text");
 				else if(mapData.containsKey("msgData"))
-					text2=(String) mapData.get("msgData");
+					text2 = (String) mapData.get("msgData");
 				else text2="";
 
-				ob=mapData.getOrDefault("partible", true);
+				ob = mapData.getOrDefault("partible", true);
 				if(ob instanceof String)
-					partible=Boolean.parseBoolean((String) ob);
-				else partible=(Boolean) ob;
+					partible = Boolean.parseBoolean((String) ob);
+				else partible = (Boolean) ob;
 			} else {
 				if(data instanceof String)
-					text2=(String) data;
-				else text2=data.toString();
+					text2 = (String) data;
+				else text2 = data.toString();
 				skippable=true;
 				characterImage = null;
 				priority=DEFAULT_MESSAGE_PRIORITY;
-				_timeout=Integer.parseInt( Main.getProperty("balloon.default_timeout", "200") );
+				_timeout = (int) Main.getProperties().getInteger("balloon.default_timeout", 200);
 			}
 
 			if(partible) {

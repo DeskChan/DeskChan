@@ -26,3 +26,4 @@ class PluginData{
 def data = new PluginData(this)
 BootCommands.initialize(pluginName, data)
 OpenCommand.initialize(pluginName, data)
+InternetSearch.initialize(pluginName, data)

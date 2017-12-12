@@ -1,42 +1,272 @@
 package info.deskchan.talking_system;
 
 import info.deskchan.core_utils.TextOperations;
-import info.deskchan.talking_system.presets.SimpleCharacterPreset;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public abstract class CharacterPreset {
+public class CharacterPreset {
+
+	/** Character name. **/
 	public String name;
-	protected CharacterDefinite MainCharacter;
-	public TextOperations.TagsContainer tags;
-	public CharacterPreset() {
-		tags=new TextOperations.TagsContainer();
-		setStandart();
-	}
-	public ArrayList<String> quotesBaseList;
-	public CharacterPreset(String jsonString) {
-		JSONObject json;
+
+	/** Character state controller. **/
+	protected CharacterController character;
+	protected static Class defaultCharacterController = StandardCharacterController.class;
+	protected static CharacterController getDefaultCharacterController(){
 		try {
-			fillFromJSON(new JSONObject(jsonString));
+			return (CharacterController) defaultCharacterController.newInstance();
+		} catch (Exception e){
+			return null;
+		}
+	}
+
+
+	/** Current emotion state. **/
+	protected EmotionsController emotionState;
+	protected static Class defaultEmotionsController = StandardEmotionsController.class;
+	protected EmotionsController getDefaultEmotionsController(){
+		try {
+			EmotionsController controller = (EmotionsController) defaultEmotionsController.newInstance();
+			controller.setUpdater(new EmotionsController.UpdateHandler() {
+				@Override
+				public void onUpdate() {
+					updatePhrases();
+					inform();
+				}
+			});
+			return controller;
+		} catch (Exception e){
+			return null;
+		}
+	}
+
+	/** Additional character and user features like gender, species, interests. **/
+	public TextOperations.TagsMap<String, Set<String>> tags;
+
+	/** Phrases list. **/
+	public PhrasesList phrases;
+
+	/** New preset with standard info. **/
+	public CharacterPreset() {
+		setDefault();
+	}
+
+	/** New preset from JSON. **/
+	public CharacterPreset(JSONObject json) {
+		try {
+			setFromJSON(json);
 		} catch (JSONException e) {
-			setStandart();
+			setDefault();
+		}
+	}
+
+	/** Set preset tags from its string representation. **/
+	public void setTags(String text){
+		tags = new TextOperations.TagsMap(text);
+	}
+
+	/** Set preset from JSON. **/
+	public void setFromJSON(JSONObject json) {
+		json = json.getJSONObject("preset");
+
+		if (json.has("name"))
+			name = json.getString("name");
+		else
+			name = Main.getString("default_name");
+
+		character = getDefaultCharacterController();
+		if (json.has("character"))
+			character.setFromJSON(json.getJSONObject("character"));
+
+		emotionState = getDefaultEmotionsController();
+		if (json.has("emotions"))
+			emotionState.setFromJSON(json.getJSONObject("emotions"));
+
+		if (json.has("phrases")){
+			phrases = new PhrasesList(character);
+			List<String> quotesFiles = listFromJSON(json, "phrases");
+			if (quotesFiles.size() > 0){
+				phrases.set(quotesFiles);
+			}
+		} else {
+			phrases = PhrasesList.getDefault(character);
+		}
+		phrases.reload();
+
+		tags = new TextOperations.TagsMap();
+		if (json.has("tags")) {
+			json = json.getJSONObject("tags");
+			for (HashMap.Entry<String, Object> obj : json.toMap().entrySet()) {
+				tags.put(obj.getKey(), (String) obj.getValue());
+			}
+		}
+	}
+
+	/** Set default preset. **/
+	public void setDefault() {
+		character = getDefaultCharacterController();
+		emotionState = getDefaultEmotionsController();
+		name = Main.getString("default_name");
+		phrases = PhrasesList.getDefault(character);
+		tags = new TextOperations.TagsMap<>();
+		tags.putFromText("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
+	}
+
+	/** Update phrases with preset info. **/
+	public void updatePhrases(){
+		phrases.update(emotionState.construct(character));
+	}
+
+	/** Check default tags. **/
+	private static final String[] defaultTags = new String[]{ "gender" , "species" , "interests" , "breastSize" , "userGender" };
+	public boolean tagsMatch(Map<String,Object> phrase){
+		for (String tag : defaultTags)
+			if (phrase.containsKey(tag) && !tags.match(tag, phrase.get(tag).toString())) return false;
+
+		if (!emotionState.tagsMatch(phrase)) return false;
+
+		return true;
+	}
+
+	public JSONObject toJSON() {
+		JSONObject json = new JSONObject();
+		json.put("name", name);
+		json.put("character", character.toJSON());
+		json.put("emotions", emotionState.toJSON());
+
+		JSONObject preset_tags = new JSONObject();
+		for(String key : tags.keySet())
+			preset_tags.put(key, tags.getAsString(key));
+		json.put("tags", preset_tags);
+
+		json.put("phrases", phrases.toList());
+		JSONObject preset = new JSONObject();
+		preset.put("preset", json);
+		return preset;
+	}
+
+	public Map<String, Object> toInformationMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("name", name);
+
+		for(int i = 0; i < CharacterFeatures.getFeatureCount(); i++)
+			map.put(CharacterFeatures.getFeatureName(i), character.getValue(i));
+
+		map.put("phrases", phrases.toList());
+		map.put("tags", tags);
+		map.put("emotion", emotionState.getCurrentEmotionName());
+		return map;
+	}
+
+	public void inform(){
+		Main.getPluginProxy().sendMessage("talk:character-updated", toInformationMap());
+	}
+
+	private String getRandomItem(Collection<String> collection){
+		int count = new Random().nextInt(collection.size());
+		Iterator<String> it = collection.iterator();
+		for(;count >0; count--) it.next();
+		return it.next();
+	}
+	public String replaceTags(String phrase) {
+		String ret = phrase;
+		if (name != null) {
+			ret = ret.replaceAll("\\{name\\}", name);
+		} else {
+			ret = ret.replaceAll("\\{name\\}", Main.getString("default_name"));
+		}
+
+		Set<String> list = tags.get("usernames");
+		if (list != null && list.size() > 0) {
+			String item = getRandomItem(list);
+			ret = ret.replaceAll("\\{user\\}", item);
+			ret = ret.replaceAll("\\{userF\\}", item);
+		} else {
+			ret = ret.replaceAll("\\{user\\}", Main.getString("default_username"));
+			ret = ret.replaceAll("\\{userF\\}", Main.getString("default_username"));
+		}
+
+		list = tags.get("abuses");
+		if (list != null && list.size() > 0) {
+			ret = ret.replaceAll("\\{abuse\\}", getRandomItem(list));
+		} else ret = ret.replaceAll("\\{abuse\\}",Main.getString("default_abuse"));
+
+		ret = ret.replaceAll("\\{time\\}", new SimpleDateFormat("HH:mm").format(new Date()));
+		ret = ret.replaceAll("\\{date\\}", new SimpleDateFormat("d LLLL").format(new Date()));
+		ret = ret.replaceAll("\\{year\\}", new SimpleDateFormat("YYYY").format(new Date()));
+		ret = ret.replaceAll("\\{weekday\\}", new SimpleDateFormat("EEEE").format(new Date()));
+
+		return ret;
+	}
+
+	public static CharacterPreset getFromFile(Path path) {
+		try {
+			String str = new String(Files.readAllBytes(path));
+			return new CharacterPreset(XML.toJSONObject(str).getJSONObject("preset"));
+		} catch (Exception e) {
+			Main.log(e);
+			return new CharacterPreset();
 		}
 	}
 	
+	public void saveInFile(Path path) throws IOException {
+		try {
+			Document doc = DocumentBuilderFactory.newInstance()
+					                             .newDocumentBuilder()
+					                             .parse(new InputSource(new StringReader(XML.toString(toJSON()))));
+
+			Transformer t = TransformerFactory.newInstance().newTransformer();
+			t.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+			t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+			t.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+			OutputStreamWriter stream = new OutputStreamWriter(new FileOutputStream(path.resolve("saved.preset").toFile()), "UTF-8");
+			t.transform(new DOMSource(doc), new StreamResult(stream));
+		} catch(Exception ex){
+			Main.log(ex);
+			Main.log("Error while writing preset file");
+		}
+	}
+	
+	public static CharacterPreset getFromFileUnsafe(Path path) {
+		try {
+			BufferedReader in = new BufferedReader(
+					new InputStreamReader(new FileInputStream(path.toFile()), "UTF-8")
+			);
+			final StringBuilder str = new StringBuilder();
+			String str2;
+			while ((str2 = in.readLine()) != null) {
+				str.append(str2);
+				str.append("\n");
+			}
+			JSONObject obj = XML.toJSONObject(str.toString());
+			return new CharacterPreset(obj.getJSONObject("preset"));
+		} catch (Exception e) {
+			Main.log(e);
+			return new CharacterPreset();
+		}
+	}
+
 	protected ArrayList<String> listFromJSON(JSONObject obj, String arrayname) {
 		ArrayList<String> list = new ArrayList<>();
 		if (obj == null || !obj.has(arrayname)) {
 			return list;
 		}
-		
+
 		JSONArray ar = null;
 		if (obj.get(arrayname) instanceof String) {
 			String sa = obj.getString(arrayname);
@@ -59,202 +289,14 @@ public abstract class CharacterPreset {
 		}
 		return list;
 	}
-	public void setTags(String text){
-		tags=new TextOperations.TagsContainer(text);
-	}
-	public void fillFromJSON(JSONObject json) {
-		name = json.getString("name");
-		if (name.isEmpty()) {
-			name = Main.getString("default_name");
-		}
-		MainCharacter = new CharacterDefinite(json.getJSONObject("main"));
-		quotesBaseList = listFromJSON(json, "quotes");
-		if (quotesBaseList.size() == 0) {
-			quotesBaseList = new ArrayList<>();
-			quotesBaseList.add("main");
-		}
-		try {
-			json=json.getJSONObject("tags");
-		} catch(Exception e){
-			return;
-		}
-		tags=new TextOperations.TagsContainer();
-		for(HashMap.Entry<String,Object> obj : json.toMap().entrySet()){
-			tags.put(obj.getKey(),(String)obj.getValue());
-		}
-	}
-	
-	public void setStandart() {
-		MainCharacter = new CharacterDefinite();
-		name = Main.getString("default_name");
-		quotesBaseList = new ArrayList<>();
-		quotesBaseList.add("main");
-		tags.put("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
-	}
-	public void setQuotesBases(ArrayList<String> list) {
-		quotesBaseList = list;
-	}
-	public abstract CharacterDefinite getCharacter(EmotionsController emo);
-	private static String[] requiredQuotesTags=new String[]{ "gender" , "species" , "interests" , "breastSize" , "userGender" };
-	public boolean isTagsMatch(HashMap<String,Object> tagsToMatch){
-		for(HashMap.Entry<String,Object> entry : tagsToMatch.entrySet()){
-			boolean found=false;
-			for(String reqTag : requiredQuotesTags)
-				if(reqTag.equals(entry.getKey())){
-					found=true;
-					break;
-				}
-			if(!found) continue;
-			if(!tags.isMatch(entry.getKey(),(List<String>)entry.getValue())) return false;
-		}
-		return true;
-	}
-	public JSONObject toJSON() {
-		JSONObject json = new JSONObject();
-		json.put("name", name);
-		json.put("main", MainCharacter.toJSON());
 
-		JSONArray ar = new JSONArray();
-		for (int i = 0; i < quotesBaseList.size(); i++) {
-			ar.put(quotesBaseList.get(i));
-		}
-		JSONObject preset_tags=new JSONObject();
-		for(Map.Entry<String,List<String>> entry : tags.entrySet()){
-			StringBuilder sb=new StringBuilder();
-			for(String arg : entry.getValue())
-				sb.append("\""+arg+"\" ");
-			sb.setLength(sb.length()-1);
-			preset_tags.put(entry.getKey(),sb.toString());
-		}
-		json.put("quotes", ar);
-		json.put("tags",preset_tags);
-		json.put("type", this.getClass().getSimpleName());
-		return json;
-	}
-	public Map<String,Object> toMap() {
-		Map map = new HashMap<String,Object>();
-		map.put("name", name);
+	public String getDefaultSpriteType(){
+		String characterImage = character.getDefaultSpriteType();
 
-		for(int i=0;i<CharacterSystem.getFeatureCount();i++)
-			map.put(CharacterSystem.getFeatureName(i), MainCharacter.getValue(i));
+		if (characterImage == null)
+			characterImage = emotionState.getDefaultSpriteType();
 
-		List<String> ar = new ArrayList<String>();
-		ar.addAll(quotesBaseList);
+		return characterImage;
+	}
 
-		Map preset_tags=new HashMap<String,Object>(tags.toMap());
-		map.put("quotes", ar);
-		map.put("tags",preset_tags);
-		return map;
-	}
-	public void inform(){
-		Main.getPluginProxy().sendMessage("talk:character-updated",toMap());
-	}
-	public void applyInfluence(ArrayList<Influence> influences) {
-		MainCharacter.applyInfluence(influences);
-	}
-	
-	public void applyInfluence(Influence influence) {
-		MainCharacter.applyInfluence(influence);
-	}
-	
-	public static CharacterPreset getFromTypeName(String typeName) {
-		CharacterPreset cp = null;
-		try {
-			Class<?> c = Class.forName("info.deskchan.talking_system.presets." + typeName);
-			cp = (CharacterPreset) c.newInstance();
-		} catch (Exception e) {
-			cp = new SimpleCharacterPreset();
-		}
-		
-		return cp;
-	}
-	public List<String> getUsernames(){
-		return tags.get("usernames");
-	}
-	public String replaceTags(String quote) {
-		String ret = quote;
-		if (name!=null) {
-			ret = ret.replaceAll("%NAME%", name);
-		} else ret = ret.replaceAll("%NAME%", Main.getString("default_name"));
-		List<String> list=tags.get("usernames");
-		if (list!=null && list.size() > 0) {
-			ret = ret.replaceAll("%USERNAME%", list.get(new Random().nextInt(list.size())));
-		} else ret = ret.replaceAll("%USERNAME%",Main.getString("default_username"));
-		list=tags.get("abuses");
-		if (list!=null && list.size() > 0) {
-			ret = ret.replaceAll("%ABUSE%", list.get(new Random().nextInt(list.size())));
-		} else ret = ret.replaceAll("%ABUSE%",Main.getString("default_abuse"));
-		ret = ret.replaceAll("%TIME%", new SimpleDateFormat("HH:mm").format(new Date()));
-		ret = ret.replaceAll("%DATE%", new SimpleDateFormat("d LLLL").format(new Date()));
-		ret = ret.replaceAll("%YEAR%", new SimpleDateFormat("YYYY").format(new Date()));
-		ret = ret.replaceAll("%WEEKDAY%", new SimpleDateFormat("EEEE").format(new Date()));
-		return ret;
-	}
-	
-	public static CharacterPreset getFromFile(Path path) {
-		CharacterPreset cp = null;
-		try {
-			String str = new String(Files.readAllBytes(path));
-			cp = getFromJSON(XML.toJSONObject(str).getJSONObject("preset"));
-		} catch (Exception e) {
-			Main.log(e);
-			cp = new SimpleCharacterPreset();
-		}
-		return cp;
-	}
-	
-	public void saveInFile(Path path) throws IOException {
-		String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<preset>"
-				+ XML.toString(toJSON()).replace("&quot;","\"") + "</preset>";
-		xml = xml.replace("><", ">\n<");
-		Writer out = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(path.resolve("saved.preset").toFile()), "UTF-8"));
-		try {
-			out.write(xml);
-		} catch (Exception e) {
-			Main.log("Error while writing preset file");
-		} finally {
-			out.close();
-		}
-	}
-	
-	public static CharacterPreset getFromFileUnsafe(Path path) {
-		CharacterPreset cp = null;
-		try {
-			BufferedReader in = new BufferedReader(
-					new InputStreamReader(new FileInputStream(path.toFile()), "UTF-8")
-			);
-			final StringBuilder str = new StringBuilder();
-			String str2;
-			while ((str2 = in.readLine()) != null) {
-				str.append(str2);
-				str.append("\n");
-			}
-			JSONObject obj = XML.toJSONObject(str.toString());
-			cp = getFromJSON(obj.getJSONObject("preset"));
-		} catch (Exception e) {
-			Main.log(e);
-		}
-		return cp;
-	}
-	
-	public static CharacterPreset getFromJSON(JSONObject obj) {
-		CharacterPreset cp = null;
-		try {
-			String type = obj.getString("type");
-			Class<?> c = Class.forName("info.deskchan.talking_system.presets." + type);
-			cp = (CharacterPreset) c.newInstance();
-		} catch (Exception e) {
-			cp = new SimpleCharacterPreset();
-		}
-		
-		cp.fillFromJSON(obj);
-		return cp;
-	}
-	
-	public static ArrayList<String> presetTypeList = new ArrayList<String>() {{
-		add("SimpleCharacterPreset");
-		add("EmotionalCharacterPreset");
-		add("TTriggerEmotionalCharacterPreset");
-	}};
 }

@@ -16,7 +16,7 @@ import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
-import javafx.stage.DirectoryChooser;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -32,14 +32,30 @@ import java.util.*;
 class OptionsDialog extends TemplateBox {
 
 	private static OptionsDialog instance = null;
+
+	/** Top tabs container. **/
 	private TabPane tabPane = new TabPane();
-	private Button skinManagerButton = new Button();
-	private Button balloonFontButton = new Button();
+
+	/** Skin options sub menu, 'Appearance' tab. **/
+	private ControlsPane skinOptions;
+
+	/** Balloon options sub menu, 'Appearance' tab. **/
+	private ControlsPane balloonOptions;
+
+	/** List of rows representing registered plugins in the core, 'Plugins' tab. **/
 	private ListView<PluginListItem> pluginsList = new ListView<>();
+
+	/** Table of alternatives registered in the core, 'Alternatives' tab. **/
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
+
+	/** Table of rows representing commands registered in the core, 'Commands' tab. **/
 	private TableView<CommandItem> commandsTable=new TableView<>();
-	private static Map<String, List<ControlsContainer>> pluginsTabs = new HashMap<>();
-	private static Map<String, List<ControlsContainer>> pluginsSubMenus = new HashMap<>();
+
+	/** All tabs registered by plugins, plugin -> list of tabs. **/
+	private static Map<String, List<ControlsPane>> pluginsTabs = new HashMap<>();
+
+	/** All submenus registered by plugins, plugin -> list of menus. **/
+	private static Map<String, List<ControlsPane>> pluginsSubMenus = new HashMap<>();
 
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
@@ -56,80 +72,42 @@ class OptionsDialog extends TemplateBox {
 		return instance;
 	}
 
-	static void updateInstanceTabs(){
-		getInstance().skinManagerButton.setText(App.getInstance().getCharacter().getSkin().toString().replaceAll(
-				String.format(".*\\%c", File.separatorChar), ""));
-		getInstance().balloonFontButton.setText(Balloon.getDefaultFont().getFamily() + ", " + Balloon.getDefaultFont().getSize());
-	}
-
+	/** Creating 'Appearance' tab. **/
 	public void initMainTab(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
-			put("id", "skin");
-			put("type", "Button");
-			put("label", Main.getString("skin"));
-			put("hint", Main.getString("help.skin"));
-			put("value", App.getInstance().getCharacter().getSkin().toString().replaceAll(
-				String.format(".*\\%c", File.separatorChar), ""));
+			put("id",    "character_options");
+			put("type",  "Button");
+			put("label",  Main.getString("skin.options"));
+			put("value",  Main.getString("open"));
 		}});
 		list.add(new HashMap<String, Object>() {{
-			put("id", "scale");
-			put("type", "Spinner");
-			put("label", Main.getString("skin.scale_factor") + " (%)");
-			put("min", 10);
-			put("max", 1000);
-			put("step", 5);
-			Map<String, Object> onChangeMap = new HashMap<>();
-			onChangeMap.put("msgTag", "gui:resize-character");
-			onChangeMap.put("newValueField", "scaleFactor");
-			onChangeMap.put("multiplier", 0.01);
-			Map<String, Boolean> data = new HashMap<>();
-			data.put("save", true);
-			onChangeMap.put("data", data);
-			put("onChange", onChangeMap);
-			double scaleFactorValue = Double.parseDouble(Main.getProperty("skin.scale_factor", "1.0"));
-			// e.g. 1.74 -> 1.75
-			scaleFactorValue = Math.round(scaleFactorValue * 200.0f) / 2.0f;
-			put("value", (int)scaleFactorValue);
+			put("id",    "balloon_options");
+			put("type",  "Button");
+			put("label",  Main.getString("balloon.options"));
+			put("value",  Main.getString("open"));
 		}});
+		/*list.add(new HashMap<String, Object>() {{
+			put("id",    "interface_size");
+			put("type",  "Slider");
+			put("min",    0.1);
+			put("max",    5);
+			put("msgTag","gui:set-interface-size");
+			put("label",  Main.getString("interface_size"));
+			put("value",  App.getInterfaceMultiplierSize());
+		}});*/
 		list.add(new HashMap<String, Object>() {{
-			put("id", "opacity");
-			put("type", "Slider");
-			put("label", Main.getString("skin.opacity") + " (%)");
-			put("min", 5);
-			put("max", 100);
-			put("step", 5);
-			Map<String, Object> onChangeMap = new HashMap<>();
-			onChangeMap.put("msgTag", "gui:change-skin-opacity");
-			onChangeMap.put("newValueField", "absolute");
-			onChangeMap.put("multiplier", 0.01);
-			Map<String, Boolean> data = new HashMap<>();
-			data.put("save", true);
-			onChangeMap.put("data", data);
-			put("onChange", onChangeMap);
-			double opacity = Float.parseFloat(Main.getProperty("skin.opacity", "1.0"));
-			opacity = Math.round(opacity * 200.0f) / 2.0f;
-			put("value", (int)opacity);
-		}});
-		list.add(new HashMap<String, Object>() {{
-			put("id", "interface_font");
-			put("type", "FontPicker");
+			put("id",    "interface_font");
+			put("type",  "FontPicker");
 			put("msgTag","gui:set-interface-font");
-			put("label", Main.getString("interface_font"));
-			put("value", LocalFont.defaultToString());
+			put("label",  Main.getString("interface_font"));
+			put("value",  LocalFont.defaultToString());
 		}});
 		list.add(new HashMap<String, Object>() {{
-			put("id", "balloon_font");
-			put("type", "FontPicker");
-			put("msgTag","gui:set-balloon-font");
-			put("label", Main.getString("balloon_font"));
-			put("value", LocalFont.toString(Balloon.getDefaultFont()));
-		}});
-		list.add(new HashMap<String, Object>() {{
-			put("id", "layer_mode");
-			put("type", "ComboBox");
-			put("hint",Main.getString("help.layer_mode"));
-			put("label", Main.getString("character.layer_mode"));
+			put("id",    "layer_mode");
+			put("type",  "ComboBox");
+			put("hint",   Main.getString("help.layer_mode"));
+			put("label",  Main.getString("character.layer_mode"));
 			List<Object> values=FXCollections.observableList(new ArrayList<>());
 			values.addAll(OverlayStage.getStages());
 			int sel=-1;
@@ -140,29 +118,95 @@ class OptionsDialog extends TemplateBox {
 			}
 			put("msgTag","gui:change-layer-mode");
 			put("values", values);
-			put("value", sel);
+			put("value",  sel);
 		}});
 		list.add(new HashMap<String, Object>() {{
-			put("id", "balloon_default_timeout");
-			put("type", "Spinner");
-			put("label", Main.getString("balloon_default_timeout"));
-			put("min", 0);
-			put("max", 2000);
-			put("step", 50);
-			Map<String, Object> onChangeMap = new HashMap<>();
-			onChangeMap.put("msgTag", "gui:change-balloon-timeout");
-			Map<String, Boolean> data = new HashMap<>();
-			data.put("save", true);
-			onChangeMap.put("data", data);
-			put("onChange", onChangeMap);
-			put("value", Integer.parseInt(Main.getProperty("balloon.default_timeout", "200")));
+			put("id",    "enable_context_menu");
+			put("type",  "CheckBox");
+			put("hint",   Main.getString("help.context_menu"));
+			put("label",  Main.getString("enable_context_menu"));
+			put("value",  Main.getProperties().getBoolean("character.enable_context_menu", true));
 		}});
 		list.add(new HashMap<String, Object>() {{
-			put("id", "balloon_position_mode");
-			put("type", "ComboBox");
-			put("hint",Main.getString("help.balloon_position"));
-			put("label", Main.getString("balloon_position_mode"));
-			List<Object> values=FXCollections.observableList(Arrays.asList((Object[])Balloon.PositionMode.values()));
+			put("id",    "load_resource_pack");
+			put("type",  "Button");
+			put("hint",   Main.getString("help.resources"));
+			put("label",  Main.getString("load_resource_pack"));
+			put("value",  Main.getString("load"));
+		}});
+		ControlsPane poTab = new ControlsPane(Main.getString("appearance"), list, null, null);
+		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
+	}
+
+	/** Creating 'Skin' options submenu. **/
+	private ControlsPane characterOptions(){
+		List<Map<String, Object>> list = new LinkedList<>();
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "skin");
+			put("type",  "Button");
+			put("label",  Main.getString("skin"));
+			put("hint",   Main.getString("help.skin"));
+			put("msgTag","gui:open-skin-dialog");
+			put("value",  App.getInstance().getCharacter().getSkin().toString());
+		}});
+		System.out.println(Main.getProperties().getInteger("skin.scale_factor"));
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "scale");
+			put("type",  "Spinner");
+			put("label",  Main.getString("skin.scale_factor") + " (%)");
+			put("min",    10);
+			put("max",    1000);
+			put("msgTag","gui:resize-character");
+			put("value",   Main.getProperties().getInteger("skin.scale_factor", 100));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "skin-opacity");
+			put("type",  "Slider");
+			put("label",  Main.getString("skin.opacity") + " (%)");
+			put("min",    0);
+			put("max",    100);
+			put("msgTag","gui:change-skin-opacity");
+			put("value",  Main.getProperties().getInteger("skin.opacity", 100));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "skin-shadow-opacity");
+			put("type",  "Slider");
+			put("label",  Main.getString("shadow-opacity") + " (%)");
+			put("min",    0);
+			put("max",    100);
+			put("msgTag","gui:set-skin-shadow-opacity");
+			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
+		}});
+		skinOptions = new ControlsPane(Main.getString("character"), list, null, null);
+		return skinOptions;
+	}
+
+	/** Creating 'Balloon' options submenu. **/
+	private ControlsPane balloonOptions(){
+		List<Map<String, Object>> list = new LinkedList<>();
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "balloon_font");
+			put("type",  "FontPicker");
+			put("msgTag","gui:set-balloon-font");
+			put("label",  Main.getString("balloon_font"));
+			put("value",  LocalFont.toString(Balloon.getDefaultFont()));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "balloon_default_timeout");
+			put("type",  "Spinner");
+			put("label",  Main.getString("balloon_default_timeout"));
+			put("min",    0);
+			put("max",    2000);
+			put("msgTag","gui:change-balloon-timeout");
+			put("value",  Main.getProperties().getInteger("balloon.default_timeout", 200));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "balloon_position_mode");
+			put("type",  "ComboBox");
+			put("hint",   Main.getString("help.balloon_position"));
+			put("label",  Main.getString("balloon_position_mode"));
+			List<Object> values =
+					FXCollections.observableList( Arrays.asList((Object[]) Balloon.PositionMode.values()) );
 			int sel=-1;
 			for(Object value : values){
 				sel++;
@@ -171,44 +215,48 @@ class OptionsDialog extends TemplateBox {
 			}
 			put("msgTag","gui:change-balloon-position-mode");
 			put("values", values);
-			put("value", sel);
-		}});
-        list.add(new HashMap<String, Object>() {{
-			put("id", "balloon-opacity");
-			put("type", "Slider");
-			put("label", Main.getString("balloon.opacity") + " (%)");
-			put("min", 5);
-			put("max", 100);
-			put("step", 5);
-			Map<String, Object> onChangeMap = new HashMap<>();
-			onChangeMap.put("msgTag", "gui:change-balloon-opacity");
-			onChangeMap.put("newValueField", "value");
-			Map<String, Boolean> data = new HashMap<>();
-			data.put("save", true);
-			onChangeMap.put("data", data);
-			put("onChange", onChangeMap);
-			double opacity = Float.parseFloat(Main.getProperty("balloon.opacity", "1.0"));
-			opacity = Math.round(opacity * 200.0f) / 2.0f;
-			put("value", (int)opacity);
-		}});
-
-		list.add(new HashMap<String, Object>() {{
-			put("id", "enable_context_menu");
-			put("type", "CheckBox");
-			put("hint",Main.getString("help.context_menu"));
-			put("label", Main.getString("enable_context_menu"));
-			put("value", Main.getProperty("character.enable_context_menu", "1").equals("1"));
+			put("value",  sel);
 		}});
 		list.add(new HashMap<String, Object>() {{
-			put("id", "load_resource_pack");
-			put("type", "Button");
-			put("hint", Main.getString("help.resources"));
-			put("label", Main.getString("load_resource_pack"));
-			put("value", Main.getString("load"));
+			put("id",    "balloon-opacity");
+			put("type",  "Slider");
+			put("label",  Main.getString("balloon.opacity") + " (%)");
+			put("min",    0);
+			put("max",    100);
+			put("msgTag","gui:change-balloon-opacity");
+			put("value",   Main.getProperties().getDouble("balloon.opacity", 100));
 		}});
-		ControlsContainer poTab = new ControlsContainer(Main.getString("appearance"), list, null, null);
-		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
+		list.add(new HashMap<String, Object>(){{
+			put("id",    "balloon-text-animation");
+			put("type",  "CheckBox");
+			put("label",  Main.getString("balloon.text-animation"));
+			put("msgTag","gui:switch-balloon-animation");
+			put("hint",   Main.getString("help.text-animation"));
+			put("value",  Main.getProperties().getBoolean("balloon.text-animation", true));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "balloon-text-animation-delay");
+			put("type",  "Spinner");
+			put("label",  Main.getString("balloon.text-animation-delay"));
+			put("min",    1);
+			put("max",    1000);
+			put("msgTag","gui:switch-balloon-animation");
+			put("value",  Main.getProperties().getInteger("balloon.text-animation-delay", 50));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "balloon-shadow-opacity");
+			put("type",  "Slider");
+			put("label",  Main.getString("shadow-opacity") + " (%)");
+			put("min",    0);
+			put("max",    100);
+			put("msgTag","gui:set-balloon-shadow-opacity");
+			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
+		}});
+		balloonOptions = new ControlsPane(Main.getString("balloon"), list, null, null);
+		return balloonOptions;
 	}
+
+	/** Creating 'Commands' tab. **/
 	private void initCommandsTab(){
 		BorderPane commandTab = new BorderPane();
 		commandTab.setCenter(commandsTable);
@@ -217,10 +265,13 @@ class OptionsDialog extends TemplateBox {
 		commandsTable.setEditable(true);
 		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
 
+		// Events column
 		TableColumn eventCol = new TableColumn(Main.getString("events"));
 		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
+		List events = CommandsProxy.getEventsList();
+		Collections.sort(events);
 		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(CommandsProxy.getEventsList())));
+				FXCollections.observableArrayList(events)));
 		eventCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -228,10 +279,13 @@ class OptionsDialog extends TemplateBox {
 		});
 		eventCol.setMinWidth(120);
 
+		// Commands column
 		TableColumn commandCol = new TableColumn(Main.getString("commands"));
 		commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
+		List commands = CommandsProxy.getCommandsList();
+		Collections.sort(commands);
 		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(CommandsProxy.getCommandsList())));
+				FXCollections.observableArrayList(commands)));
 		commandCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -239,6 +293,7 @@ class OptionsDialog extends TemplateBox {
 		});
 		commandCol.setMinWidth(120);
 
+		// Rules column
 		TableColumn ruleCol = new TableColumn(Main.getString("rules"));
 		ruleCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("rule"));
 		ruleCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
@@ -249,6 +304,7 @@ class OptionsDialog extends TemplateBox {
 		});
 		ruleCol.setMinWidth(120);
 
+		// Parameters column
 		TableColumn msgCol = new TableColumn(Main.getString("parameters"));
 		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
 		msgCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
@@ -259,29 +315,36 @@ class OptionsDialog extends TemplateBox {
 		});
 		msgCol.setMinWidth(120);
 
-		ObservableList<CommandItem> list=FXCollections.observableArrayList();
+		// Filling list of commands
+		ObservableList<CommandItem> list = FXCollections.observableArrayList();
 		for(Map<String,Object> entry : CommandsProxy.getLinksList()){
 			list.add(new CommandItem(entry));
 		}
 
 		commandsTable.setItems(list);
 
+		// Setting columns
 		commandsTable.getColumns().addAll(eventCol, ruleCol, commandCol, msgCol);
 
+		// 'Delete' button
 		Button deleteButton = new Button(Main.getString("delete"));
 		deleteButton.setOnAction(event -> {
 			if(commandsTable.getSelectionModel().getSelectedIndex()>=0)
 				commandsTable.getItems().remove(commandsTable.getSelectionModel().getSelectedIndex());
 		});
+
+		// 'Reset' button
 		Button resetButton = new Button(Main.getString("reset"));
 		resetButton.setOnAction(event -> {
 			CommandsProxy.reset();
-			ObservableList<CommandItem> l=FXCollections.observableArrayList();
+			ObservableList<CommandItem> l = FXCollections.observableArrayList();
 			for(Map<String,Object> entry : CommandsProxy.getLinksList()){
 				l.add(new CommandItem(entry));
 			}
 			commandsTable.setItems(l);
 		});
+
+		// 'Save' button
 		Button saveButton = new Button(Main.getString("save"));
 		saveButton.setOnAction(event -> {
 			ArrayList<Map<String,Object>> push = new ArrayList<>();
@@ -291,6 +354,8 @@ class OptionsDialog extends TemplateBox {
 			CommandsProxy.setLinks(push);
 			CommandsProxy.save();
 		});
+
+		// 'Load' button
 		Button loadButton = new Button(Main.getString("load"));
 		loadButton.setOnAction(event -> {
 			CommandsProxy.load();
@@ -300,13 +365,18 @@ class OptionsDialog extends TemplateBox {
 			}
 			commandsTable.setItems(l);
 		});
+
+		// 'Add' button
 		Button addButton=new Button(Main.getString("add"));
 		addButton.setOnAction(event -> {
 			CommandItem item=new CommandItem(CommandsProxy.getEventsList().get(0),CommandsProxy.getCommandsList().get(0),"","");
 			commandsTable.getItems().add(item);
 		});
-		HBox buttons=new HBox(addButton,deleteButton,loadButton,saveButton,resetButton);
+
+		// Adding buttons to form
+		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
+
 		tabPane.getTabs().add(new Tab(Main.getString("commands"), commandTab));
 	}
 
@@ -314,17 +384,24 @@ class OptionsDialog extends TemplateBox {
 		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
+		double prefWidth  = 400 * App.getInterfaceMultiplierSize(),
+			   prefHeight = 300 * App.getInterfaceMultiplierSize();
+
 
 		/// appearance
 		initMainTab();
 
+
 		/// commands
 		initCommandsTab();
+
 
 		/// plugins
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
-		pluginsList.setPrefSize(400, 300);
+		pluginsList.setPrefSize(prefWidth, prefHeight);
+
+		// Setting row style
 		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
 			@Override
 			public ListCell<PluginListItem> call(ListView<PluginListItem> obj) {
@@ -332,7 +409,7 @@ class OptionsDialog extends TemplateBox {
 					@Override
 					protected void updateItem(PluginListItem t, boolean bln) {
 						super.updateItem(t, bln);
-						setStyle("-fx-cell-size: 30");
+						setStyle("-fx-cell-size: " + LocalFont.defaultFont.getSize()*2.5);
 						if (t != null) {
 							setGraphic(t.hbox);
 							setTooltip(t.tooltip);
@@ -344,6 +421,8 @@ class OptionsDialog extends TemplateBox {
 				return cell;
 			}
 		});
+
+		// Filling plugins list, 'plugin-load' sends full list of registered commands every time you subscribed to it
 		pluginProxy.addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				for (PluginListItem item : pluginsList.getItems()) {
@@ -354,21 +433,27 @@ class OptionsDialog extends TemplateBox {
 				pluginsList.getItems().add(new PluginListItem(data.toString(), false));
 			});
 		});
+
+		// Listener to unloaded plugins to remove them from list
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
 			});
 		});
+
+		// Blacklisted plugins that not registered in program
 		for (String id : PluginManager.getInstance().getBlacklistedPlugins()) {
 			pluginsList.getItems().add(new PluginListItem(id, true));
 		}
+
+		// Load button
 		HBox hbox = new HBox();
 		Button button = new Button(Main.getString("load"));
 		button.setOnAction(event -> {
-			DirectoryChooser chooser = new DirectoryChooser();
+			FileChooser chooser = new FileChooser();
 			chooser.setTitle(Main.getString("load_plugin"));
 			chooser.setInitialDirectory(PluginManager.getPluginsDirPath().toFile());
-			File file = chooser.showDialog(OptionsDialog.this.getDialogPane().getScene().getWindow());
+			File file = chooser.showOpenDialog(OptionsDialog.this.getDialogPane().getScene().getWindow());
 			if (file != null) {
 				Path path = file.toPath();
 				try {
@@ -382,10 +467,11 @@ class OptionsDialog extends TemplateBox {
 		pluginsTab.setBottom(hbox);
 		tabPane.getTabs().add(new Tab(Main.getString("plugins"), pluginsTab));
 
+
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
 		alternativesTab.setCenter(alternativesTable);
-		alternativesTable.setPrefSize(400, 300);
+		alternativesTable.setPrefSize(prefWidth, prefHeight);
 		{
 			TreeTableColumn<AlternativeTreeItem, String> column = new TreeTableColumn<>(Main.getString("tag"));
 			column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getValue().tag));
@@ -402,10 +488,9 @@ class OptionsDialog extends TemplateBox {
 		}
 		alternativesTable.setShowRoot(false);
 		pluginProxy.sendMessage("core:query-alternatives-map", null, (sender, data) -> {
-			Map<String, List<Map<String, Object>>> m1 = (Map<String, List<Map<String, Object>>>)
-					((Map<String, Object>) data).get("map");
+			Map<String, List<Map<String, Object>>> map = (Map) data;
 			final TreeItem<AlternativeTreeItem> root = new TreeItem<>();
-			for (Map.Entry<String, List<Map<String, Object>>> entry : m1.entrySet()) {
+			for (Map.Entry<String, List<Map<String, Object>>> entry : map.entrySet()) {
 				final TreeItem<AlternativeTreeItem> group = new TreeItem<>(new AlternativeTreeItem(entry.getKey()));
 				for (Map<String, Object> m2 : entry.getValue()) {
 					final TreeItem<AlternativeTreeItem> item = new TreeItem<>(new AlternativeTreeItem(
@@ -432,9 +517,7 @@ class OptionsDialog extends TemplateBox {
 			String tag = debugMsgTag.getText();
 			String dataStr = debugMsgData.getText();
 			try {
-				JSONObject json = new JSONObject(dataStr);
-				Object data = json.toMap();
-				Main.getInstance().getPluginProxy().sendMessage(tag, data);
+				Main.getInstance().getPluginProxy().sendMessage(tag, stringToMap(dataStr));
 			} catch (Throwable e) {
 				App.showThrowable(OptionsDialog.this.getDialogPane().getScene().getWindow(), e);
 			}
@@ -442,18 +525,20 @@ class OptionsDialog extends TemplateBox {
 		debugTab.setBottom(button);
 		tabPane.getTabs().add(new Tab(Main.getString("debug"), debugTab));
 
-		/// plugin's tabs
-		for (Map.Entry<String, List<ControlsContainer>> entry : pluginsTabs.entrySet()) {
-			for (ControlsContainer tab : entry.getValue()) {
+
+		/// Creating top tabs from registered tabs list
+		for (Map.Entry<String, List<ControlsPane>> entry : pluginsTabs.entrySet()) {
+			for (ControlsPane tab : entry.getValue()) {
 				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
 			}
 		}
+
 
 		/// about
 		gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-		label.getStyleClass().add("header");
+		label.setFont(new Font(LocalFont.defaultFont.getName(), LocalFont.defaultFont.getSize() * 2));
 		gridPane.add(label, 0, 0, 2, 1);
 		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
 		Hyperlink hyperlink = new Hyperlink();
@@ -483,7 +568,7 @@ class OptionsDialog extends TemplateBox {
 					dialog.requestFocus();
 					dialog.show();
 					Locale.setDefault(new Locale(locale.getKey()));
-					Main.setProperty("locale", locale.getKey());
+					Main.getProperties().put("locale", locale.getKey());
 					break;
 				}
 			}
@@ -491,18 +576,15 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(locales, 1, 5);
 		tabPane.getTabs().add(new Tab(Main.getString("about"), gridPane));
 
-		/// appearance set up
+
+		/// Creating additional listeners for 'Appearance' tab, must be after tabs initialization
 		for(Tab tab : getInstance().tabPane.getTabs()) {
 			if (!tab.getText().equals(Main.getString("appearance"))) continue;
 			GridPane pane = (GridPane) ((BorderPane) tab.getContent()).getChildren().get(0);
 			for (Node node : pane.getChildren()) {
-				if (node.getId() != null && node.getId().equals("skin"))
-					skinManagerButton = (Button) node;
-				if (node.getId() != null && node.getId().equals("balloon_font"))
-					balloonFontButton = (Button) node;
 				if (node.getId() != null && node.getId().equals("enable_context_menu")){
 					((CheckBox) node).selectedProperty().addListener((property, oldValue, newValue) -> {
-						Main.setProperty("character.enable_context_menu", newValue ? "1" : "0");
+						Main.getProperties().put("character.enable_context_menu", newValue);
 					});
 				}
 				if (node.getId() != null && node.getId().equals("load_resource_pack")) {
@@ -515,21 +597,38 @@ class OptionsDialog extends TemplateBox {
 						} catch(Exception e){ }
 					});
 				}
+				if (node.getId() != null && node.getId().equals("balloon_options")){
+					((Button) node).setOnAction(event -> {
+						ControlsWindow.setupCustomWindow(Main.getInstance().getPluginProxy().getId(), balloonOptions());
+					});
+				}
+				if (node.getId() != null && node.getId().equals("character_options")){
+					((Button) node).setOnAction(event -> {
+						ControlsWindow.setupCustomWindow(Main.getInstance().getPluginProxy().getId(), characterOptions());
+					});
+				}
 			}
 		}
-		skinManagerButton.setOnAction(event -> openSkinManager());
 	}
 
-	protected void openSkinManager() {
+	/** Open skin manager and wait for closing. **/
+	public void openSkinManager() {
 		SkinManagerDialog dialog = new SkinManagerDialog(getDialogPane().getScene().getWindow());
 		dialog.showAndWait();
-		updateInstanceTabs();
-		Main.setProperty("skin.name", App.getInstance().getCharacter().getSkin().getName());
+
+		// Update skin name in menu
+		Main.getProperties().put("skin.name", App.getInstance().getCharacter().getSkin().getName());
+		List<Map<String, Object>> list = new ArrayList<>();
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "skin");
+			put("value",  App.getInstance().getCharacter().getSkin().toString());
+		}});
+		skinOptions.updateControlsPane(list);
 	}
 
 	protected static void openSubMenu(String pluginId, String menuId) {
 		try {
-			for (ControlsContainer container : pluginsSubMenus.get(pluginId)) {
+			for (ControlsPane container : pluginsSubMenus.get(pluginId)) {
 				if (container.name.equals(menuId)) {
 					ControlsWindow.setupCustomWindow(pluginId, container);
 				}
@@ -539,41 +638,45 @@ class OptionsDialog extends TemplateBox {
 		}
 	}
 
+	/** Register plugin menu, will be shown in options. Use updatePluginMenu to update its content.
+	 * @param plugin plugin name
+	 * @param data content of menu
+	 * @param isTab True - will be shown as top tab, False - will be shown as submenu button in 'Plugins' tab
+	 */
 	static void registerPluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
-		Map<String, List<ControlsContainer>> menu = isTab ? pluginsTabs : pluginsSubMenus;
-		List<ControlsContainer> tabs = menu.get(plugin);
+		Map<String, List<ControlsPane>> menu = isTab ? pluginsTabs : pluginsSubMenus;
+		List<ControlsPane> tabs = menu.get(plugin);
 
 		String name = (String) data.getOrDefault("name", plugin);
 		List<Map<String, Object>> controls = (List) data.getOrDefault("controls", new LinkedList<>());
 		String msgTag = (String) data.get("msgTag");
 		String msgClose = (String) data.get("onClose");
 
-		ControlsContainer poTab = new ControlsContainer(name, controls, msgTag, msgClose);
+		ControlsPane pluginMenuContainer = new ControlsPane(name, controls, msgTag, msgClose);
 
-		if (tabs == null) {
+		if (tabs == null) {  // No menus registered by plugin
 			tabs = new ArrayList<>();
 			menu.put(plugin, tabs);
-			tabs.add(poTab);
+			tabs.add(pluginMenuContainer);
 			return;
 		} else {
 			boolean found = false;
 			for (int i = 0; i < tabs.size(); i++) {
 				if (tabs.get(i).name.equals(name)) {
-					tabs.set(i, poTab);
+					tabs.set(i, pluginMenuContainer);
 					found = true;
 					break;
 				}
 			}
-			if (!found) {
-				tabs.add(poTab);
-			}
+			if (!found) tabs.add(pluginMenuContainer);
 		}
 
+		/// Is options is currently shown, we update its content
 		if (instance == null) return;
-		if(isTab) {
+		if (isTab) {
 			for (Tab tab : instance.tabPane.getTabs()) {
 				if (tab.getText().equals(name)) {
-					tab.setContent(poTab.createControlsPane(instance.getDialogPane().getScene().getWindow()));
+					tab.setContent(pluginMenuContainer.createControlsPane(instance.getDialogPane().getScene().getWindow()));
 					break;
 				}
 			}
@@ -585,10 +688,16 @@ class OptionsDialog extends TemplateBox {
 
 		}
 	}
-	static void updatePluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
-		Map<String, List<ControlsContainer>> menu = isTab ? pluginsTabs : pluginsSubMenus;
 
-		List<ControlsContainer> tabs = menu.get(plugin);
+	/** Register plugin menu, will be shown in options. Use updatePluginMenu to update its content.
+	 * @param plugin plugin name
+	 * @param data content of menu
+	 * @param isTab True - will be shown as top tab, False - will be shown as submenu button in 'Plugins' tab
+	 */
+	static void updatePluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
+		Map<String, List<ControlsPane>> menu = isTab ? pluginsTabs : pluginsSubMenus;
+
+		List<ControlsPane> tabs = menu.get(plugin);
 		String name = (String) data.getOrDefault("name", plugin);
 		List<Map<String, Object>> controls = (List) data.getOrDefault("controls", new LinkedList<>());
 		String msgTag   = (String) data.get("msgTag");
@@ -603,13 +712,21 @@ class OptionsDialog extends TemplateBox {
 			}
 		}
 	}
-	static void unregisterPluginTabs(String plugin) {
+
+	/** Unregister all menus registered by plugin
+	 * @param plugin plugin name
+	 */
+	static void unregisterPluginMenus(String plugin) {
 		pluginsTabs.remove(plugin);
 		pluginsSubMenus.remove(plugin);
 	}
 
+	// -- Technical classes --
+
+	/** Class representing row in 'Plugins' tab. **/
 	private static class PluginListItem {
 
+		/** List of plugins cannot be simply removed. **/
 		private static final String[] importantPlugins=new String[]{
 				"core", "core_utils", Main.getInstance().getPluginProxy().getId()
 		};
@@ -624,37 +741,42 @@ class OptionsDialog extends TemplateBox {
 		Pane pane = new Pane();
 		String locked   = "🔒";
 		String unlocked = "🔓";
-		private static boolean alert(){
-			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-			Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-			stage.setAlwaysOnTop(true);
-			alert.setTitle(Main.getString("default_messagebox_name"));
-			alert.setContentText(Main.getString("info.shutdown_important"));
-			Optional<ButtonType> result = alert.showAndWait();
-			return (result.get() == ButtonType.OK);
-		}
+
 		PluginListItem(String id, boolean blacklisted) {
 			this.id = id;
 			this.blacklisted = blacklisted;
-			Object type = PluginManager.getInstance().getPluginConfig(id).get("type");
-			if(type != null) {
-				Character c = Character.toLowerCase(type.toString().charAt(0));
-				label = new Label((char) ((int) c - 97 + 9398) +
-						"  " + toString());
-			} else label = new Label(toString());
+			setInfo();
+		}
+
+		void setInfo(){
+			// Adding char in circle to plugin name if we know its type
+			label = new Label(toString());
+
+			// Filling row content
+			hbox.getChildren().clear();
 			hbox.getChildren().addAll(label, pane, menuBox);
 
-			tooltip = new Tooltip(PluginManager.getInstance().getPluginConfig(id).getShortDescription());
-			final String description = PluginManager.getInstance().getPluginConfig(id).getDescription();
-			if(description != null) {
-				Button infoPluginButton = new Button("?");
-				infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
-				infoPluginButton.setOnAction(event -> {
-					App.showNotification(Main.getString("info"),description);
-				});
-				hbox.getChildren().add(infoPluginButton);
+			// Adding tooltip with plugin information
+			try {
+				tooltip = new Tooltip(PluginManager.getInstance().getPluginConfig(id).getShortDescription());
+			} catch (Exception e){
+				tooltip = new Tooltip(Main.getString("no-info"));
 			}
 
+			try {
+				final String description = PluginManager.getInstance().getPluginConfig(id).getDescription();
+				if(description != null) {
+					Button infoPluginButton = new Button("?");
+					infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
+					infoPluginButton.setOnAction(event -> {
+						App.showNotification(Main.getString("info"),description);
+					});
+					hbox.getChildren().add(infoPluginButton);
+				}
+			} catch (Exception e){ }
+
+
+			// 'Unload' button
 			Button unloadPluginButton = new Button("X");
 			unloadPluginButton.setTooltip(new Tooltip(Main.getString("info.unload-plugin")));
 			unloadPluginButton.setOnAction(event -> {
@@ -670,6 +792,7 @@ class OptionsDialog extends TemplateBox {
 
 			PluginListItem item = this;
 
+			// 'Blacklist' button
 			blacklistPluginButton = new Button(blacklisted ? locked : unlocked);
 			blacklistPluginButton.setTooltip(new Tooltip(Main.getString("info.blacklist-plugin")));
 			blacklistPluginButton.setOnAction(event -> {
@@ -688,11 +811,13 @@ class OptionsDialog extends TemplateBox {
 
 			updateOptionsSubMenu();
 		}
+
+		/** Update all submenus content. **/
 		void updateOptionsSubMenu(){
-			List<ControlsContainer> list = pluginsSubMenus.get(id);
+			List<ControlsPane> list = pluginsSubMenus.get(id);
 			menuBox.getChildren().clear();
 			if(list == null) return;
-			for(ControlsContainer container : list){
+			for(ControlsPane container : list){
 				Button button = new Button(container.name);
 				button.setOnAction((event) -> {
 					ControlsWindow.setupCustomWindow(id, container);
@@ -701,8 +826,10 @@ class OptionsDialog extends TemplateBox {
 				ControlsWindow.updateCustomWindow(id, container);
 			}
 		}
+
+		/** Toggle blacklisting of plugin. **/
 		void toggleBlacklisted(){
-			blacklisted=!blacklisted;
+			blacklisted = !blacklisted;
 			if (blacklisted) {
 				PluginManager.getInstance().addPluginToBlacklist(id);
 				blacklistPluginButton.setText(locked);
@@ -710,16 +837,40 @@ class OptionsDialog extends TemplateBox {
 				PluginManager.getInstance().removePluginFromBlacklist(id);
 				PluginManager.getInstance().tryLoadPluginByName(id);
 				blacklistPluginButton.setText(unlocked);
+				setInfo();
 			}
 			label.setText(toString());
 			menuBox.setVisible(!blacklisted);
 		}
+
 		@Override
 		public String toString() {
-			return blacklisted ? (id + " ["+Main.getString("blacklisted")+"]") : id;
+			return getPluginTypeLetter() + id + (blacklisted ? (" ["+Main.getString("blacklisted")+"]") : "");
+		}
+
+		/** Alert about removing important plugin. **/
+		private static boolean alert(){
+			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+			Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+			stage.setAlwaysOnTop(true);
+			alert.setTitle(Main.getString("default_messagebox_name"));
+			alert.setContentText(Main.getString("info.shutdown_important"));
+			Optional<ButtonType> result = alert.showAndWait();
+			return (result.get() == ButtonType.OK);
+		}
+
+		private String getPluginTypeLetter(){
+			try {
+				Object type = PluginManager.getInstance().getPluginConfig(id).get("type");
+				Character c = Character.toLowerCase(type.toString().charAt(0));
+				return (char) ((int) c - 97 + 9398) + " ";
+			} catch (Exception e) {
+				return "";
+			}
 		}
 	}
 
+	/** Tree of alternatives for single tag for 'Alternatives' tab. **/
 	private static class AlternativeTreeItem {
 
 		String tag;
@@ -738,40 +889,59 @@ class OptionsDialog extends TemplateBox {
 
 	}
 
-	public static class CommandItem{
+	/** Class representing command in 'Commands' tab. **/
+	public static class CommandItem {
+
 		String event;
 		String command;
 		String rule;
 		Object msgData;
+
 		CommandItem(String event, String command, String rule, String msg) {
-			this.event=event;
-			this.command=command;
-			this.rule=rule;
-			this.msgData=msg;
+			this.event = event;
+			this.command = command;
+			this.rule = rule;
+			this.msgData = msg;
 		}
+
 		CommandItem(Map<String,Object> data) {
-			this.event=(String)data.get("event");
-			this.command=(String)data.get("command");
-			this.rule=(String)data.get("rule");
-			this.msgData=data.get("msgData");
+			this.event = (String) data.get("event");
+			this.command = (String) data.get("command");
+			this.rule = (String) data.get("rule");
+			this.msgData = data.get("msgData");
 		}
-		public String getEvent(){ return event; }
-		public void setEvent(String value){ event=value; }
-		public String getCommand(){ return command; }
-		public void setCommand(String value){ command=value; }
-		public String getRule(){ return rule; }
-		public void setRule(String value){ rule=value; }
-		public String getMsgData(){ return msgData!=null ? msgData.toString() : ""; }
-		public void setMsgData(String value){ msgData=value; }
+
+		public String getEvent(){         return event;            }
+		public void   setEvent(String value){    event = value;    }
+
+		public String getCommand(){       return command;          }
+		public void   setCommand(String value){  command = value;  }
+
+		public String getRule(){          return rule;             }
+		public void   setRule(String value){     rule = value;     }
+
+		public String getMsgData(){       return msgData != null ? msgData.toString() : ""; }
+		public void   setMsgData(String value){
+			try {
+				msgData = stringToMap(value);
+			} catch (Exception e){
+				msgData = value;
+			}
+		}
+
 		public Map<String,Object> toMap(){
-			HashMap<String,Object> data=new HashMap<>();
-			data.put("eventName",event);
-			data.put("commandName",command);
-			if(rule!=null && rule.length()>0) data.put("rule",rule);
-			if(msgData!=null) data.put("msgData",msgData);
+			HashMap <String,Object> data = new HashMap<>();
+
+			data.put("eventName", event);
+			data.put("commandName", command);
+			if(rule != null && rule.length() > 0)  data.put("rule", rule);
+			if(msgData != null) data.put("msgData", msgData);
+
 			return data;
 		}
 	}
+
+	/** Tooltipped cell for 'Commands' tab. **/
 	static class TooltippedTableCell<S, T> extends TextFieldTableCell<S, T> {
 		public static <S> Callback<TableColumn<S, String>, TableCell<S, String>> forTableColumn() {
 			return forTableColumn(new DefaultStringConverter());
@@ -811,5 +981,14 @@ class OptionsDialog extends TemplateBox {
 			super.updateItem(item, empty);
 			updateItem(this, getConverter());
 		}
+	}
+
+	private static Map stringToMap(String text) throws Exception{
+		text = text.trim();
+		if (!text.startsWith("{")) text = "{" + text;
+		if (!text.endsWith("}"))   text = text + "}";
+
+		JSONObject json = new JSONObject(text);
+		return json.toMap();
 	}
 }

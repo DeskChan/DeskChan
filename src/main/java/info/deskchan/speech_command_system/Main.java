@@ -13,35 +13,81 @@ public class Main implements Plugin {
     private static PluginProxyInterface pluginProxy;
 
     /** Check this to log all rules comparison into console. **/
-    private static final boolean debugBuild = false;
+    protected static final boolean debugBuild = false;
 
     @Override
     public boolean initialize(PluginProxyInterface newPluginProxy) {
-        pluginProxy=newPluginProxy;
+        pluginProxy = newPluginProxy;
 
         log("loading speech to command module");
 
-        pluginProxy.sendMessage("core:add-event", TextOperations.toMap("tag: \"speech:get\""));
+        // Adding event information to core
+        pluginProxy.sendMessage("core:add-event", new TextOperations.TagsMap("tag: \"speech:get\""));
+        pluginProxy.sendMessage("core:add-command", new TextOperations.TagsMap("tag: \"speech:commands-list\""));
+        pluginProxy.sendMessage("core:set-event-link", new HashMap<String, String>(){{
+            put("eventName", "speech:get");
+            put("commandName", "speech:commands-list");
+            put("rule", "(список команд)|(что умеешь)");
+        }});
 
-        pluginProxy.sendMessage("core:register-alternative",new HashMap<String,Object>(){{
+        // Registering as alternative
+        pluginProxy.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
             put("srcTag", "DeskChan:user-said");
             put("dstTag", "speech:get");
             put("priority", 100);
         }});
 
-        pluginProxy.addMessageListener("core:update-links#speech:get", (sender, tag, data) -> {
+        // Transforming rules to Command every time commands list updates
+        pluginProxy.addMessageListener("core:update-links:speech:get", (sender, tag, data) -> {
             updateCommandsList((List) data);
         });
 
+        /* Analyze speech and call matching command.
+         * Public message
+         * Params: Map
+         *           value: String! - speech
+         * Returns: None */
+        pluginProxy.addMessageListener("speech:commands-list", (sender, tag, data) -> {
+            StringBuilder sb = new StringBuilder("Я умею много всего! Вот весь список:\n");
+            for (Command command : commands)
+                sb.append(command.rule.getRule()+"\n");
+
+            pluginProxy.sendMessage("DeskChan:say", sb.toString());
+        });
+
+        /* Say commands list.
+         * Public message
+         * Params: None
+         * Returns: None */
         pluginProxy.addMessageListener("speech:get", (sender, tag, data) -> {
             String text;
             if (data instanceof Map)
-                 text = (String) ((Map) data).getOrDefault("value", "");
+                text = (String) ((Map) data).getOrDefault("value", "");
             else text = data.toString();
 
             operateRequest(text);
         });
 
+        /* Check speech matches to rule.
+         * Public message
+         * Params: Map
+         *           speech: String! - speech
+         *           rule: String! - rule
+         * Returns: Boolean - is speech matches to rule */
+        pluginProxy.addMessageListener("speech:match", (sender, tag, data) -> {
+            if (!(data instanceof Map)){
+                throw new IllegalArgumentException();
+            }
+
+            Map query = (Map) data;
+            try {
+                RegularRule rule = RegularRule.create(query.get("rule").toString());
+                RegularRule.MatchResult result = rule.parse(query.get("speech").toString());
+                pluginProxy.sendMessage(sender, result.better(null));
+            } catch (Exception e){
+                pluginProxy.log(e);
+            }
+        });
         log("loading completed");
         return true;
     }
@@ -54,12 +100,12 @@ public class Main implements Plugin {
 
         public Command(Map<String, Object> map){
             tag = (String) map.get("tag");
-            String r = (String) map.getOrDefault("rule", null);
+            String r = (String) map.get("rule");
             msgData = map.get("msgData");
             RegularRule rul = null;
             if(r != null) {
                 try {
-                    rul = new RegularRule(r);
+                    rul = RegularRule.create(r);
                 } catch (Exception e) {
                     Main.log(e);
                 }
@@ -103,20 +149,29 @@ public class Main implements Plugin {
 
             command.result = command.rule.parse(text, words);
             if(debugBuild)
-               System.out.println(command.tag+" "+command.result+" "+command.better(best));
+               System.out.println(command.tag + " " + command.result + " " + command.better(best));
             if(command.better(best))
                 best = command;
         }
 
         if(best != null) {
             if(debugBuild)
-                System.out.println("best: "+best.tag+" "+best.result);
-            HashMap<String,Object> ret = best.rule.getArguments();
-            ret.put("text", words);
-            if(best.msgData != null)
-                ret.put("msgData", best.msgData);
+                System.out.println("best: " + best.tag + " " + best.result);
+            Map<String, Object> ret = best.rule.getArguments(text, best.result);
+            if (!ret.containsKey("text")) ret.put("text", text);
+            if(best.msgData != null) {
+                if (best.msgData instanceof Map){
+                    for(Map.Entry<String, Object> entry : ((Map<String, Object>) best.msgData).entrySet()){
+                        ret.put(entry.getKey(), entry.getValue());
+                    }
+                } else {
+                    ret.put("msgData", best.msgData);
+                }
+            }
 
             pluginProxy.sendMessage(best.tag, ret);
+        } else {
+            pluginProxy.sendMessage("DeskChan:say", pluginProxy.getString("no-conversation"));
         }
     }
     static void log(String text) {

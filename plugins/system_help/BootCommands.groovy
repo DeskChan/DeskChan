@@ -23,7 +23,7 @@ class BootCommands{
             }
             if (delay > 0) {
                 instance.sendMessage('DeskChan:say', 'Отключаю компьютер через ' + delay + ' секунды')
-                instance.sendMessage('core-utils:notify-after-delay', ['delay': delay], { s, d2 ->
+                instance.setTimer(delay, { s, d2 ->
                     sendMessage('DeskChan:say', 'Ну, пришло время выключаться! Пока!')
                     Runtime.getRuntime().exec(shutdown_info)
                     sendMessage('core:quit')
@@ -56,7 +56,7 @@ class BootCommands{
 
             if (delay > 0) {
                 instance.sendMessage('DeskChan:say', 'Перезагружаю компьютер через ' + delay + ' секунды')
-                instance.sendMessage('core-utils:notify-after-delay', ['delay': delay], { s, d2 ->
+                instance.setTimer(delay, { s, d2 ->
                     instance.sendMessage('DeskChan:say', 'Ну, пришло время перезагружаться! Пока!')
                     Runtime.getRuntime().exec(shutdown_info)
                     instance.sendMessage('core:quit')

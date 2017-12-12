@@ -8,7 +8,7 @@ import java.util.*;
 public class Main implements Plugin {
 
 	private static PluginProxyInterface pluginProxy;
-	private final List<MyTimerTask> timerTasks = new LinkedList<>();
+	private final List<DelayNotifier> timerTasks = new LinkedList<>();
 	private final Timer timer = new Timer();
 
 	@Override
@@ -17,30 +17,42 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("core-utils:notify-after-delay-default-impl",
 				(sender, tag, data) -> {
 					Map m = (Map) data;
-					Object seq = m.get("seq");
-					synchronized (timerTasks) {
-						Iterator<MyTimerTask> iterator = timerTasks.iterator();
-						while (iterator.hasNext()) {
-							MyTimerTask task = iterator.next();
-							if (task.plugin.equals(sender) && task.seq.equals(seq)) {
-								task.cancel();
-								iterator.remove();
+
+					// canceling timer
+					Integer seq = (Integer) m.get("cancel");
+					if (seq != null) {
+						synchronized (timerTasks) {
+							String cancelTag = sender + "#" + seq;
+							Iterator<DelayNotifier> iterator = timerTasks.iterator();
+							while (iterator.hasNext()) {
+								DelayNotifier task = iterator.next();
+								if (task.tag.equals(cancelTag)) {
+									task.cancel();
+									iterator.remove();
+								}
 							}
+							return;
 						}
 					}
+
 					Object delayObj = m.getOrDefault("delay", -1L);
-					long delay = delayObj instanceof Number ? ((Number) delayObj).longValue() : Long.valueOf(delayObj.toString());
+					long delay = 1000;
+					if(delayObj instanceof Number)
+						delay = ((Number) delayObj).longValue();
+					else
+						delay = Long.valueOf(delayObj.toString());
+
 					if (delay > 0) {
-						MyTimerTask task = new MyTimerTask(sender, seq);
+						DelayNotifier task = new DelayNotifier(sender);
 						timer.schedule(task, delay);
 					}
 				});
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			synchronized (timerTasks) {
-				Iterator<MyTimerTask> iterator = timerTasks.iterator();
+				Iterator<DelayNotifier> iterator = timerTasks.iterator();
 				while (iterator.hasNext()) {
-					MyTimerTask task = iterator.next();
-					if (task.plugin.equals(data)) {
+					DelayNotifier task = iterator.next();
+					if (task.tag.startsWith(data.toString())) {
 						task.cancel();
 						iterator.remove();
 					}
@@ -56,7 +68,11 @@ public class Main implements Plugin {
 			put("priority", 1);
 		}});
 		UserSpeechRequest.initialize(pluginProxy);
-		// TerminalGUI.initialize();
+
+		pluginProxy.getProperties().load();
+		if (pluginProxy.getProperties().getBoolean("terminal", false))
+			TerminalGUI.initialize();
+
 		return true;
 	}
 	
@@ -65,14 +81,12 @@ public class Main implements Plugin {
 		timer.purge();
 	}
 	
-	class MyTimerTask extends TimerTask {
+	class DelayNotifier extends TimerTask {
 		
-		private final String plugin;
-		private final Object seq;
+		private final String tag;
 		
-		MyTimerTask(String plugin, Object seq) {
-			this.plugin = plugin;
-			this.seq = seq;
+		DelayNotifier(String tag) {
+			this.tag = tag;
 			synchronized (timerTasks) {
 				timerTasks.add(this);
 			}
@@ -83,11 +97,10 @@ public class Main implements Plugin {
 			synchronized (timerTasks) {
 				timerTasks.remove(this);
 			}
-			pluginProxy.sendMessage(plugin, new HashMap<String, Object>() {{
-				put("seq", seq);
-			}});
+			pluginProxy.sendMessage(tag, null);
 		}
 	}
+
 	static void log(String text) {
 		pluginProxy.log(text);
 	}

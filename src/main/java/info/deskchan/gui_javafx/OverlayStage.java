@@ -76,7 +76,7 @@ class OverlayStage extends Stage {
 		}
 	}
 	public static void updateStage(){
-		String mode = Main.getProperty("character.layer_mode", null);
+		String mode = Main.getProperties().getString("character.layer_mode");
 		if(mode == null){
 			if(SystemUtils.IS_OS_MAC) mode = "SEPARATE";
 			else mode = "ALWAYS_TOP";
@@ -85,6 +85,10 @@ class OverlayStage extends Stage {
 	}
 	public static void updateStage(String name){
 		LayerMode mode;
+		if (name == null){
+			updateStage();
+			return;
+		}
 		try {
 			mode = LayerMode.valueOf(name);
 		} catch (Exception e){
@@ -106,19 +110,19 @@ class OverlayStage extends Stage {
 		}
 	}
 	public static void updateStage(LayerMode mode){
-		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC)
+		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC && instance != null)
 			showConfirmation("info.separated-stage");
 		else if(mode == LayerMode.ALWAYS_TOP && SystemUtils.IS_OS_MAC)
 			showConfirmation("info.not-separated-stage");
 		if(mode == currentMode) return;
 		try {
 			OverlayStage nextInstance = (OverlayStage) instances.get(mode).newInstance();
-			if(instance!=null) {
+			if(instance != null) {
 				instance.hideBalloons();
 				instance.hideCharacter();
 				instance.close();
 			}
-			instance=nextInstance;
+			instance = nextInstance;
 			nextInstance.showStage();
 			nextInstance.showCharacter();
 		} catch (Exception e){
@@ -128,6 +132,8 @@ class OverlayStage extends Stage {
 		}
 		currentMode = mode;
 		instance.toFront();
+		if (mode != LayerMode.HIDE)
+			Main.getProperties().put("character.layer_mode", mode);
 	}
 
 	public static LayerMode getCurrentStage(){
@@ -187,8 +193,8 @@ class OverlayStage extends Stage {
 	synchronized void hideBalloons() {}
 
 	void relocate(Node node, double x, double y){
-		node.setLayoutX(x-this.getX());
-		node.setLayoutY(y-this.getY());
+		node.setLayoutX(x - this.getX());
+		node.setLayoutY(y - this.getY());
 	}
 
 	public void showStage(){

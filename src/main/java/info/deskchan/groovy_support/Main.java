@@ -37,9 +37,17 @@ public class Main implements Plugin, PluginLoader {
 	
 	@Override
 	public void loadByPath(Path path) throws Throwable {
-		String id = path.getFileName().toString();
+		String id;
 		if (Files.isDirectory(path)) {
+			id = path.getFileName().toString();
 			path = path.resolve("plugin.groovy");
+		} else {
+			if(path.getFileName().toString().equals("plugin.groovy"))
+				id = path.getParent().getFileName().toString();
+			else {
+				id = path.getFileName().toString();
+				id = id.substring(0, id.length() - 7);
+			}
 		}
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setSourceEncoding("UTF-8");

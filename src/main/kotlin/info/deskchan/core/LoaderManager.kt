@@ -7,14 +7,18 @@ typealias PluginFiles = Set<File>
 
 object LoaderManager {
 
+    /** Extensions that registered loaders can interpret as plugin. **/
     private val registeredExtensions = mutableSetOf<String>()
+    /** 'plugins' path. **/
     private val pluginsDirPath = PluginManager.getPluginsDirPath()
 
+    /** Scan plugins directory to runnable plugins. **/
     private fun scanPluginsDir(): PluginFiles {
         val loadedPlugins = PluginManager.getInstance().namesOfLoadedPlugins
         return pluginsDirPath.toFile().listFiles({ _, name -> !loadedPlugins.contains(name) }).toSet()
     }
 
+    /** Automatically load all plugins from 'plugin' directory. **/
     internal fun loadPlugins() {
         var unloadedPlugins = scanPluginsDir()
 
@@ -31,6 +35,7 @@ object LoaderManager {
                 .forEach { PluginManager.log("Could not match loader for plugin ${it.name}") }
     }
 
+    /** Iterates over all registered extensions to find loadable plugins. **/
     private fun PluginFiles.loadFilePlugins(): PluginFiles {
         val unloadedPlugins = this.toMutableSet()
         val extensions = registeredExtensions.toSet()
@@ -40,6 +45,7 @@ object LoaderManager {
         return unloadedPlugins
     }
 
+    /** Iterates over all first level directories to find loadable plugins. **/
     private fun PluginFiles.loadDirectoryPlugins(): PluginFiles {
         val unloadedPlugins = this.toMutableSet()
         val (loaders, plugins) = this
@@ -49,12 +55,14 @@ object LoaderManager {
         return unloadedPlugins
     }
 
+    /** Tries to load all plugins that wasn't loaded previously. **/
     private fun PluginFiles.loadRestPlugins(): PluginFiles {
         val unloadedPlugins = this.toMutableSet()
         this.forEach { unloadedPlugins.tryLoadPlugin(it) }
         return unloadedPlugins
     }
 
+    /** Tries to load plugin that wasn't loaded previously. **/
     private fun MutableSet<File>.tryLoadPlugin(file: File) {
         if (PluginManager.getInstance().tryLoadPluginByPath(file.toPath())) {
             this.remove(file)

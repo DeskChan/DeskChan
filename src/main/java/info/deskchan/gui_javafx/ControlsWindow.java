@@ -8,9 +8,9 @@ import java.util.Map;
 
 class ControlsWindow extends TemplateBox {
     private static List<ControlsWindow> customWindowOpened = new LinkedList<>();
-    private ControlsContainer controls;
+    private ControlsPane controls;
     private String owner;
-    public ControlsWindow(String name, String owner, ControlsContainer controls){
+    public ControlsWindow(String name, String owner, ControlsPane controls){
         super(name);
         this.controls=controls;
         this.owner=owner;
@@ -19,7 +19,7 @@ class ControlsWindow extends TemplateBox {
     public String getOwnerName(){
         return owner;
     }
-    public void setControls(ControlsContainer controls) {
+    public void setControls(ControlsPane controls) {
         this.controls = null;
         getDialogPane().setContent(null);
         this.controls = controls;
@@ -31,11 +31,11 @@ class ControlsWindow extends TemplateBox {
     }
     public static void setupCustomWindow(String sender, Map<String, Object> data){
         String name = (String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
-        setupCustomWindow(sender, new ControlsContainer(name, (List<Map<String, Object>>) data.get("controls"),
+        setupCustomWindow(sender, new ControlsPane(name, (List<Map<String, Object>>) data.get("controls"),
                 (String) data.getOrDefault("msgTag", null), (String) data.getOrDefault("onClose", null)));
 
     }
-    public static void setupCustomWindow(String sender, ControlsContainer container){
+    public static void setupCustomWindow(String sender, ControlsPane container){
         String name = container.name;
         for(ControlsWindow window : customWindowOpened){
             if(window.getTitle().equals(name) && window.getOwnerName().equals(sender)){
@@ -73,7 +73,7 @@ class ControlsWindow extends TemplateBox {
             }
         }
     }
-    public static void updateCustomWindow(String sender, ControlsContainer container){
+    public static void updateCustomWindow(String sender, ControlsPane container){
         for(ControlsWindow window : customWindowOpened){
             if(window.getTitle().equals(container.name)){
                 window.setControls(container);

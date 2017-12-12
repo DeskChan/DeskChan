@@ -8,26 +8,6 @@ import java.util.Scanner;
 
 public class TerminalGUI {
 
-    private static CoreTimerTask readInTimer = new CoreTimerTask(Main.getPluginProxy(), 500, true) {
-        @Override
-        public void run() {
-            try {
-                //System.out.println(System.in.available());
-                if (System.in.available() > 0) {
-                    Scanner scanner = new Scanner(System.in);
-                    String readString;
-                    do {
-                        readString = scanner.nextLine();
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("value", readString);
-                        proxy.sendMessage("DeskChan:user-said", data);
-                    } while(System.in.available()>0 && scanner.hasNextLine());
-                }
-            } catch (Throwable e){
-                System.out.println("Problems while reading console: "+e.getClass().toString());
-            }
-        }
-    };
     public static void initialize(){
         Main.getPluginProxy().sendMessage("core:register-alternative",
                 new HashMap<String, Object>() {{
@@ -36,11 +16,13 @@ public class TerminalGUI {
                     put("priority", 1000);
                 }}
         );
+
         Main.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
             String name = data.toString();
             if(name.contains("gui"))
                 PluginManager.getInstance().unloadPlugin(name);
         });
+
         Main.getPluginProxy().addMessageListener("core-utils:say", (sender, tag, data) -> {
             String text = "";
             if(data instanceof Map){
@@ -63,7 +45,25 @@ public class TerminalGUI {
 
             System.out.println(text);
         });
+
+        Main.getPluginProxy().setTimer(500, -1, (s, d) -> {
+                try {
+                    //System.out.println(System.in.available());
+                    if (System.in.available() > 0) {
+                        Scanner scanner = new Scanner(System.in);
+                        String readString;
+                        do {
+                            readString = scanner.nextLine();
+                            Map<String, Object> data = new HashMap<>();
+                            data.put("value", readString);
+                            Main.getPluginProxy().sendMessage("DeskChan:user-said", data);
+                        } while(System.in.available()>0 && scanner.hasNextLine());
+                    }
+                } catch (Throwable e){
+                    System.out.println("Problems while reading console: "+e.getClass().toString());
+                }
+        });
+
         System.out.println("started");
-        readInTimer.start();
     }
 }

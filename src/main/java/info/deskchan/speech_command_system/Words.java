@@ -9,6 +9,8 @@ class Pair<K, V>{
     }
 }
 
+/** Class representing words array with info about their usage.
+ * 'Usage' means that word was already parsed and interpreted as it should be so we do not parse it again. **/
 public class Words {
     ArrayList<String> words;
     boolean[] used;
@@ -57,9 +59,11 @@ public class Words {
     }
     public int size(){ return words.size(); }
     public String get(int i){ return words.get(i); }
-    public void print(){
-        for(int i=0;i<words.size();i++)
-            System.out.print(words.get(i)+" "+used[i]+" / ");
-        System.out.println();
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i<words.size(); i++)
+            sb.append(words.get(i)+" "+used[i]+" / ");
+        return sb.toString();
     }
 }

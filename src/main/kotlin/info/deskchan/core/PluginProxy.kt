@@ -17,6 +17,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
     private val messageListeners = HashMap<String, MutableSet<MessageListener>>()
     private val responseListeners  = HashMap<Any, ResponseInfo>()
     private var seq = 0
+    private val properties:PluginProperties = PluginProperties(this)
 
     override fun getId() : String = id
 
@@ -50,45 +51,28 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
     }
 
     override fun sendMessage(tag: String, data: Any?, responseListener: ResponseListener, returnListener: ResponseListener): Any {
-        var data = data?: HashMap<String,Any>()
-        if (data !is Map<*, *>) {
-            val m = HashMap<String, Any>()
-            m.put("data", data)
-            data = m
-        }
-        val m = data as MutableMap<String, Any>
-        var seq: Any? = m["seq"]
-        if (seq == null)
-            seq = this.seq++
-
-
-        m["seq"] = seq
         val count = PluginManager.getInstance().getMessageListenersCount(tag)
-        if (count > 0)
-            responseListeners.put(seq, ResponseInfo(responseListener, count, returnListener))
-        else
+        // if there is no listeners for this tag, we skip sending message
+        if (count == 0) {
             returnListener.handle(id, null)
-        sendMessage(tag, data)
+            return -1
+        }
+
+        seq++
+        responseListeners.put(seq, ResponseInfo(responseListener, count, returnListener))
+        PluginManager.getInstance().sendMessage(id + "#" + seq, tag, data)
         return seq
     }
 
     override fun sendMessage(tag: String, data: Any?, responseListener: ResponseListener): Any {
-        var data = data?: HashMap<String,Any>()
-        if (data !is Map<*, *>) {
-            val m = HashMap<String, Any>()
-            m.put("data", data)
-            data = m
-        }
-        val m = data as MutableMap<String, Any>
-        var seq: Any? = m["seq"]
-        if (seq == null) {
-            seq = this.seq++
-        }
-        m["seq"] = seq
         val count = PluginManager.getInstance().getMessageListenersCount(tag)
-        if (count > 0)
-            responseListeners.put(seq, ResponseInfo(responseListener, count))
-        sendMessage(tag, data)
+        // if there is no listeners for this tag, we skip sending message
+        if (count == 0)
+            return -1
+
+        seq++
+        responseListeners.put(seq, ResponseInfo(responseListener, count))
+        PluginManager.getInstance().sendMessage(id + "#" + seq, tag, data)
         return seq
     }
 
@@ -113,16 +97,35 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         }
     }
 
-    override fun handleMessage(sender: String, tag: String, data: Any) {
-        if (data is Map<*, *>) {
-            val m = data as Map<String, Any>
-            val seq = m["seq"] ?: return
+    override fun handleMessage(sender: String, tag: String, data: Any?) {
+        val delimiterPas = tag.indexOf('#')
+        if (delimiterPas >= 0 && tag.startsWith(id)){
+            val seq = Integer.parseInt(tag.substring(delimiterPas + 1))
             val listener = responseListeners[seq] ?: return
             if (listener.handle(sender, id, data)) {
                 responseListeners.remove(seq)
             }
         }
     }
+
+    override fun setTimer(delay: Long, responseListener: ResponseListener) : Int {
+        return CoreTimerTask(delay, 1, responseListener).hashCode()
+    }
+
+    override fun setTimer(delay: Long, count: Int, responseListener: ResponseListener) : Int {
+        return CoreTimerTask(delay, count, responseListener).hashCode()
+    }
+
+    override fun cancelTimer(id: Int) {
+        timers.forEach {
+            if(it.hashCode() == id) {
+                it.stop()
+                return
+            }
+        }
+    }
+
+    override fun getProperties() = properties
 
     private var plugin_strings: ResourceBundle? = null
 
@@ -235,6 +238,42 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         }
         return true
     }
+
+    /** Timers **/
+
+    protected var timers: MutableList<CoreTimerTask> = mutableListOf()
+
+    inner class CoreTimerTask(val delay: Long, var count: Int, val response: ResponseListener) : ResponseListener, Runnable {
+
+        protected var lastSeq: Any? = null
+
+        init {
+            timers.add(this)
+            start()
+        }
+        override fun handle(sender: String, data: Any?) {
+            run()
+            if (count > 0) count--
+            if (count == 0) return
+            lastSeq = null
+            start()
+        }
+
+        fun start() {
+            if (lastSeq != null) stop()
+            lastSeq = sendMessage("core-utils:notify-after-delay", mapOf("delay" to delay), this)
+        }
+
+        fun stop() {
+            if (lastSeq != null)
+                sendMessage("core-utils:notify-after-delay", mapOf("cancel" to lastSeq))
+            timers.remove(this)
+        }
+
+        override fun run(){
+            response.handle(getId(), null)
+        }
+    }
 }
 
 internal class ResponseInfo {
@@ -254,7 +293,7 @@ internal class ResponseInfo {
         ret = returnListener
     }
 
-    fun handle(sender: String, id: String, data: Any): Boolean {
+    fun handle(sender: String, id: String, data: Any?): Boolean {
         res!!.handle(sender, data)
         count--
         if (count == 0) {
@@ -263,5 +302,6 @@ internal class ResponseInfo {
         }
         return false
     }
-
 }
+
+

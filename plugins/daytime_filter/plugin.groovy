@@ -19,17 +19,17 @@ void setEnabled(boolean value){
 // TODO: add a filter for morning
 sunset = [red: 0.94, green: 0.82, blue: 1.0]
 night = [red: 0.63, green: 0.78, blue: 0.82]
-seq = 500
+timerId = -1
 def updateSkin() {
     if(!isEnabled()){
-        sendMessage('core-utils:notify-after-delay', [ delay: -1 , seq: seq ])
+        cancelTimer(timerId)
         return
     }
     doDependingOnDaytime(
         night: { setSkinFilter(night) },
         evening: { setSkinFilter(sunset) }
     )
-    sendMessage('core-utils:notify-after-delay', [ delay: 3600000 , seq: seq ], { sender, tag, data ->
+    timerId = setTimer(3600000, { sender, data ->
         updateSkin()
     })
 }

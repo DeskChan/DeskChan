@@ -14,12 +14,12 @@ import java.util.concurrent.ThreadLocalRandom;
 class ImageSetSkin implements Skin {
 	private final String[][] replacing = {
 			{"smile", "happy", "laugh", "love", "bounty"},
-			{"vulgar", "confident", "excitement", "laugh", "grin"},
-			{"sad", "thoughtful", "cry"},
-			{"angry", "serious", "rage"},
-			{"sceptic", "facepalm", "disgusted"},
+			{"vulgar", "confident", "excitement", "grin"},
+			{"angry", "serious", "rage", "cry", "sad"},
+			{"sceptic", "facepalm", "despair", "disgusted"},
 			{"shy", "sorry", "tired"},
 			{"scared", "shocked", "tired"},
+			{"love", "bounty"},
 			{"waiting", "normal"}
 	};
 	private final Path path;
