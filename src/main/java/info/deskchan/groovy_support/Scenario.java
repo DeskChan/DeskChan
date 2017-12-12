@@ -107,7 +107,7 @@ public abstract class Scenario extends Script{
 
         void is(String obj, Function action) {
             try {
-                matches.put(new RegularRule(obj), action);
+                matches.put(RegularRule.create(obj), action);
             } catch (Exception e){
                 ScenarioPlugin.pluginProxy.log(e);
                 matches.put(false, action);

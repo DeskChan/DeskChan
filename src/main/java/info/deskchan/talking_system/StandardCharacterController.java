@@ -33,7 +33,6 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 	}
 	
 	public void setFromJSON(JSONObject json) {
-		System.out.println(json);
 		if (json == null) return;
 
 		for (int i = 0; i < getFeatureCount(); i++) {

@@ -3,7 +3,6 @@ package info.deskchan.chat_window;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core_utils.TextOperations;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -98,10 +97,13 @@ public class Main implements Plugin {
         * Returns: None */
         pluginProxy.addMessageListener("chat:open", (sender, tag, data) -> {
             chatIsOpened = true;
+            pluginProxy.sendMessage("DeskChan:request-say", "START_DIALOG");
             setupChat();
         });
 
-        pluginProxy.sendMessage("core:add-command", TextOperations.toMap("tag: \"chat:open\""));
+        pluginProxy.sendMessage("core:add-command", new HashMap(){{
+            put("tag", "chat:open");
+        }});
         pluginProxy.sendMessage("core:set-event-link", new HashMap<String, Object>(){{
             put("eventName", "gui:keyboard-handle");
             put("commandName", "chat:open");

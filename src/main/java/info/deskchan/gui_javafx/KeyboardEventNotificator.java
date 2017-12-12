@@ -4,10 +4,10 @@ import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core_utils.TextOperations;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
+import org.apache.commons.lang3.SystemUtils;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -15,21 +15,17 @@ import org.jnativehook.keyboard.NativeKeyListener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.PrintStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.lang.Character;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class KeyboardEventNotificator implements NativeKeyListener {
 
     private static KeyboardEventNotificator instance;
 
     public static void initialize() {
-        PrintStream originalOut = System.out;
-        System.setOut(null);
+
         instance = new KeyboardEventNotificator();
         try {
             GlobalScreen.registerNativeHook();
@@ -42,8 +38,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 
         // registering event
-        pluginProxy.sendMessage("core:add-event", TextOperations.toMap("tag: \"gui:keyboard-handle\""));
-
+        pluginProxy.sendMessage("core:add-event", new TextOperations.TagsMap("tag: \"gui:keyboard-handle\""));
         pluginProxy.addMessageListener("core:update-links:gui:keyboard-handle", (sender, tag, data) -> {
             updateCommandsList((List) data);
         });
@@ -90,7 +85,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         });
 
         GlobalScreen.addNativeKeyListener(instance);
-        System.setOut(originalOut);
+
         // testing keywords parsing
         KeyboardCommand.test();
     }
@@ -136,7 +131,8 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         }});
     }
 
-    class KeyPair{
+
+    static class KeyPair{
         final int keyCode;
         final int rawCode;
         KeyPair(NativeKeyEvent e){
@@ -145,7 +141,8 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         @Override
         public boolean equals(Object other){
             if (other instanceof String) return toString().equals(other);
-            if (other instanceof Number) return keyCode == ((Number) other).intValue();
+            if (other instanceof Number)
+                return rawCode == ((Number) other).intValue();
             try {
                 return keyCode == ((KeyPair) other).keyCode;
             } catch (Exception e) {
@@ -156,9 +153,13 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         public int hashCode(){
             return keyCode;
         }
+
+        private static final boolean invert = SystemUtils.IS_OS_WINDOWS;
+
         @Override
         public String toString(){
-            return Integer.toString(keyCode) + (KeyboardCommand.isDuplicate(this) ? "-" + (rawCode%2) : "");
+            return Integer.toString(keyCode) +
+                  (KeyboardCommand.isDuplicate(this) ? "-" + Math.abs(rawCode%2 - (invert ? 1 : 0)) : "");
         }
     }
 
@@ -305,7 +306,12 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         private static final List<Integer> duplicates = new ArrayList<>();
         static {
             try {
-                String keycodes = new String(Files.readAllBytes(Paths.get(App.class.getResource("keycodes.json").toURI())));
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(App.class.getResourceAsStream("keycodes.json"), "UTF8"));
+
+                String keycodes = "", str;
+                while ((str = in.readLine()) != null) keycodes += str;
+
                 JSONObject map = new JSONObject(keycodes);
                 for(String entry : map.keySet()){
                     JSONArray array = map.getJSONArray(entry);
@@ -406,39 +412,6 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                     keySet.add(keyCode);
             }
             keyCodes = keySet.toArray(new Object[keySet.size()]);
-        }
-    }
-
-    public static class JavaFxDispatchService extends AbstractExecutorService {
-        private boolean running = false;
-
-        public JavaFxDispatchService() {
-            running = true;
-        }
-
-        public void shutdown() {
-            running = false;
-        }
-
-        public List<Runnable> shutdownNow() {
-            running = false;
-            return new ArrayList<Runnable>(0);
-        }
-
-        public boolean isShutdown() {
-            return !running;
-        }
-
-        public boolean isTerminated() {
-            return !running;
-        }
-
-        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-            return true;
-        }
-
-        public void execute(Runnable r) {
-            Platform.runLater(r);
         }
     }
 }

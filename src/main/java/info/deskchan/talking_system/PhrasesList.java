@@ -299,7 +299,7 @@ public class PhrasesList {
 		final String fPurpose = purpose;
 		Main.getPluginProxy().sendMessage("talk:reject-quote", matchingList,
 				(sender, data) -> {
-					ArrayList<Map<String,Object>> phrasesList = (ArrayList<Map<String,Object>>) data;
+					ArrayList<Map<String, Object>> phrasesList = (ArrayList<Map<String,Object>>) data;
 					if(phrasesList == null) return;
 
 					for (Map<String, Object> phrase : phrasesList) {
@@ -315,11 +315,7 @@ public class PhrasesList {
 				},
 				(sender, dat) -> {
 					if (currentlySuitable.size() == 0) {
-						if (fPurpose.equals("NO_PHRASES")){
-							callback.call(new Phrase(Main.getString("phrase."+fPurpose)));
-						} else {
-							requestRandomQuote("NO_PHRASES", callback);
-						}
+						callback.call(new Phrase(Main.getString("phrase."+fPurpose)));
 						return;
 					}
 					int counter = LimitArrayList.LIMIT + 1;

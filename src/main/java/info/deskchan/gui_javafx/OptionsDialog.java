@@ -16,6 +16,7 @@ import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -267,8 +268,10 @@ class OptionsDialog extends TemplateBox {
 		// Events column
 		TableColumn eventCol = new TableColumn(Main.getString("events"));
 		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
+		List events = CommandsProxy.getEventsList();
+		Collections.sort(events);
 		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(CommandsProxy.getEventsList())));
+				FXCollections.observableArrayList(events)));
 		eventCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -279,8 +282,10 @@ class OptionsDialog extends TemplateBox {
 		// Commands column
 		TableColumn commandCol = new TableColumn(Main.getString("commands"));
 		commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
+		List commands = CommandsProxy.getCommandsList();
+		Collections.sort(commands);
 		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(CommandsProxy.getCommandsList())));
+				FXCollections.observableArrayList(commands)));
 		commandCol.setOnEditCommit(ev -> {
 			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
 			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
@@ -332,7 +337,6 @@ class OptionsDialog extends TemplateBox {
 		Button resetButton = new Button(Main.getString("reset"));
 		resetButton.setOnAction(event -> {
 			CommandsProxy.reset();
-			System.out.println(CommandsProxy.getLinksList());
 			ObservableList<CommandItem> l = FXCollections.observableArrayList();
 			for(Map<String,Object> entry : CommandsProxy.getLinksList()){
 				l.add(new CommandItem(entry));
@@ -513,9 +517,7 @@ class OptionsDialog extends TemplateBox {
 			String tag = debugMsgTag.getText();
 			String dataStr = debugMsgData.getText();
 			try {
-				JSONObject json = new JSONObject(dataStr);
-				Object data = json.toMap();
-				Main.getInstance().getPluginProxy().sendMessage(tag, data);
+				Main.getInstance().getPluginProxy().sendMessage(tag, stringToMap(dataStr));
 			} catch (Throwable e) {
 				App.showThrowable(OptionsDialog.this.getDialogPane().getScene().getWindow(), e);
 			}
@@ -536,6 +538,7 @@ class OptionsDialog extends TemplateBox {
 		gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
+		label.setFont(new Font(LocalFont.defaultFont.getName(), LocalFont.defaultFont.getSize() * 2));
 		gridPane.add(label, 0, 0, 2, 1);
 		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
 		Hyperlink hyperlink = new Hyperlink();
@@ -918,7 +921,13 @@ class OptionsDialog extends TemplateBox {
 		public void   setRule(String value){     rule = value;     }
 
 		public String getMsgData(){       return msgData != null ? msgData.toString() : ""; }
-		public void   setMsgData(String value){  msgData=value;    }
+		public void   setMsgData(String value){
+			try {
+				msgData = stringToMap(value);
+			} catch (Exception e){
+				msgData = value;
+			}
+		}
 
 		public Map<String,Object> toMap(){
 			HashMap <String,Object> data = new HashMap<>();
@@ -972,5 +981,14 @@ class OptionsDialog extends TemplateBox {
 			super.updateItem(item, empty);
 			updateItem(this, getConverter());
 		}
+	}
+
+	private static Map stringToMap(String text) throws Exception{
+		text = text.trim();
+		if (!text.startsWith("{")) text = "{" + text;
+		if (!text.endsWith("}"))   text = text + "}";
+
+		JSONObject json = new JSONObject(text);
+		return json.toMap();
 	}
 }

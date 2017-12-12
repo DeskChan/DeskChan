@@ -59,9 +59,11 @@ public class Words {
     }
     public int size(){ return words.size(); }
     public String get(int i){ return words.get(i); }
-    public void print(){
-        for(int i=0;i<words.size();i++)
-            System.out.print(words.get(i)+" "+used[i]+" / ");
-        System.out.println();
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i<words.size(); i++)
+            sb.append(words.get(i)+" "+used[i]+" / ");
+        return sb.toString();
     }
 }

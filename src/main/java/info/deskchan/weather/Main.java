@@ -3,7 +3,6 @@ package info.deskchan.weather;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core_utils.TextOperations;
 
 import java.util.*;
 
@@ -35,7 +34,9 @@ public class Main implements Plugin {
             updateOptionsTab();
             saveOptions();
         });
-        pluginProxy.sendMessage("core:add-command", TextOperations.toMap("tag: \"weather:say-weather\""));
+        pluginProxy.sendMessage("core:add-command", new HashMap(){{
+            put("tag", "weather:say-weather");
+        }});
         String[] v=new String[]{ "", "", " сейчас", "", " сегодня", "0", " завтра", "1", " послезавтра", "2"};
         for(int i=0;i<5;i++) {
             Map m=new HashMap<String, String>();

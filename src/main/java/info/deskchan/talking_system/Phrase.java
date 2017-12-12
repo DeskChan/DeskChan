@@ -18,7 +18,7 @@ public class Phrase {
 
 	private int timeout;
 
-	private TextOperations.TagsMap tags;
+	private TextOperations.TagsMap<String, Set<String>> tags;
 
 	// null = "CHAT"
 	private List<String> purposeType;
@@ -114,10 +114,10 @@ public class Phrase {
 
 	public void setTags(String text){
 		if(tags == null) tags = new TextOperations.TagsMap();
-		tags.put(text);
+		tags.putFromText(text);
 	}
 
-	public List<String> getTag(String name){
+	public Set<String> getTag(String name){
 		return tags != null ? tags.get(name) : null;
 	}
 
@@ -234,7 +234,7 @@ public class Phrase {
 		map.put("hash", this.hashCode());
 
 		if(tags != null)
-			for(Map.Entry<String,List<String>> tag : tags.entrySet()) {
+			for(Map.Entry<String, Set<String>> tag : tags.entrySet()) {
 				map.put(tag.getKey(), tag.getValue());
 			}
 		return map;

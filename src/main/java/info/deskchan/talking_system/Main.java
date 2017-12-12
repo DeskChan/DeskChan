@@ -61,9 +61,9 @@ public class Main implements Plugin {
 
 		/* Building DeskChan:request-say chain. */
 		pluginProxy.sendMessage("core:register-alternatives", new ArrayList<Map<String, Object>>(){{
-			add(TextOperations.toMap("srcTag: DeskChan:request-say, dstTag: talk:request-say, priority: 10000"));
-			add(TextOperations.toMap("srcTag: DeskChan:request-say, dstTag: talk:replace-by-preset-fields, priority: 9990"));
-			add(TextOperations.toMap("srcTag: DeskChan:request-say, dstTag: talk:send-phrase, priority: 10"));
+			add(new TextOperations.TagsMap("srcTag: \"DeskChan:request-say\", dstTag: \"talk:request-say\", priority: 10000"));
+			add(new TextOperations.TagsMap("srcTag: \"DeskChan:request-say\", dstTag: \"talk:replace-by-preset-fields\", priority: 9990"));
+			add(new TextOperations.TagsMap("srcTag: \"DeskChan:request-say\", dstTag: \"talk:send-phrase\", priority: 10"));
 		}});
 
 		/* Request a phrase with certain purpose. If answer is not requested, automatically send it to DeskChan:say.
@@ -181,7 +181,7 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:save-preset", (sender, tag, data) -> {
 			try {
 				currentCharacter.saveInFile(getPresetsPath());
-				pluginProxy.sendMessage("gui:show-notification", TextOperations.toMap("text: "+getString("done")));
+				pluginProxy.sendMessage("gui:show-notification", new TextOperations.TagsMap("text: "+getString("done")));
 			} catch (Exception e) {
 				HashMap<String, Object> list = new HashMap<String, Object>();
 				list.put("name", getString("error"));
@@ -256,12 +256,12 @@ public class Main implements Plugin {
 
 		/* Saying 'Hello' at launch. */
 		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
-			phraseRequest(TextOperations.toMap("purpose: HELLO, priority: 20001"));
+			phraseRequest(new TextOperations.TagsMap("purpose: HELLO, priority: 20001"));
 		});
 
 		/* Saying 'Bye' when someone requests quit. */
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			phraseRequest(TextOperations.toMap("purpose: BYE, priority: 10000"));
+			phraseRequest(new TextOperations.TagsMap("purpose: BYE, priority: 10000"));
 		});
 
 		/* Adding "Say something" button to menu. */

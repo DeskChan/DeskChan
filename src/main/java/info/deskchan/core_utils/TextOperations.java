@@ -95,42 +95,38 @@ public class TextOperations {
         return words;
     }
 
-    /** Converts text to map. <br> Example: 'key1: value1, key2: "value 22" value21' **/
-    public static Map<String,Object> toMap(String text){
-        TagsMap tags = new TagsMap(text);
-        Map<String,Object> map = new HashMap<>();
+    /** Class representing tags map. Each value of map can be only Set&lt;String&gt;, including empty list. <br>
+     * You can parse map from string like <br> key1: value1, key2, key3: "value 21" value22 !value23. <br><br>
+     * It will definitely throw an error if you create an instance with type definition other than String, Set. <br>
+     * '!' means boolean negation, but '!value' will override 'value'. **/
+    public static class TagsMap<K, V> implements Map<K, V>{
 
-        for(HashMap.Entry<String, List<String>> entry : tags.entrySet()){
-            if(entry.getValue().size() == 0) continue;
-            if(entry.getValue().size() == 1)
-                map.put(entry.getKey(), entry.getValue().get(0));
-            else
-                map.put(entry.getKey(), entry.getValue());
-        }
-        return map;
-    }
+        // null as value means keys without value like "key2"
+        private Map<String, Set<String>> tags;
 
-    public static class TagsMap{
-
-        private Map<String, List<String>> tags;
-
-        public TagsMap() {
-            tags = new HashMap<>();
-        }
+        public TagsMap() { tags = new HashMap<>();  }
 
         public TagsMap(String text) {
             this();
-            put(text);
+            putFromText(text);
         }
 
-        public void put(String tag, List<String> args) {
-            if (args.size() > 0) tags.put(tag, args);
+        public Set<String> put(String tag) {
+            return tags.put(tag, null);
         }
 
-        /** Split input values string to list. **/
-        private static ArrayList<String> split(String text) {
-            ArrayList<String> args = new ArrayList<String>();
-            if (text == null || text.length() < 3) return args;
+        public Set<String> put(String tag, Collection args) {
+            if (args != null && args.size() > 0)
+                return tags.put(tag, new ImprovedSet<>(args));
+            else
+                return tags.put(tag, null);
+        }
+
+        /** Split input values string to list. <br>
+         * Example: 'value1 "value2 with spaces" value3'.  **/
+        private static Set<String> split(String text) {
+            Set<String> args = new ImprovedSet<>();
+            if (text == null || text.length() == 0) return args;
 
             boolean inQuoteMarks = false;
             int startPos = 0;
@@ -156,31 +152,36 @@ public class TextOperations {
             return args;
         }
 
-        public void put(String tag, String args) {
+        public Set<String> put(String tag, String args) {
             try {
-                List<String> list = split(args);
-                if (list.size() > 0) tags.put(tag, list);
+                Set<String> list = split(args);
+                if (list.size() > 0)
+                    return tags.put(tag, list);
+                else
+                    return tags.put(tag, null);
             } catch (Exception e) {
                 throw new IllegalArgumentException(args);
             }
         }
 
-        public boolean put(String text) {
-            if (text == null || text.length() == 0) return true;
-            boolean inQuoteMarks = false;
-            boolean before = true;
+        public void putFromText(String text) {
+            if (text == null || text.length() == 0) return;
+
+            boolean inQuoteMarks = false, beforeColon = true;
             text = text.replace("\n", "") + ",";
-            String tagname = "";
+            String tagName = "";
             int st = 0;
+
             for (int c = 0; c < text.length(); c++) {
-                if (!before) {
-                    if (text.charAt(c) == ',') {
-                        ArrayList<String> list = new ArrayList<>();
-                        tags.put(tagname, split(text.substring(st, c)));
-                        st = c + 1;
-                        tagname = "";
-                        before = true;
-                    }
+                 if (text.charAt(c) == ',') {
+                     if (beforeColon)
+                         tags.put(text.substring(st, c).trim(), null);
+                     else
+                         tags.put(tagName, split(text.substring(st, c).trim()));
+
+                     st = c + 1;
+                     tagName = "";
+                     beforeColon = true;
                 } else if (text.charAt(c) == '"') inQuoteMarks = !inQuoteMarks;
                 else if (text.charAt(c) == ':' && !inQuoteMarks) {
                     if (st == c) {
@@ -188,18 +189,18 @@ public class TextOperations {
                         continue;
                     }
                     if (text.charAt(st) == '"' && text.charAt(c - 1) == '"')
-                        tagname = text.substring(st + 1, c - 1);
-                    else tagname = text.substring(st, c);
-                    tagname = tagname.trim();
+                        tagName = text.substring(st + 1, c - 1);
+                    else tagName = text.substring(st, c);
+                    tagName = tagName.trim();
                     st = c + 1;
-                    before = false;
+                    beforeColon = false;
                 }
             }
-            return true;
         }
 
         public String getAsString(String tag) {
-            if (!tags.containsKey(tag)) return "";
+            if (!tags.containsKey(tag)) return null;
+            if (tags.get(tag) == null)  return "";
 
             StringBuilder sb = new StringBuilder();
             for (String arg : tags.get(tag)) {
@@ -211,27 +212,42 @@ public class TextOperations {
             return sb.toString();
         }
 
-        public List<String> get(String tag) { return tags.get(tag); }
-
-        public void remove(String tag) {
-            tags.remove(tag);
+        private static boolean containsPositive(Collection<String> items){
+            if (items == null) return false;
+            for (String item : items)
+                if (item.charAt(0) != '!') return true;
+            return false;
         }
 
-        public Set<String> keySet() {
-            return tags.keySet();
-        }
+        public boolean match(String tag, Collection<String> args) {
+            Set<String> dstTags = tags.get(tag);
+            if (args == null || args.size() == 0) {
+                if (dstTags == null) return true;
+                for (String arg : dstTags)
+                    if (arg.charAt(0) != '!') return false;
 
-        public Set<HashMap.Entry<String, List<String>>> entrySet() {
-            return tags.entrySet();
-        }
+                return true;
+            }
 
-        public boolean match(String tag, List<String> args) {
-            List<String> targs = get(tag);
-            if (targs == null)
-                return (args.size() == 0);
+            boolean containsAnyPositive = containsPositive(dstTags),
+                    containsAnyNegative = dstTags != null && !containsAnyPositive;
+            if (!containsAnyNegative && !containsAnyPositive) return !containsPositive(args);
 
-            for (String arg : args)
-                if (!targs.contains(arg)) return false;
+            for (String arg : args){
+                boolean containsPositive = false, containsNegative = false;
+                boolean negation = arg.charAt(0) == '!';
+                if (negation) arg = arg.substring(1);
+                String narg = "!" + arg;
+                for (String arg2 : dstTags){
+                    if (arg2.equals(arg)) containsPositive = true;
+                    else if (arg2.equals(narg)) containsNegative = true;
+                }
+                if (!negation){
+                    if (!containsPositive || containsNegative) return false;
+                } else {
+                    if (containsPositive) return false;
+                }
+            }
 
             return true;
         }
@@ -240,8 +256,20 @@ public class TextOperations {
             return match(tag, split(argstext));
         }
 
-        public Map<String, List<String>> toMap() {
-            return new HashMap<>(tags);
+        public boolean match(String argstext) {
+            TagsMap other = new TagsMap(argstext);
+            for (Object tag : other.keySet()) {
+                if (other.get(tag) instanceof Collection) {
+                    if (!match(tag.toString(), (Collection) other.get(tag))) return false;
+                } else {
+                    if (other.get(tag) == null) {
+                        if (containsKey(tag)) continue;
+                        else return false;
+                    }
+                    if (!match(tag.toString(), other.get(tag).toString())) return false;
+                }
+            }
+            return true;
         }
 
         @Override
@@ -251,16 +279,103 @@ public class TextOperations {
             StringBuilder sb = new StringBuilder();
             for (String key : tags.keySet()) {
                 sb.append(key);
-                sb.append(":");
-                sb.append(getAsString(key));
+                String args = getAsString(key);
+                if (args.length() > 0) {
+                    sb.append(":");
+                    sb.append(args);
+                }
                 sb.append(", ");
             }
             sb.setLength(sb.length() - 2);
             return sb.toString();
         }
 
-        public void clear(){
-            tags.clear();
+        /* -- Fully implementing interface, don't mind -- */
+
+        @Override
+        public void putAll(Map<? extends K, ? extends V> map){
+            for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()){
+                put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        @Override
+        public V put(K tag, V args) {
+            if (args instanceof Collection)
+                return (V) put(tag.toString(), (Collection) args);
+            else
+                return (V) put(tag.toString(), args.toString());
+        }
+
+        @Override public Set<K> keySet() {  return (Set<K>) tags.keySet();  }
+
+        @Override public Set<HashMap.Entry<K, V>> entrySet() {  return (Set) tags.entrySet();  }
+
+        @Override public int size(){  return tags.size();  }
+
+        @Override public int hashCode(){  return tags.hashCode();  }
+
+        @Override public boolean containsKey(Object key){  return tags.keySet().contains(key);  }
+
+        @Override public boolean containsValue(Object value){  return tags.containsValue(value);  }
+
+        @Override public boolean isEmpty(){  return tags.isEmpty();  }
+
+        @Override public boolean equals(Object other){  return tags.equals(other);  }
+
+        @Override public Collection<V> values() {  return (Collection<V>) tags.values();  }
+
+        @Override public V remove(Object item){  return (V) tags.remove(item);  }
+
+        @Override public V get(Object key){
+            Set<String> items = tags.get(key);
+            if (items != null && items.size() == 1)
+                return (V) items.iterator().next();
+            return (V) tags.get(key);
+        }
+
+        @Override public void clear(){  tags.clear();  }
+
+        private static class ImprovedSet<E> extends HashSet<E>{
+            public ImprovedSet(){
+                super();
+            }
+            public ImprovedSet(Collection copy){
+                for (Object item : copy) add(item.toString());
+            }
+
+            public boolean add(String item){
+                String repr = item;
+                if (repr.charAt(0) == '!')
+                    repr = repr.substring(1);
+                if (contains(repr))
+                    remove(repr);
+                return super.add((E) item);
+            }
+
+            @Override
+            public boolean add(E item){
+                return add(item.toString());
+            }
+        }
+
+        private static void Testing(){
+            TagsMap map = new TagsMap("part: head legs");
+            System.out.println(map);
+            System.out.println(map.match("part: legs"));
+            System.out.println(map.match("part", "head"));
+            System.out.println(map.match("part", "spine"));
+            System.out.println(map.match("part", new ArrayList<String>(){{
+                add("!spine");
+            }}));
+            System.out.println(map.match("part: legs head"));
+            System.out.println(map.match("part"));
+            map = new TagsMap("species: ai, sleepTime");
+            System.out.println(map);
+            System.out.println(map.match("sleepTime"));
+            System.out.println(map.match("dayTime"));
+            System.out.println(map.match("sleepTime, species: !android"));
+            System.out.println(map.match("sleepTime, species: android"));
         }
     }
 }

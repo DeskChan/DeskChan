@@ -20,11 +20,11 @@ public class DefaultTagsListeners {
 
     public static void parseForTagsRemove(String sender, String messagetag, Object data) {
         checkCondition(sender, data, (quote) -> {
-            List<String> tag;
+            Collection<String> tag;
 
             /// operation system
             try {
-                tag = (List) quote.get("os");
+                tag = (Collection) quote.get("os");
                 if (tag != null && tag.size() > 0) {
                     if (OS == null) return true;
 
@@ -54,7 +54,7 @@ public class DefaultTagsListeners {
         cal.setTime(new Date());
 
         checkCondition(sender, data, (quote) -> {
-            List<String> tag;
+            Collection<String> tag;
 
             // first five conditions filling TextBooleanSet
             // example: listOf("1-3", "5-6") -> [false, true, true, true, false, true, true, false...]
@@ -62,25 +62,25 @@ public class DefaultTagsListeners {
 
             /// possibleHour
             try {
-                tag = (List) quote.get("possibleHour");
+                tag = (Collection) quote.get("possibleHour");
                 if (tag != null && !new TextBooleanSet(24, tag).get(cal.get(Calendar.HOUR_OF_DAY))) return true;
             } catch(Exception e){ Main.log(e); }
 
             /// possibleMinute
             try {
-                tag = (List) quote.get("possibleMinute");
+                tag = (Collection) quote.get("possibleMinute");
                 if(tag != null && !new TextBooleanSet(60, tag).get(cal.get(Calendar.MINUTE))) return true;
             } catch(Exception e){ Main.log(e); }
 
             /// possibleDay
             try {
-                tag = (List) quote.get("possibleDay");
+                tag = (Collection) quote.get("possibleDay");
                 if(tag != null && !new TextBooleanSet(31, tag).get(cal.get(Calendar.DAY_OF_MONTH) - 1)) return true;
             } catch(Exception e){ Main.log(e); }
 
             /// possibleDayOfWeek
             try {
-                tag = (List) quote.get("possibleDayOfWeek");
+                tag = (Collection) quote.get("possibleDayOfWeek");
 
                 if(tag != null){
                     int dayIndex = cal.get(Calendar.DAY_OF_WEEK);
@@ -96,7 +96,7 @@ public class DefaultTagsListeners {
 
             /// possibleMonth
             try {
-                tag = (List) quote.get("possibleMonth");
+                tag = (Collection) quote.get("possibleMonth");
 
                 if(tag != null){
                     TextBooleanSet set = new TextBooleanSet(12);
@@ -109,16 +109,17 @@ public class DefaultTagsListeners {
 
             /// lastConversation
             try {
-                tag = (List) quote.get("lastConversation");
+                tag = (Collection) quote.get("lastConversation");
 
                 if (tag != null && tag.size() > 0) {
                     int left = 0, right = -1;
                     try {
-                        if (tag.get(0).contains("-")) {
-                            String[] di = tag.get(0).split("-");
+                        String text = tag.iterator().next();
+                        if (text.contains("-")) {
+                            String[] di = text.split("-");
                             left = Integer.valueOf(di[0]);
                             right = Integer.valueOf(di[1]);
-                        } else left = Integer.parseInt(tag.get(0));
+                        } else left = Integer.parseInt(text);
                     } catch (Exception e) { }
 
                     Instant lastConversation = Instant.ofEpochMilli(Main.getProperties().getLong("lastConversation", 0));
@@ -127,6 +128,21 @@ public class DefaultTagsListeners {
                 }
             } catch(Exception e){ }
 
+            /// sleepTime
+            try {
+                tag = (Collection) quote.get("sleepTime");
+
+                if (tag != null) {
+                    Calendar left = Calendar.getInstance(), right = Calendar.getInstance();
+                    while(left.get(Calendar.HOUR_OF_DAY) != 22) left.add(Calendar.HOUR_OF_DAY, -1);
+                    left.set(Calendar.MINUTE, 0);
+                    while(right.get(Calendar.HOUR_OF_DAY) != 4) left.add(Calendar.HOUR_OF_DAY, 1);
+                    right.set(Calendar.MINUTE, 0);
+                    Calendar current = Calendar.getInstance();
+                    if(current.getTimeInMillis() < left.getTimeInMillis() ||
+                       current.getTimeInMillis() > right.getTimeInMillis()) return true;
+                }
+            } catch(Exception e){ }
             return false;
         });
     }
@@ -161,7 +177,7 @@ class TextBooleanSet {
         }
     }
 
-    public TextBooleanSet(int length, List<String> selected) {
+    public TextBooleanSet(int length, Collection<String> selected) {
         this(length);
 
         for(String item : selected)

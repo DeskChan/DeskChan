@@ -56,7 +56,7 @@ public class CharacterPreset {
 	}
 
 	/** Additional character and user features like gender, species, interests. **/
-	public TextOperations.TagsMap tags;
+	public TextOperations.TagsMap<String, Set<String>> tags;
 
 	/** Phrases list. **/
 	public PhrasesList phrases;
@@ -123,8 +123,8 @@ public class CharacterPreset {
 		emotionState = getDefaultEmotionsController();
 		name = Main.getString("default_name");
 		phrases = PhrasesList.getDefault(character);
-		tags = new TextOperations.TagsMap();
-		tags.put("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
+		tags = new TextOperations.TagsMap<>();
+		tags.putFromText("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
 	}
 
 	/** Update phrases with preset info. **/
@@ -168,7 +168,7 @@ public class CharacterPreset {
 			map.put(CharacterFeatures.getFeatureName(i), character.getValue(i));
 
 		map.put("phrases", phrases.toList());
-		map.put("tags", tags.toMap());
+		map.put("tags", tags);
 		map.put("emotion", emotionState.getCurrentEmotionName());
 		return map;
 	}
@@ -177,26 +177,39 @@ public class CharacterPreset {
 		Main.getPluginProxy().sendMessage("talk:character-updated", toInformationMap());
 	}
 
+	private String getRandomItem(Collection<String> collection){
+		int count = new Random().nextInt(collection.size());
+		Iterator<String> it = collection.iterator();
+		for(;count >0; count--) it.next();
+		return it.next();
+	}
 	public String replaceTags(String phrase) {
 		String ret = phrase;
 		if (name != null) {
-			ret = ret.replaceAll("%NAME%", name);
-		} else ret = ret.replaceAll("%NAME%", Main.getString("default_name"));
+			ret = ret.replaceAll("\\{name\\}", name);
+		} else {
+			ret = ret.replaceAll("\\{name\\}", Main.getString("default_name"));
+		}
 
-		List<String> list = tags.get("usernames");
+		Set<String> list = tags.get("usernames");
 		if (list != null && list.size() > 0) {
-			ret = ret.replaceAll("%USERNAME%", list.get(new Random().nextInt(list.size())));
-		} else ret = ret.replaceAll("%USERNAME%",Main.getString("default_username"));
+			String item = getRandomItem(list);
+			ret = ret.replaceAll("\\{user\\}", item);
+			ret = ret.replaceAll("\\{userF\\}", item);
+		} else {
+			ret = ret.replaceAll("\\{user\\}", Main.getString("default_username"));
+			ret = ret.replaceAll("\\{userF\\}", Main.getString("default_username"));
+		}
 
 		list = tags.get("abuses");
 		if (list != null && list.size() > 0) {
-			ret = ret.replaceAll("%ABUSE%", list.get(new Random().nextInt(list.size())));
-		} else ret = ret.replaceAll("%ABUSE%",Main.getString("default_abuse"));
+			ret = ret.replaceAll("\\{abuse\\}", getRandomItem(list));
+		} else ret = ret.replaceAll("\\{abuse\\}",Main.getString("default_abuse"));
 
-		ret = ret.replaceAll("%TIME%", new SimpleDateFormat("HH:mm").format(new Date()));
-		ret = ret.replaceAll("%DATE%", new SimpleDateFormat("d LLLL").format(new Date()));
-		ret = ret.replaceAll("%YEAR%", new SimpleDateFormat("YYYY").format(new Date()));
-		ret = ret.replaceAll("%WEEKDAY%", new SimpleDateFormat("EEEE").format(new Date()));
+		ret = ret.replaceAll("\\{time\\}", new SimpleDateFormat("HH:mm").format(new Date()));
+		ret = ret.replaceAll("\\{date\\}", new SimpleDateFormat("d LLLL").format(new Date()));
+		ret = ret.replaceAll("\\{year\\}", new SimpleDateFormat("YYYY").format(new Date()));
+		ret = ret.replaceAll("\\{weekday\\}", new SimpleDateFormat("EEEE").format(new Date()));
 
 		return ret;
 	}
@@ -213,7 +226,6 @@ public class CharacterPreset {
 	
 	public void saveInFile(Path path) throws IOException {
 		try {
-			System.out.println(XML.toString(toJSON()));
 			Document doc = DocumentBuilderFactory.newInstance()
 					                             .newDocumentBuilder()
 					                             .parse(new InputSource(new StringReader(XML.toString(toJSON()))));
@@ -242,7 +254,6 @@ public class CharacterPreset {
 				str.append("\n");
 			}
 			JSONObject obj = XML.toJSONObject(str.toString());
-			System.out.println(obj.toString(2));
 			return new CharacterPreset(obj.getJSONObject("preset"));
 		} catch (Exception e) {
 			Main.log(e);

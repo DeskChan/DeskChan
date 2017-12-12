@@ -10,6 +10,7 @@ import org.jnativehook.NativeHookException;
 import org.jnativehook.mouse.NativeMouseWheelEvent;
 import org.jnativehook.mouse.NativeMouseWheelListener;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -28,11 +29,15 @@ class MouseEventNotificator {
 
     // Gets rid of all garbage messages from the GlobalScreen of JNativeHook.
     static {
-        if (SystemUtils.IS_OS_WINDOWS) {
-            Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-            logger.setLevel(Level.OFF);
-            logger.setUseParentHandlers(false);
-        }
+        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+        logger.setLevel(Level.OFF);
+        logger.setUseParentHandlers(false);
+        PrintStream originalOut = System.out;
+        System.setOut(null);
+        try {
+            GlobalScreen.unregisterNativeHook();
+        } catch (Exception e){ }
+        System.setOut(originalOut);
     }
 
     /**

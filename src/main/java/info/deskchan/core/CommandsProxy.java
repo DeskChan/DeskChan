@@ -1,6 +1,7 @@
 package info.deskchan.core;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.util.*;
@@ -12,7 +13,13 @@ public class CommandsProxy{
 
         public Link(String rule, Object msgData){
             this.rule = (String) getObjectOrNull(rule);
-            this.msgData = getObjectOrNull(msgData);
+            Object d = getObjectOrNull(msgData);
+            if (d instanceof JSONObject){
+                d = ((JSONObject) d).toMap();
+            } else if (d instanceof JSONArray){
+                d = ((JSONArray) d).toList();
+            }
+            this.msgData = d;
         }
 
         public boolean equals(Link link){
@@ -94,7 +101,6 @@ public class CommandsProxy{
         data.remove("tag", tag);
         data.put("owner", sender);
         events.put(tag, data);
-
         sendNotify();
         sendUpdateByEvent(tag);
     }
@@ -250,10 +256,14 @@ public class CommandsProxy{
     private static void callByTag(String source){
         for(Map<String, Object> command : getCommandsMatch(source)) {
             String tag = (String) command.get("tag");
-            proxy.sendMessage(tag, new HashMap<String, Object>() {{
-                    if (command.containsKey("msgData"))
-                        put("msgData", command.get("msgData"));
-            }});
+            Object msgData = command.get("msgData");
+            if (msgData != null) {
+                if (!(msgData instanceof Map)) {
+                    msgData = new HashMap<>();
+                    ((Map) msgData).put("msgData", command.get("msgData"));
+                }
+            }
+            proxy.sendMessage(tag, msgData);
         }
     }
 
@@ -365,18 +375,18 @@ public class CommandsProxy{
         BufferedReader out=new BufferedReader(reader);
         commandLinks.clear();
         try {
-            StringBuilder b=new StringBuilder();
+            StringBuilder b = new StringBuilder();
             out.lines().forEach(b::append);
-            JSONArray array=new JSONArray(b.toString());
+            JSONArray array = new JSONArray(b.toString());
             for(Object obj : array) {
                 if(!(obj instanceof JSONArray)) continue;
-                JSONArray link=(JSONArray) obj;
+                JSONArray link = (JSONArray) obj;
                 if(link.length()<3 || link.getString(0).length()==0 || link.getString(1).length()==0 || link.getString(0).length()==2) continue;
-                addEventLink(link.getString(0), link.getString(1), link.getString(2), link.length()>3 ? link.getString(3) : "", false);
+                addEventLink(link.getString(0), link.getString(1), link.getString(2), link.length()>3 ? link.get(3) : "", false);
             }
             PluginManager.log("Links successfully loaded");
         } catch (Exception e){
-            commandLinks=defaultCommandLinks.clone();
+            commandLinks = defaultCommandLinks.clone();
             PluginManager.log("Error while loading command links file");
             PluginManager.log(e);
         }
@@ -402,7 +412,7 @@ public class CommandsProxy{
             }
         }
 
-        private HashMap<TK1, HashMap<TK2, TV>> map = new HashMap<>();
+        private Map<TK1, Map<TK2, TV>> map = new HashMap<>();
         private Set<Entry<TK1, TK2, TV>> entrySet = new LinkedHashSet<>();
 
         public Map<TK2, TV> get(TK1 key){
@@ -428,6 +438,7 @@ public class CommandsProxy{
                 }
                 return val;
             } catch (Exception e){
+                PluginManager.log(e);
                 return null;
             }
         }
@@ -442,7 +453,7 @@ public class CommandsProxy{
         }
 
         public Object put(TK1 key1, TK2 key2, TV value){
-            HashMap submap = map.get(key1);
+            Map submap = map.get(key1);
             if(submap == null)
                 map.put(key1, submap = new HashMap<TK2, TV>());
 
@@ -452,12 +463,13 @@ public class CommandsProxy{
 
         public Object put(TK1 key, Object value){
             try {
-                HashMap<TK2, TV> val = (HashMap) value;
+                Map<TK2, TV> val = (Map) value;
                 map.put(key,  val);
                 for(Map.Entry<TK2, TV> entry : val.entrySet())
                     entrySet.add(new Entry<>(key, entry.getKey(), entry.getValue()));
                 return val;
             } catch (Exception e){
+                PluginManager.log(e);
                 return null;
             }
         }
@@ -490,7 +502,7 @@ public class CommandsProxy{
 
         public void add(String eventName, String commandName, Link link){
             ArrayList<Link> links = array.get(eventName, commandName);
-            if(links==null) {
+            if(links == null) {
                 array.put(eventName, commandName, links = new ArrayList<>());
                 links.add(link);
                 return;
@@ -517,7 +529,9 @@ public class CommandsProxy{
                         }
                     }
                 }
-            } catch (Exception e){ }
+            } catch (Exception e){
+                PluginManager.log(e);
+            }
         }
 
         public Map<String, ArrayList<Link>> get(String eventName){
@@ -532,7 +546,7 @@ public class CommandsProxy{
             array.clear();
         }
         public JSONArray toJSONArray(){
-            JSONArray array=new JSONArray();
+            JSONArray array = new JSONArray();
             for(MatrixMap.Entry entry : entrySet()) {
                 for(Link link : (ArrayList<Link>) entry.value) {
                     JSONArray ar = new JSONArray();
@@ -540,7 +554,8 @@ public class CommandsProxy{
                     ar.put(entry.key2);
                     ar.put(link.rule != null ? link.rule : "");
                     if (link.msgData != null)
-                        ar.put(link.msgData.toString());
+                        ar.put(link.msgData);
+
                     array.put(ar);
                 }
             }

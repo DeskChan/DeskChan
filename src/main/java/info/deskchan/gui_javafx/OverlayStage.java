@@ -117,12 +117,12 @@ class OverlayStage extends Stage {
 		if(mode == currentMode) return;
 		try {
 			OverlayStage nextInstance = (OverlayStage) instances.get(mode).newInstance();
-			if(instance!=null) {
+			if(instance != null) {
 				instance.hideBalloons();
 				instance.hideCharacter();
 				instance.close();
 			}
-			instance=nextInstance;
+			instance = nextInstance;
 			nextInstance.showStage();
 			nextInstance.showCharacter();
 		} catch (Exception e){
@@ -132,7 +132,8 @@ class OverlayStage extends Stage {
 		}
 		currentMode = mode;
 		instance.toFront();
-		Main.getProperties().put("character.layer_mode", mode);
+		if (mode != LayerMode.HIDE)
+			Main.getProperties().put("character.layer_mode", mode);
 	}
 
 	public static LayerMode getCurrentStage(){

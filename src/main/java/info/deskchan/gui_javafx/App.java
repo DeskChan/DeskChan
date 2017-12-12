@@ -38,13 +38,14 @@ public class App extends Application {
 			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader()
 	);
 
-	private Character character = new Character("main", Skin.load(Main.getProperties().getString("skin.name")));
+	private Character character;
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
 
 	/** Initializing plugin. **/
 	@Override
 	public void start(Stage primaryStage) {
 		instance = this;
+		character = new Character("main", Skin.load(Main.getProperties().getString("skin.name")));
 		// Hacking javafx Application class to hide app from programs panel
 		HackJavaFX.process();
 		// Loading fonts from 'assets/fonts' folder
@@ -779,6 +780,31 @@ public class App extends Application {
 					put("priority", 100);
 				}}
 		));
+
+		pluginProxy.sendMessage("core:add-command", new HashMap(){{
+			put("tag", "gui:show-character");
+		}});
+		pluginProxy.sendMessage("core:set-event-link", new HashMap(){{
+			put("eventName", "speech:get");
+			put("commandName", "gui:show-character");
+			put("rule", "появись");
+		}});
+		pluginProxy.sendMessage("core:add-command", new HashMap(){{
+			put("tag", "gui:hide-character");
+		}});
+		pluginProxy.sendMessage("core:set-event-link", new HashMap(){{
+			put("eventName", "speech:get");
+			put("commandName", "gui:hide-character");
+			put("rule", "спрячься");
+		}});
+		pluginProxy.sendMessage("core:add-command", new HashMap(){{
+			put("tag", "gui:show-options-dialog");
+		}});
+		pluginProxy.sendMessage("core:set-event-link", new HashMap(){{
+			put("eventName", "speech:get");
+			put("commandName", "gui:show-options-dialog");
+			put("rule", "открой опции");
+		}});
 	}
 
 	/** Parsing value to double or returning default if we failed. **/
