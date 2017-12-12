@@ -117,9 +117,9 @@ class OpenCommand{
     static boolean open(List text){
         float result = 0.6
         LinkEntry link = null
-        for(int i = 0; i<text.size(); i++){
+        for(int i = 0; i < text.size(); i++){
             for(int j = 0; j<entries.size(); j++){
-                entries.get(j).keywords.each{
+                entries.get(j).keywords.each {
                     float r = PhraseComparison.relative(it, text[i])
                     if(r > result){
                         result = r
@@ -143,17 +143,18 @@ class OpenCommand{
         load()
         instance.sendMessage("core:add-command", [tag: pluginName + ':run'])
         instance.sendMessage("core:add-command", [tag: pluginName + ':open'])
-        instance.sendMessage("core:add-command", [tag: pluginName + ':open-file'])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':open-link'])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':run-with-report' ])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':run-with-multiple-report' ])
 
         instance.addMessageListener(pluginName + ':open-link', { sender, tag, d ->
-            println(d.toString())
             new LinkEntry(d.toString(), LinkEntry.Types.FILE, []).open()
         })
 
         instance.addMessageListener(pluginName + ':open', { sender, tag, d ->
             Map m = d
             List text = (List) m.get('text')
-            if(text==null || text.size()==0){
+            if(text == null || text.size()==0){
                 StringBuilder sb = new StringBuilder()
                 entries.each{
                     sb.append(it.keywords.get(0)+", ")
@@ -179,10 +180,6 @@ class OpenCommand{
                         rule       : 'открой {text:List}'
                 ]
         )
-
-        instance.sendMessage("core:add-command", [ tag: pluginName+':run' ])
-        instance.sendMessage("core:add-command", [ tag: pluginName+':run-with-report' ])
-        instance.sendMessage("core:add-command", [ tag: pluginName+':run-with-multiple-report' ])
 
         instance.addMessageListener(pluginName+':run', { sender, tag, dat ->
             if(dat==null) return

@@ -5,7 +5,7 @@ def tag(tag) { "${getId()}:$tag".toString() }
 final EVALUATION_COMMAND_TAG = tag('evaluate-expression')
 
 def evaluateExpression(expression) {
-    def exprStr = expression.toString().replace('**','^').replace('[\\s\\t\\n]', '')
+    def exprStr = expression.toString().replace('**','^').replaceAll('[A-я\\s\\t\\n]', '')
     def expr = null
     try {
         expr = new ExpressionBuilder(exprStr).build()
