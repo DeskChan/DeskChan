@@ -42,6 +42,15 @@ class InternetSearch {
 
         instance.addMessageListener(pluginName + ':internet-search', { sender, tag, dat ->
             List<String> words = ((Map) dat).getOrDefault("query", new ArrayList())
+            String text = ((Map) dat).getOrDefault("text", "")
+            if (text.contains('загугли')){
+                String query = ""
+                for (String w : words){
+                    query += w + " "
+                }
+                instance.sendMessage(pluginName + ':open-link', getLink(variants[0][0], query))
+                return
+            }
             for (String word : words) {
                 for (String[] variant : variants) {
                     for (String item : variant) {

@@ -755,6 +755,10 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void setValue(Object value) {
+			if (value == null){
+				picker.setValue(Color.BLACK);
+				return;
+			}
 			String colorText = (String) value;
 			colorText = colorText.toUpperCase();
 			try {
