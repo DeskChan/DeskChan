@@ -57,7 +57,14 @@ public class TrayMenu {
     }
     private static MenuItemAction optionsMenuItemAction = new MenuItemAction() {
         @Override
-        protected void run() {  Platform.runLater(App.getInstance()::showOptionsDialog);  }
+        protected void run() {
+            long start = System.currentTimeMillis();
+            Main.log("clicked to open");
+            Platform.runLater( () -> {
+                Main.log("in thread, "+App.getTime(start));
+                App.getInstance().showOptionsDialog();
+                Main.log("opened, "+App.getTime(start));
+            });  }
     };
     private static MenuItemAction frontMenuItemAction = new MenuItemAction() {
         @Override

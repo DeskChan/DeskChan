@@ -41,41 +41,52 @@ public class App extends Application {
 	private Character character;
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
 
+	static float getTime(long start){
+		return (System.currentTimeMillis() - start) / 1000.f;
+	}
 	/** Initializing plugin. **/
 	@Override
 	public void start(Stage primaryStage) {
 		instance = this;
+		long start = System.currentTimeMillis();
+
 		character = new Character("main", Skin.load(Main.getProperties().getString("skin.name")));
+		Main.log("character initialized, " + getTime(start));
 		// Hacking javafx Application class to hide app from programs panel
 		HackJavaFX.process();
+		Main.log("hacked JavaFX, " + getTime(start));
 		// Loading fonts from 'assets/fonts' folder
 		loadFonts();
+		Main.log("fonts loaded, " + getTime(start));
 		// Trying to apply 'style.css' to application
 		initStylesheetOverride();
+		Main.log("stylesheets overrided, " + getTime(start));
 		// Forbid auto closing program if there is no program windows
 		Platform.setImplicitExit(false);
 		// Tray and right click menus initialization
 		TrayMenu.initialize();
+		Main.log("tray initialized, " + getTime(start));
 		// Transparent window initialization
 		OverlayStage.initialize();
+		Main.log("overlay initialized, " + getTime(start));
 		OverlayStage.updateStage();
+		Main.log("overlay setted, " + getTime(start));
 		// Registering plugin's API
 		initMessageListeners();
-		// Registering keyboard handlers
-		KeyboardEventNotificator.initialize();
-
+		Main.log("message listeners initialized, " + getTime(start));
 		Main.getInstance().getAppInitSem().release();
+		Main.log("semaphore released, " + getTime(start));
 
 		// DeskChan saying "Loading"
-		character.say(new HashMap<String,Object>(){{
+		character.say(new HashMap<String, Object>() {{
 			put("text", Main.getString("info.loading"));
-			put("priority",20000);
-			put("timeout",500000);
+			put("priority", 20000);
+			put("timeout", 500000);
 		}});
-		character.say(new HashMap<String,Object>(){{
-			put("text",Main.getString("info.not-loading"));
-			put("priority",19999);
-			put("timeout",500000);
+		character.say(new HashMap<String, Object>() {{
+			put("text", Main.getString("info.not-loading"));
+			put("priority", 19999);
+			put("timeout", 500000);
 		}});
 	}
 	
@@ -333,7 +344,7 @@ public class App extends Application {
         * Params: None
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
-			Platform.runLater(this::showOptionsDialog);
+			showOptionsDialog();
 		});
 
 		/* Show options submenu.
@@ -840,8 +851,11 @@ public class App extends Application {
 		if (optionsDialog != null) {
 			optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
 		} else {
+			System.out.println("creating dialog");
 			optionsDialog = new OptionsDialog();
+			System.out.println("showing dialog");
 			optionsDialog.show();
+			System.out.println("dialog showed");
 		}
 	}
 
