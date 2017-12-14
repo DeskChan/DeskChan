@@ -212,6 +212,10 @@ public class TextOperations {
             return sb.toString();
         }
 
+        public Collection<String> getAsCollection(Object key){
+            return tags.get(key);
+        }
+
         private static boolean containsPositive(Collection<String> items){
             if (items == null) return false;
             for (String item : items)

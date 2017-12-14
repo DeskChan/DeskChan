@@ -851,11 +851,8 @@ public class App extends Application {
 		if (optionsDialog != null) {
 			optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
 		} else {
-			System.out.println("creating dialog");
 			optionsDialog = new OptionsDialog();
-			System.out.println("showing dialog");
 			optionsDialog.show();
-			System.out.println("dialog showed");
 		}
 	}
 

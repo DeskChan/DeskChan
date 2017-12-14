@@ -25,6 +25,7 @@ class PhrasesPack {
 	protected Path packFile;
 	protected String packName;
 	protected ArrayList<Phrase> phrases = new ArrayList<>();
+	protected boolean loaded;
 
 	public PhrasesPack(String file) {
 		packName = file;
@@ -39,15 +40,17 @@ class PhrasesPack {
 
 		if (packName.contains("."))
 			packName = packName.substring(0, packName.lastIndexOf("."));
+
+		loaded = false;
 	}
 
-	public void load() throws Exception{
-		phrases.clear();
-		DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-		f.setValidating(false);
-		DocumentBuilder builder = f.newDocumentBuilder();
-
+	public void load(){
 		try {
+			phrases.clear();
+			DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+			f.setValidating(false);
+
+			DocumentBuilder builder = f.newDocumentBuilder();
 			InputStream inputStream = Files.newInputStream(packFile);
 			Document doc = builder.parse(inputStream);
 			inputStream.close();
@@ -62,9 +65,11 @@ class PhrasesPack {
 				}
 			}
 		} catch (Exception e) {
-			Main.log("Error while parsing phrases file " + packName + ": " + e);
-			throw e;
+			Main.log("Error while parsing phrases file " + packName + ": " + e.getMessage());
+			loaded = false;
+			return;
 		}
+		loaded = true;
 	}
 
 	public void add(Phrase quote) {
@@ -85,7 +90,8 @@ class PhrasesPack {
 		return packName;
 	}
 
-	public String toString(){ return "[" + packName + " - " + packFile.toString() + "]"; }
+	public String toString(){ return "[" + packName + " - " + packFile.toString() + "]" +
+			(loaded ? "" : " -- " + Main.getString("error") + " -- "); }
 
 	@Override
 	public boolean equals(Object other){
@@ -245,9 +251,7 @@ public class PhrasesList {
 
 		if(packs.contains(pack)) return null;
 
-		try {
-			pack.load();
-		} catch (Exception e){ return null; }
+		pack.load();
 
 		packs.add(pack);
 		Main.log("Loaded phrases: " + pack.getName()+" "+ pack.size());
@@ -273,9 +277,7 @@ public class PhrasesList {
 
 	public void reload(){
 		for(PhrasesPack pack : packs){
-			try {
-				pack.load();
-			} catch (Exception e){ }
+			pack.load();
 		}
 		update();
 	}
