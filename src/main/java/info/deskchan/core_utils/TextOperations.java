@@ -111,6 +111,20 @@ public class TextOperations {
             putFromText(text);
         }
 
+        public TagsMap(Map<String, Object> map) {
+            this();
+            for (Map.Entry<String, Object> entry : map.entrySet()){
+                if (entry.getValue() instanceof Collection){
+                    Set<String> set = new ImprovedSet<>();
+                    for (Object item : (Collection) entry.getValue()){
+                        set.add(item.toString());
+                    }
+                } else {
+                    put(entry.getKey(), entry.getValue().toString());
+                }
+            }
+        }
+
         public Set<String> put(String tag) {
             return tags.put(tag, null);
         }
@@ -212,8 +226,8 @@ public class TextOperations {
             return sb.toString();
         }
 
-        public Collection<String> getAsCollection(Object key){
-            return tags.get(key);
+        public String getFirst(Object key){
+            return tags.get(key).iterator().next();
         }
 
         private static boolean containsPositive(Collection<String> items){
@@ -261,7 +275,10 @@ public class TextOperations {
         }
 
         public boolean match(String argstext) {
-            TagsMap other = new TagsMap(argstext);
+            return match(new TagsMap<>(argstext));
+        }
+
+        public boolean match(Map other) {
             for (Object tag : other.keySet()) {
                 if (other.get(tag) instanceof Collection) {
                     if (!match(tag.toString(), (Collection) other.get(tag))) return false;
@@ -331,12 +348,7 @@ public class TextOperations {
 
         @Override public V remove(Object item){  return (V) tags.remove(item);  }
 
-        @Override public V get(Object key){
-            Set<String> items = tags.get(key);
-            if (items != null && items.size() == 1)
-                return (V) items.iterator().next();
-            return (V) tags.get(key);
-        }
+        @Override public V get(Object key){  return (V) tags.get(key);  }
 
         @Override public void clear(){  tags.clear();  }
 

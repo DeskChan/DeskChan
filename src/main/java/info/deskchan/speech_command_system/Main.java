@@ -2,7 +2,6 @@ package info.deskchan.speech_command_system;
 
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core_utils.TextOperations;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,8 +21,12 @@ public class Main implements Plugin {
         log("loading speech to command module");
 
         // Adding event information to core
-        pluginProxy.sendMessage("core:add-event", new TextOperations.TagsMap("tag: \"speech:get\""));
-        pluginProxy.sendMessage("core:add-command", new TextOperations.TagsMap("tag: \"speech:commands-list\""));
+        pluginProxy.sendMessage("core:add-event", new HashMap(){{
+            put("tag", "speech:get");
+        }});
+        pluginProxy.sendMessage("core:add-command", new HashMap(){{
+            put("tag", "speech:commands-list");
+        }});
         pluginProxy.sendMessage("core:set-event-link", new HashMap<String, String>(){{
             put("eventName", "speech:get");
             put("commandName", "speech:commands-list");
@@ -68,12 +71,12 @@ public class Main implements Plugin {
             operateRequest(text);
         });
 
-        /* Check speech matches to rule.
+        /* Check if speech matches to rule.
          * Public message
          * Params: Map
          *           speech: String! - speech
          *           rule: String! - rule
-         * Returns: Boolean - is speech matches to rule */
+         * Returns: Float - match value */
         pluginProxy.addMessageListener("speech:match", (sender, tag, data) -> {
             if (!(data instanceof Map)){
                 throw new IllegalArgumentException();
@@ -83,11 +86,43 @@ public class Main implements Plugin {
             try {
                 RegularRule rule = RegularRule.create(query.get("rule").toString());
                 RegularRule.MatchResult result = rule.parse(query.get("speech").toString());
-                pluginProxy.sendMessage(sender, result.better(null));
+                pluginProxy.sendMessage(sender, result.matchPercentage);
             } catch (Exception e){
                 pluginProxy.log(e);
             }
         });
+
+        /* Check if speech matches to any rule of list.
+         * Public message
+         * Params: Map
+         *           speech: String! - speech
+         *           rules: List<String>! - rules
+         * Returns: Int - index of rule with best match or -1 if nothing matches */
+        pluginProxy.addMessageListener("speech:match-any", (sender, tag, data) -> {
+            if (!(data instanceof Map)){
+                throw new IllegalArgumentException();
+            }
+
+            Map query = (Map) data;
+            try {
+                String speech = query.get("speech").toString();
+                int index = -1, i=0;
+                RegularRule.MatchResult bestResult = null;
+                for (Object ruletext : (List) query.get("rules")){
+                    RegularRule rule = RegularRule.create(ruletext.toString());
+                    RegularRule.MatchResult result = rule.parse(speech);
+                    if (result.better(bestResult)){
+                        index = i;
+                        bestResult = result;
+                    }
+                    i++;
+                }
+                pluginProxy.sendMessage(sender, index);
+            } catch (Exception e){
+                pluginProxy.log(e);
+            }
+        });
+
         log("loading completed");
         return true;
     }
@@ -149,7 +184,7 @@ public class Main implements Plugin {
 
             command.result = command.rule.parse(text, words);
             if(debugBuild)
-               System.out.println(command.tag + " " + command.result + " " + command.better(best));
+               System.out.println(command.tag + " " + command.rule.getRule() + " " + command.result + " " + command.better(best));
             if(command.better(best))
                 best = command;
         }
@@ -158,7 +193,6 @@ public class Main implements Plugin {
             if(debugBuild)
                 System.out.println("best: " + best.tag + " " + best.result);
             Map<String, Object> ret = best.rule.getArguments(text, best.result);
-            if (!ret.containsKey("text")) ret.put("text", text);
             if(best.msgData != null) {
                 if (best.msgData instanceof Map){
                     for(Map.Entry<String, Object> entry : ((Map<String, Object>) best.msgData).entrySet()){
@@ -168,6 +202,7 @@ public class Main implements Plugin {
                     ret.put("msgData", best.msgData);
                 }
             }
+            if (!ret.containsKey("msgData".toLowerCase())) ret.put("msgData", text);
 
             pluginProxy.sendMessage(best.tag, ret);
         } else {

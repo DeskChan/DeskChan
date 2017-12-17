@@ -4,7 +4,6 @@ hash = -1
 //String[] componentsNames = ["HEAD", "TOP", "BOTTOM", "LEGS"]
 
 addMessageListener("gui-events:character-left-click", { sender, tag, data ->
-	println('it works!')
 	/*try {
 		Float[] components = [0.2, 0.4, 0.6, 1]
 		def map = (Map) data
@@ -29,7 +28,7 @@ addMessageListener("gui-events:character-start-drag", { sender, tag, data ->
 			drag++
 			hash = setTimer(5000, -1, { s2, d2 ->
 				drag++
-				sendMessage("DeskChan:request-say", [purpose: 'DRAG', priority: 3000])
+				sendMessage("DeskChan:request-say", [purpose: 'DRAG', priority: 500])
 			})
 		})
 	}

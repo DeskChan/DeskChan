@@ -5,7 +5,7 @@ def tag(tag) { "${getId()}:$tag".toString() }
 final EVALUATION_COMMAND_TAG = tag('evaluate-expression')
 
 def evaluateExpression(expression) {
-    def exprStr = expression.toString().replace('**','^').replaceAll('[A-я\\s\\t\\n]', '')
+    def exprStr = expression.toString().replace('**','^').replaceAll('[А-я\\s\\t\\n]', '')
     def expr = null
     try {
         expr = new ExpressionBuilder(exprStr).build()
@@ -37,12 +37,12 @@ def evaluateExpression(expression) {
 
 
 addMessageListener(EVALUATION_COMMAND_TAG) { sender, tag, data ->
-    if (data.containsKey('value')) {
-        evaluateExpression(data['value'])
+    if (data.containsKey('msgData')) {
+        evaluateExpression(data['msgData'])
     } else {
         sendMessage('DeskChan:request-say', 'CLARIFY')
         sendMessage('DeskChan:request-user-speech', null) { s, d ->
-            evaluateExpression(d['value'])
+            evaluateExpression(d['msgData'])
         }
     }
 }
@@ -52,5 +52,5 @@ sendMessage('core:add-command', [tag: EVALUATION_COMMAND_TAG])
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
         commandName: EVALUATION_COMMAND_TAG,
-        rule: '(сколько будет)|вычисли|посчитай|(забей калькулятор) {value:text}'
+        rule: '(сколько будет)|вычисли|посчитай|(забей калькулятор) {msgData:text}'
 ])

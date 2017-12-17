@@ -112,7 +112,7 @@ buildConfig {
 	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
 	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd HH:mm:ssZ')
 	buildConfigField 'String', 'PROJECT_SITE_URL', 'http://deskchan.info/'
-	buildConfigField 'String', 'AUTHOR', 'DeskChan Project <support@deskchan.info> (http://deskchan.info)'
+	buildConfigField 'String', 'AUTHOR', 'DeskChan Project <deskchanproject@gmail.com> (http://deskchan.info)'
 }
 
 defaultTasks 'printHelpMessage'
@@ -181,7 +181,7 @@ standardJarPlugins.each { name ->
 				'Main-Class': "info.deskchan.${baseName}.Main",
 				'Type': 'Jar',
 				'Version': appVersion,
-				'Author': 'DeskChan Project <support@deskchan.info> (http://deskchan.info)',
+				'Author': 'DeskChan Project <deskchanproject@gmail.com> (http://deskchan.info)',
 				'Resources': "info/deskchan/${baseName}/strings"
 			]
 			attributes commonAttrs

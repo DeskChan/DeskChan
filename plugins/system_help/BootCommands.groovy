@@ -1,9 +1,9 @@
 class BootCommands{
     static void initialize(pluginName, data) {
         def instance = data.instance
-        instance.sendMessage("core:add-command", [tag: pluginName + ':search'])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':turn-off'])
 
-        instance.addMessageListener(pluginName + ':search', { sender, tag, d ->
+        instance.addMessageListener(pluginName + ':turn-off', { sender, tag, d ->
             String shutdown_info = "shutdown"
             long delay = 2
 

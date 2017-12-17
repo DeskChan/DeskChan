@@ -678,7 +678,7 @@ public class Parsers {
                         found = true;
                     }
                     i = words.size();
-                }
+                } break;
                 case "после": {
                     do {
                         counter++;
@@ -699,7 +699,7 @@ public class Parsers {
                         found = true;
                     }
                     i = words.size();
-                }
+                } break;
             }
         }
         if(found && counter==0)
