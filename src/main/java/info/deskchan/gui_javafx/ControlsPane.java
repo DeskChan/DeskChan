@@ -8,7 +8,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.stage.Window;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +42,7 @@ public class ControlsPane {
 		this.msgClose = msgClose;
 	}
 
-	Node createControlsPane(Window parent) {
+	Node createControlsPane(TemplateBox parent) {
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		float columnGrowPercentage = columnGrow * 100;
@@ -66,7 +65,8 @@ public class ControlsPane {
 				HBox box = new HBox();
 				node = box;
 				for (Map element : (List<Map>) controlInfo.get("elements")) {
-					PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, element);
+					PluginOptionsControlItem item =
+							PluginOptionsControlItem.create(parent.getDialogPane().getScene().getWindow(), element);
 					if (item == null) continue;
 					String id = (String) element.get("id");
 					if (id != null) {
@@ -76,7 +76,8 @@ public class ControlsPane {
 					box.getChildren().add(item.getNode());
 				}
 			} else {
-				PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, controlInfo);
+				PluginOptionsControlItem item =
+						PluginOptionsControlItem.create(parent.getDialogPane().getScene().getWindow(), controlInfo);
 				if (item == null) continue;
 				String id = (String) controlInfo.getOrDefault("id", null);
 				if (id != null) {
@@ -119,8 +120,8 @@ public class ControlsPane {
 			borderPane.setBottom(saveButton);
 		}
 		if (getCloseTag() != null) {
-			parent.setOnCloseRequest(event -> {
-				Main.getInstance().getPluginProxy().sendMessage(getCloseTag(),null);
+			parent.addOnCloseRequest(event -> {
+				Main.getInstance().getPluginProxy().sendMessage(getCloseTag(), null);
 			});
 		}
 		borderPane.setTop(gridPane);

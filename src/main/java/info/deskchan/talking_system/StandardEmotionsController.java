@@ -25,6 +25,15 @@ public class StandardEmotionsController implements EmotionsController{
 			this.influences = influences;
 		}
 
+		public Emotion(Emotion copy) {
+			this.name = copy.name;
+			this.influences = new int[copy.influences.length][2];
+			for (int i=0; i<influences.length; i++) {
+				influences[i][0] = copy.influences[i][0];
+				influences[i][1] = copy.influences[i][1];
+			}
+		}
+
 		public String toString(){
 			String print = name + ", chance = " + chance + ", strength = " + strength + "\n";
 			for(int i=0; i<influences.length; i++)
@@ -163,18 +172,27 @@ public class StandardEmotionsController implements EmotionsController{
 					influencesList.add(new int[]{index, force});
 				} catch (Exception e){ }
 			}
-			int[][] influences = new int[influencesList.size()][];
-			for(int i=0; i<influencesList.size(); i++)
-				influences[i] = influencesList.get(i);
+			if (influencesList.size() > 0) {
+				int[][] influences = new int[influencesList.size()][];
+				for (int i = 0; i < influencesList.size(); i++)
+					influences[i] = influencesList.get(i);
 
-			Emotion emotion = new Emotion(emotionName, influences);
-			if (obj.has("chance")) emotion.chance = (float) obj.getDouble("chance");
-			newEmotions.add(emotion);
+				Emotion emotion = new Emotion(emotionName, influences);
+				if (obj.has("chance")) emotion.chance = (float) obj.getDouble("chance");
+				newEmotions.add(emotion);
+			} else {
+				for (int i=0; i<emotions.length; i++)
+					if (emotions[i].name.equals(emotionName)){
+						Emotion emotion = new Emotion(emotions[i]);
+						if (obj.has("chance")) emotion.chance = (float) obj.getDouble("chance");
+						newEmotions.add(emotion);
+						break;
+					}
+			}
 		}
 		emotions = newEmotions.toArray(new Emotion[newEmotions.size()]);
 		normalize();
 		reset();
-
 	}
 
 	public JSONObject toJSON() {
@@ -228,5 +246,17 @@ public class StandardEmotionsController implements EmotionsController{
 		}
 
 		return null;
+	}
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		for (Emotion emotion : emotions){
+			sb.append(emotion.name + ", chance=" + emotion.chance + "\n");
+			for (int[] influence : emotion.influences){
+				sb.append(" "+CharacterFeatures.getFeatureName(influence[0]));
+				sb.append(" " + influence[1] + "\n");
+			}
+		}
+		return sb.toString();
 	}
 }

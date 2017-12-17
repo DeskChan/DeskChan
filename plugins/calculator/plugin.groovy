@@ -5,7 +5,21 @@ def tag(tag) { "${getId()}:$tag".toString() }
 final EVALUATION_COMMAND_TAG = tag('evaluate-expression')
 
 def evaluateExpression(expression) {
+    if (expression instanceof Map){
+        expression = expression.getOrDefault("value", expression.get("msgData"))
+    } else expression = expression.toString()
+
+    println(expression)
+    if (expression == null) expression = ''
     def exprStr = expression.toString().replace('**','^').replaceAll('[А-я\\s\\t\\n]', '')
+    if (exprStr.length() == 0){
+        sendMessage('DeskChan:request-say', 'CLARIFY')
+        sendMessage('DeskChan:request-user-speech', null) { s, d ->
+            evaluateExpression(d)
+        }
+        return
+    }
+
     def expr = null
     try {
         expr = new ExpressionBuilder(exprStr).build()
@@ -37,14 +51,7 @@ def evaluateExpression(expression) {
 
 
 addMessageListener(EVALUATION_COMMAND_TAG) { sender, tag, data ->
-    if (data.containsKey('msgData')) {
-        evaluateExpression(data['msgData'])
-    } else {
-        sendMessage('DeskChan:request-say', 'CLARIFY')
-        sendMessage('DeskChan:request-user-speech', null) { s, d ->
-            evaluateExpression(d['msgData'])
-        }
-    }
+    evaluateExpression(data)
 }
 
 sendMessage('core:add-command', [tag: EVALUATION_COMMAND_TAG])

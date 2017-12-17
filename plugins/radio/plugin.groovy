@@ -30,7 +30,7 @@ dir.eachFileRecurse {
 def clarify(){
     sendMessage('DeskChan:request-say', 'CLARIFY')
     sendMessage('DeskChan:request-user-speech', null, { s, d ->
-        playRadio(d.get('msgData').toString())
+        playRadio(d.get('value').toString())
     })
 }
 
@@ -56,7 +56,7 @@ def playRadio(Object text){
             sendMessage("system:open-link", file.toString())
             sendMessage('DeskChan:say', 'А как оно называется?')
             sendMessage('DeskChan:request-user-speech', null, { s2, d2 ->
-                saveRadio(d2.get('msgData'), text)
+                saveRadio(d2.get('value'), text)
             })
             return
         }

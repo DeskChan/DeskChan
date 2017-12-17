@@ -129,6 +129,7 @@ class OverlayStage extends Stage {
 				instance.close();
 			}
 			instance = nextInstance;
+			instance.getScene().getStylesheets().add(App.getStylesheet());
 			nextInstance.showStage();
 			nextInstance.showCharacter();
 		} catch (Exception e){

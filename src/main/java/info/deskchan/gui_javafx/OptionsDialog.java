@@ -79,6 +79,7 @@ class OptionsDialog extends TemplateBox {
 				instance.pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
 			});
 		});
+
 	}
 
 	OptionsDialog() {
@@ -87,7 +88,7 @@ class OptionsDialog extends TemplateBox {
 		tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 		initTabs();
 		getDialogPane().setContent(tabPane);
-		setOnHidden(event -> {
+		addOnCloseRequest(event -> {
 			instance = null;
 		});
 	}
@@ -128,6 +129,13 @@ class OptionsDialog extends TemplateBox {
 			put("value",  LocalFont.defaultToString());
 		}});
 		list.add(new HashMap<String, Object>() {{
+			put("id",    "interface.on_top");
+			put("type",  "CheckBox");
+			put("msgTag","gui:switch-interface-front");
+			put("label",  Main.getString("interface.on_top"));
+			put("value",  TemplateBox.checkForceOnTop());
+		}});
+		list.add(new HashMap<String, Object>() {{
 			put("id",    "layer_mode");
 			put("type",  "ComboBox");
 			put("hint",   Main.getString("help.layer_mode"));
@@ -159,7 +167,7 @@ class OptionsDialog extends TemplateBox {
 			put("value",  Main.getString("load"));
 		}});
 		ControlsPane poTab = new ControlsPane(Main.getString("appearance"), list, null, null);
-		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
+		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance)));
 	}
 
 	/** Creating 'Skin' options submenu. **/
@@ -529,6 +537,7 @@ class OptionsDialog extends TemplateBox {
 		debugTab.setTop(debugMsgTag);
 		TextArea debugMsgData = new TextArea("{\n\"text\": \"Test\"\n}");
 		debugTab.setCenter(debugMsgData);
+
 		button = new Button(Main.getString("send"));
 		button.setOnAction(event -> {
 			String tag = debugMsgTag.getText();
@@ -539,14 +548,22 @@ class OptionsDialog extends TemplateBox {
 				App.showThrowable(OptionsDialog.this.getDialogPane().getScene().getWindow(), e);
 			}
 		});
-		debugTab.setBottom(button);
+
+		Button reloadButton = new Button(Main.getString("reload-style"));
+		button.setOnAction(event -> {
+			instance.applyStyle();
+			instance.hide();
+			instance.show();
+		});
+
+		debugTab.setBottom(new HBox(button, reloadButton));
 		tabPane.getTabs().add(new Tab(Main.getString("debug"), debugTab));
 
 
 		/// Creating top tabs from registered tabs list
 		for (Map.Entry<String, List<ControlsPane>> entry : pluginsTabs.entrySet()) {
 			for (ControlsPane tab : entry.getValue()) {
-				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
+				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance)));
 			}
 		}
 
@@ -693,7 +710,7 @@ class OptionsDialog extends TemplateBox {
 		if (isTab) {
 			for (Tab tab : instance.tabPane.getTabs()) {
 				if (tab.getText().equals(name)) {
-					tab.setContent(pluginMenuContainer.createControlsPane(instance.getDialogPane().getScene().getWindow()));
+					tab.setContent(pluginMenuContainer.createControlsPane(instance));
 					break;
 				}
 			}
@@ -870,7 +887,7 @@ class OptionsDialog extends TemplateBox {
 		private static boolean alert(){
 			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
 			Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-			stage.setAlwaysOnTop(true);
+			stage.setAlwaysOnTop(TemplateBox.checkForceOnTop());
 			alert.setTitle(Main.getString("default_messagebox_name"));
 			alert.setContentText(Main.getString("info.shutdown_important"));
 			Optional<ButtonType> result = alert.showAndWait();

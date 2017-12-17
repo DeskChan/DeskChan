@@ -471,12 +471,7 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 		} else {
-			CharacterPreset newPreset = CharacterPreset.getFromFileUnsafe(Paths.get(val));
-			if (newPreset == null) {
-				errorMessage = "Wrong or corrupted file!";
-			} else {
-				currentCharacter = newPreset;
-			}
+			currentCharacter = CharacterPreset.getFromFileUnsafe(Paths.get(val));
 		}
 		currentCharacter.updatePhrases();
 		currentCharacter.inform();

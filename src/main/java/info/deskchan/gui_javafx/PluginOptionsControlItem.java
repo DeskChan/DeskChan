@@ -805,7 +805,7 @@ interface PluginOptionsControlItem {
 
 			setOnAction(event -> {
 				Stage stage = (Stage) picker.getDialogPane().getScene().getWindow();
-				stage.setAlwaysOnTop(true);
+				stage.setAlwaysOnTop(TemplateBox.checkForceOnTop());
 				Optional<Font> selectedFontOpt = picker.showAndWait();
 				if (selectedFontOpt.isPresent()) {
 					selectedFont = LocalFont.toString(selectedFontOpt.get());

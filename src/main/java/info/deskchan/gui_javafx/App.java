@@ -1,12 +1,10 @@
 package info.deskchan.gui_javafx;
 
-import com.sun.javafx.stage.StageHelper;
 import info.deskchan.core.PluginProxyInterface;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
@@ -59,7 +57,6 @@ public class App extends Application {
 		loadFonts();
 		Main.log("fonts loaded, " + getTime(start));
 		// Trying to apply 'style.css' to application
-		initStylesheetOverride();
 		Main.log("stylesheets overrided, " + getTime(start));
 		// Forbid auto closing program if there is no program windows
 		Platform.setImplicitExit(false);
@@ -398,8 +395,6 @@ public class App extends Application {
 					Map<String, Object> m = (Map<String, Object>) data;
 					showNotification((String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
 							(String) m.get("text"));
-				} else {
-					showNotification(Main.getString("default_messagebox_name"), data.toString());
 				}
 			});
 		});
@@ -897,17 +892,11 @@ public class App extends Application {
 	}
 
 	/** Trying to apply 'style.css' to application. **/
-	private void initStylesheetOverride() {
+	public static String getStylesheet(){
 		try {
-			StageHelper.getStages().addListener((ListChangeListener<Stage>) change -> {
-				while (change.next()) {
-					for (Stage stage : change.getAddedSubList()) {
-						stage.getScene().getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-					}
-				}
-			});
-		} catch (Throwable e){
-			Main.log("Stylesheets deprecated in this version of Java, we didn't fix it yet.");
+			return Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toUri().toURL().toString();
+		} catch (Exception e){
+			return App.class.getResource("style.css").toExternalForm();
 		}
 	}
 

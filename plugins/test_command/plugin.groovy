@@ -8,12 +8,12 @@ sendMessage("core:add-command", [ tag: pluginName+':command' ])
 addMessageListener(pluginName+':command', { sender, tag, dat ->
     HashMap<String,Object> data = dat
     if(data.containsKey('text'))
-        sendMessage('DeskChan:say', data.get('text').toString())
+        sendMessage('DeskChan:say', data.get('msgData').toString())
     else {
         sendMessage('DeskChan:say','Что ты хочешь услышать, сахарочек?')
         sendMessage('DeskChan:request-user-speech', null, { s, d ->
             data = d
-            sendMessage('DeskChan:say', data.get('text').toString())
+            sendMessage('DeskChan:say', data.get('value').toString())
         })
     }
 

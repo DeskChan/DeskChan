@@ -71,6 +71,7 @@ public class CharacterPreset {
 		try {
 			setFromJSON(json);
 		} catch (JSONException e) {
+			Main.log(e);
 			setDefault();
 		}
 	}
@@ -82,7 +83,8 @@ public class CharacterPreset {
 
 	/** Set preset from JSON. **/
 	public void setFromJSON(JSONObject json) {
-		json = json.getJSONObject("preset");
+		if (json.has("preset"))
+			json = json.getJSONObject("preset");
 
 		if (json.has("name"))
 			name = json.getString("name");
@@ -92,10 +94,6 @@ public class CharacterPreset {
 		character = getDefaultCharacterController();
 		if (json.has("character"))
 			character.setFromJSON(json.getJSONObject("character"));
-
-		emotionState = getDefaultEmotionsController();
-		if (json.has("emotions"))
-			emotionState.setFromJSON(json.getJSONObject("emotions"));
 
 		if (json.has("phrases")){
 			phrases = new PhrasesList(character);
@@ -107,6 +105,10 @@ public class CharacterPreset {
 			phrases = PhrasesList.getDefault(character);
 		}
 		phrases.reload();
+
+		emotionState = getDefaultEmotionsController();
+		if (json.has("emotions"))
+			emotionState.setFromJSON(json.getJSONObject("emotions"));
 
 		tags = new TextOperations.TagsMap();
 		if (json.has("tags")) {

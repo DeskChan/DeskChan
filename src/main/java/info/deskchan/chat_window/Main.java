@@ -34,7 +34,7 @@ public class Main implements Plugin {
             String dateString = "(" + new SimpleDateFormat("HH:mm:ss").format(date) + ") ";
             switch(sender){
                 case 0: {  // DeskChan
-                    color = properties.getString("deskchan-color", "red");
+                    color = properties.getString("deskchan-color", "#F00");
                     font  = properties.getString("deskchan-font");
                     senderName = characterName;
                 } break;
@@ -86,7 +86,7 @@ public class Main implements Plugin {
         properties.putIfHasNot("length", 10);
         properties.putIfHasNot("fixer", true);
         properties.putIfHasNot("user-color", "#00A");
-        properties.putIfHasNot("deskchan-color", "red");
+        properties.putIfHasNot("deskchan-color", "#F00");
 
         logLength = properties.getInteger("length");
 
@@ -221,9 +221,10 @@ public class Main implements Plugin {
                 properties.putIfNotNull("deskchan-font", data.get("deskchan-font"));
 
                 logLength = properties.getInteger("length", logLength);
-                setupOptions();
+
                 saveOptions();
                 setupChat();
+                setupOptions();
             } catch (Exception e){
 
             }
@@ -287,14 +288,14 @@ public class Main implements Plugin {
             list.add(new HashMap<String, Object>() {{
                 put("id", "name");
                 put("type", "TextField");
-                put("width", 400d);
+                put("width", 500d);
                 put("enterTag","chat:user-said");
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "textname");
                 put("type", "CustomizableTextArea");
-                put("width", 400d);
-                put("height", 200d);
+                put("width", 500d);
+                put("height", 300d);
                 put("value", historyToChat());
             }});
             put("controls", list);
