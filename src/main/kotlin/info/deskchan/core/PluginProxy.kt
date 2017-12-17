@@ -2,6 +2,9 @@ package info.deskchan.core
 
 import org.apache.commons.io.FilenameUtils.removeExtension
 import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Path
@@ -15,11 +18,11 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     private val loader: ClassLoader = plugin::class.java.classLoader
     private val messageListeners = HashMap<String, MutableSet<MessageListener>>()
-    private val responseListeners  = HashMap<Any, ResponseInfo>()
+    private val responseListeners = HashMap<Any, ResponseInfo>()
     private var seq = 0
-    private val properties:PluginProperties = PluginProperties(this)
+    private val properties: PluginProperties = PluginProperties(this)
 
-    override fun getId() : String = id
+    override fun getId(): String = id
 
     fun isNameMatched(name: String) = name == getId() ||
             name == removeExtension(getId()) ||
@@ -99,7 +102,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     override fun handleMessage(sender: String, tag: String, data: Any?) {
         val delimiterPas = tag.indexOf('#')
-        if (delimiterPas >= 0 && tag.startsWith(id)){
+        if (delimiterPas >= 0 && tag.startsWith(id)) {
             val seq = Integer.parseInt(tag.substring(delimiterPas + 1))
             val listener = responseListeners[seq] ?: return
             if (listener.handle(sender, id, data)) {
@@ -108,17 +111,17 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         }
     }
 
-    override fun setTimer(delay: Long, responseListener: ResponseListener) : Int {
+    override fun setTimer(delay: Long, responseListener: ResponseListener): Int {
         return CoreTimerTask(delay, 1, responseListener).hashCode()
     }
 
-    override fun setTimer(delay: Long, count: Int, responseListener: ResponseListener) : Int {
+    override fun setTimer(delay: Long, count: Int, responseListener: ResponseListener): Int {
         return CoreTimerTask(delay, count, responseListener).hashCode()
     }
 
     override fun cancelTimer(id: Int) {
         timers.forEach {
-            if(it.hashCode() == id) {
+            if (it.hashCode() == id) {
                 it.stop()
                 return
             }
@@ -131,21 +134,21 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     override fun setResourceBundle(path: String) {
         try {
-            plugin_strings = ResourceBundle.getBundle(path, Locale.getDefault(), loader)
+            plugin_strings = ResourceBundle.getBundle(path, Locale.getDefault(), loader, UTF8Control())
             log("Loaded bundle for ${id} at ${path}")
         } catch (e: Exception) {
-            try{
+            try {
                 val urls = arrayOf<URL>(File(path).toURI().toURL())
                 val file_loader = URLClassLoader(urls)
-                plugin_strings = ResourceBundle.getBundle("strings", Locale.getDefault(), file_loader)
+                plugin_strings = ResourceBundle.getBundle("strings", Locale.getDefault(), file_loader, UTF8Control())
             } catch (e: Exception) {
                 log("Cannot find strings bundle for ${id} at ${path}")
             }
         }
     }
 
-    override fun setConfigField(key: String, value: Any){
-        config.append(key,value)
+    override fun setConfigField(key: String, value: Any) {
+        config.append(key, value)
     }
 
     override fun getConfigField(key: String) = config.get(key)
@@ -157,11 +160,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             s = plugin_strings!!.getString(key)
         else if (general_strings != null && general_strings!!.containsKey(key))
             s = general_strings!!.getString(key)
-        try {
-            return java.lang.String(s.toByteArray(charset("ISO-8859-1")), "UTF-8").toString()
-        } catch (e: Exception) {
-            return s
-        }
+        return s
     }
 
     fun getConfig() = config
@@ -184,26 +183,27 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
     }
 
     companion object {
-        fun create(plugin: Plugin, id:String, config: PluginConfig?): PluginProxy? {
-            val entity = PluginProxy(id, plugin, config?: PluginConfig())
-            if(!entity.resolveDependencies())
+        fun create(plugin: Plugin, id: String, config: PluginConfig?): PluginProxy? {
+            val entity = PluginProxy(id, plugin, config ?: PluginConfig())
+            if (!entity.resolveDependencies())
                 return null
 
             val resources = config?.get("resources")
-            if(resources!=null)
+            if (resources != null)
                 entity.setResourceBundle(resources.toString())
 
-            if(!entity.initialize())
+            if (!entity.initialize())
                 return null
 
             return entity
 
         }
+
         private var general_strings: ResourceBundle? = null
 
         fun updateResourceBundle() {
             try {
-                general_strings = ResourceBundle.getBundle("info/deskchan/strings", Locale.getDefault())
+                general_strings = ResourceBundle.getBundle("info/deskchan/strings", UTF8Control())
             } catch (e: Exception) {
                 PluginManager.log("Cannot find resource bundle info/deskchan/strings")
             }
@@ -218,20 +218,16 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             if (general_strings != null && general_strings!!.containsKey(key))
                 s = general_strings!!.getString(key)
 
-            try {
-                return java.lang.String(s.toByteArray(charset("ISO-8859-1")), "UTF-8").toString()
-            } catch (e: Exception) {
-                return s
-            }
+            return s
         }
     }
 
     // TODO: Implement dependencies resolving from remote repositories.
     // TODO: Or implement a way to delegate resolving to another plugin.
-    fun resolveDependencies() : Boolean {
+    fun resolveDependencies(): Boolean {
         config.getDependencies().forEach {
             val r = PluginManager.getInstance().tryLoadPluginByName(it)
-            if (!r){
+            if (!r) {
                 PluginManager.log("Failed to load dependency $it of plugin ${getId()}")
                 return false
             }
@@ -239,7 +235,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         return true
     }
 
-    /** Timers **/
+    /* Timers */
 
     protected var timers: MutableList<CoreTimerTask> = mutableListOf()
 
@@ -251,6 +247,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             timers.add(this)
             start()
         }
+
         override fun handle(sender: String, data: Any?) {
             run()
             if (count > 0) count--
@@ -270,7 +267,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             timers.remove(this)
         }
 
-        override fun run(){
+        override fun run() {
             response.handle(getId(), null)
         }
     }
@@ -304,4 +301,35 @@ internal class ResponseInfo {
     }
 }
 
-
+// Override getBundle to correctly read bundles in UTF-8
+internal class UTF8Control : ResourceBundle.Control() {
+    @Throws(IllegalAccessException::class, InstantiationException::class, IOException::class)
+    override fun newBundle(baseName: String, locale: Locale, format: String, loader: ClassLoader, reload: Boolean): ResourceBundle? {
+        // The below is a copy of the default implementation.
+        val bundleName = toBundleName(baseName, locale)
+        val resourceName = toResourceName(bundleName, "properties")
+        var bundle: ResourceBundle? = null
+        var stream: InputStream? = null
+        if (reload) {
+            val url = loader.getResource(resourceName)
+            if (url != null) {
+                val connection = url.openConnection()
+                if (connection != null) {
+                    connection.useCaches = false
+                    stream = connection.getInputStream()
+                }
+            }
+        } else {
+            stream = loader.getResourceAsStream(resourceName)
+        }
+        if (stream != null) {
+            try {
+                // Only this line is changed to make it to read properties files as UTF-8.
+                bundle = PropertyResourceBundle(InputStreamReader(stream, "UTF-8"))
+            } finally {
+                stream!!.close()
+            }
+        }
+        return bundle
+    }
+}
