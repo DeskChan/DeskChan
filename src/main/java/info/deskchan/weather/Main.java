@@ -9,10 +9,13 @@ import java.util.*;
 public class Main implements Plugin {
 
     private static PluginProxyInterface pluginProxy;
+
+    private WeatherServer server = new YahooServer();
+
     public static String getCity(){
         return pluginProxy.getProperties().getString("city");
     }
-    private WeatherServer server = new YahooServer();
+
 
     @Override
     public boolean initialize(PluginProxyInterface pluginProxyIn) {
@@ -23,8 +26,8 @@ public class Main implements Plugin {
         properties.putIfHasNot("city", "Nowhere");
 
         pluginProxy.addMessageListener("weather:update-city",(sender, tag, data) -> {
-            String city = (String) ((Map) data).get("city");
-            if(city.length()<2) {
+            String city = ((Map) data).get("city").toString();
+            if(city.length() < 2) {
                 pluginProxy.sendMessage("gui:show-notification", new HashMap<String,Object>(){{
                     put("name",getString("error"));
                     put("text",getString("info.no-city"));
@@ -34,28 +37,28 @@ public class Main implements Plugin {
             updateOptionsTab();
             saveOptions();
         });
+
         pluginProxy.sendMessage("core:add-command", new HashMap(){{
             put("tag", "weather:say-weather");
         }});
-        String[] v=new String[]{ "", "", " сейчас", "", " сегодня", "0", " завтра", "1", " послезавтра", "2"};
-        for(int i=0;i<5;i++) {
-            Map m=new HashMap<String, String>();
-            m.put("eventName", "speech:get");
-            m.put("commandName", "weather:say-weather");
-            m.put("rule", "погода" + v[i * 2]);
-            if (i != 1) m.put("msgData", v[1 + i * 2]);
-            pluginProxy.sendMessage("core:set-event-link",  m);
-        }
+
+        Map m = new HashMap<String, String>();
+        m.put("eventName", "speech:get");
+        m.put("commandName", "weather:say-weather");
+        m.put("rule", "погода {date:DateTime}");
+        pluginProxy.sendMessage("core:set-event-link",  m);
+
         pluginProxy.addMessageListener("weather:say-weather",(sender, tag, data) -> {
             Map<String, Object> say = new HashMap<>();
             say.put("priority", 2000);
             say.put("skippable", false);
-            Object value=((Map<String, Object>) data).getOrDefault("msgData",null);
+
+            Object value = ((Map) data).get("date");
             if (value == null ||
                (value instanceof String && ((String) value).length()==0) ||
                (value instanceof Map && ((Map) value).size()==0)) {
                 say.put("text", getString("now")+" "+server.getNow().toString()+", "+Main.getString("lastUpdate")+": "+server.getLastUpdate());
-            } else if (value.equals("all")) {
+            } /*else if (value.equals("all")) {
                 List<String> b = new ArrayList<>(11);
                 b.add(getString("now") + " - " + server.getNow().toString());
                 for (int i = 0; i < 10; i++) {
@@ -63,32 +66,47 @@ public class Main implements Plugin {
                 }
                 b.add(Main.getString("lastUpdate")+": "+server.getLastUpdate());
                 say.put("text", b);
-            } else {
-                Integer num = 0;
-                if(value instanceof Number) num=((Number)value).intValue();
+            } */ else {
+                Long num = 0L;
+                if(value instanceof Number) num = ((Number)value).longValue();
                 else if(value instanceof String){
                     String c = (String) value;
                     try {
-                        num = Integer.valueOf(c);
+                        num = Long.valueOf(c);
                     } catch (Exception e) { }
                 }
-                if(num>=server.getDaysLimit()){
-                    say.put("text", "Ой, прости, этот день будет слишком нескоро. Я не знаю, какая будет погода.");
+                Calendar calendar = Calendar.getInstance(), now = Calendar.getInstance();
+                calendar.setTimeInMillis(num);
+                if (now.getTimeInMillis() > calendar.getTimeInMillis() &&
+                        calendar.get(Calendar.DAY_OF_YEAR) != now.get(Calendar.DAY_OF_YEAR)){
+                    say.put("text", "Я пока не могу сказать, какая погода была в прошлом. И вообще, надо смотреть в будущее.");
+                } else if (Math.abs(now.getTimeInMillis() - calendar.getTimeInMillis()) < 3600000){
+                    say.put("text", getString("now")+" "+server.getNow().toString()+", "+Main.getString("lastUpdate")+": "+server.getLastUpdate());
                 } else {
-                    say.put("text", server.getByDay(num).toString() + ", " + Main.getString("lastUpdate") + ": " + server.getLastUpdate());
+                    int days = 0;
+                    while (calendar.get(Calendar.DAY_OF_YEAR) != Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
+                        days++;
+                        calendar.add(Calendar.DAY_OF_YEAR, -1);
+                    }
+                    if (days >= server.getDaysLimit()) {
+                        say.put("text", "Ой, прости, этот день будет слишком нескоро. Я не знаю, какая будет погода.");
+                    } else {
+                        say.put("text", server.getByDay(days).toString() + ", " + Main.getString("lastUpdate") + ": " + server.getLastUpdate());
+                    }
                 }
             }
             pluginProxy.sendMessage("DeskChan:say",say);
         });
+
         pluginProxy.addMessageListener("talk:reject-quote",(sender, tag, data) -> {
-            ArrayList<HashMap<String, Object>> list = (ArrayList<HashMap<String, Object>>) data;
-            ArrayList<HashMap<String, Object>> quotes_list = new ArrayList<>();
+            List<Map<String, Object>> list = (List<Map<String, Object>>) data;
+            List<Map<String, Object>> quotes_list = new ArrayList<>();
             if (list != null) {
-                TimeForecast now=server.getNow();
-                for (HashMap<String, Object> entry : list) {
-                    List<String> types = (List<String>) entry.get("weather");
-                    if(types==null) continue;
-                    if(now==null){
+                TimeForecast now = server.getNow();
+                for (Map<String, Object> entry : list) {
+                    Collection<String> types = (Collection) entry.get("weather");
+                    if(types == null) continue;
+                    if(now == null){
                         quotes_list.add(entry);
                         continue;
                     }
@@ -102,14 +120,19 @@ public class Main implements Plugin {
             }
             pluginProxy.sendMessage(sender, quotes_list);
         });
+
         setupOptionsTab();
         return true;
     }
+
     String checkLocationResult(){
-        String ret=server.checkLocation();
-        if(ret.equals("1")) return getString("info.lost-server");
-        if(ret.equals("2") || ret.equals("3")) return getString("incorrect");
-        return ret;
+        String ret = server.checkLocation();
+        switch (ret){
+            case "1": return getString("info.lost-server");
+            case "2":
+            case "3": return getString("incorrect");
+            default : return ret;
+        }
     }
     void setupOptionsTab() {
         pluginProxy.sendMessage("gui:setup-options-submenu", new HashMap<String, Object>() {{
@@ -152,10 +175,10 @@ public class Main implements Plugin {
     void saveOptions(){
        pluginProxy.getProperties().save();
     }
-    @Override
-    public void unload(){
 
-    }
+    @Override
+    public void unload(){ }
+
     public boolean isWeatherMatch(String match, String current, Temperature temp){
         if(match.equals("cold"))
             return (temp.getInt()<-9);
@@ -167,6 +190,7 @@ public class Main implements Plugin {
             return (!current.equals("clear") && !current.equals("cloudy"));
         return current.equals(match);
     }
+
     static void log(String text) {
         pluginProxy.log(text);
     }
