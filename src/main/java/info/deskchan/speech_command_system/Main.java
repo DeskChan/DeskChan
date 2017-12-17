@@ -203,8 +203,7 @@ public class Main implements Plugin {
                     ret.put("msgData", best.msgData);
                 }
             }
-            if (!ret.containsKey("msgData".toLowerCase())) ret.put("msgData", text);
-
+            if (!ret.containsKey("msgData")) ret.put("msgData", text);
             pluginProxy.sendMessage(best.tag, ret);
         } else {
             pluginProxy.sendMessage("DeskChan:say", pluginProxy.getString("no-conversation"));

@@ -262,12 +262,12 @@ public class Main implements Plugin {
 
 		/* Saying 'Hello' at launch. */
 		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
-			phraseRequest(createMapFromString("purpose: HELLO, priority: 20001"));
+			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("purpose: HELLO, priority: 20001"));
 		});
 
 		/* Saying 'Bye' when someone requests quit. */
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			phraseRequest(createMapFromString("purpose: BYE, priority: 10000"));
+			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("purpose: BYE, priority: 10000"));
 		});
 
 		/* Adding "Say something" button to menu. */
@@ -341,7 +341,7 @@ public class Main implements Plugin {
 	void resetTimer(){
 		pluginProxy.cancelTimer(timerId);
 		timerId = pluginProxy.setTimer(getProperties().getLong("messageTimeout", DEFAULT_CHATTING_TIMEOUT), -1,
-				(sender, data) -> Main.this.phraseRequest("CHAT")
+				(sender, data) -> getPluginProxy().sendMessage("DeskChan:request:say", "CHAT")
 		);
 	}
 

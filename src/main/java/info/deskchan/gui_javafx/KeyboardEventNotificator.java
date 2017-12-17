@@ -355,7 +355,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
                 String keycodes = "", str;
                 while ((str = in.readLine()) != null) keycodes += str;
-
+                in.close();
                 JSONObject map = new JSONObject(keycodes);
                 for(String entry : map.keySet()){
                     JSONArray array = map.getJSONArray(entry);
