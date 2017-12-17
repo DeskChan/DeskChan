@@ -35,10 +35,10 @@ public class StandardEmotionsController implements EmotionsController{
 	}
 
 	private static final Emotion[] STANDARD_EMOTIONS = {
-			new Emotion("happiness", new int[][]{{0,  1}, {1,  1}, {3,  1}, {4,  2}, {7,  1}}),
-			new Emotion("sorrow",    new int[][]{{1,  1}, {3, -2}, {4, -2}}),
+			new Emotion("happiness", new int[][]{{0,  1}, {1,  1}, {4,  2}, {7,  1}}),
+			new Emotion("sorrow",    new int[][]{{2, -1}, {3, -2}, {4, -2}}),
 			new Emotion("fun",       new int[][]{{1,  2}, {3,  2}, {4,  1}}),
-			new Emotion("anger",     new int[][]{{1,  2}, {3,  2}, {4,  1}, {7, -2}}),
+			new Emotion("anger",     new int[][]{{0, -2}, {1,  2}, {2,  1}, {3,  2}, {4,  -1}, {7, -2}}),
 			new Emotion("confusion", new int[][]{{1, -1}, {2, -1}, {5, -1}}),
 			new Emotion("affection", new int[][]{{1,  2}, {3,  1}, {7,  1}})
 	};
@@ -75,8 +75,12 @@ public class StandardEmotionsController implements EmotionsController{
 	}
 
 	public void raiseEmotion(String emotionName) {
+		raiseEmotion(emotionName, 1);
+	}
+
+	public void raiseEmotion(String emotionName, int value) {
 		if (currentEmotion != null){
-			currentEmotion.strength -= 1;
+			currentEmotion.strength -= value;
 			if (currentEmotion.strength <= 0)
 				currentEmotion = null;
 			else return;
@@ -84,7 +88,7 @@ public class StandardEmotionsController implements EmotionsController{
 		for (Emotion emotion : emotions){
 			if (emotion.name.equals(emotionName)){
 				currentEmotion = emotion;
-				emotion.strength = 1;
+				emotion.strength = value;
 				tryInform();
 				return;
 			}

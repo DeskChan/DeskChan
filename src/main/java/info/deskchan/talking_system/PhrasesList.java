@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core_utils.TextOperations;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -283,25 +284,36 @@ public class PhrasesList {
 	}
 
 	public void requestRandomQuote(String purpose, PhraseGetterCallback callback) {
+		requestRandomQuote(purpose, null, callback);
+	}
+	public void requestRandomQuote(String purpose, Map info, PhraseGetterCallback callback) {
 		purpose = purpose.toUpperCase();
 		if (matchingPhrases.size() == 0) {
-			callback.call(new Phrase(Main.getString("phrase."+purpose)));
+			callback.call(new Phrase(Main.getString("phrase." + purpose)));
 			return;
 		}
 
-		LinkedList<Phrase> currentlySuitable = new LinkedList<>();
+		List<Phrase> currentlySuitable = new LinkedList<>();
+		if (info != null && info.get("tags") != null) {
+			if (info.get("tags") instanceof Map)
+				info = new TextOperations.TagsMap((Map) info.get("tags"));
+			else
+				info = new TextOperations.TagsMap(info.get("tags").toString());
+		} else info = null;
 
-		ArrayList<Map<String,Object>> matchingList = new ArrayList<>();
+		List<Map> matchingList = new ArrayList<>();
 		for (Phrase phrase : matchingPhrases)
 			if (phrase.noTimeout() && phrase.purposeEquals(purpose)){
-				currentlySuitable.add(phrase);
-				matchingList.add(phrase.toMap());
+				if (info == null || (phrase.getTags() != null && phrase.getTags().match(info))){
+					currentlySuitable.add(phrase);
+					matchingList.add(phrase.toMap());
+				}
 			}
 
 		final String fPurpose = purpose;
 		Main.getPluginProxy().sendMessage("talk:reject-quote", matchingList,
 				(sender, data) -> {
-					ArrayList<Map<String, Object>> phrasesList = (ArrayList<Map<String,Object>>) data;
+					List<Map<String, Object>> phrasesList = (ArrayList<Map<String,Object>>) data;
 					if(phrasesList == null) return;
 
 					for (Map<String, Object> phrase : phrasesList) {

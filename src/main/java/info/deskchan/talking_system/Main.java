@@ -57,13 +57,13 @@ public class Main implements Plugin {
 			syncThread.start();
 		}
 
-		log("options loaded");
+		currentCharacter.inform();
 
 		/* Building DeskChan:request-say chain. */
-		pluginProxy.sendMessage("core:register-alternatives", new ArrayList<Map<String, Object>>(){{
-			add(new TextOperations.TagsMap("srcTag: \"DeskChan:request-say\", dstTag: \"talk:request-say\", priority: 10000"));
-			add(new TextOperations.TagsMap("srcTag: \"DeskChan:request-say\", dstTag: \"talk:replace-by-preset-fields\", priority: 9990"));
-			add(new TextOperations.TagsMap("srcTag: \"DeskChan:request-say\", dstTag: \"talk:send-phrase\", priority: 10"));
+		pluginProxy.sendMessage("core:register-alternatives", new ArrayList<Map>(){{
+			add(createMapFromString("srcTag: \"DeskChan:request-say\", dstTag: \"talk:request-say\", priority: 10000"));
+			add(createMapFromString("srcTag: \"DeskChan:request-say\", dstTag: \"talk:replace-by-preset-fields\", priority: 9990"));
+			add(createMapFromString("srcTag: \"DeskChan:request-say\", dstTag: \"talk:send-phrase\", priority: 100"));
 		}});
 
 		/* Request a phrase with certain purpose. If answer is not requested, automatically send it to DeskChan:say.
@@ -128,6 +128,7 @@ public class Main implements Plugin {
 				multiplier = ((Number) obj).floatValue();
 
 			currentCharacter.character.setValue(feature, multiplier);
+			currentCharacter.inform();
 		});
 
 		/* Make an influence on character emotion state
@@ -141,21 +142,17 @@ public class Main implements Plugin {
 			Object obj = data.get("feature");
 			if (obj == null) return;
 
-			int emotion;
-			float multiplier = 1;
-			if (obj instanceof String)
-				emotion = CharacterFeatures.getFeatureIndex((String) obj);
-			else if (obj instanceof Number)
-				emotion = ((Number) obj).intValue();
-			else return;
+			String emotion;
+			int multiplier = 1;
+			emotion = (String) obj;
 
 			obj = data.getOrDefault("value", 1);
 			if (obj instanceof String)
-				multiplier = Float.valueOf((String) obj);
+				multiplier = Float.valueOf((String) obj).intValue();
 			else if (obj instanceof Number)
-				multiplier = ((Number) obj).floatValue();
+				multiplier = ((Number) obj).intValue();
 
-			currentCharacter.character.setValue(emotion, multiplier);
+			currentCharacter.emotionState.raiseEmotion(emotion, multiplier);
 		});
 
 		/* Save options
@@ -174,6 +171,13 @@ public class Main implements Plugin {
 			saveSettings();
 		});
 
+		/* Get preset
+        * Public message
+        * Returns: Map */
+		pluginProxy.addMessageListener("talk:get-preset", (sender, tag, data) -> {
+			pluginProxy.sendMessage(sender, currentCharacter.toInformationMap());
+		});
+
 		/* Save preset to file by character name
         * Technical message
         * Params: None
@@ -181,9 +185,9 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:save-preset", (sender, tag, data) -> {
 			try {
 				currentCharacter.saveInFile(getPresetsPath());
-				pluginProxy.sendMessage("gui:show-notification", new TextOperations.TagsMap("text: "+getString("done")));
+				pluginProxy.sendMessage("gui:show-notification", createMapFromString("text: "+getString("done")));
 			} catch (Exception e) {
-				HashMap<String, Object> list = new HashMap<String, Object>();
+				Map<String, Object> list = new HashMap<>();
 				list.put("name", getString("error"));
 				list.put("text", "Error while writing file: " + e.getMessage());
 				pluginProxy.sendMessage("gui:show-notification", list);
@@ -239,10 +243,12 @@ public class Main implements Plugin {
 								currentCharacter.updatePhrases();
 							}
 						}
-						updateOptionsTab();
+
 					} catch(Exception e){
 						log(e);
 					}
+					updateOptionsTab();
+					currentCharacter.inform();
 				}
 		);
 
@@ -256,12 +262,12 @@ public class Main implements Plugin {
 
 		/* Saying 'Hello' at launch. */
 		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
-			phraseRequest(new TextOperations.TagsMap("purpose: HELLO, priority: 20001"));
+			phraseRequest(createMapFromString("purpose: HELLO, priority: 20001"));
 		});
 
 		/* Saying 'Bye' when someone requests quit. */
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			phraseRequest(new TextOperations.TagsMap("purpose: BYE, priority: 10000"));
+			phraseRequest(createMapFromString("purpose: BYE, priority: 10000"));
 		});
 
 		/* Adding "Say something" button to menu. */
@@ -300,7 +306,7 @@ public class Main implements Plugin {
 		if (data != null)
 			purpose = data.getOrDefault("purpose", purpose).toString();
 
-		currentCharacter.phrases.requestRandomQuote( purpose, quote -> sendPhrase(quote, data) );
+		currentCharacter.phrases.requestRandomQuote( purpose, data, quote -> sendPhrase(quote, data) );
 	}
 
 	/** Request phrase with purpose. **/
@@ -473,6 +479,7 @@ public class Main implements Plugin {
 			}
 		}
 		currentCharacter.updatePhrases();
+		currentCharacter.inform();
 
 		try {
 			getProperties().put("messageTimeout", (Integer) data.getOrDefault("message_interval", 40) * 1000);
@@ -549,5 +556,16 @@ public class Main implements Plugin {
 				data.put("purpose", object.toString());
 		}
 		return data;
+	}
+
+	static Map createMapFromString(String text){
+		TextOperations.TagsMap<String, Collection> map = new TextOperations.TagsMap<>(text);
+		Map result = new HashMap<>();
+		for (Map.Entry<String, Collection> entry : map.entrySet()){
+			try {
+				result.put(entry.getKey(), entry.getValue().iterator().next());
+			} catch (Exception e){ }
+		}
+		return result;
 	}
 }

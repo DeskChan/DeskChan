@@ -191,7 +191,7 @@ public class CharacterPreset {
 			ret = ret.replaceAll("\\{name\\}", Main.getString("default_name"));
 		}
 
-		Collection<String> list = tags.getAsCollection("usernames");
+		Collection<String> list = tags.get("usernames");
 		if (list != null && list.size() > 0) {
 			String item = getRandomItem(list);
 			ret = ret.replaceAll("\\{user\\}", item);
@@ -201,7 +201,7 @@ public class CharacterPreset {
 			ret = ret.replaceAll("\\{userF\\}", Main.getString("default_username"));
 		}
 
-		list = tags.getAsCollection("abuses");
+		list = tags.get("abuses");
 		if (list != null && list.size() > 0) {
 			ret = ret.replaceAll("\\{abuse\\}", getRandomItem(list));
 		} else ret = ret.replaceAll("\\{abuse\\}",Main.getString("default_abuse"));

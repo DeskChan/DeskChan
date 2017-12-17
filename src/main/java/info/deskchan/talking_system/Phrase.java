@@ -121,6 +121,10 @@ public class Phrase {
 		return tags != null ? tags.get(name) : null;
 	}
 
+	public TextOperations.TagsMap getTags(){
+		return tags;
+	}
+
 	private void appendTo(Document doc, Node target, String name, String text) {
 		Node n = doc.createElement(name);
 		n.setTextContent(text);
