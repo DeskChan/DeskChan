@@ -51,11 +51,12 @@ public class Main implements Plugin {
          *           value: String! - speech
          * Returns: None */
         pluginProxy.addMessageListener("speech:commands-list", (sender, tag, data) -> {
-            StringBuilder sb = new StringBuilder("Я умею много всего! Вот весь список:\n");
+            StringBuilder sb = new StringBuilder();
             for (Command command : commands)
                 sb.append(command.rule.getRule()+"\n");
 
-            pluginProxy.sendMessage("DeskChan:say", sb.toString());
+            pluginProxy.sendMessage("DeskChan:say", "Я умею много всего! Сейчас список даже покажу.");
+            pluginProxy.sendMessage("DeskChan:show-technical", sb.toString());
         });
 
         /* Say commands list.

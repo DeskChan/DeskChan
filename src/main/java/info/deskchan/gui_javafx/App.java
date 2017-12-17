@@ -394,9 +394,13 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				showNotification( (String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
-						(String) m.get("text"));
+				if (data instanceof Map) {
+					Map<String, Object> m = (Map<String, Object>) data;
+					showNotification((String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
+							(String) m.get("text"));
+				} else {
+					showNotification(Main.getString("default_messagebox_name"), data.toString());
+				}
 			});
 		});
 
@@ -803,6 +807,11 @@ public class App extends Application {
 				new HashMap<String, Object>() {{
 					put("srcTag", "core-utils:notify-after-delay");
 					put("dstTag", "gui:notify-after-delay");
+					put("priority", 100);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:show-technical");
+					put("dstTag", "gui:show-notification");
 					put("priority", 100);
 				}}
 		));

@@ -414,10 +414,15 @@ public class PluginManager {
 		}
 		System.exit(0);
 	}
-	
+
+	/** Get list of plugins. **/
+	public List<String> getPlugins() {
+		return new ArrayList<>(plugins.keySet());
+	}
+
 	/* Plugins blacklist */
 
-	/** Get list of plugins in blacklist **/
+	/** Get list of plugins in blacklist. **/
 	public List<String> getBlacklistedPlugins() {
 		return new ArrayList<>(blacklistedPlugins);
 	}

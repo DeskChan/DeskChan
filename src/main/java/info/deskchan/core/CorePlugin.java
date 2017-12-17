@@ -167,7 +167,7 @@ public class CorePlugin implements Plugin, MessageListener {
 
 		queue.add(new AlternativeInfo(dstTag, plugin, _priority));
 
-		pluginProxy.log("Registered alternative " + dstTag + " for tag " + srcTag + " by plugin " + plugin);
+		pluginProxy.log("Registered alternative " + dstTag + " for tag " + srcTag + " with priority: " + priority + ", by plugin " + plugin);
 	}
 	
 	private void unregisterAlternative(String srcTag, String dstTag, String plugin) {
