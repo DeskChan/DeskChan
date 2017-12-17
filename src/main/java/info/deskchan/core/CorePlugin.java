@@ -6,7 +6,7 @@ import java.util.*;
 public class CorePlugin implements Plugin, MessageListener {
 	
 	private PluginProxyInterface pluginProxy = null;
-	private final Map<String, Queue<AlternativeInfo>> alternatives = new HashMap<>();
+	private final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
 
 	@Override
 	public boolean initialize(PluginProxyInterface pluginProxy) {
@@ -94,10 +94,10 @@ public class CorePlugin implements Plugin, MessageListener {
 			}
 			String plugin = data.toString();
 			synchronized (this) {
-				Iterator < Map.Entry<String, Queue<AlternativeInfo>> > mapIterator = alternatives.entrySet().iterator();
+				Iterator < Map.Entry<String, List<AlternativeInfo>> > mapIterator = alternatives.entrySet().iterator();
 				while (mapIterator.hasNext()) {
-					Map.Entry <String, Queue<AlternativeInfo>> entry = mapIterator.next();
-					Queue<AlternativeInfo> l = entry.getValue();
+					Map.Entry <String, List<AlternativeInfo>> entry = mapIterator.next();
+					List<AlternativeInfo> l = entry.getValue();
 					Iterator<AlternativeInfo> iterator = l.iterator();
 					while (iterator.hasNext()) {
 						AlternativeInfo info = iterator.next();
@@ -144,19 +144,14 @@ public class CorePlugin implements Plugin, MessageListener {
 			}
 		}
 
-		Queue<AlternativeInfo> queue = alternatives.get(srcTag);
-		if (queue == null) {
-			queue = new PriorityQueue<>(new Comparator<AlternativeInfo>() {
-				@Override
-				public int compare(AlternativeInfo o1, AlternativeInfo o2) {
-					return Integer.compare(o2.priority, o1.priority);
-				}
-			});
-			alternatives.put(srcTag, queue);
+		List<AlternativeInfo> list = alternatives.get(srcTag);
+		if (list == null) {
+			list = new LinkedList<>();
+			alternatives.put(srcTag, list);
 			pluginProxy.addMessageListener(srcTag, this);
 		}
 
-		Iterator<AlternativeInfo> iterator = queue.iterator();
+		Iterator<AlternativeInfo> iterator = list.iterator();
 		while (iterator.hasNext()) {
 			AlternativeInfo info = iterator.next();
 			if (info.isEqual(dstTag, plugin)) {
@@ -165,17 +160,23 @@ public class CorePlugin implements Plugin, MessageListener {
 			}
 		}
 
-		queue.add(new AlternativeInfo(dstTag, plugin, _priority));
+		list.add(new AlternativeInfo(dstTag, plugin, _priority));
+		list.sort(new Comparator<AlternativeInfo>() {
+			@Override
+			public int compare(AlternativeInfo o1, AlternativeInfo o2) {
+				return Integer.compare(o2.priority, o1.priority);
+			}
+		});
 
 		pluginProxy.log("Registered alternative " + dstTag + " for tag " + srcTag + " with priority: " + priority + ", by plugin " + plugin);
 	}
 	
 	private void unregisterAlternative(String srcTag, String dstTag, String plugin) {
-		Queue<AlternativeInfo> queue = alternatives.get(srcTag);
-		if (queue == null)
+		List<AlternativeInfo> list = alternatives.get(srcTag);
+		if (list == null)
 			return;
 
-		Iterator<AlternativeInfo> iterator = queue.iterator();
+		Iterator<AlternativeInfo> iterator = list.iterator();
 		while (iterator.hasNext()) {
 			AlternativeInfo info = iterator.next();
 			if (info.isEqual(dstTag, plugin)) {
@@ -185,7 +186,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			}
 		}
 
-		if (queue.isEmpty()) {
+		if (list.isEmpty()) {
 			alternatives.remove(srcTag);
 			pluginProxy.removeMessageListener(srcTag, this);
 			pluginProxy.log("No more alternatives for " + srcTag);
@@ -194,7 +195,7 @@ public class CorePlugin implements Plugin, MessageListener {
 
 	private Map<String, Object> getAlternativesMap() {
 		Map<String, Object> m = new HashMap<>();
-		for (Map.Entry<String, Queue<AlternativeInfo>> entry : alternatives.entrySet()) {
+		for (Map.Entry<String, List<AlternativeInfo>> entry : alternatives.entrySet()) {
 			List<Map<String, Object>> l = new ArrayList<>();
 			for (AlternativeInfo info : entry.getValue()) {
 				l.add(new HashMap<String, Object>() {{
@@ -217,11 +218,11 @@ public class CorePlugin implements Plugin, MessageListener {
 			tag = tag.substring(0, delimiter);
 		}
 
-		Queue<AlternativeInfo> queue = alternatives.get(tag);
-		if (queue == null || queue.isEmpty())
+		List<AlternativeInfo> list = alternatives.get(tag);
+		if (list == null || list.isEmpty())
 			return;
 
-		Iterator<AlternativeInfo> iterator = queue.iterator();
+		Iterator<AlternativeInfo> iterator = list.iterator();
 		if (senderTag != null){
 			do {
 				AlternativeInfo nextInfo = iterator.next();

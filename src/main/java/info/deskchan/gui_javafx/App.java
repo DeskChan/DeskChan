@@ -395,6 +395,8 @@ public class App extends Application {
 					Map<String, Object> m = (Map<String, Object>) data;
 					showNotification((String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
 							(String) m.get("text"));
+				} else {
+					showNotification(Main.getString("default_messagebox_name"), data.toString());
 				}
 			});
 		});

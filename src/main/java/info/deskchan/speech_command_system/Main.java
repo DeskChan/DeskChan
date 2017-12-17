@@ -194,6 +194,8 @@ public class Main implements Plugin {
             if(debugBuild)
                 System.out.println("best: " + best.tag + " " + best.result);
             Map<String, Object> ret = best.rule.getArguments(text, best.result);
+            if(debugBuild)
+                System.out.println("1: " + ret);
             if(best.msgData != null) {
                 if (best.msgData instanceof Map){
                     for(Map.Entry<String, Object> entry : ((Map<String, Object>) best.msgData).entrySet()){
@@ -203,7 +205,11 @@ public class Main implements Plugin {
                     ret.put("msgData", best.msgData);
                 }
             }
+            if(debugBuild)
+                System.out.println("2: " + ret);
             if (!ret.containsKey("msgData")) ret.put("msgData", text);
+            if(debugBuild)
+                System.out.println("3: " + ret);
             pluginProxy.sendMessage(best.tag, ret);
         } else {
             pluginProxy.sendMessage("DeskChan:say", pluginProxy.getString("no-conversation"));

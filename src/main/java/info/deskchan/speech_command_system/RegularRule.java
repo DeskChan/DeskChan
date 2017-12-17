@@ -394,7 +394,7 @@ public class RegularRule{
             }
             if(type == WordType.NONE || max<PhraseComparison.ACCURACY){
                 parsed = false;
-                return new SearchResult(0,0);
+                return new SearchResult(0, word.length());
             }
             switch(type){
                 case SIMILAR:
@@ -417,7 +417,7 @@ public class RegularRule{
                     return new SearchResult(max, p.length());
                 }
             }
-            return new SearchResult(0, 0);
+            return new SearchResult(0, word.length());
         }
         public boolean canBeRemoved(){
             return parent.canBeRemoved();
