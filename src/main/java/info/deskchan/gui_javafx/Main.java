@@ -58,7 +58,7 @@ public class Main implements Plugin {
 		return instance;
 	}
 
-	PluginProxyInterface getPluginProxy() { return pluginProxy; }
+	static PluginProxyInterface getPluginProxy() { return instance.pluginProxy; }
 	
 	Semaphore getAppInitSem() {
 		return appInitSem;
@@ -69,19 +69,19 @@ public class Main implements Plugin {
 	}
 	
 	static void log(String text) {
-		instance.pluginProxy.log(text);
+		getPluginProxy().log(text);
 	}
 	
 	static void log(Throwable e) {
-		instance.pluginProxy.log(e);
+		getPluginProxy().log(e);
 	}
 
 	public static String getString(String text){
-		return getInstance().pluginProxy.getString(text);
+		return getPluginProxy().getString(text);
 	}
 	
 	static synchronized PluginProperties getProperties() {
-		return getInstance().getPluginProxy().getProperties();
+		return getPluginProxy().getProperties();
 	}
 
 }

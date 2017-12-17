@@ -68,7 +68,7 @@ public class ControlsPane {
 				for (Map element : (List<Map>) controlInfo.get("elements")) {
 					PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, element);
 					if (item == null) continue;
-					String id = (String) controlInfo.get("id");
+					String id = (String) element.get("id");
 					if (id != null) {
 						namedControls.put(id, item);
 						item.getNode().setId(id);
@@ -105,7 +105,7 @@ public class ControlsPane {
 				for (Map.Entry<String, PluginOptionsControlItem> entry : namedControls.entrySet()) {
 					data.put(entry.getKey(), entry.getValue().getValue());
 					for (Map<String, Object> control : controls) {
-						String id = (String) control.getOrDefault("id", null);
+						String id = (String) control.get("id");
 						if (id != null) {
 							if (id.equals(entry.getKey())) {
 								control.put("value", entry.getValue().getValue());
@@ -128,18 +128,18 @@ public class ControlsPane {
 	}
 	void updateControlsPane(List<Map<String, Object>> update) {
 		for (Map<String, Object> control : update) {
-			String id = (String) control.getOrDefault("id", null);
-			Object value=control.getOrDefault("value", null);
-			if(value!=null) namedControls.get(id).setValue(value);
-			Boolean disabled=App.getBoolean(control.getOrDefault("disabled", null),null);
-			if(disabled!=null)
+			String id = (String) control.get("id");
+			Object value = control.get("value");
+			if(value != null) namedControls.get(id).setValue(value);
+			Boolean disabled = App.getBoolean(control.get("disabled"), null);
+			if(disabled != null)
 				namedControls.get(id).getNode().setDisable(disabled);
 		}
 	}
 	class Hint extends Label{
 		Hint(String text){
 			setText(" ❔ ");
-			setBorder(new Border(new BorderStroke(Color.BLACK,BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+			setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
 			Tooltip tooltip = new Tooltip(text);
 			tooltip.setAutoHide(true);
 			setTooltip(tooltip);

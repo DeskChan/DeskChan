@@ -10,6 +10,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -56,6 +57,29 @@ class OptionsDialog extends TemplateBox {
 
 	/** All submenus registered by plugins, plugin -> list of menus. **/
 	private static Map<String, List<ControlsPane>> pluginsSubMenus = new HashMap<>();
+
+	static {
+		// Filling plugins list, 'plugin-load' sends full list of registered commands every time you subscribed to it
+		Main.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (instance == null) return;
+				for (PluginListItem item : instance.pluginsList.getItems()) {
+					if (item.id.equals(data)) {
+						return;
+					}
+				}
+				instance.pluginsList.getItems().add(new PluginListItem(data.toString(), false));
+			});
+		});
+
+		// Listener to unloaded plugins to remove them from list
+		Main.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (instance == null) return;
+				instance.pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
+			});
+		});
+	}
 
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
@@ -149,11 +173,10 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:open-skin-dialog");
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
-		System.out.println(Main.getProperties().getInteger("skin.scale_factor"));
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "scale");
 			put("type",  "Spinner");
-			put("label",  Main.getString("skin.scale_factor") + " (%)");
+			put("label",  Main.getString("scale_factor") + " (%)");
 			put("min",    10);
 			put("max",    1000);
 			put("msgTag","gui:resize-character");
@@ -177,13 +200,22 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		skinOptions = new ControlsPane(Main.getString("character"), list, null, null);
+		skinOptions = new ControlsPane(Main.getString("skin"), list, null, null);
 		return skinOptions;
 	}
 
 	/** Creating 'Balloon' options submenu. **/
 	private ControlsPane balloonOptions(){
 		List<Map<String, Object>> list = new LinkedList<>();
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "scale");
+			put("type",  "Spinner");
+			put("label",  Main.getString("scale_factor") + " (%)");
+			put("min",    10);
+			put("max",    1000);
+			put("msgTag","gui:resize-balloon");
+			put("value",  Main.getProperties().getInteger("balloon.scale_factor", 100));
+		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_font");
 			put("type",  "FontPicker");
@@ -409,7 +441,7 @@ class OptionsDialog extends TemplateBox {
 					@Override
 					protected void updateItem(PluginListItem t, boolean bln) {
 						super.updateItem(t, bln);
-						setStyle("-fx-cell-size: " + LocalFont.defaultFont.getSize()*2.5);
+						//setStyle("-fx-cell-size: " + LocalFont.defaultFont.getSize()*2.5);
 						if (t != null) {
 							setGraphic(t.hbox);
 							setTooltip(t.tooltip);
@@ -422,24 +454,9 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 
-		// Filling plugins list, 'plugin-load' sends full list of registered commands every time you subscribed to it
-		pluginProxy.addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				for (PluginListItem item : pluginsList.getItems()) {
-					if (item.id.equals(data)) {
-						return;
-					}
-				}
-				pluginsList.getItems().add(new PluginListItem(data.toString(), false));
-			});
-		});
-
-		// Listener to unloaded plugins to remove them from list
-		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
-			});
-		});
+		for (String id : PluginManager.getInstance().getPlugins()) {
+			pluginsList.getItems().add(new PluginListItem(id, false));
+		}
 
 		// Blacklisted plugins that not registered in program
 		for (String id : PluginManager.getInstance().getBlacklistedPlugins()) {
@@ -751,6 +768,7 @@ class OptionsDialog extends TemplateBox {
 		void setInfo(){
 			// Adding char in circle to plugin name if we know its type
 			label = new Label(toString());
+			label.setAlignment(Pos.CENTER_LEFT);
 
 			// Filling row content
 			hbox.getChildren().clear();
@@ -958,7 +976,9 @@ class OptionsDialog extends TemplateBox {
 				cell.setText(null);
 				cell.setTooltip(null);
 			} else {
-				cell.setText(getItemText(cell, converter));
+				String itemText = getItemText(cell, converter);
+				cell.setText(itemText);
+				if (itemText.length() == 0) return;
 				//Add text as tooltip so that user can read text without editing it.
 				Tooltip tooltip = new Tooltip(getItemText(cell, converter));
 				tooltip.setWrapText(true);

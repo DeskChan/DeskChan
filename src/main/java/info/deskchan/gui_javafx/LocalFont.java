@@ -34,10 +34,10 @@ public class LocalFont {
 
     public static void setDefaultFont(String font){
         if(font == null)
-            defaultFont =  getSystemDefaultFont();
+            defaultFont = getSystemDefaultFont();
         else
             defaultFont = fromString(font);
-        Main.getProperties().getString("interface.font", toString(defaultFont));
+        Main.getProperties().put("interface.font", toString(defaultFont));
         TrayMenu.getContextMenu().setStyle(getDefaultFontCSS());
     }
 
@@ -46,8 +46,12 @@ public class LocalFont {
         Font font = hash.get(name);
         if (font != null) return font;
         try {
-            String[] parts = name.split(",");
-            font = Font.font(parts[0].trim(), Float.parseFloat(parts[1].trim()));
+            try {
+                font = Font.font(defaultFont.getFamily(), Float.parseFloat(name));
+            } catch (Exception e) {
+                String[] parts = name.split(",");
+                font = Font.font(parts[0].trim(), Float.parseFloat(parts[1].trim()));
+            }
             hash.put(name, font);
             return font;
         } catch (Exception e){

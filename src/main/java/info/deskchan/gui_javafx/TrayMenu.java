@@ -12,10 +12,7 @@ import javafx.scene.control.SeparatorMenuItem;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TrayMenu {
 
@@ -92,12 +89,17 @@ public class TrayMenu {
         menu.add(new MenuItem(Main.getString("send-top"),frontMenuItemAction));
 
         menu.add(new Separator());
-        for(PluginMenuItem it : menuItems){
-            menu.add(it.getDorkBoxItem());
+        try {
+            for (PluginMenuItem it : menuItems) {
+                menu.add(it.getDorkBoxItem());
+            }
+        } catch (ConcurrentModificationException e){
+            Main.log("Concurrent modification by tray. Write us if it cause you lags.");
+            return;
         }
         menu.add(new Separator());
 
-        menu.add(new MenuItem(Main.getString("quit"),quitMenuItemAction));
+        menu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
 
         ObservableList<javafx.scene.control.MenuItem> contextMenuItems = contextMenu.getItems();
         contextMenuItems.clear();

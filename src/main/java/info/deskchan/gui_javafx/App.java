@@ -74,6 +74,9 @@ public class App extends Application {
 		// Registering plugin's API
 		initMessageListeners();
 		Main.log("message listeners initialized, " + getTime(start));
+		// Keyboard initialization
+		KeyboardEventNotificator.initialize();
+		Main.log("keyboard initialized, " + getTime(start));
 		Main.getInstance().getAppInitSem().release();
 		Main.log("semaphore released, " + getTime(start));
 
@@ -295,6 +298,24 @@ public class App extends Application {
 			});
 		});
 
+		/* Resize balloon.
+        * Public message
+        * Params: value:Float - absolute scaling value, integer percents
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:resize-balloon", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (data instanceof Map) {
+					Map m = (Map) data;
+					if (m.containsKey("value"))
+						Balloon.setScaleFactor(((Number) m.get("value")).floatValue());
+				} else if (data instanceof Number){
+					Balloon.setScaleFactor(((Number) data).floatValue());
+				} else {
+					Balloon.setScaleFactor(Float.parseFloat(data.toString()));
+				}
+			});
+		});
+
 		/* Set up options container as tab.
         * Public message
         * Params: Map
@@ -491,10 +512,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-balloon-shadow-opacity", (sender, tag, data) -> {
 			float opacity = ((Number) data).floatValue();
-			Main.getProperties().getFloat("skin.shadow-opacity", opacity);
-
-			if (Balloon.getInstance() != null)
-				Balloon.getInstance().setShadowOpacity(opacity);
+			Balloon.setShadowOpacity(opacity);
 		});
 
 		/* Set skin shadow opacity.
@@ -503,7 +521,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-skin-shadow-opacity", (sender, tag, data) -> {
 			float opacity = ((Number) data).floatValue();
-			Main.getProperties().getFloat("balloon.shadow-opacity", opacity);
+			Main.getProperties().getFloat("skin.shadow-opacity", opacity);
 
 			if (character != null)
 				character.setShadowOpacity(opacity);
@@ -696,10 +714,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Double value = getDouble(data, 100.0);
-				Main.getProperties().put("balloon.opacity", value.toString());
-
-				if(Balloon.getInstance() != null)
-					Balloon.getInstance().setBalloonOpacity(value.floatValue());
+				Balloon.setOpacity(value.floatValue());
 			});
 		});
 

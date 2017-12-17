@@ -29,6 +29,7 @@ class OverlayStage extends Stage {
 		ALWAYS_NORMAL,
 		TOP_IF_MESSAGE,
 		ALWAYS_TOP,
+		ONLY_BALLOON,
 		HIDE,
 		SHOW_IF_MESSAGE,
 		SEPARATE
@@ -71,6 +72,11 @@ class OverlayStage extends Stage {
 		}
 		try {
 			instances.put(LayerMode.SEPARATE, SeparateStage.class);
+		} catch(Exception e){
+			Main.log("Cannot initialize SEPARATE stage");
+		}
+		try {
+			instances.put(LayerMode.ONLY_BALLOON, OnlyBalloonStage.class);
 		} catch(Exception e){
 			Main.log("Cannot initialize SEPARATE stage");
 		}
@@ -282,6 +288,16 @@ class TopStage extends NormalStage{
 		}
 	}
 }
+
+class OnlyBalloonStage extends TopStage{
+	OnlyBalloonStage(){
+		super();
+		App.getInstance().getCharacter().setBalloonPositionMode(Balloon.PositionMode.ABSOLUTE);
+	}
+	@Override
+	void showCharacter(){ }
+}
+
 class FrontNormalStage extends NormalStage{
 	FrontNormalStage(){
 		super();
