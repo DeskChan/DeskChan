@@ -146,19 +146,21 @@ class PluginConfig {
             }
         }
         if ("short-description" in data) {
-            sb.appendln(PluginProxy.getString("description") + ": " + get("short-description"))
+            sb.appendln(PluginProxy.getString("description") + ": " + getLocalized("short-description"))
         }
 
         return sb.toString().trimEnd()
     }
 
     /** Get full description of plugin. **/
-    fun getDescription(): String? = if ("description" in data) {
-        val descriptionMap = data["description"] as? Map<String, String>?
+    fun getDescription(): String? = getLocalized("description")
+
+    fun getLocalized(tag:String): String? = if (tag in data) {
+        val descriptionMap = data[tag] as? Map<String, String>?
         if (descriptionMap != null) {
             getLocalString(descriptionMap)
         } else {
-            data["description"].toString()
+            data[tag].toString()
         }
     } else {
         null
