@@ -295,6 +295,8 @@ public class Main implements Plugin {
 			DefaultTagsListeners.checkCondition(sender, data, quote -> !currentCharacter.tagsMatch(quote))
 		);
 
+		resetTimer();
+
 		return true;
 	}
 
@@ -342,7 +344,9 @@ public class Main implements Plugin {
 	void resetTimer(){
 		pluginProxy.cancelTimer(timerId);
 		timerId = pluginProxy.setTimer(getProperties().getLong("messageTimeout", DEFAULT_CHATTING_TIMEOUT), -1,
-				(sender, data) -> getPluginProxy().sendMessage("DeskChan:request:say", "CHAT")
+				(sender, data) -> {
+					getPluginProxy().sendMessage("DeskChan:request-say", "CHAT");
+				}
 		);
 	}
 
