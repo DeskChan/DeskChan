@@ -11,4 +11,4 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 script:
-  - ./gradlew assembly
+  - ./gradlew createExeDistZip
