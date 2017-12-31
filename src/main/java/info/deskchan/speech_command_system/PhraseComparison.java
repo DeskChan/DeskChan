@@ -24,7 +24,7 @@ public class PhraseComparison {
         {"о","а"} , {"е","и"} , {"д","т"} , {"г","к"} , {"ж","ш"} , {"ы","и"} , {"з","с"} , {"б","п"} , {"в","ф"} , {"ь",""} , {"ъ",""} , {"тс","ц"} , {"тщ","ч"} , {"я", "а"} , {"ю", "у"}
     };
 
-    protected final static float ACCURACY = 0.65f;
+    public final static float ACCURACY = 0.65f;
 
     private final static String suffixes1 = "аеюиэйуъыояью", suffixes2 = "гмтсш";
     private static LimitHashMap<String, String> suffixCache = new LimitHashMap<>(500);
