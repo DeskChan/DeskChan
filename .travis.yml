@@ -5,6 +5,8 @@ sudo: false
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f  $HOME/.gradle/caches/3.4.1/fileHashes/fileHashes.bin
+  - rm -f  $HOME/.gradle/caches/3.4.1/fileHashes/fileHashes.lock
 cache:
   directories:
     - $HOME/.gradle/caches/
