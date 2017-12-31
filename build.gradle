@@ -39,6 +39,22 @@ sourceSets {
 			srcDir 'src/main/java'
 		}
 	}
+	test {
+		java {
+			srcDirs 'src/test/java'
+		}
+	}
+}
+
+test {
+    testLogging {
+        events "PASSED", "FAILED", "SKIPPED"
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            }
+        }
+    }
 }
 
 dependencies {
