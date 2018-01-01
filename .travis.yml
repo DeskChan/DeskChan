@@ -13,4 +13,5 @@ cache:
     - $HOME/.gradle/wrapper/
 script:
   - ./gradlew test
+after_success:
   - ./gradlew createExeDistZip
