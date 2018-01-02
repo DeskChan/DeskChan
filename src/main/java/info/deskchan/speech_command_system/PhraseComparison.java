@@ -7,24 +7,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PhraseComparison {
-    public static void Testing(){
-        String tests[][] = new String[][]{
-                {"привет", "перевод"},  {"два", "три"}, {"два", "две"}, {"один", "сотня"}, {"шесть", "шест"},
-                {"четверг", "четверть"}, {"второй", "второго"}, {"пятьсот", "пяццот"}, {"второй", "добрый"}, {"сутки", "суток"},
-                {"шестой", "шестого"}, {"две", "двести"}, {"сутки", "сутками"}, {"шестьсот", "шестого"}
-        };
-        boolean results[] = new boolean[]{ false, false, true, false, true, true, true, true, false, true, true, false, true, false };
-        for(int i=0;i<tests.length;i++) {
-            float result = relative(tests[i][0], tests[i][1]);
-            if( (result>ACCURACY) != results[i] )
-                System.out.println(tests[i][0] + " - " + tests[i][1] + " -> " + result + ", " + (result>ACCURACY));
-        }
-    }
+
     private final static String[][] replaceable=new String[][]{
         {"о","а"} , {"е","и"} , {"д","т"} , {"г","к"} , {"ж","ш"} , {"ы","и"} , {"з","с"} , {"б","п"} , {"в","ф"} , {"ь",""} , {"ъ",""} , {"тс","ц"} , {"тщ","ч"} , {"я", "а"} , {"ю", "у"}
     };
 
-    protected final static float ACCURACY = 0.65f;
+    public final static float ACCURACY = 0.65f;
 
     private final static String suffixes1 = "аеюиэйуъыояью", suffixes2 = "гмтсш";
     private static LimitHashMap<String, String> suffixCache = new LimitHashMap<>(500);
