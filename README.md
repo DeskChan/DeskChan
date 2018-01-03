@@ -1,7 +1,8 @@
- ![](https://img.shields.io/badge/Java-1.8-orange.svg)
+![](https://img.shields.io/badge/Java-1.8-orange.svg)
 ![](https://img.shields.io/badge/Kotlin-1.1.2-blue.svg)
 ![](https://img.shields.io/badge/Gradle-3.4-brightgreen.svg)
 ![](https://img.shields.io/badge/waifu-inside-blue.svg)
+[![Build Status](https://travis-ci.org/DeskChan/DeskChan.svg?branch=master)](https://travis-ci.org/DeskChan/DeskChan)
 
 ### [DeskChan](https://deskchan.info/) – твой персональный компьютерный ассистент
  
