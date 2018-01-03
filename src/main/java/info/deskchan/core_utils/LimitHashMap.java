@@ -11,6 +11,7 @@ public class LimitHashMap<K,V> extends HashMap<K,V> {
         super();
         limit = maxCapacity;
     }
+    @Override
     public V put(K key, V value){
         if (size()>=limit)
         {
@@ -21,5 +22,13 @@ public class LimitHashMap<K,V> extends HashMap<K,V> {
             orderedKeySet.add(key);
         }
         return super.put(key, value);
+    }
+
+    @Override
+    public V remove(Object key) {
+        if (orderedKeySet.contains(key)){
+            orderedKeySet.remove(key);
+        }
+        return super.remove(key);
     }
 }
