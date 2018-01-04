@@ -8,14 +8,22 @@ import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -36,6 +44,9 @@ class OptionsDialog extends TemplateBox {
 	/** Top tabs container. **/
 	private TabPane tabPane = new TabPane();
 
+	/** Tab list list. **/
+	private ListView<String> tabListView = new ListView<>();
+	
 	/** Skin options sub menu, 'Appearance' tab. **/
 	private ControlsPane skinOptions;
 
@@ -61,13 +72,41 @@ class OptionsDialog extends TemplateBox {
 		super(Main.getString("deskchan_options"));
 		instance = this;
 		tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+		tabPane.setTabMaxWidth(0);
+		tabPane.setTabMaxHeight(0);
+		tabPane.setSide(Side.RIGHT);
+		tabPane.pseudoClassStateChanged(PseudoClass.getPseudoClass("right"), false);
+		tabPane.pseudoClassStateChanged(PseudoClass.getPseudoClass(TabPane.STYLE_CLASS_FLOATING), true);
+		tabListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		initTabs();
-		getDialogPane().setContent(tabPane);
+		syncTabListViewItems();
+		tabPane.getTabs().addListener((ListChangeListener<Tab>) change -> syncTabListViewItems());
+		tabListView.getSelectionModel().selectedIndexProperty().addListener((observableValue, oldValue, newValue) ->
+				tabPane.getSelectionModel().select(newValue.intValue()));
+		HBox contentPane = new HBox();
+		contentPane.getChildren().add(tabListView);
+		contentPane.getChildren().add(tabPane);
+		/* !!! FIXME: Begin of dirty code !!! */
+		HBox.setMargin(tabPane, new Insets(0, -13, 0, 6));
+		Rectangle clipRect = new Rectangle();
+		clipRect.widthProperty().bind(contentPane.widthProperty().subtract(13));
+		clipRect.heightProperty().bind(contentPane.heightProperty());
+		contentPane.setClip(clipRect);
+		/* !!! End of dirty code !!! */
+		getDialogPane().setContent(contentPane);
 		setOnHidden(event -> {
 			instance = null;
 		});
 	}
-
+	
+	private void syncTabListViewItems() {
+		tabListView.getItems().clear();
+		for (Tab tab : tabPane.getTabs()) {
+			tabListView.getItems().add(tab.getText());
+		}
+		tabListView.getSelectionModel().select(tabPane.getSelectionModel().getSelectedIndex());
+	}
+	
 	static OptionsDialog getInstance() {
 		return instance;
 	}
