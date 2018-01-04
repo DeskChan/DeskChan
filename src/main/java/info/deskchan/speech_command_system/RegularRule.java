@@ -1,67 +1,42 @@
 package info.deskchan.speech_command_system;
 
+import info.deskchan.core_utils.LimitHashMap;
+
 import java.util.*;
+import java.util.regex.Pattern;
 
+/** Modified fuzzy regular expression turned into state machine. **/
 public class RegularRule{
-    public static void Testing(){
-        String[] correct_rules = {"погода", "поставь таймер {datetime:RelativeDateTime}", "(открой|запусти) браузер", "включи компьютер", "запусти   будильник {datetime:RelativeDateTime}", "(перейди|открой) ?ярлык (папку|файл)",
-                "(посчитай|вычисли|(забей ?в калькулятор)) ?(выражение|пример) {text:Text}", "рабочий день {start:DateTime} {end:DateTime}"};
-        String[] incorrect_rules = {"(открой||запусти) браузер", "", "(", "??включи компьютер", "?вк?лючи компьютер", "запусти   будильник {date:time:RelativeDateTime}", "(перейди|открой) ?ярлык ((папку|файл)",
-                "(посчитай?|вычисли|(забей ?в калькулятор)) ?(выражение|пример) {text:Text}", "{argument:Arg}", "{argument:Integer}"};
-        ArrayList<RegularRule> rules = new ArrayList<>();
-        for(String text : correct_rules){
-            try{
-                RegularRule rule = new RegularRule(text);
-                System.out.println("correct: ["+text+"] / ["+rule.toString()+"]");
-                rules.add(rule);
-            } catch (Exception e){
-                System.out.println("correct: ["+text+"] / [error]");
-                System.out.println(e.getMessage());
-            }
-        }
-        for(String text : incorrect_rules){
-            try{
-                RegularRule rule = new RegularRule(text);
-                System.out.println("incorrect: ["+text+"] / ["+rule.toString()+"]");
-                rules.add(rule);
-            } catch (Exception e){
-                System.out.println("incorrect: ["+text+"] / [error]");
-                System.out.println(e.getMessage());
-            }
-        }
-        String[] texts = { "поставь таймер на 2 секунды", "поставь таймер пять минут назад", "открой мне браузер", "включи кампуктер", "запусти будильник через 5 минут", "забей в калькулятор пример 2+2", "открой ярлык папка", "открой папка", "открой ярлык", "открой перейди файл",
-                "браузер будильник запусти", "рабочий день с 10 до 15"};
-        for(String text : texts){
-            RegularRule best;
-            for(RegularRule rule : rules) {
-                MatchResult result = rule.parse(text);
-                System.out.println(text+" "+rule+" "+result);
-                if(result.matchPercentage>0.95)
-                    System.out.println(rule.getArguments());
-            }
-        }
 
-    }
+    /** If you want to interpret rule with order dependence, so 'hello hi' will not be equal to 'hi hello'. **/
+    public boolean orderDependent = false;
 
-    protected int max_word_length=0;
-    public boolean orderDependent=false;
-    public boolean fullMatch=false;
+    /** Hardly decrease matching percent if some words was not found in rule. **/
+    public boolean fullMatch = false;
 
+    /** All information contains parse options for single matching operation. **/
     private class ParseOptions{
-        public int start;
-        public boolean orderDependent;
-        public String text;
 
-        public class Users{
-            // what is being used / who is using
+        /** Last word indexed by parsing, so we know what we should parse next. **/
+        public int lastParsedIndex;
+
+        public final boolean orderDependent;
+
+        /** Original text query. **/
+        public final String text;
+
+        /** Information which vertex using a word. **/
+        public class UsersStats {
+            // which word is being used / who is using
             protected ArrayList< Pair<String, HashSet<PhraseLevel>> > users;
 
-            public Users(ArrayList<String> words){
-                users=new ArrayList<>();
+            public UsersStats(ArrayList<String> words){
+                users = new ArrayList<>();
                 for(String word : words)
                     users.add(new Pair<>(word, new HashSet<>()));
             }
 
+            /** Split word. **/
             public void split(int wordIndex, int separatorPos){
                 Pair<String, HashSet<PhraseLevel>> element = users.get(wordIndex);
                 String left = element.one.substring(0,separatorPos),
@@ -85,17 +60,21 @@ public class RegularRule{
             public int wordsCount(){
                 return users.size();
             }
+            public int getWordUsedBy(PhraseLevel level){
+                for (int i = 0; i < users.size(); i++)
+                    if (users.get(i).two.contains(level)) return i;
+                return -1;
+            }
         }
-        public Users users;
-        public int max_word_length;
-        public ParseOptions(String text, ArrayList<String> words, int mwl, boolean orderDependent){
-            users = new Users(words);
-            max_word_length = mwl;
-            start = 0;
+        public UsersStats users;
+        public ParseOptions(String text, ArrayList<String> words, boolean orderDependent){
+            users = new UsersStats(words);
+            lastParsedIndex = -1;
             this.orderDependent = orderDependent;
             this.text = text;
         }
     }
+
     ParseOptions parseOptions;
     private static class SearchResult{
         float result;
@@ -107,18 +86,17 @@ public class RegularRule{
 
     protected abstract class PhraseLevel{
         boolean parsed;
-        public boolean required=true;
-        protected float result;
+        public boolean required = true;
 
         public abstract SearchResult parse();
         PhraseLevelComplex parent;
         public abstract boolean canBeRemoved();
         public abstract void remove();
-        public abstract int getLastPosition();
+        public abstract int getLastPosition(ParseOptions.UsersStats users);
     }
 
     protected abstract class PhraseLevelComplex extends PhraseLevel{
-        public ArrayList<PhraseLevel> levels=new ArrayList<PhraseLevel>();
+        public ArrayList<PhraseLevel> levels = new ArrayList <>();
         public void add(PhraseLevel level){
             levels.add(level);
         }
@@ -128,12 +106,11 @@ public class RegularRule{
         public PhraseLevel get(int index){
             return levels.get(index);
         }
-        public int getLastPosition(){
-            if(!parsed) return -1;
-            int position=-1;
+        public int getLastPosition(ParseOptions.UsersStats users){
+            int position = -1;
             for(PhraseLevel level : levels)
-                if(level.getLastPosition()>position && level.parsed)
-                    position=level.getLastPosition();
+                if(level.getLastPosition(users) > position)
+                    position = level.getLastPosition(users);
             return position;
         }
         protected String printer(char separator){
@@ -149,15 +126,16 @@ public class RegularRule{
             return pr.toString();
         }
     }
+
     protected class PhraseLevelTypeAnd extends PhraseLevelComplex{
         public SearchResult parse(){
             int length = 0;
-            float currentResult=0;
+            float currentResult = 0;
             SearchResult[] results = new SearchResult[levels.size()];
-            for(int i=0;i<levels.size();i++){
-                results[i]=levels.get(i).parse();
+            for(int i = 0; i < levels.size(); i++){
+                results[i] = levels.get(i).parse();
 
-                if(results[i].result<0.55 && levels.get(i).required){
+                if(results[i].result < 0.55 && levels.get(i).required){
                     parsed = false;
                     return new SearchResult(required ? 0f : 0.6f, 1);
                 }
@@ -171,7 +149,7 @@ public class RegularRule{
         }
         public boolean canBeRemoved(){
             if(!parsed || !required) return true;
-            if(parent==null) return false;
+            if(parent == null) return false;
             return parent.canBeRemoved();
         }
         public void remove(){
@@ -180,8 +158,9 @@ public class RegularRule{
             parent.remove();
         }
         @Override
-        public String toString(){ return (required ? "" : "?")+printer(' '); }
+        public String toString(){ return (required ? "" : "?") + printer(' '); }
     }
+
     protected class PhraseLevelTypeOr extends PhraseLevelComplex{
         private int found;
         public SearchResult parse(){
@@ -190,21 +169,18 @@ public class RegularRule{
             SearchResult[] results = new SearchResult[levels.size()];
             for(int i=0; i<levels.size(); i++){
                 results[i] = levels.get(i).parse();
-                //MessageBox.Show("or: "+levels.size()+" "+i+" "+levels[i].Printer()+" "+results[i].one+" "+results[i].two);
                 if(results[i].result<0.6) continue;
                 found++;
-                if (max.result < results[i].result)
-                    max.result = results[i].result;
-                if (max.wordSequenceLength < results[i].wordSequenceLength)
-                    max.wordSequenceLength = results[i].wordSequenceLength;
+
+                max.result = Math.max(results[i].result, max.result);
+                max.wordSequenceLength = Math.max(max.wordSequenceLength, results[i].wordSequenceLength);
             }
-            parsed=false;
+            parsed = false;
             if(found == 0) return new SearchResult(0, 0);
-            parsed=true;
+            parsed = true;
             return max;
         }
         public boolean canBeRemoved(){
-            ////MessageBox.Show(found+" "+parsed+" "+(parent!=null)+" "+required);
             if(!parsed || !required) return true;
             if(found>1) return true;
             return parent!=null && parent.canBeRemoved();
@@ -213,19 +189,19 @@ public class RegularRule{
             if(!parsed) return;
             found--;
             if(found>0) return;
-            parsed=false;
+            parsed = false;
             parent.remove();
         }
         @Override
         public String toString(){ return (required ? "" : "?")+printer('|'); }
     }
+
     protected ArrayList<Argument> arguments=new ArrayList<>();
 
     private enum ArgumentType { Text , Word , List , Integer , Number , Date , Time , DateTime , RelativeDateTime }
     protected class Argument extends PhraseLevel{
         public String name;
         public ArgumentType type;
-        Object value;
         private PhraseLevel previous;
         private int lastPos;
 
@@ -245,23 +221,28 @@ public class RegularRule{
             this.type = searchArgument(parts[1].toLowerCase());
             this.name = parts[0];
             this.previous = previous;
-            value = null;
         }
 
         public SearchResult parse(){
-            lastPos=-1;
+            dropPosition();
             return new SearchResult(1, 1);
         }
 
-        public void localize(String text, Words words){
-            int i = getLastPosition()+1;
+        public void dropPosition(){
+            lastPos = -1;
+        }
 
+        public Object localize(String text, MatchResult result){
+            Object value = null;
+            int i = getLastPosition(result.users) + 1;
+            Words words = result.words;
             switch(type){
                 case Text: {
-                    String textCopy=text;
+                    String textCopy = text;
                     for (int k=0; k < words.size(); k++) {
                         if (k < i || words.used[k]) {
-                            textCopy=textCopy.replace(words.get(k),"");
+                            Pattern pattern = Pattern.compile("(^|[^A-zА-я])("+words.get(k)+")($|[^A-zА-я])");
+                            textCopy = pattern.matcher(textCopy).replaceAll("$1$3");
                         }
                         words.used[k] = true;
                     }
@@ -270,19 +251,24 @@ public class RegularRule{
                         value = textCopy;
                 } break;
                 case Word:{
-                    value=words.get(i);
-                    lastPos = i;
-                    words.used[i]=true;
+                    for (int k=i; k < words.size(); k++) {
+                        if (!words.used[k]) {
+                            value = words.get(k);
+                            lastPos = k;
+                            words.used[k] = true;
+                            break;
+                        }
+                    }
                 } break;
                 case List: {
-                    List<String> list=new ArrayList<>();
+                    List<String> list = new ArrayList<>();
                     for (; i < words.size(); i++)
                         if (!words.used[i]){
                             list.add(words.get(i));
-                            words.used[i]=true;
+                            words.used[i] = true;
                             lastPos = i;
                         }
-                    if(list.size()>0) value=list;
+                    if(list.size()>0) value = list;
                 } break;
                 case Integer:{
                     Words sub = new Words(words, i, words.size());
@@ -315,6 +301,7 @@ public class RegularRule{
                     lastPos = words.join(sub.used, i);
                 } break;
             }
+            return value;
         }
         public boolean canBeRemoved(){
             return true;
@@ -322,50 +309,57 @@ public class RegularRule{
         public void remove(){
             parent.remove();
         }
-        public int getLastPosition(){
-            if(lastPos<0){
-                if(previous!=null)
-                    return previous.getLastPosition();
-                return 0;
+        public int getLastPosition(ParseOptions.UsersStats users){
+            if(lastPos < 0){
+                return previous != null ? previous.getLastPosition(users) : 0;
             }
             return lastPos;
         }
         @Override
         public String toString(){ return '{'+name+":"+type.toString()+"}"; }
     }
+
+    /** SIMILAR - we found word that looks similar to required word
+     *  SUBWORD - we found required word as the part of other word
+     *  DIVIDED - we found some words divided by space that looks like required word as one
+     */
+    private enum WordType { NONE, SIMILAR, SUBWORD, DIVIDED }
+
     protected class WordPhrase extends PhraseLevel{
         private String word;
         private int lastPosition;
+
         private WordPhrase(String word) throws Exception{
             for(int i=0; i<word.length(); i++)
                 if(!Character.isLetter(word.charAt(i)))
                     throw new Exception("Wrong word for rule: "+word, null);
 
-            if(max_word_length < word.length()) max_word_length = word.length();
             this.word = word;
             parsed = true;
         }
-        public SearchResult parse(){
-            lastPosition=-1;
-            int type=0;
-            float max=0;
-            int leftBorder=-1, rightBorder=-1, wordsCount = parseOptions.users.wordsCount();
 
-            for(int i=parseOptions.start, k, l=word.length()*2; i<wordsCount; i++){
-                String matchingWord=parseOptions.users.getWord(i);
+        public SearchResult parse(){
+            lastPosition = -1;
+            WordType type = WordType.NONE;
+            float max = 0;
+            int leftBorder = -1, rightBorder = -1,
+                wordsCount = parseOptions.users.wordsCount();
+
+            for(int i = parseOptions.lastParsedIndex + 1, k, l = word.length()*2; i < wordsCount; i++){
+                String matchingWord = parseOptions.users.getWord(i);
 
                 float result = PhraseComparison.relative(word, matchingWord);
                 if(result > 0.99){   // exact match
                     parseOptions.users.addUser(i, this);
                     lastPosition = i;
-                    if(parseOptions.orderDependent) parseOptions.start = i+1;
+                    if(parseOptions.orderDependent) parseOptions.lastParsedIndex = i;
                     return new SearchResult(1, word.length());
                 }
 
                 if(result > PhraseComparison.ACCURACY && result > max){  // some overlapping, but we do not sure
                     max = result;
                     leftBorder = i;
-                    type = 1;
+                    type = WordType.SIMILAR;
                 }
 
                 if(matchingWord.length() > word.length()*1.3){   // maybe only start or end of the word matches
@@ -374,14 +368,14 @@ public class RegularRule{
                         max=result;
                         leftBorder=i;
                         rightBorder=i;
-                        type=2;
+                        type = WordType.SUBWORD;
                     }
                     result = PhraseComparison.relative(matchingWord.substring(word.length()), word) * 0.95f;
                     if(result>0.85 && result>max){   // end
                         max=result;
                         leftBorder=i;
                         rightBorder=i+1;
-                        type=2;
+                        type = WordType.SUBWORD;
                     }
                 }
                 StringBuilder p = new StringBuilder(parseOptions.users.getWord(i));
@@ -395,49 +389,49 @@ public class RegularRule{
                         max = result;
                         leftBorder=i;
                         rightBorder=i+k;
-                        type=3;
+                        type = WordType.DIVIDED;
                     }
                 }
             }
-            if(type==0 || max<PhraseComparison.ACCURACY){
+            if(type == WordType.NONE || max<PhraseComparison.ACCURACY){
                 parsed = false;
                 return new SearchResult(0,0);
             }
             switch(type){
-                case 1:
+                case SIMILAR:
                     parseOptions.users.addUser(leftBorder, this);
-                    return new SearchResult(max, leftBorder);
-                case 2:{
+                    return new SearchResult(max, parseOptions.users.getWord(leftBorder).length());
+                case SUBWORD:{
                     parseOptions.users.split(leftBorder, word.length());
                     if(parseOptions.orderDependent)
-                        parseOptions.start = rightBorder+1;
+                        parseOptions.lastParsedIndex = rightBorder;
                     parseOptions.users.addUser(rightBorder, this);
                     lastPosition = rightBorder;
                     return new SearchResult(max, word.length());
                 }
-                case 3:{
+                case DIVIDED:{
                     StringBuilder p = new StringBuilder();
-                    for(int a=leftBorder; a<rightBorder; a++){
+                    for(int a = leftBorder; a < rightBorder; a++){
                         p.append(parseOptions.users.getWord(a));
                         parseOptions.users.addUser(a, this);
                     }
-                    return new SearchResult(max, word.length());
+                    return new SearchResult(max, p.length());
                 }
             }
-            return new SearchResult(0,0);
+            return new SearchResult(0, 0);
         }
         public boolean canBeRemoved(){
             return parent.canBeRemoved();
         }
-        public int getLastPosition(){
-            return lastPosition;
+        public int getLastPosition(ParseOptions.UsersStats users){
+            return users.getWordUsedBy(this);
         }
         public void remove(){
             parent.remove();
         }
         @Override
         public String toString(){
-            return (required ? "" : "?")+word;
+            return (required ? "" : "?") + word;
         }
     }
 
@@ -449,11 +443,10 @@ public class RegularRule{
         return phrase;
     }
     protected PhraseLevel analyzePhrase(String phrase, PhraseLevelComplex parent) throws Exception{
-        //MessageBox.Show(phrase);
         int level=0, st=0, blocks=0;
         for(int i=0, len=phrase.length(); i<len; i++){
             if(phrase.charAt(i)=='('){
-                if(level==0) blocks++;
+                if(level == 0) blocks++;
                 level++;
             } else if(phrase.charAt(i)==')') level--;
         }
@@ -493,11 +486,7 @@ public class RegularRule{
                     phraseLevel = new Argument(phrase, last);
                     arguments.add((Argument) phraseLevel);
                 } catch (Exception e){
-                    try {
-                        phraseLevel = new WordPhrase(phrase);
-                    } catch (Exception e2){
-                        throw e2;
-                    }
+                    phraseLevel = new WordPhrase(phrase);
                 }
 
                 phraseLevel.parent = parent;
@@ -602,16 +591,27 @@ public class RegularRule{
         if(!simple_word_present) throw new Exception("Text rule parse error: rule should contain at least one word, rule=["+rule+"]");
         if(level!=0) throw new Exception("Text rule parse error: not all brackets closed, level="+level+", rule=["+rule+"]");
     }
+
+    public static RegularRule create(String phrase) throws Exception{
+        if (!hash.containsKey(phrase)) {
+            hash.put(phrase, new RegularRule(phrase));
+            if (debug) System.out.println("created new rule for '" + phrase + "'");
+        }
+        return hash.get(phrase);
+    }
+
     private String textrule;
+
     public String getRule(){
         return textrule;
     }
-    public RegularRule(String phrase) throws Exception{
+
+    private RegularRule(String phrase) throws Exception{
         textrule = phrase;
 
         if(phrase.charAt(0)=='!'){
-            orderDependent=true;
-            phrase=phrase.substring(1);
+            orderDependent = true;
+            phrase = phrase.substring(1);
         }
         correctCheck(phrase);
 
@@ -625,84 +625,110 @@ public class RegularRule{
         }
         start.required = true;
     }
+
     public static class MatchResult{
         final float matchPercentage;
-        final int wordsUsed;
+        final Words words;
         final int firstWordUsed;
-        final boolean[] used;
+        final int wordsUsed;
+        private final ParseOptions.UsersStats users;
         MatchResult(){
             matchPercentage = 0;
-            used = null;
+            words = null;
             firstWordUsed = -1;
             wordsUsed = 0;
+            users = null;
+        }
+        MatchResult(MatchResult copy){
+            matchPercentage = copy.matchPercentage;
+            words = new Words(copy.words);
+            firstWordUsed = copy.firstWordUsed;
+            wordsUsed = copy.wordsUsed;
+            users = copy.users;
         }
         MatchResult(SearchResult result, ParseOptions options){
             matchPercentage = result.result;
-            used = new boolean[options.users.wordsCount()];
+
+            ArrayList<String> wordsList = new ArrayList<>();
+            boolean[] used = new boolean[options.users.wordsCount()];
             int fwu = -1, wu = 0;
-            for(int i=0; i<used.length; i++) {
+            for(int i=0; i<used.length; i++){
+                wordsList.add(options.users.getWord(i));
                 used[i] = (options.users.usersCount(i) > 0);
                 if (used[i]){
                     if (fwu<0) fwu = i;
                     wu++;
                 }
             }
+            words = new Words(wordsList, used);
             firstWordUsed = fwu;
             wordsUsed = wu;
+            users = options.users;
         }
         public boolean better(MatchResult other){
             return matchPercentage > 0.5 && (other == null ||
-                    ( wordsUsed>=other.wordsUsed && matchPercentage>=other.matchPercentage && ( other.firstWordUsed<0 || firstWordUsed<=other.firstWordUsed )));
+                    ( wordsUsed >= other.wordsUsed && ( other.firstWordUsed < 0 || firstWordUsed <= other.firstWordUsed )));
         }
         @Override
         public String toString(){
             return "words used: "+wordsUsed+", first word used at: "+firstWordUsed+", match: "+(matchPercentage*100)+"%";
         }
     }
+
     public MatchResult parse(String phrase, ArrayList<String> words){
-        parseOptions = new ParseOptions(phrase, words, max_word_length, orderDependent);
+        QueryPair query = new QueryPair(this, phrase);
+        if (matchingHash.containsKey(query))
+            return new MatchResult(matchingHash.get(query));
+
+        if (debug) System.out.println("new parse operation for '" + phrase + "'");
+        parseOptions = new ParseOptions(phrase, words, orderDependent);
         SearchResult result = start.parse();
-        int mass=0;
-        for(int i=0,le;i<words.size();i++){
+
+        // whole symbols count in text
+        int mass = 0;
+
+        // trying to resolve situations where some words was used more than once, like text 'hi hello' with rule 'hi hello hi'
+        for(int i = 0, le; i < words.size(); i++){
             le = parseOptions.users.usersCount(i);
             mass += words.get(i).length();
             if(le > 1){
-                for(PhraseLevel user : parseOptions.users.getWordUsers(i))
-                    if(user.canBeRemoved()){
-                        parseOptions.users.getWordUsers(i).remove(i);
+                Iterator<PhraseLevel> it = parseOptions.users.getWordUsers(i).iterator();
+                while (it.hasNext()) {
+                    if (it.next().canBeRemoved()) {
+                        it.remove();
                         break;
                     }
-                if(!start.parsed) return new MatchResult();
+                }
+                // cannot resolve
+                if(!start.parsed) {
+                    matchingHash.put(query, new MatchResult());
+                    return new MatchResult();
+                }
             }
         }
         if(fullMatch && result.result>0.5)
-            result.result *= 0.5f+(float)result.wordSequenceLength/mass/2.0f;
+            result.result *= 0.5f + (float) result.wordSequenceLength / mass / 2.0f;
 
-        return new MatchResult(result, parseOptions);
+        matchingHash.put(query, new MatchResult(result, parseOptions));
+        return new MatchResult(matchingHash.get(query));
     }
+
     public MatchResult parse(String phrase){
         return parse(phrase, PhraseComparison.toClearWords(phrase));
     }
-    public HashMap<String,Object> getArguments(){
-        HashMap<String,Object> map=new HashMap<>();
-        if(arguments.size()==0)
+
+    public Map<String,Object> getArguments(String text, MatchResult result){
+        Map<String, Object> map = new HashMap<>();
+        if(arguments.size() == 0)
             return map;
 
-        ArrayList<String> wordsList = new ArrayList<>();
-        boolean[] used = new boolean[parseOptions.users.wordsCount()];
-        for(int i=0,le; i<used.length; i++){
-            wordsList.add(parseOptions.users.getWord(i));
-            used[i] = (parseOptions.users.usersCount(i) > 0);
-        }
-
-        Words words = new Words(wordsList, used);
+        for(Argument element : arguments)
+            element.dropPosition();
 
         for(Argument element : arguments){
-            element.localize(parseOptions.text, words);
-        }
-        for(Argument element : arguments){
-            if(element.value==null) continue;
-            map.put(element.name, element.value);
+            Object argument = element.localize(text, result);
+            if (argument != null)
+                map.put(element.name, argument);
         }
 
         return map;
@@ -710,5 +736,80 @@ public class RegularRule{
     @Override
     public String toString(){
         return start.toString();
+    }
+
+    private static final LimitHashMap<String, RegularRule> hash = new LimitHashMap<>(100);
+    private static final LimitHashMap<QueryPair, MatchResult> matchingHash = new LimitHashMap<>(500);
+
+    private static class QueryPair{
+        RegularRule rule;
+        String query;
+        QueryPair(RegularRule rule, String query){
+            this.rule = rule;
+            this.query = query;
+        }
+        @Override
+        public boolean equals(Object other){
+            if (other.getClass() != getClass()) return false;
+            return rule.equals(((QueryPair) other).rule) && query.equals(((QueryPair) other).query);
+        }
+        @Override
+        public int hashCode(){
+            return rule.hashCode();
+        }
+    }
+
+    private static boolean debug = Main.debugBuild;
+
+    static {
+        if (debug){
+            Testing();
+            debug = false;
+        }
+    }
+    public static void Testing(){
+        String[] correct_rules = {"погода", "поставь таймер {datetime:RelativeDateTime}", "(открой|запусти) браузер", "включи компьютер", "запусти   будильник {datetime:RelativeDateTime}", "(перейди|открой) ?ярлык (папку|файл)",
+                "(посчитай|вычисли|(забей ?в калькулятор)) ?(выражение|пример) {text:Text}", "погода", "рабочий день {start:DateTime} {end:DateTime}"};
+        String[] incorrect_rules = {"(открой||запусти) браузер", "", "(", "??включи компьютер", "?вк?лючи компьютер", "запусти   будильник {date:time:RelativeDateTime}", "(перейди|открой) ?ярлык ((папку|файл)",
+                "(посчитай?|вычисли|(забей ?в калькулятор)) ?(выражение|пример) {text:Text}", "{argument:Arg}", "{argument:Integer}"};
+        ArrayList<RegularRule> rules = new ArrayList<>();
+        for(String text : correct_rules){
+            try{
+                RegularRule rule = RegularRule.create(text);
+                // System.out.println("correct: ["+text+"] / ["+rule.toString()+"]");
+                rules.add(rule);
+            } catch (Exception e){
+                System.out.println("correct: ["+text+"] / [error]");
+                System.out.println(e.getMessage());
+            }
+        }
+        for(String text : incorrect_rules){
+            try {
+                RegularRule rule = RegularRule.create(text);
+                System.out.println("incorrect: ["+text+"] | ["+rule.toString()+"]");
+                rules.add(rule);
+            } catch (Exception e){
+                //System.out.println("incorrect: ["+text+"] | [error]");
+                //System.out.println(e.getMessage());
+            }
+        }
+        String[] texts = { "поставь таймер на 2 секунды", "поставь таймер пять минут назад", "рабочий день с 10 до 15", "открой мне браузер", "включи кампуктер", "запусти будильник через 5 минут", "забей в калькулятор пример 2+2", "открой ярлык папка", "открой папка", "открой ярлык", "открой перейди файл",
+                "браузер будильник запусти", "рабочий день с 10 до 15"};
+        for(String text : texts){
+            MatchResult bestResult = null;
+            RegularRule bestRule = null;
+            for(RegularRule rule : rules) {
+                MatchResult result = rule.parse(text);
+                System.out.println(text+" | "+rule+" | "+result);
+                System.out.println(result.words);
+                if (result.better(bestResult)){
+                    bestResult = result;
+                    bestRule = rule;
+                }
+            }
+            if (bestResult != null){
+                System.out.println(bestRule.getRule() + " | " + bestRule.getArguments(text, bestResult));
+            }
+        }
     }
 }

@@ -138,6 +138,6 @@ public class ScenarioPlugin implements Plugin {
                 }
             };
             scenarioThread.start();
-        } else pluginProxy.sendMessage("talk:request", "TECHPROBLEM");
+        } else pluginProxy.sendMessage("DeskChan:request-say", "TECHPROBLEM");
     }
 }

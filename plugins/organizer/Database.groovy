@@ -39,24 +39,26 @@ class Database{
         long time
         String eventId
         String soundPath
+        int timerId
         DatabaseEntry(JSONObject obj){
-            type=obj.getInt("type")
-            time=obj.getLong("stamp")
-            eventId=obj.getString("id")
+            type = obj.getInt("type")
+            time = obj.getLong("stamp")
+            eventId = obj.getString("id")
             if(obj.has("soundPath"))
-                soundPath=obj.getString("soundPath")
-            else soundPath=null
+                soundPath = obj.getString("soundPath")
+            else
+                soundPath = null
         }
         DatabaseEntry(int type, Calendar date, String name, String sound){
-            this.type=type
-            time=date.getTimeInMillis()
-            eventId=name
-            soundPath=null
-            if(sound!=null){
+            this.type = type
+            time = date.getTimeInMillis()
+            eventId = name
+            soundPath = null
+            if(sound != null){
                 if(sound.equals(instance.getString('default')))
-                    soundPath=defaultSound
+                    soundPath = defaultSound
                 else if(sound.length()>0)
-                    soundPath=sound
+                    soundPath = sound
             }
         }
         JSONObject toJSON(){
@@ -128,13 +130,13 @@ class Database{
         writer.close()
     }
     void delete(List items) {
-        for(int k=0;k<items.size();k++) {
-            int i=items[k].lastIndexOf('[')
-            def str=items[k].substring(0,i-1)
-            for (i = 0; i < entries.size() && entries.size()>0; i++) {
-                DatabaseEntry entry=entries.getAt(i) as DatabaseEntry
+        for(int k = 0; k < items.size(); k++) {
+            int i = items[k].lastIndexOf('[')
+            def str = items[k].substring(0,i-1)
+            for (i = 0; i < entries.size() && entries.size() > 0; i++) {
+                DatabaseEntry entry = entries.getAt(i) as DatabaseEntry
                 if (entry.eventId.equals(str)) {
-                    instance.sendMessage('core-utils:notify-after-delay', [ 'delay': -1 , 'seq': entry.hashCode() ])
+                    instance.cancelTimer(entry.timerId)
                     entries.removeAt(i)
                     i--
                 }
@@ -150,16 +152,19 @@ class Database{
     }
 
     def notify(Database.DatabaseEntry entry){
-        def delay=entry.time-Calendar.instance.getTimeInMillis()
+        def delay = entry.time - Calendar.instance.getTimeInMillis()
         String message
-        if(entry.type==0) message="Ты планировал событие \""+entry.eventId+"\". Оно наступило!"
-        else if(entry.type==1) message="Ты ставил таймер \""+entry.eventId+"\". Он закончился!"
+        if(entry.type==0)
+            message="Ты планировал событие \""+entry.eventId+"\". Оно наступило!"
+        else if(entry.type==1)
+            message="Ты ставил таймер \""+entry.eventId+"\". Он закончился!"
         else return
-        instance.sendMessage('core-utils:notify-after-delay', [ 'delay': delay , 'seq': entry.hashCode() ], { sender, data ->
+
+        entry.timerId = instance.setTimer(delay, { sender, data ->
             instance.sendMessage('DeskChan:say',[ 'text': message, 'timeout': 20, 'priority': 10000, 'partible': false ])
             if(entry.soundPath!=null)
                 instance.sendMessage('gui:play-sound',[ 'file': entry.soundPath, /*'count': 10*/ ])
-            entries-=entry
+            entries -= entry
             save()
             instance.setupEventsMenu()
         })

@@ -42,7 +42,7 @@ public abstract class Scenario extends Script{
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:say", text);
     }
     protected void requestPhrase(String text){
-        ScenarioPlugin.pluginProxy.sendMessage("talk:request", text);
+        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-say", text);
     }
 
     protected void sprite(String text){
@@ -107,7 +107,7 @@ public abstract class Scenario extends Script{
 
         void is(String obj, Function action) {
             try {
-                matches.put(new RegularRule(obj), action);
+                matches.put(RegularRule.create(obj), action);
             } catch (Exception e){
                 ScenarioPlugin.pluginProxy.log(e);
                 matches.put(false, action);

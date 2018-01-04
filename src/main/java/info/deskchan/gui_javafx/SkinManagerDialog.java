@@ -2,18 +2,16 @@ package info.deskchan.gui_javafx;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;
-import javafx.scene.control.TreeTableView;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 
-class SkinManagerDialog extends Dialog<Void> {
+class SkinManagerDialog extends TemplateBox {
 	
 	private ListView<Skin> skinsList = new ListView<>();
 	
 	SkinManagerDialog(Window parent) {
-		setTitle(Main.getString("skin_manager"));
+		super("skin_manager");
 		initOwner(parent);
 		initModality(Modality.WINDOW_MODAL);
 		skinsList.setPrefSize(400, 300);

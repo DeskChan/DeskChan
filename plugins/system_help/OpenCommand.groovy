@@ -50,7 +50,7 @@ class OpenCommand{
                             value.execute()
                             break
                         default:
-                            ('cmd /c start '+wrap(value)).execute()
+                            ('cmd /c start "" ' + wrap(value)).execute()
                             break
                     }
                     break
@@ -60,7 +60,7 @@ class OpenCommand{
                             value.execute()
                             break
                         default:
-                            ('xdg-open '+wrap(value)).execute()
+                            ('xdg-open ' + wrap(value)).execute()
                             break
                     }
                     break
@@ -70,7 +70,7 @@ class OpenCommand{
                             value.execute()
                             break
                         default:
-                            ('open '+wrap(value)).execute()
+                            ('open ' + wrap(value)).execute()
                             break
                     }
                     break
@@ -117,9 +117,9 @@ class OpenCommand{
     static boolean open(List text){
         float result = 0.6
         LinkEntry link = null
-        for(int i = 0; i<text.size(); i++){
+        for(int i = 0; i < text.size(); i++){
             for(int j = 0; j<entries.size(); j++){
-                entries.get(j).keywords.each{
+                entries.get(j).keywords.each {
                     float r = PhraseComparison.relative(it, text[i])
                     if(r > result){
                         result = r
@@ -143,18 +143,25 @@ class OpenCommand{
         load()
         instance.sendMessage("core:add-command", [tag: pluginName + ':run'])
         instance.sendMessage("core:add-command", [tag: pluginName + ':open'])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':open-link'])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':run-with-report' ])
+        instance.sendMessage("core:add-command", [tag: pluginName + ':run-with-multiple-report' ])
+
+        instance.addMessageListener(pluginName + ':open-link', { sender, tag, d ->
+            new LinkEntry(d.toString(), LinkEntry.Types.FILE, []).open()
+        })
 
         instance.addMessageListener(pluginName + ':open', { sender, tag, d ->
             Map m = d
             List text = (List) m.get('text')
-            if(text==null || text.size()==0){
+            if(text == null || text.size()==0){
                 StringBuilder sb = new StringBuilder()
                 entries.each{
                     sb.append(it.keywords.get(0)+", ")
                 }
                 sb.delete(sb.length()-2, sb.length())
                 instance.sendMessage('DeskChan:say', "Смотри: я умею открывать следующие штуки: "+sb.toString())
-                instance.sendMessage('talk:request', 'CLARIFY')
+                instance.sendMessage('DeskChan:request-say', 'CLARIFY')
                 instance.sendMessage('DeskChan:request-user-speech', null) { s, d2 ->
                     text = (List) d2['value'].split(' ')
                     if(!open(text))
@@ -173,10 +180,6 @@ class OpenCommand{
                         rule       : 'открой {text:List}'
                 ]
         )
-
-        instance.sendMessage("core:add-command", [ tag: pluginName+':run' ])
-        instance.sendMessage("core:add-command", [ tag: pluginName+':run-with-report' ])
-        instance.sendMessage("core:add-command", [ tag: pluginName+':run-with-multiple-report' ])
 
         instance.addMessageListener(pluginName+':run', { sender, tag, dat ->
             if(dat==null) return

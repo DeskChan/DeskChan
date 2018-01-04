@@ -125,7 +125,11 @@ class MovablePane extends Pane {
 	void setPositionStorageID(String id) {
 		assert positionStorageID == null;
 		positionStorageID = id;
-		loadPositionFromStorage();
+		try {
+			loadPositionFromStorage();
+		} catch (Exception e){
+			setDefaultPosition();
+		}
 		if (positionRelativeToDesktopSize) {
 			Screen.getScreens().addListener((ListChangeListener<Screen>) change -> loadPositionFromStorage());
 		}
@@ -155,7 +159,7 @@ class MovablePane extends Pane {
 		try {
 			final String key = getCurrentPositionStorageKey();
 			if (key != null) {
-				final String value = Main.getProperty(key, null);
+				final String value = Main.getProperties().getString(key);
 				if (value != null) {
 					String[] coords = value.split(";");
 					if (coords.length == 2) {
@@ -179,7 +183,7 @@ class MovablePane extends Pane {
 		final String key = getCurrentPositionStorageKey();
 		if (key != null) {
 			Point2D pos = getPosition();
-			Main.setProperty(key, pos.getX() + ";" + pos.getY());
+			Main.getProperties().put(key, pos.getX() + ";" + pos.getY());
 		}
 	}
 
