@@ -1,7 +1,6 @@
 package info.deskchan.gui_javafx;
 
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core_utils.TextOperations;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -23,6 +22,7 @@ import java.util.*;
 public class KeyboardEventNotificator implements NativeKeyListener {
 
     private static KeyboardEventNotificator instance;
+    private static int listenerId = -1;
 
     public static void initialize() {
 
@@ -38,7 +38,9 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
 
         // registering event
-        pluginProxy.sendMessage("core:add-event", new TextOperations.TagsMap("tag: \"gui:keyboard-handle\""));
+        pluginProxy.sendMessage("core:add-event", new HashMap(){{
+            put("tag", "gui:keyboard-handle");
+        }});
         pluginProxy.addMessageListener("core:update-links:gui:keyboard-handle", (sender, tag, data) -> {
             updateCommandsList((List) data);
         });
@@ -50,38 +52,45 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             setSubmenu();
         });
 
-        /* Print key names in options window
+        /* Print/stop printing key names in options window
          * Technical message
-         * Returns: none
-         */
+         * Returns: none */
         pluginProxy.addMessageListener("gui:keyboard-get-keycodes", (sender, tag, data) -> {
-            pluginProxy.sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
-                put("name", pluginProxy.getString("hotkeys"));
-                List<HashMap<String, Object>> list = new LinkedList<>();
-
-                String raw = "";
-                String keys = "";
-                if(currentPressed.size() > 0) {
-                    for (KeyPair keyCode : currentPressed)
-                        raw += "R" + keyCode.rawCode + " + ";
-                    raw = raw.substring(0, raw.length()-3);
-
-                    keys = KeyboardCommand.getKeyNames(currentPressed);
-                }
-
-                final String Fraw = raw, Fkeys = keys;
-                list.add(new HashMap<String, Object>() {{
-                    put("id", "raw-codes");
-                    put("type", "TextField");
-                    put("value", Fraw);
+            if (listenerId < 0){
+                listenerId = pluginProxy.setTimer(30000, (s, d) -> {
+                    listenerId = -1;
+                    Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+                        put("name", Main.getString("hotkeys"));
+                        List<Map<String, Object>> list = new LinkedList<>();
+                        list.add(new HashMap<String, Object>() {{
+                            put("id", "get-codes");
+                            put("value", Main.getString("hotkeys.watch"));
+                        }});
+                        put("controls", list);
+                    }});
+                });
+                Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+                    put("name", Main.getString("hotkeys"));
+                    List<Map<String, Object>> list = new LinkedList<>();
+                    list.add(new HashMap<String, Object>() {{
+                        put("id", "get-codes");
+                        put("value", Main.getString("hotkeys.stop-watch"));
+                    }});
+                    put("controls", list);
                 }});
-                list.add(new HashMap<String, Object>() {{
-                    put("id", "keywords");
-                    put("type", "TextField");
-                    put("value", Fkeys);
+            } else {
+                pluginProxy.cancelTimer(listenerId);
+                listenerId = -1;
+                Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+                    put("name", Main.getString("hotkeys"));
+                    List<Map<String, Object>> list = new LinkedList<>();
+                    list.add(new HashMap<String, Object>() {{
+                        put("id", "get-codes");
+                        put("value", Main.getString("hotkeys.watch"));
+                    }});
+                    put("controls", list);
                 }});
-                put("controls", list);
-            }});
+            }
         });
 
         GlobalScreen.addNativeKeyListener(instance);
@@ -95,7 +104,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         pluginProxy.sendMessage("gui:setup-options-submenu", new HashMap<String, Object>(){{
             put("name", pluginProxy.getString("hotkeys"));
             put("msgTag", "gui:keyboard-submenu-save");
-            List<HashMap<String, Object>> list = new LinkedList<>();
+            List<Map<String, Object>> list = new LinkedList<>();
             list.add(new HashMap<String, Object>() {{
                 put("id", "code-info");
                 put("type", "Label");
@@ -116,7 +125,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                 put("id", "get-codes");
                 put("type", "Button");
                 put("msgTag", "gui:keyboard-get-keycodes");
-                put("value", Main.getString("Get"));
+                put("value", Main.getString("hotkeys.watch"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "delay");
@@ -131,6 +140,35 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         }});
     }
 
+    static void updateKeysInSubMenu(){
+        Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+            put("name", Main.getString("hotkeys"));
+            List<HashMap<String, Object>> list = new LinkedList<>();
+
+            String raw = "";
+            String keys = "";
+            if(currentPressed.size() > 0) {
+                for (KeyPair keyCode : currentPressed)
+                    raw += "R" + keyCode.rawCode + " + ";
+                raw = raw.substring(0, raw.length()-3);
+
+                keys = KeyboardCommand.getKeyNames(currentPressed);
+            }
+
+            final String Fraw = raw, Fkeys = keys;
+            list.add(new HashMap<String, Object>() {{
+                put("id", "raw-codes");
+                put("type", "TextField");
+                put("value", Fraw);
+            }});
+            list.add(new HashMap<String, Object>() {{
+                put("id", "keywords");
+                put("type", "TextField");
+                put("value", Fkeys);
+            }});
+            put("controls", list);
+        }});
+    }
 
     static class KeyPair{
         final int keyCode;
@@ -177,6 +215,9 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         if(currentPressed.add(new KeyPair(e)) && commands != null && commands.length > 0) {
             setChanged = true;
             handler.start();
+            if (listenerId >= 0){
+                updateKeysInSubMenu();
+            }
         }
     }
 
@@ -186,6 +227,9 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         setChanged = true;
         if(currentPressed.size() == 0)
             handler.stop();
+        if (listenerId >= 0){
+            updateKeysInSubMenu();
+        }
     }
 
     /** It does nothing but needs to me implemented. **/
@@ -311,7 +355,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
                 String keycodes = "", str;
                 while ((str = in.readLine()) != null) keycodes += str;
-
+                in.close();
                 JSONObject map = new JSONObject(keycodes);
                 for(String entry : map.keySet()){
                     JSONArray array = map.getJSONArray(entry);

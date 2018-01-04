@@ -290,14 +290,14 @@ class Character extends MovablePane {
 		MessageInfo messageInfo = null;
 		if (data != null) {
 			messageInfo = new MessageInfo(data);
-			if ((messageInfo.priority <= 0) && (messageQueue.size() > 0)) {
+			if ((messageInfo.priority < 0) && (messageQueue.size() > 0)) {
 				return;
 			}
 			messageQueue.add(messageInfo);
 			Iterator<MessageInfo> i = messageQueue.iterator();
 			while (i.hasNext()) {
 				MessageInfo s = i.next();
-				if(s!=messageInfo && s.skippable && s.priority<messageInfo.priority) i.remove();
+				if(s!=messageInfo && s.skippable && s.priority<=messageInfo.priority) i.remove();
 			}
 			if (messageQueue.peek() != messageInfo) {
 				return;

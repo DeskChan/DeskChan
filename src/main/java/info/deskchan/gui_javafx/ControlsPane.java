@@ -8,7 +8,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.stage.Window;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +42,7 @@ public class ControlsPane {
 		this.msgClose = msgClose;
 	}
 
-	Node createControlsPane(Window parent) {
+	Node createControlsPane(TemplateBox parent) {
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		float columnGrowPercentage = columnGrow * 100;
@@ -66,9 +65,10 @@ public class ControlsPane {
 				HBox box = new HBox();
 				node = box;
 				for (Map element : (List<Map>) controlInfo.get("elements")) {
-					PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, element);
+					PluginOptionsControlItem item =
+							PluginOptionsControlItem.create(parent.getDialogPane().getScene().getWindow(), element);
 					if (item == null) continue;
-					String id = (String) controlInfo.get("id");
+					String id = (String) element.get("id");
 					if (id != null) {
 						namedControls.put(id, item);
 						item.getNode().setId(id);
@@ -76,7 +76,8 @@ public class ControlsPane {
 					box.getChildren().add(item.getNode());
 				}
 			} else {
-				PluginOptionsControlItem item = PluginOptionsControlItem.create(parent, controlInfo);
+				PluginOptionsControlItem item =
+						PluginOptionsControlItem.create(parent.getDialogPane().getScene().getWindow(), controlInfo);
 				if (item == null) continue;
 				String id = (String) controlInfo.getOrDefault("id", null);
 				if (id != null) {
@@ -105,7 +106,7 @@ public class ControlsPane {
 				for (Map.Entry<String, PluginOptionsControlItem> entry : namedControls.entrySet()) {
 					data.put(entry.getKey(), entry.getValue().getValue());
 					for (Map<String, Object> control : controls) {
-						String id = (String) control.getOrDefault("id", null);
+						String id = (String) control.get("id");
 						if (id != null) {
 							if (id.equals(entry.getKey())) {
 								control.put("value", entry.getValue().getValue());
@@ -119,8 +120,8 @@ public class ControlsPane {
 			borderPane.setBottom(saveButton);
 		}
 		if (getCloseTag() != null) {
-			parent.setOnCloseRequest(event -> {
-				Main.getInstance().getPluginProxy().sendMessage(getCloseTag(),null);
+			parent.addOnCloseRequest(event -> {
+				Main.getInstance().getPluginProxy().sendMessage(getCloseTag(), null);
 			});
 		}
 		borderPane.setTop(gridPane);
@@ -128,18 +129,18 @@ public class ControlsPane {
 	}
 	void updateControlsPane(List<Map<String, Object>> update) {
 		for (Map<String, Object> control : update) {
-			String id = (String) control.getOrDefault("id", null);
-			Object value=control.getOrDefault("value", null);
-			if(value!=null) namedControls.get(id).setValue(value);
-			Boolean disabled=App.getBoolean(control.getOrDefault("disabled", null),null);
-			if(disabled!=null)
+			String id = (String) control.get("id");
+			Object value = control.get("value");
+			if(value != null) namedControls.get(id).setValue(value);
+			Boolean disabled = App.getBoolean(control.get("disabled"), null);
+			if(disabled != null)
 				namedControls.get(id).getNode().setDisable(disabled);
 		}
 	}
 	class Hint extends Label{
 		Hint(String text){
 			setText(" ❔ ");
-			setBorder(new Border(new BorderStroke(Color.BLACK,BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+			setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
 			Tooltip tooltip = new Tooltip(text);
 			tooltip.setAutoHide(true);
 			setTooltip(tooltip);

@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <preset>
     <name>Моэ</name>
-	<main>
-		<confidence>-2</confidence>
-		<activity>5</activity>
-		<optimism>7</optimism>
-		<kindness>5</kindness>
-		<elegance>2</elegance>
-		<sympathy>5</sympathy>
-	</main>
-	<type>SimpleCharacterPreset</type>
+	<character>
+	    <empathy left="-1" value="2"/>
+	    <impulsivity value="0"/>
+		<selfconfidence right="0" value="-2"/>
+		<energy value="1"/>
+		<attitude value="1"/>
+		<experience value="-3"/>
+		<manner value="0"/>
+		<relation value="2"/>
+	</character>
+	<emotions>
+	    <happiness chance="0.3"/>
+		<fun chance="0.2"/>
+		<sorrow chance="0.25"/>
+		<confusion chance="0.5"/>
+		<anger chance="0.1"/>
+		<affection chance="0.25"/>
+	</emotions>
+	<tags>
+	    <gender>girl</gender>
+	    <userGender>boy</userGender>
+	</tags>
 </preset>

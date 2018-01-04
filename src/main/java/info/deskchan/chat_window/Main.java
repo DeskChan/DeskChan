@@ -26,24 +26,24 @@ public class Main implements Plugin {
             this.sender = sender;
             date = new Date();
         }
-        public HashMap<String,Object> toMap(){
-            HashMap<String,Object> map = new HashMap<>();
+        public Map<String,Object> toMap(){
+            Map<String,Object> map = new HashMap<>();
             String color = null;
             String senderName = null;
             String font = null;
             String dateString = "(" + new SimpleDateFormat("HH:mm:ss").format(date) + ") ";
             switch(sender){
-                case 0: {
-                    color = properties.getString("deskchan-color", "red");
+                case 0: {  // DeskChan
+                    color = properties.getString("deskchan-color", "#F00");
                     font  = properties.getString("deskchan-font");
                     senderName = characterName;
                 } break;
-                case 1: {
+                case 1: {  // User
                     color = properties.getString("user-color", "#00A");
                     font  = properties.getString("user-font");
                     senderName = userName;
                 } break;
-                case 2: {
+                case 2: {  // Technical messages
                     color = "#888";
                     dateString = "";
                 } break;
@@ -62,8 +62,8 @@ public class Main implements Plugin {
     private LinkedList<ChatPhrase> history = new LinkedList<>();;
     private int logLength = 1;
 
-    private ArrayList<HashMap> historyToChat(){
-        ArrayList<HashMap> ret = new ArrayList<>();
+    private List<Map> historyToChat(){
+        List<Map> ret = new ArrayList<>();
         List<ChatPhrase> list = history.subList(Math.max(history.size() - logLength, 0), history.size());
         if(list.size() == 0){
             ret.add(new ChatPhrase("История сообщений пуста", 2).toMap());
@@ -85,6 +85,8 @@ public class Main implements Plugin {
         properties.load();
         properties.putIfHasNot("length", 10);
         properties.putIfHasNot("fixer", true);
+        properties.putIfHasNot("user-color", "#00A");
+        properties.putIfHasNot("deskchan-color", "#F00");
 
         logLength = properties.getInteger("length");
 
@@ -219,9 +221,10 @@ public class Main implements Plugin {
                 properties.putIfNotNull("deskchan-font", data.get("deskchan-font"));
 
                 logLength = properties.getInteger("length", logLength);
-                setupOptions();
+
                 saveOptions();
                 setupChat();
+                setupOptions();
             } catch (Exception e){
 
             }
@@ -229,20 +232,10 @@ public class Main implements Plugin {
 
         /* Character was updated, so we changing his name and username in chat. */
         pluginProxy.addMessageListener("talk:character-updated", (sender, tag, data) -> {
-            Map map = (Map) data;
-            characterName = (String) map.get("name");
-            map = (Map) map.get("tags");
-            if(map != null){
-                Object un=map.get("usernames");
-                if(un == null) return;
-                if(un instanceof String){
-                    userName = (String) un;
-                } else {
-                    List list = (List) un;
-                    if(list.size()>0)
-                        userName = (String) list.get(0);
-                }
-            }
+            onCharacterUpdate((Map) data);
+        });
+        pluginProxy.sendMessage("talk:get-preset", null, (sender, data) -> {
+            onCharacterUpdate((Map) data);
         });
 
         /* Registering "Open chat" button in menu. */
@@ -255,6 +248,26 @@ public class Main implements Plugin {
         setupChat();
         setupOptions();
         return true;
+    }
+
+    void onCharacterUpdate(Map<String, Object> map){
+        String name = map.get("name").toString();
+        if (name != null)
+            characterName = name;
+        else
+            characterName = "DeskChan";
+        map = (Map) map.get("tags");
+        if(map != null){
+            Object un = map.get("usernames");
+            if(un == null) return;
+            if(un instanceof String){
+                userName = (String) un;
+            } else {
+                Collection list = (Collection) un;
+                if(list != null && list.size() > 0)
+                    userName = (String) list.iterator().next();
+            }
+        }
     }
 
     /** Chat drawing. **/
@@ -275,14 +288,14 @@ public class Main implements Plugin {
             list.add(new HashMap<String, Object>() {{
                 put("id", "name");
                 put("type", "TextField");
-                put("width", 400d);
+                put("width", 500d);
                 put("enterTag","chat:user-said");
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "textname");
                 put("type", "CustomizableTextArea");
-                put("width", 400d);
-                put("height", 200d);
+                put("width", 500d);
+                put("height", 300d);
                 put("value", historyToChat());
             }});
             put("controls", list);

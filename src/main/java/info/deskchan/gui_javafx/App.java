@@ -1,12 +1,10 @@
 package info.deskchan.gui_javafx;
 
-import com.sun.javafx.stage.StageHelper;
 import info.deskchan.core.PluginProxyInterface;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
@@ -41,41 +39,54 @@ public class App extends Application {
 	private Character character;
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
 
+	static float getTime(long start){
+		return (System.currentTimeMillis() - start) / 1000.f;
+	}
 	/** Initializing plugin. **/
 	@Override
 	public void start(Stage primaryStage) {
 		instance = this;
+		long start = System.currentTimeMillis();
+
 		character = new Character("main", Skin.load(Main.getProperties().getString("skin.name")));
+		Main.log("character initialized, " + getTime(start));
 		// Hacking javafx Application class to hide app from programs panel
 		HackJavaFX.process();
+		Main.log("hacked JavaFX, " + getTime(start));
 		// Loading fonts from 'assets/fonts' folder
 		loadFonts();
+		Main.log("fonts loaded, " + getTime(start));
 		// Trying to apply 'style.css' to application
-		initStylesheetOverride();
+		Main.log("stylesheets overrided, " + getTime(start));
 		// Forbid auto closing program if there is no program windows
 		Platform.setImplicitExit(false);
 		// Tray and right click menus initialization
 		TrayMenu.initialize();
+		Main.log("tray initialized, " + getTime(start));
 		// Transparent window initialization
 		OverlayStage.initialize();
+		Main.log("overlay initialized, " + getTime(start));
 		OverlayStage.updateStage();
+		Main.log("overlay setted, " + getTime(start));
 		// Registering plugin's API
 		initMessageListeners();
-		// Registering keyboard handlers
+		Main.log("message listeners initialized, " + getTime(start));
+		// Keyboard initialization
 		KeyboardEventNotificator.initialize();
-
+		Main.log("keyboard initialized, " + getTime(start));
 		Main.getInstance().getAppInitSem().release();
+		Main.log("semaphore released, " + getTime(start));
 
 		// DeskChan saying "Loading"
-		character.say(new HashMap<String,Object>(){{
+		character.say(new HashMap<String, Object>() {{
 			put("text", Main.getString("info.loading"));
-			put("priority",20000);
-			put("timeout",500000);
+			put("priority", 20000);
+			put("timeout", 500000);
 		}});
-		character.say(new HashMap<String,Object>(){{
-			put("text",Main.getString("info.not-loading"));
-			put("priority",19999);
-			put("timeout",500000);
+		character.say(new HashMap<String, Object>() {{
+			put("text", Main.getString("info.not-loading"));
+			put("priority", 19999);
+			put("timeout", 500000);
 		}});
 	}
 	
@@ -284,6 +295,24 @@ public class App extends Application {
 			});
 		});
 
+		/* Resize balloon.
+        * Public message
+        * Params: value:Float - absolute scaling value, integer percents
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:resize-balloon", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (data instanceof Map) {
+					Map m = (Map) data;
+					if (m.containsKey("value"))
+						Balloon.setScaleFactor(((Number) m.get("value")).floatValue());
+				} else if (data instanceof Number){
+					Balloon.setScaleFactor(((Number) data).floatValue());
+				} else {
+					Balloon.setScaleFactor(Float.parseFloat(data.toString()));
+				}
+			});
+		});
+
 		/* Set up options container as tab.
         * Public message
         * Params: Map
@@ -333,7 +362,7 @@ public class App extends Application {
         * Params: None
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
-			Platform.runLater(this::showOptionsDialog);
+			showOptionsDialog();
 		});
 
 		/* Show options submenu.
@@ -362,9 +391,13 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				showNotification( (String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
-						(String) m.get("text"));
+				if (data instanceof Map) {
+					Map<String, Object> m = (Map<String, Object>) data;
+					showNotification((String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
+							(String) m.get("text"));
+				} else {
+					showNotification(Main.getString("default_messagebox_name"), data.toString());
+				}
 			});
 		});
 
@@ -480,10 +513,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-balloon-shadow-opacity", (sender, tag, data) -> {
 			float opacity = ((Number) data).floatValue();
-			Main.getProperties().getFloat("skin.shadow-opacity", opacity);
-
-			if (Balloon.getInstance() != null)
-				Balloon.getInstance().setShadowOpacity(opacity);
+			Balloon.setShadowOpacity(opacity);
 		});
 
 		/* Set skin shadow opacity.
@@ -492,7 +522,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-skin-shadow-opacity", (sender, tag, data) -> {
 			float opacity = ((Number) data).floatValue();
-			Main.getProperties().getFloat("balloon.shadow-opacity", opacity);
+			Main.getProperties().getFloat("skin.shadow-opacity", opacity);
 
 			if (character != null)
 				character.setShadowOpacity(opacity);
@@ -685,10 +715,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Double value = getDouble(data, 100.0);
-				Main.getProperties().put("balloon.opacity", value.toString());
-
-				if(Balloon.getInstance() != null)
-					Balloon.getInstance().setBalloonOpacity(value.floatValue());
+				Balloon.setOpacity(value.floatValue());
 			});
 		});
 
@@ -778,6 +805,11 @@ public class App extends Application {
 					put("srcTag", "core-utils:notify-after-delay");
 					put("dstTag", "gui:notify-after-delay");
 					put("priority", 100);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:show-technical");
+					put("dstTag", "gui:show-notification");
+					put("priority", 100);
 				}}
 		));
 
@@ -862,17 +894,11 @@ public class App extends Application {
 	}
 
 	/** Trying to apply 'style.css' to application. **/
-	private void initStylesheetOverride() {
+	public static String getStylesheet(){
 		try {
-			StageHelper.getStages().addListener((ListChangeListener<Stage>) change -> {
-				while (change.next()) {
-					for (Stage stage : change.getAddedSubList()) {
-						stage.getScene().getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-					}
-				}
-			});
-		} catch (Throwable e){
-			Main.log("Stylesheets deprecated in this version of Java, we didn't fix it yet.");
+			return Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toUri().toURL().toString();
+		} catch (Exception e){
+			return App.class.getResource("style.css").toExternalForm();
 		}
 	}
 

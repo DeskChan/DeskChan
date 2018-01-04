@@ -143,7 +143,8 @@ public class RegularRule{
                 currentResult += results[i].wordSequenceLength * results[i].result;
             }
 
-            currentResult /= length;
+            if (length > 0) currentResult /= length;
+            else currentResult = 0;
             parsed = true;
             return new SearchResult(currentResult, length);
         }
@@ -246,9 +247,7 @@ public class RegularRule{
                         }
                         words.used[k] = true;
                     }
-                    textCopy = textCopy.trim();
-                    if(textCopy.length()>0)
-                        value = textCopy;
+                    value = textCopy.trim();
                 } break;
                 case Word:{
                     for (int k=i; k < words.size(); k++) {
@@ -395,7 +394,7 @@ public class RegularRule{
             }
             if(type == WordType.NONE || max<PhraseComparison.ACCURACY){
                 parsed = false;
-                return new SearchResult(0,0);
+                return new SearchResult(0, word.length());
             }
             switch(type){
                 case SIMILAR:
@@ -418,7 +417,7 @@ public class RegularRule{
                     return new SearchResult(max, p.length());
                 }
             }
-            return new SearchResult(0, 0);
+            return new SearchResult(0, word.length());
         }
         public boolean canBeRemoved(){
             return parent.canBeRemoved();
@@ -444,17 +443,18 @@ public class RegularRule{
     }
     protected PhraseLevel analyzePhrase(String phrase, PhraseLevelComplex parent) throws Exception{
         int level=0, st=0, blocks=0;
+
+        // removing brackets in case '(ab)' but not in case '(ab) (cd)'
         for(int i=0, len=phrase.length(); i<len; i++){
             if(phrase.charAt(i)=='('){
                 if(level == 0) blocks++;
                 level++;
             } else if(phrase.charAt(i)==')') level--;
         }
+        if(blocks == 1) phrase = removeBrackets(phrase);
 
-        if(blocks==1) phrase = removeBrackets(phrase);
-
-        ArrayList<String> sequence=new ArrayList<String>();
-
+        // splitting phrase to elements
+        List<String> sequence = new ArrayList<>();
         for(int i=0, len=phrase.length(); i<len; i++){
             if(phrase.charAt(i)==' ' && level==0){
                 if(i-st>0) sequence.add(phrase.substring(st, i));
@@ -463,52 +463,57 @@ public class RegularRule{
             else if(phrase.charAt(i)==')') level--;
         }
 
-        if(sequence.size()>0){
-            PhraseLevelTypeAnd p=new PhraseLevelTypeAnd();
-            p.parent = parent;
+        // if it's an AND type sequence because of spaces
+        if(sequence.size() > 0){
+            PhraseLevelTypeAnd levelTypeAnd = new PhraseLevelTypeAnd();
+            levelTypeAnd.parent = parent;
             sequence.add(phrase.substring(st));
             for(String element : sequence)
-                p.add(analyzePhrase(element, p));
-            last = p;
-            return p;
-        } else {
-            boolean required=true;
-            if(phrase.charAt(0)=='?'){
-                required = false;
-                phrase = phrase.substring(1);
-            }
+                levelTypeAnd.add(analyzePhrase(element, levelTypeAnd));
+            last = levelTypeAnd;
+            return levelTypeAnd;
+        }
 
-            if(blocks==1) phrase = removeBrackets(phrase);
+        boolean required = true;
+        phrase = phrase.trim();
+        if(phrase.charAt(0) == '?'){
+            required = false;
+            phrase = phrase.substring(1);
+        }
 
-            if(phrase.indexOf('|')<0){
-                PhraseLevel phraseLevel = null;
-                try {
-                    phraseLevel = new Argument(phrase, last);
-                    arguments.add((Argument) phraseLevel);
-                } catch (Exception e){
-                    phraseLevel = new WordPhrase(phrase);
-                }
+        if(blocks == 1) phrase = removeBrackets(phrase);
 
-                phraseLevel.parent = parent;
-                phraseLevel.required = required;
-                last = phraseLevel;
-                return phraseLevel;
-            }
+        // if it's an OR type sequence because of slashes
+        if(phrase.indexOf('|') >= 0) {
             PhraseLevelTypeOr phraseLevel = new PhraseLevelTypeOr();
             phraseLevel.parent = parent;
             phraseLevel.required = required;
-            st=0; level=0;
-            for(int i=0,len=phrase.length();i<len;i++){
-                if(phrase.charAt(i)=='|' && level==0 && i-st>0){
-                    phraseLevel.add(analyzePhrase(phrase.substring(st,i), phraseLevel));
-                    st=i+1;
-                } else if(phrase.charAt(i)=='(') level++;
-                else if(phrase.charAt(i)==')') level--;
+            st = 0;
+            level = 0;
+            for (int i = 0, len = phrase.length(); i < len; i++) {
+                if (phrase.charAt(i) == '|' && level == 0 && i - st > 0) {
+                    phraseLevel.add(analyzePhrase(phrase.substring(st, i), phraseLevel));
+                    st = i + 1;
+                } else if (phrase.charAt(i) == '(') level++;
+                else if (phrase.charAt(i) == ')') level--;
             }
             phraseLevel.add(analyzePhrase(phrase.substring(st), phraseLevel));
             last = phraseLevel;
             return phraseLevel;
         }
+
+        PhraseLevel phraseLevel = null;
+        try {
+            phraseLevel = new Argument(phrase, last);
+            arguments.add((Argument) phraseLevel);
+        } catch (Exception e){
+            phraseLevel = new WordPhrase(phrase);
+        }
+
+        phraseLevel.parent = parent;
+        phraseLevel.required = required;
+        last = phraseLevel;
+        return phraseLevel;
     }
     protected void correctCheck(String rule) throws Exception{
         int state=0,level=0;
@@ -607,7 +612,6 @@ public class RegularRule{
     }
 
     private RegularRule(String phrase) throws Exception{
-        textrule = phrase;
 
         if(phrase.charAt(0)=='!'){
             orderDependent = true;
@@ -615,7 +619,14 @@ public class RegularRule{
         }
         correctCheck(phrase);
 
-        start = analyzePhrase(phrase.toLowerCase(), null);
+        StringBuilder sb = new StringBuilder(phrase);
+        for(int i=0, in=0; i<phrase.length(); i++){
+            if (phrase.charAt(i) == '{') in = 1;
+            else if (phrase.charAt(i) == '}') in = 0;
+            else if (in == 0) sb.setCharAt(i, Character.toLowerCase(phrase.charAt(i)));
+        }
+
+        start = analyzePhrase(sb.toString(), null);
         if(start instanceof WordPhrase || start instanceof Argument) {
             PhraseLevelTypeAnd phraseLevel = new PhraseLevelTypeAnd();
             phraseLevel.add(start);
@@ -624,6 +635,7 @@ public class RegularRule{
             start = phraseLevel;
         }
         start.required = true;
+        textrule = start.toString();
     }
 
     public static class MatchResult{
@@ -666,8 +678,12 @@ public class RegularRule{
             users = options.users;
         }
         public boolean better(MatchResult other){
-            return matchPercentage > 0.5 && (other == null ||
-                    ( wordsUsed >= other.wordsUsed && ( other.firstWordUsed < 0 || firstWordUsed <= other.firstWordUsed )));
+            if (matchPercentage < 0.5) return false;
+            if (other == null) return true;
+            if (wordsUsed != other.wordsUsed) return wordsUsed > other.wordsUsed;
+            if (firstWordUsed != other.firstWordUsed)
+                return other.firstWordUsed < 0 || firstWordUsed < other.firstWordUsed;
+            return matchPercentage >= other.matchPercentage;
         }
         @Override
         public String toString(){
@@ -706,7 +722,7 @@ public class RegularRule{
                 }
             }
         }
-        if(fullMatch && result.result>0.5)
+        if(fullMatch && result.result > 0.5)
             result.result *= 0.5f + (float) result.wordSequenceLength / mass / 2.0f;
 
         matchingHash.put(query, new MatchResult(result, parseOptions));
@@ -769,7 +785,7 @@ public class RegularRule{
     }
     public static void Testing(){
         String[] correct_rules = {"погода", "поставь таймер {datetime:RelativeDateTime}", "(открой|запусти) браузер", "включи компьютер", "запусти   будильник {datetime:RelativeDateTime}", "(перейди|открой) ?ярлык (папку|файл)",
-                "(посчитай|вычисли|(забей ?в калькулятор)) ?(выражение|пример) {text:Text}", "погода", "рабочий день {start:DateTime} {end:DateTime}"};
+                "(посчитай|вычисли|(забей ?в калькулятор)) ?(выражение|пример) {text:Text}", "погода", "рабочий день {start:DateTime} {end:DateTime}", " ?some ?english words", "  ?another   words", " ?anonfm"};
         String[] incorrect_rules = {"(открой||запусти) браузер", "", "(", "??включи компьютер", "?вк?лючи компьютер", "запусти   будильник {date:time:RelativeDateTime}", "(перейди|открой) ?ярлык ((папку|файл)",
                 "(посчитай?|вычисли|(забей ?в калькулятор)) ?(выражение|пример) {text:Text}", "{argument:Arg}", "{argument:Integer}"};
         ArrayList<RegularRule> rules = new ArrayList<>();

@@ -46,7 +46,7 @@ buffer = new Buffer(50)
 
 addMessageListener(pluginName+':magic-ball', { sender, tag, dat ->
     Map data = (Map) dat
-    def text = data.get("text")
+    def text = data.get("msgData")
     if(text == null || text.size() == 0){
         sendMessage('DeskChan:say', 'Но ты же ничего не спросил!')
         return
@@ -71,7 +71,7 @@ addMessageListener(pluginName+':magic-ball', { sender, tag, dat ->
 
 addMessageListener(pluginName+':choose', { sender, tag, dat ->
     Map data = (Map) dat
-    String text = data.get("text")
+    String text = data.get("msgData")
     if(text == null || text.size() == 0){
         sendMessage('DeskChan:say', 'Но ты же ничего не спросил!')
         return
@@ -186,7 +186,7 @@ addMessageListener(pluginName+':time', { sender, tag, dat ->
 sendMessage("core:set-event-link", [
         eventName: 'speech:get',
         commandName: pluginName+':magic-ball',
-        rule: 'посоветуй {text:list}'
+        rule: 'ответь {text:list}'
 ])
 sendMessage("core:set-event-link", [
         eventName: 'speech:get',

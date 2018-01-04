@@ -180,9 +180,6 @@ class Balloon extends MovablePane {
 	Balloon(String id, String text) {
 		instance=this;
 
-		stackPane.setPrefWidth(400);
-		stackPane.setMinHeight(200);
-
 		bubbleShadow.setRadius(10.0);
 		bubbleShadow.setOffsetX(1.5);
 		bubbleShadow.setOffsetY(2.5);
@@ -214,6 +211,7 @@ class Balloon extends MovablePane {
 		stackPane.getChildren().add(contentPane);
 		StackPane.setMargin(content, margin);
 
+		setBalloonScaleFactor(Main.getProperties().getFloat("balloon.scale_factor", 100));
 		getChildren().add(stackPane);
 
 		setBalloonOpacity(Main.getProperties().getFloat("balloon.opacity", 100));
@@ -253,10 +251,9 @@ class Balloon extends MovablePane {
 	}
 
 	Balloon(Character character, PositionMode positionMode, String text) {
-
 		this(character.getId() + ".balloon", text);
 
-		instance=this;
+		instance = this;
 
 		this.character = character;
 		this.positionMode = positionMode;
@@ -292,15 +289,16 @@ class Balloon extends MovablePane {
 		}
 	};
 	private void impl_updateBalloonLayoutX() {
-		if(positionMode == PositionMode.ABSOLUTE || character == null) return;
-		if(positionMode == PositionMode.RELATIVE){
+		if (positionMode == PositionMode.ABSOLUTE || character == null || character.getParent() == null) return;
+		if (positionMode == PositionMode.RELATIVE){
 			try{
 				loadPositionFromStorage();
 				return;
 			} catch (Exception e){ }
 		}
-		double width = prefWidth(-1);
 		double x = character.localToScreen(character.getBoundsInLocal()).getMinX();
+		double width = prefWidth(-1)*stackPane.getScaleX();
+
 		boolean rightAlign = x-width>0;
 		x += rightAlign ? (-width) : character.getWidth();
 		relocate(x, getPosition().getY());
@@ -310,7 +308,7 @@ class Balloon extends MovablePane {
 				margin.getBottom(), (!rightAlign) ? margin.getRight() : margin.getLeft()));
 	}
 	private void impl_updateBalloonLayoutY() {
-		if(positionMode == PositionMode.ABSOLUTE || character == null) return;
+		if(positionMode == PositionMode.ABSOLUTE || character == null || character.getParent() == null) return;
 		if (positionMode == PositionMode.RELATIVE) {
 			try{
 				loadPositionFromStorage();
@@ -344,25 +342,44 @@ class Balloon extends MovablePane {
         return balloonOpacity;
 	}
 
-	public void setBalloonOpacity(float opacity) {
+	public static void setOpacity(float opacity) {
 		opacity /= 100;
+		opacity = Math.max(opacity, 0);
+		opacity = Math.min(opacity, 1);
+		Main.getProperties().put("balloon.opacity", opacity * 100);
+		if (instance != null) instance.setBalloonOpacity(opacity);
+	}
+
+	protected void setBalloonOpacity(float opacity) {
 		if (opacity > 0.99) {
-			balloonOpacity = 1.0f;
 			stackPane.setEffect(bubbleShadow);
 		} else {
-			balloonOpacity = opacity;
 			stackPane.setEffect(null);
 		}
 		bubblesGroup.setOpacity(balloonOpacity);
-		Main.getProperties().getFloat("balloon.opacity", balloonOpacity * 100);
 	}
 
-	public void setShadowOpacity(float opacity) {
-		if (opacity > 0.99)
-			opacity = 1.0f;
+	public static void setShadowOpacity(float opacity) {
+		opacity /= 100;
+		opacity = Math.max(opacity, 0);
+		opacity = Math.min(opacity, 1);
+		Main.getProperties().put("balloon.shadow-opacity", opacity);
+		if (instance != null) instance.setBalloonShadowOpacity(opacity);
+	}
 
+	protected void setBalloonShadowOpacity(float opacity) {
 		bubbleShadow.setColor(Color.color(0, 0, 0, opacity));
-		Main.getProperties().getFloat("balloon.shadow-opacity", opacity);
+	}
+
+	public static void setScaleFactor(float scale) {
+		Main.getProperties().put("balloon.scale_factor", scale);
+		if (instance != null) instance.setBalloonScaleFactor(scale);
+	}
+
+	protected void setBalloonScaleFactor(float scale) {
+		scale = Math.max(scale, 0) / 100;
+		stackPane.setScaleX(scale);
+		stackPane.setScaleY(scale);
 	}
         
 	@Override
@@ -443,11 +460,13 @@ class Balloon extends MovablePane {
 	}
 
 	private static final String DEFAULT_FONT = "PT Sans, 16.0";
+
 	static void setDefaultFont(String font) {
 		if (font == null)
 			font = DEFAULT_FONT;
 		setDefaultFont(LocalFont.fromString(font));
 	}
+
 	static void setDefaultFont(Font font) {
 		if (font == null)
 			font = LocalFont.fromString(DEFAULT_FONT);

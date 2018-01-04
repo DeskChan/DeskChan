@@ -14,7 +14,7 @@ class ControlsWindow extends TemplateBox {
         super(name);
         this.controls=controls;
         this.owner=owner;
-        getDialogPane().setContent(this.controls.createControlsPane(getDialogPane().getScene().getWindow()));
+        getDialogPane().setContent(this.controls.createControlsPane(this));
     }
     public String getOwnerName(){
         return owner;
@@ -23,7 +23,7 @@ class ControlsWindow extends TemplateBox {
         this.controls = null;
         getDialogPane().setContent(null);
         this.controls = controls;
-        getDialogPane().setContent(this.controls.createControlsPane(getDialogPane().getScene().getWindow()));
+        getDialogPane().setContent(this.controls.createControlsPane(this));
     }
     public void updateControls(List<Map<String,Object>> data){
         if(data!=null)
@@ -52,23 +52,21 @@ class ControlsWindow extends TemplateBox {
         dialog.setOnHiding(event -> {
             customWindowOpened.remove(dialog);
         });
-        dialog.setOnCloseRequest(event -> {
+        dialog.addOnCloseRequest(event -> {
             customWindowOpened.remove(dialog);
         });
         dialog.getDialogPane().getScene().getWindow().setOnHiding(event -> {
             customWindowOpened.remove(dialog);
         });
-        dialog.getDialogPane().getScene().getWindow().setOnCloseRequest(event -> {
-            customWindowOpened.remove(dialog);
-        });
     }
     public static void updateCustomWindow(String sender, Map<String,Object> data){
         String name = (String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
-        List<Map<String,Object>> controls = (List<Map<String,Object>>) data.getOrDefault("controls", null);
+        List<Map<String,Object>> controls = (List<Map<String,Object>>) data.get("controls");
         if(controls==null) return;
         for(ControlsWindow window : customWindowOpened){
             if(window.getTitle().equals(name)){
                 window.updateControls(controls);
+                window.requestFocus();
                 return;
             }
         }
@@ -77,6 +75,7 @@ class ControlsWindow extends TemplateBox {
         for(ControlsWindow window : customWindowOpened){
             if(window.getTitle().equals(container.name)){
                 window.setControls(container);
+                window.requestFocus();
                 return;
             }
         }

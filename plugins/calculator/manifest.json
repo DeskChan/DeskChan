@@ -1,4 +1,12 @@
 {
   "deps": ["groovy_support"],
-  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)"
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "short-description": {
+    "ru": "Калькулятор",
+    "en": "Calculator"
+  },
+  "description": {
+    "ru": "Калькулятор",
+    "en": "Calculator"
+  }
 }

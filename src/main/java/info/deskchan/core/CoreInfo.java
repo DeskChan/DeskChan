@@ -35,6 +35,7 @@ public class CoreInfo {
 		PluginManager.log("Git commit hash: " + CoreInfo.get("GIT_COMMIT_HASH"));
 		PluginManager.log("Build date and time: " + CoreInfo.get("BUILD_DATETIME"));
 		PluginManager.log("Operation system: " + SystemUtils.OS_NAME+"-"+SystemUtils.OS_VERSION+", "+SystemUtils.USER_LANGUAGE+", Java ver.: "+SystemUtils.JAVA_VERSION);
+		if (SystemUtils.IS_JAVA_9) PluginManager.log("WARNING: You are using Java 9. Make sure your DeskChan build compiled on Java 9 SDK.");
 	}
 	
 	static {

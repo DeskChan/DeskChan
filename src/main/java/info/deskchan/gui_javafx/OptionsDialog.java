@@ -17,6 +17,7 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.Side;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -67,6 +68,30 @@ class OptionsDialog extends TemplateBox {
 
 	/** All submenus registered by plugins, plugin -> list of menus. **/
 	private static Map<String, List<ControlsPane>> pluginsSubMenus = new HashMap<>();
+
+	static {
+		// Filling plugins list, 'plugin-load' sends full list of registered commands every time you subscribed to it
+		Main.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (instance == null) return;
+				for (PluginListItem item : instance.pluginsList.getItems()) {
+					if (item.id.equals(data)) {
+						return;
+					}
+				}
+				instance.pluginsList.getItems().add(new PluginListItem(data.toString(), false));
+			});
+		});
+
+		// Listener to unloaded plugins to remove them from list
+		Main.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (instance == null) return;
+				instance.pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
+			});
+		});
+
+	}
 
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
@@ -143,6 +168,13 @@ class OptionsDialog extends TemplateBox {
 			put("value",  LocalFont.defaultToString());
 		}});
 		list.add(new HashMap<String, Object>() {{
+			put("id",    "interface.on_top");
+			put("type",  "CheckBox");
+			put("msgTag","gui:switch-interface-front");
+			put("label",  Main.getString("interface.on_top"));
+			put("value",  TemplateBox.checkForceOnTop());
+		}});
+		list.add(new HashMap<String, Object>() {{
 			put("id",    "layer_mode");
 			put("type",  "ComboBox");
 			put("hint",   Main.getString("help.layer_mode"));
@@ -174,7 +206,7 @@ class OptionsDialog extends TemplateBox {
 			put("value",  Main.getString("load"));
 		}});
 		ControlsPane poTab = new ControlsPane(Main.getString("appearance"), list, null, null);
-		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
+		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance)));
 	}
 
 	/** Creating 'Skin' options submenu. **/
@@ -188,11 +220,10 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:open-skin-dialog");
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
-		System.out.println(Main.getProperties().getInteger("skin.scale_factor"));
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "scale");
 			put("type",  "Spinner");
-			put("label",  Main.getString("skin.scale_factor") + " (%)");
+			put("label",  Main.getString("scale_factor") + " (%)");
 			put("min",    10);
 			put("max",    1000);
 			put("msgTag","gui:resize-character");
@@ -216,13 +247,22 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		skinOptions = new ControlsPane(Main.getString("character"), list, null, null);
+		skinOptions = new ControlsPane(Main.getString("skin"), list, null, null);
 		return skinOptions;
 	}
 
 	/** Creating 'Balloon' options submenu. **/
 	private ControlsPane balloonOptions(){
 		List<Map<String, Object>> list = new LinkedList<>();
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "scale");
+			put("type",  "Spinner");
+			put("label",  Main.getString("scale_factor") + " (%)");
+			put("min",    10);
+			put("max",    1000);
+			put("msgTag","gui:resize-balloon");
+			put("value",  Main.getProperties().getInteger("balloon.scale_factor", 100));
+		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_font");
 			put("type",  "FontPicker");
@@ -448,7 +488,7 @@ class OptionsDialog extends TemplateBox {
 					@Override
 					protected void updateItem(PluginListItem t, boolean bln) {
 						super.updateItem(t, bln);
-						setStyle("-fx-cell-size: " + LocalFont.defaultFont.getSize()*2.5);
+						//setStyle("-fx-cell-size: " + LocalFont.defaultFont.getSize()*2.5);
 						if (t != null) {
 							setGraphic(t.hbox);
 							setTooltip(t.tooltip);
@@ -461,24 +501,9 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 
-		// Filling plugins list, 'plugin-load' sends full list of registered commands every time you subscribed to it
-		pluginProxy.addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				for (PluginListItem item : pluginsList.getItems()) {
-					if (item.id.equals(data)) {
-						return;
-					}
-				}
-				pluginsList.getItems().add(new PluginListItem(data.toString(), false));
-			});
-		});
-
-		// Listener to unloaded plugins to remove them from list
-		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
-			});
-		});
+		for (String id : PluginManager.getInstance().getPlugins()) {
+			pluginsList.getItems().add(new PluginListItem(id, false));
+		}
 
 		// Blacklisted plugins that not registered in program
 		for (String id : PluginManager.getInstance().getBlacklistedPlugins()) {
@@ -551,6 +576,7 @@ class OptionsDialog extends TemplateBox {
 		debugTab.setTop(debugMsgTag);
 		TextArea debugMsgData = new TextArea("{\n\"text\": \"Test\"\n}");
 		debugTab.setCenter(debugMsgData);
+
 		button = new Button(Main.getString("send"));
 		button.setOnAction(event -> {
 			String tag = debugMsgTag.getText();
@@ -561,14 +587,22 @@ class OptionsDialog extends TemplateBox {
 				App.showThrowable(OptionsDialog.this.getDialogPane().getScene().getWindow(), e);
 			}
 		});
-		debugTab.setBottom(button);
+
+		Button reloadButton = new Button(Main.getString("reload-style"));
+		button.setOnAction(event -> {
+			instance.applyStyle();
+			instance.hide();
+			instance.show();
+		});
+
+		debugTab.setBottom(new HBox(button, reloadButton));
 		tabPane.getTabs().add(new Tab(Main.getString("debug"), debugTab));
 
 
 		/// Creating top tabs from registered tabs list
 		for (Map.Entry<String, List<ControlsPane>> entry : pluginsTabs.entrySet()) {
 			for (ControlsPane tab : entry.getValue()) {
-				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance.getDialogPane().getScene().getWindow())));
+				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance)));
 			}
 		}
 
@@ -715,7 +749,7 @@ class OptionsDialog extends TemplateBox {
 		if (isTab) {
 			for (Tab tab : instance.tabPane.getTabs()) {
 				if (tab.getText().equals(name)) {
-					tab.setContent(pluginMenuContainer.createControlsPane(instance.getDialogPane().getScene().getWindow()));
+					tab.setContent(pluginMenuContainer.createControlsPane(instance));
 					break;
 				}
 			}
@@ -790,6 +824,7 @@ class OptionsDialog extends TemplateBox {
 		void setInfo(){
 			// Adding char in circle to plugin name if we know its type
 			label = new Label(toString());
+			label.setAlignment(Pos.CENTER_LEFT);
 
 			// Filling row content
 			hbox.getChildren().clear();
@@ -891,7 +926,7 @@ class OptionsDialog extends TemplateBox {
 		private static boolean alert(){
 			Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
 			Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-			stage.setAlwaysOnTop(true);
+			stage.setAlwaysOnTop(TemplateBox.checkForceOnTop());
 			alert.setTitle(Main.getString("default_messagebox_name"));
 			alert.setContentText(Main.getString("info.shutdown_important"));
 			Optional<ButtonType> result = alert.showAndWait();
@@ -997,7 +1032,9 @@ class OptionsDialog extends TemplateBox {
 				cell.setText(null);
 				cell.setTooltip(null);
 			} else {
-				cell.setText(getItemText(cell, converter));
+				String itemText = getItemText(cell, converter);
+				cell.setText(itemText);
+				if (itemText.length() == 0) return;
 				//Add text as tooltip so that user can read text without editing it.
 				Tooltip tooltip = new Tooltip(getItemText(cell, converter));
 				tooltip.setWrapText(true);

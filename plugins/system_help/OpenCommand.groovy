@@ -25,8 +25,6 @@ class OpenCommand{
             }
         }
         String wrap(String val){
-            if(!val.contains(' '))
-                return val
             if(val[0] !='"') val = '"'+val
             if(val[-1]!='"') val = val+'"'
             return val
@@ -148,7 +146,10 @@ class OpenCommand{
         instance.sendMessage("core:add-command", [tag: pluginName + ':run-with-multiple-report' ])
 
         instance.addMessageListener(pluginName + ':open-link', { sender, tag, d ->
-            new LinkEntry(d.toString(), LinkEntry.Types.FILE, []).open()
+            if (d instanceof Map)
+                new LinkEntry(d.getOrDefault("msgData", "").toString(), LinkEntry.Types.FILE, []).open()
+            else
+                new LinkEntry(d.toString(), LinkEntry.Types.FILE, []).open()
         })
 
         instance.addMessageListener(pluginName + ':open', { sender, tag, d ->
@@ -182,10 +183,15 @@ class OpenCommand{
         )
 
         instance.addMessageListener(pluginName+':run', { sender, tag, dat ->
-            if(dat==null) return
-            String line = ((Map)dat).get("msgData").toString()
+            if(dat == null) return
+
+            String line = ""
+            if (dat instanceof Map)
+                line = dat.getOrDefault("msgData", "").toString()
+            else
+                line = dat.toString()
             line.execute()
-            instance.sendMessage("DeskChan:say","Запущено")
+            instance.sendMessage("DeskChan:say", "Запущено")
         })
 
         instance.addMessageListener(pluginName+':run-with-report', { sender, tag, dat ->
@@ -228,6 +234,7 @@ class OpenCommand{
             case PluginData.OS.WINDOWS:
                 entries.add(new LinkEntry("cmd.exe /c start", LinkEntry.Types.COMMAND, ['командная строка', 'терминал']))
                 entries.add(new LinkEntry("notepad", LinkEntry.Types.COMMAND, ['блокнот', 'notepad']))
+                entries.add(new LinkEntry("%userprofile%\\documents", LinkEntry.Types.PATH, ['документы']))
                 break
             case PluginData.OS.UNIX:
 

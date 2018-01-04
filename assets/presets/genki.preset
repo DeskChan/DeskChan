@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <preset>
     <name>Генки</name>
-	<usernames>"Юзер"</usernames>
-	<main>
-		<confidence>6</confidence>
-		<activity>8</activity>
-		<optimism>5</optimism>
-		<kindness>2</kindness>
-		<elegance>-3</elegance>
-		<sympathy>3</sympathy>
-	</main>
-	<type>SimpleCharacterPreset</type>
+	<character>
+	    <empathy value="-1"/>
+	    <impulsivity value="2" left="0"/>
+		<selfconfidence left="-2" right="4" value="0"/>
+		<energy value="1"/>
+		<attitude value="2"/>
+		<experience value="-1"/>
+		<manner value="0"/>
+		<relation value="1"/>
+	</character>
+	<emotions>
+	    <happiness chance="0.2"/>
+		<fun chance="0.5"/>
+		<sorrow chance="0.1"/>
+	</emotions>
+	<tags>
+	    <gender>girl</gender>
+	    <userGender>boy</userGender>
+	    <usernames>"Юзверь"</usernames>
+	</tags>
 </preset>

@@ -2,6 +2,7 @@ package info.deskchan.core_utils;
 
 import info.deskchan.core.PluginManager;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -9,13 +10,18 @@ import java.util.Scanner;
 public class TerminalGUI {
 
     public static void initialize(){
-        Main.getPluginProxy().sendMessage("core:register-alternative",
+        Main.getPluginProxy().sendMessage("core:register-alternatives", Arrays.asList(
                 new HashMap<String, Object>() {{
                     put("srcTag", "DeskChan:say");
                     put("dstTag", "core-utils:say");
                     put("priority", 1000);
+                }},
+                new HashMap<String, Object>() {{
+                    put("srcTag", "DeskChan:show-technical");
+                    put("dstTag", "core-utils:show-technical");
+                    put("priority", 1000);
                 }}
-        );
+        ));
 
         Main.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
             String name = data.toString();
@@ -44,6 +50,29 @@ public class TerminalGUI {
             }
 
             System.out.println(text);
+        });
+
+        Main.getPluginProxy().addMessageListener("core-utils:show-technical", (sender, tag, data) -> {
+            String text = "";
+            String header = "MESSAGE";
+            if(data instanceof Map){
+                Map<String, Object> mapData = (Map) data;
+
+                text = (String) mapData.get("text");
+                header = mapData.getOrDefault("name", header).toString();
+            } else {
+                if(data instanceof String)
+                    text = (String) data;
+                else text = data.toString();
+            }
+            int dashes = 19 - header.length();
+            if (dashes % 2 == 1) dashes--;
+            dashes /= 2;
+            for (int i=0; i < dashes; i++) System.out.print("-");
+            System.out.print(" " + header + " ");
+            for (int i=0; i < dashes; i++) System.out.print("-");
+            System.out.println(text);
+            for (int i=0, l=header.length() + 2 + dashes*2; i < l; i++) System.out.print("-");
         });
 
         Main.getPluginProxy().setTimer(500, -1, (s, d) -> {

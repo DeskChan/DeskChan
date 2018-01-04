@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core_utils.TextOperations;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -25,6 +26,7 @@ class PhrasesPack {
 	protected Path packFile;
 	protected String packName;
 	protected ArrayList<Phrase> phrases = new ArrayList<>();
+	protected boolean loaded;
 
 	public PhrasesPack(String file) {
 		packName = file;
@@ -39,15 +41,17 @@ class PhrasesPack {
 
 		if (packName.contains("."))
 			packName = packName.substring(0, packName.lastIndexOf("."));
+
+		loaded = false;
 	}
 
-	public void load() throws Exception{
-		phrases.clear();
-		DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-		f.setValidating(false);
-		DocumentBuilder builder = f.newDocumentBuilder();
-
+	public void load(){
 		try {
+			phrases.clear();
+			DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+			f.setValidating(false);
+
+			DocumentBuilder builder = f.newDocumentBuilder();
 			InputStream inputStream = Files.newInputStream(packFile);
 			Document doc = builder.parse(inputStream);
 			inputStream.close();
@@ -62,9 +66,11 @@ class PhrasesPack {
 				}
 			}
 		} catch (Exception e) {
-			Main.log("Error while parsing phrases file " + packName + ": " + e);
-			throw e;
+			Main.log("Error while parsing phrases file " + packName + ": " + e.getMessage());
+			loaded = false;
+			return;
 		}
+		loaded = true;
 	}
 
 	public void add(Phrase quote) {
@@ -85,7 +91,8 @@ class PhrasesPack {
 		return packName;
 	}
 
-	public String toString(){ return "[" + packName + " - " + packFile.toString() + "]"; }
+	public String toString(){ return "[" + packName + " - " + packFile.toString() + "]" +
+			(loaded ? "" : " -- " + Main.getString("error") + " -- "); }
 
 	@Override
 	public boolean equals(Object other){
@@ -245,9 +252,7 @@ public class PhrasesList {
 
 		if(packs.contains(pack)) return null;
 
-		try {
-			pack.load();
-		} catch (Exception e){ return null; }
+		pack.load();
 
 		packs.add(pack);
 		Main.log("Loaded phrases: " + pack.getName()+" "+ pack.size());
@@ -273,33 +278,42 @@ public class PhrasesList {
 
 	public void reload(){
 		for(PhrasesPack pack : packs){
-			try {
-				pack.load();
-			} catch (Exception e){ }
+			pack.load();
 		}
 		update();
 	}
 
 	public void requestRandomQuote(String purpose, PhraseGetterCallback callback) {
+		requestRandomQuote(purpose, null, callback);
+	}
+	public void requestRandomQuote(String purpose, Map info, PhraseGetterCallback callback) {
 		purpose = purpose.toUpperCase();
 		if (matchingPhrases.size() == 0) {
-			callback.call(new Phrase(Main.getString("phrase."+purpose)));
+			callback.call(new Phrase(Main.getString("phrase." + purpose)));
 			return;
 		}
 
-		LinkedList<Phrase> currentlySuitable = new LinkedList<>();
+		List<Phrase> currentlySuitable = new LinkedList<>();
+		if (info != null && info.get("tags") != null) {
+			if (info.get("tags") instanceof Map)
+				info = new TextOperations.TagsMap((Map) info.get("tags"));
+			else
+				info = new TextOperations.TagsMap(info.get("tags").toString());
+		} else info = null;
 
-		ArrayList<Map<String,Object>> matchingList = new ArrayList<>();
+		List<Map> matchingList = new ArrayList<>();
 		for (Phrase phrase : matchingPhrases)
 			if (phrase.noTimeout() && phrase.purposeEquals(purpose)){
-				currentlySuitable.add(phrase);
-				matchingList.add(phrase.toMap());
+				if (info == null || (phrase.getTags() != null && phrase.getTags().match(info))){
+					currentlySuitable.add(phrase);
+					matchingList.add(phrase.toMap());
+				}
 			}
 
 		final String fPurpose = purpose;
 		Main.getPluginProxy().sendMessage("talk:reject-quote", matchingList,
 				(sender, data) -> {
-					ArrayList<Map<String, Object>> phrasesList = (ArrayList<Map<String,Object>>) data;
+					List<Map<String, Object>> phrasesList = (ArrayList<Map<String,Object>>) data;
 					if(phrasesList == null) return;
 
 					for (Map<String, Object> phrase : phrasesList) {

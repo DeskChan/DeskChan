@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
@@ -129,14 +130,22 @@ interface PluginOptionsControlItem {
 		}
 		@Override
 		public void init(Map<String, Object> options, Object value) {
+			if (options.containsKey("font")) {
+				getStyleClass().remove("label");
+				setFont(LocalFont.fromString(options.get("font").toString()));
+			}
+
+			try {
+				setAlignment(Pos.valueOf(options.getOrDefault("align", "CENTER").toString().toUpperCase()));
+			} catch (Exception e){
+				setAlignment(Pos.CENTER_LEFT);
+			}
 			setValue(value);
 		}
 
 		@Override
 		public void setValue(Object value) {
-			if (value == null) return;
-			setText(value.toString());
-			setFont(LocalFont.defaultFont);
+			if (value != null) setText(value.toString());
 		}
 		
 		@Override
@@ -755,6 +764,10 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void setValue(Object value) {
+			if (value == null){
+				picker.setValue(Color.BLACK);
+				return;
+			}
 			String colorText = (String) value;
 			colorText = colorText.toUpperCase();
 			try {
@@ -787,18 +800,18 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void init(Map<String, Object> options, Object value) {
-			setValue(options.get("font"));
+			setValue(value);
 			msgTag = (String) options.get("msgTag");
 
 			setOnAction(event -> {
 				Stage stage = (Stage) picker.getDialogPane().getScene().getWindow();
-				stage.setAlwaysOnTop(true);
+				stage.setAlwaysOnTop(TemplateBox.checkForceOnTop());
 				Optional<Font> selectedFontOpt = picker.showAndWait();
 				if (selectedFontOpt.isPresent()) {
 					selectedFont = LocalFont.toString(selectedFontOpt.get());
 					setText(selectedFont);
 					if (msgTag != null)
-						Main.getInstance().getPluginProxy().sendMessage(msgTag, getValue());
+						Main.getPluginProxy().sendMessage(msgTag, getValue());
 					picker = new FontSelectorDialog(selectedFontOpt.get());
 				} else {
 					picker = new FontSelectorDialog(picker.getResult());

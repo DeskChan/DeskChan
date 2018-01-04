@@ -12,6 +12,8 @@ public interface EmotionsController {
 
 	void raiseEmotion(String emotionName);
 
+	void raiseEmotion(String emotionName, int value);
+
 	boolean tagsMatch(Map<String,Object> tags);
 
 	CharacterController construct(CharacterController target);
