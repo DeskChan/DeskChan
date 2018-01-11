@@ -583,7 +583,7 @@ public class PluginManager {
 		if (debugBuild) {
 			path = corePath;
 			try {
-				while (!path.endsWith("build"))
+                while (!IsPathEndsWithList(path,debugBuildFolders))
 					path = path.getParent();
 				path = path.getParent();
 			} catch (Exception e){
