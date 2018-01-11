@@ -22,6 +22,7 @@ public class PluginManager {
 	private static OutputStream logStream = null;
 
 	private static boolean debugBuild = false;
+    private static String[] debugBuildFolders = { "build", "out" };
 
 	Set<MessageListener> getMessageListeners(String key){
 		int delimiterPas = key.indexOf('#');
@@ -265,6 +266,15 @@ public class PluginManager {
 			return false;
 		}
 	}
+
+    private static boolean IsPathEndsWithList(Path path,String[] names){
+	    for(String name: names){
+	        if (path.endsWith(name))
+	            return true;
+        }
+
+                return false;
+    }
 
 	/** Load plugin by its class name.
 	 * @param className Class name
