@@ -5,8 +5,8 @@ import java.util.*;
 
 public class CorePlugin implements Plugin, MessageListener {
 	
-	private PluginProxyInterface pluginProxy = null;
-	private final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
+	protected PluginProxyInterface pluginProxy = null;
+	protected final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
 
 	@Override
 	public boolean initialize(PluginProxyInterface pluginProxy) {
@@ -31,7 +31,11 @@ public class CorePlugin implements Plugin, MessageListener {
 			if(delay > 20)
 				pluginProxy.sendMessage("core-utils:notify-after-delay", m, (s, d) -> PluginManager.getInstance().quit() );
 			else
+			{
 				PluginManager.getInstance().quit();
+				System.exit(0);
+			}
+
 		});
 
 		/* Registers alternative to tag. All messages sent to srcTag will be redirected to dstTag
@@ -126,7 +130,6 @@ public class CorePlugin implements Plugin, MessageListener {
 		});
 
 		CommandsProxy.initialize(pluginProxy);
-		// Testing();
 
 		return true;
 	}
@@ -236,7 +239,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		} catch (NoSuchElementException e) { }
 	}
 	
-	private static class AlternativeInfo {
+	static class AlternativeInfo {
 		String tag;
 		String plugin;
 		int priority;
@@ -255,61 +258,5 @@ public class CorePlugin implements Plugin, MessageListener {
 		public String toString(){
 			return tag + "(" + plugin + ")" + "=" + priority;
 		}
-	}
-
-	/** Testing alternatives. Very good example of using. **/
-	void Testing(){
-		pluginProxy.addMessageListener("core:test1", (sender, tag, data) -> {
-			System.out.println("test 1");
-			pluginProxy.sendMessage("DeskChan:test#core:test1", null);
-		});
-
-		pluginProxy.addMessageListener("core:test2", (sender, tag, data) -> {
-			System.out.println("test 2");
-			pluginProxy.sendMessage("DeskChan:test#core:test2", null);
-		});
-
-		pluginProxy.addMessageListener("core:test3", (sender, tag, data) -> {
-			System.out.println("test 3");
-		});
-
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>(){{
-			put("srcTag", "DeskChan:test");
-			put("dstTag", "core:test1");
-			put("priority", 1000);
-		}});
-
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>(){{
-			put("srcTag", "DeskChan:test");
-			put("dstTag", "core:test2");
-			put("priority", 500);
-		}});
-
-		System.out.println(alternatives);
-		pluginProxy.sendMessage("DeskChan:test", null);
-
-		pluginProxy.sendMessage("core:unregister-alternative", new HashMap<String, Object>(){{
-			put("srcTag", "DeskChan:test");
-			put("dstTag", "core:test1");
-		}});
-
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>(){{
-			put("srcTag", "DeskChan:test");
-			put("dstTag", "core:test3");
-			put("priority", 1500);
-		}});
-
-		System.out.println(alternatives);
-		pluginProxy.sendMessage("DeskChan:test", null);
-
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>(){{
-			put("srcTag", "DeskChan:test");
-			put("dstTag", "core:test3");
-			put("priority", 400);
-		}});
-
-		System.out.println(alternatives);
-		pluginProxy.sendMessage("DeskChan:test", null);
-
 	}
 }

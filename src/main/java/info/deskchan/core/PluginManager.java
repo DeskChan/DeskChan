@@ -22,6 +22,7 @@ public class PluginManager {
 	private static OutputStream logStream = null;
 
 	private static boolean debugBuild = false;
+    private static String[] debugBuildFolders = { "build", "out" };
 
 	Set<MessageListener> getMessageListeners(String key){
 		int delimiterPas = key.indexOf('#');
@@ -74,6 +75,10 @@ public class PluginManager {
 
 	Set<String> getNamesOfLoadedPlugins() {
 		return plugins.keySet();
+	}
+
+	PluginProxy getPlugin(String name){
+		return plugins.get(name);
 	}
 
 	/* Plugin initialization and unloading */
@@ -266,6 +271,15 @@ public class PluginManager {
 		}
 	}
 
+    private static boolean IsPathEndsWithList(Path path,String[] names){
+	    for(String name: names){
+	        if (path.endsWith(name))
+	            return true;
+        }
+
+                return false;
+    }
+
 	/** Load plugin by its class name.
 	 * @param className Class name
 	 * @see #loadPluginByClass(Class)
@@ -412,7 +426,6 @@ public class PluginManager {
 			}
 			logStream = null;
 		}
-		System.exit(0);
 	}
 
 	/** Get list of plugins. **/
@@ -573,7 +586,7 @@ public class PluginManager {
 		if (debugBuild) {
 			path = corePath;
 			try {
-				while (!path.endsWith("build"))
+                while (!IsPathEndsWithList(path,debugBuildFolders))
 					path = path.getParent();
 				path = path.getParent();
 			} catch (Exception e){
