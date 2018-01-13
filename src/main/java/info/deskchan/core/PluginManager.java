@@ -77,6 +77,10 @@ public class PluginManager {
 		return plugins.keySet();
 	}
 
+	PluginProxy getPlugin(String name){
+		return plugins.get(name);
+	}
+
 	/* Plugin initialization and unloading */
 
 	/** Plugin initialization. Use other methods of this class if you haven't all needed components
