@@ -426,7 +426,6 @@ public class PluginManager {
 			}
 			logStream = null;
 		}
-		System.exit(0);
 	}
 
 	/** Get list of plugins. **/

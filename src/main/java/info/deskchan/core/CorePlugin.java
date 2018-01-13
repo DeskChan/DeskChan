@@ -31,7 +31,11 @@ public class CorePlugin implements Plugin, MessageListener {
 			if(delay > 20)
 				pluginProxy.sendMessage("core-utils:notify-after-delay", m, (s, d) -> PluginManager.getInstance().quit() );
 			else
+			{
 				PluginManager.getInstance().quit();
+				System.exit(0);
+			}
+
 		});
 
 		/* Registers alternative to tag. All messages sent to srcTag will be redirected to dstTag
