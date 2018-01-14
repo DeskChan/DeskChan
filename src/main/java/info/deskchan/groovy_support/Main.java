@@ -49,6 +49,7 @@ public class Main implements Plugin, PluginLoader {
 				id = id.substring(0, id.length() - 7);
 			}
 		}
+		System.setProperty("groovy.grape.report.downloads", "true");
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setSourceEncoding("UTF-8");
 		compilerConfiguration.setScriptBaseClass("info.deskchan.groovy_support.GroovyPlugin");
