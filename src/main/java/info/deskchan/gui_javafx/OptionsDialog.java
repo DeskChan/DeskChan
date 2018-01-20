@@ -476,10 +476,21 @@ class OptionsDialog extends TemplateBox {
 
 
 		/// plugins
+		BorderPane MainPluginsTab = new BorderPane();
+		ScrollPane pluginScrollPanel = new ScrollPane();
+		MainPluginsTab.setCenter(pluginScrollPanel);
+		pluginScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+		pluginScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+		pluginScrollPanel.setPannable(true);
+
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
-		pluginsList.setPrefSize(prefWidth, prefHeight);
+		pluginScrollPanel.setContent(pluginsTab);
+		pluginScrollPanel.setPannable(true);
+		pluginScrollPanel.setFitToHeight(true);
+		pluginScrollPanel.setFitToWidth(true);
 
+		pluginsList.setPrefSize(prefWidth, prefHeight);
 		// Setting row style
 		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
 			@Override
@@ -528,9 +539,8 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 		hbox.getChildren().add(button);
-		pluginsTab.setBottom(hbox);
-		tabPane.getTabs().add(new Tab(Main.getString("plugins"), pluginsTab));
-
+		MainPluginsTab.setBottom(hbox);
+		tabPane.getTabs().add(new Tab(Main.getString("plugins"), MainPluginsTab));
 
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
