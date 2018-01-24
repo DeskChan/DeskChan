@@ -599,7 +599,7 @@ class OptionsDialog extends TemplateBox {
 		});
 
 		Button reloadButton = new Button(Main.getString("reload-style"));
-		button.setOnAction(event -> {
+		reloadButton.setOnAction(event -> {
 			instance.applyStyle();
 			instance.hide();
 			instance.show();
