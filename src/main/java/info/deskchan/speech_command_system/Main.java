@@ -56,7 +56,9 @@ public class Main implements Plugin {
                 sb.append(command.rule.getRule()+"\n");
 
             pluginProxy.sendMessage("DeskChan:say", "Я умею много всего! Сейчас список даже покажу.");
-            pluginProxy.sendMessage("DeskChan:show-technical", sb.toString());
+            pluginProxy.setTimer(200, (s, d) -> {
+                pluginProxy.sendMessage("DeskChan:show-technical", sb.toString());
+            });
         });
 
         /* Say commands list.
