@@ -1,3 +1,5 @@
+import java.nio.file.Files
+
 pluginName = "speech_morpher"
 
 log("loading speech_morpher plugin");
@@ -31,6 +33,13 @@ class PluginData {
 
     void calculatePluginMode() {
         def tags = preset.get("tags")
+
+        nekonization = false
+        obscenization = false
+        powerOfStuttering = "none"
+        culturizationMod = "none"
+        exclamentionMod = "none"
+
         sumOfCharacteristic = preset.get("selfconfidence") + preset.get("energy") + preset.get("attitude")
         +preset.get("impulsivity") + preset.get("relationship")
 
@@ -50,19 +59,27 @@ class PluginData {
         if (preset.get("manner") <= -2
                 && properties.getBoolean("enableUnculturization")) {
             culturizationMod = "unculture"
+            instance.log("unculture was enabled")
         } else if (preset.get("manner") >= 2
                 && properties.getBoolean("enableCulturization")) {
             culturizationMod = "culture"
+            instance.log("culture was enabled")
         }
 
         if (preset.get("manner") <= 2 && preset.get("manner") >= -2
                 && properties.getBoolean("enableStuttering")) {
-            if (sumOfCharacteristic <= 6 && sumOfCharacteristic > 2)
+            if (sumOfCharacteristic <= 6 && sumOfCharacteristic > 2) {
                 powerOfStuttering = "light"
-            else if (sumOfCharacteristic <= 2 && sumOfCharacteristic > -2)
+                instance.log("powerOfStuttering is light")
+            }
+            else if (sumOfCharacteristic <= 2 && sumOfCharacteristic > -2) {
                 powerOfStuttering = "perceptible"
-            else if (sumOfCharacteristic <= -2 && sumOfCharacteristic > -8)
+                instance.log("powerOfStuttering is perceptible")
+            }
+            else if (sumOfCharacteristic <= -2 && sumOfCharacteristic > -8) {
                 powerOfStuttering = "irritable"
+                instance.log("powerOfStuttering is irritable")
+            }
         }
 
         if (preset.get("impulsivity") >= 2 && properties.getBoolean("enableExclamention")) {
@@ -71,14 +88,21 @@ class PluginData {
                 && properties.getBoolean("enableUnexclamention"))
         {
             exclamentionMod = "unexclamention"
+            instance.log("exclamentionMod is unexclamention")
         }
     }
 }
 
 def setSettings(enableList) {
+    def properties = getProperties()
+    def configPath = getDataDirPath().resolve("config.properties")
+    if(!Files.exists(configPath)) {
+        for(String entry : subpluginEnableList)
+            properties.putIfHasNot(entry, false)
+    }
     if(enableList) {
          for(String entry : subpluginEnableList)
-            getProperties().put(entry, enableList.get(entry))
+             properties.put(entry, enableList.get(entry))
     }
     getProperties().save()
 }
@@ -137,8 +161,9 @@ pluginData.calculatePluginMode()
 
 addMessageListener(pluginName + ":save-options", {sender, tag, data ->
     def enableList = [:]
-    for(String entry : subpluginEnableList)
+    for(String entry : subpluginEnableList){
         enableList.put(entry, data.get(entry))
+    }
     setSettings(enableList)
     pluginData.calculatePluginMode()
 })
