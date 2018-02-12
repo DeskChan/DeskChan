@@ -27,6 +27,17 @@ apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'edu.sc.seis.launch4j'
 apply plugin: 'de.fuerstenau.buildconfig'
+apply plugin: 'jacoco'
+
+jacocoTestReport {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
+    reports {
+        xml.enabled true
+        csv.enabled false
+    }
+}
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
