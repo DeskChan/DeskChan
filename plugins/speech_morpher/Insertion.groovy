@@ -64,7 +64,12 @@ class Insertion {
             finalText = text + " " + insertion + text[-1]
 
         else if (position == "middle") {
-            def inTextPosition = random.nextInt(textParts.size()-2) // "-2" is protect against "end" position.
+            def inTextPosition = 0
+            if (textParts.size()<=2)
+                inTextPosition = 0
+            else {
+                inTextPosition = random.nextInt(textParts.size() - 2) // "-2" is protect against "end" position.
+            }
             for(def i = 0; i < textParts.size(); i++) {
                 finalText += textParts[i]
                 if (i == inTextPosition) {
