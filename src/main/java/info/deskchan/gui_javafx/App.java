@@ -80,11 +80,13 @@ public class App extends Application {
 		// DeskChan saying "Loading"
 		character.say(new HashMap<String, Object>() {{
 			put("text", Main.getString("info.loading"));
+			put("characterImage", "LOADING");
 			put("priority", 20000);
 			put("timeout", 500000);
 		}});
 		character.say(new HashMap<String, Object>() {{
 			put("text", Main.getString("info.not-loading"));
+			put("characterImage", "HELLO");
 			put("priority", 19999);
 			put("timeout", 500000);
 		}});

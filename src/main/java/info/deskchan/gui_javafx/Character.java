@@ -123,6 +123,7 @@ class Character extends MovablePane {
 			skin = Skin.load(DEFAULT_SKIN_NAME);
 		}
 		this.skin = skin;
+
 		setImageName(imageName);
 	}
 
@@ -151,8 +152,9 @@ class Character extends MovablePane {
             imageView.setImage(getImage());
         }
         Image image = imageView.getImage();
-	    if(image==null){
-	    	App.showNotification(Main.getString("error"), Main.getString("error.no-image")+getImage());
+	    if(image == null){
+	    	App.showNotification(Main.getString("error"), Main.getString("error.no-image"));
+	    	setSkin(null);
 	    	return;
 		}
 		double oldWidth = imageView.getFitWidth();

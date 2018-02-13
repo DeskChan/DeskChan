@@ -41,6 +41,7 @@ public interface Skin {
 				}
 			}
 		}
+		Main.log("Skin by path \"" + path.toString() + "\" not found in assets folder.");
 		return null;
 	}
 	

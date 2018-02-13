@@ -53,9 +53,7 @@ class PluginConfig {
         }
 
         val manifestStr = try {
-            Files.newInputStream(path).use { manifestInputStream ->
-                IOUtils.toString(manifestInputStream, "UTF-8")
-            }
+            IOUtils.toString(Files.newInputStream(path), "UTF-8")
         } catch (e: IOException) {
             PluginManager.log("Couldn't read file: $path")
             PluginManager.log(e)
