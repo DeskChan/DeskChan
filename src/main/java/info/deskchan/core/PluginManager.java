@@ -198,17 +198,18 @@ public class PluginManager {
 	 */
 	void sendMessage(String sender, String tag, Object data) {
 		Set<MessageListener> listeners = getMessageListeners(tag);
-		if (listeners != null) {
-			for (MessageListener listener : listeners) {
-				try {
-					Debug.TimeTest send = new Debug.TimeTest() {
-						@Override
-						void run() { listener.handleMessage(sender, tag, data); }
-					};
-				} catch (Exception e){
-					log("Error while calling "+tag+", called by "+sender);
-					log(e);
-				}
+		if (listeners == null || listeners.size() == 0)
+			return;
+
+		for (MessageListener listener : listeners) {
+			try {
+				Debug.TimeTest send = new Debug.TimeTest() {
+					@Override
+					void run() { listener.handleMessage(sender, tag, data); }
+				};
+			} catch (Exception e){
+				log("Error while calling "+tag+", called by "+sender);
+				log(e);
 			}
 		}
 	}

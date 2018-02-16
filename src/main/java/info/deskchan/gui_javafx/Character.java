@@ -59,13 +59,13 @@ class Character extends MovablePane {
 			Map<String, Object> m = new HashMap<>();
 			m.put("screenX", event.getScreenX());
 			m.put("screenY", event.getScreenY());
-			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-start-drag",m);
+			Main.getPluginProxy().sendMessage("gui-events:character-start-drag",m);
 		});
 		addEventFilter(MouseEvent.MOUSE_RELEASED, event -> {
 			Map<String, Object> m = new HashMap<>();
 			m.put("screenX", event.getScreenX());
 			m.put("screenY", event.getScreenY());
-			Main.getInstance().getPluginProxy().sendMessage("gui-events:character-stop-drag",m);
+			Main.getPluginProxy().sendMessage("gui-events:character-stop-drag",m);
 		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
 			boolean enabled = Main.getProperties().getBoolean("character.enable_context_menu", true);
@@ -121,6 +121,11 @@ class Character extends MovablePane {
 	void setSkin(Skin skin) {
 		if (skin == null) {
 			skin = Skin.load(DEFAULT_SKIN_NAME);
+			if (skin == null){
+				App.showNotification(Main.getString("error"), Main.getString("error.no-image"));
+				Main.getInstance().quit();
+				return;
+			}
 		}
 		this.skin = skin;
 
@@ -153,7 +158,6 @@ class Character extends MovablePane {
         }
         Image image = imageView.getImage();
 	    if(image == null){
-	    	App.showNotification(Main.getString("error"), Main.getString("error.no-image"));
 	    	setSkin(null);
 	    	return;
 		}
@@ -299,13 +303,13 @@ class Character extends MovablePane {
 			Iterator<MessageInfo> i = messageQueue.iterator();
 			while (i.hasNext()) {
 				MessageInfo s = i.next();
-				if(s!=messageInfo && s.skippable && s.priority<=messageInfo.priority) i.remove();
+				if(s != messageInfo && s.skippable && s.priority <= messageInfo.priority) i.remove();
 			}
 			if (messageQueue.peek() != messageInfo) {
 				return;
 			}
 		} else {
-			if(messageQueue.peek()!=null && messageQueue.peek().itsTimeToStop()){
+			if(messageQueue.peek() != null && messageQueue.peek().itsTimeToStop()){
 				messageQueue.poll();
 			}
 		}
@@ -314,10 +318,10 @@ class Character extends MovablePane {
 			balloon = null;
 		}
 		messageInfo = messageQueue.peek();
-		if (messageInfo == null || messageInfo.counter>=messageInfo.text.length) {
+		if (messageInfo == null || messageInfo.counter >= messageInfo.text.length) {
 			setImageName(idleImageName);
 		} else {
-			if(messageInfo.characterImage!=null)
+			if(messageInfo.characterImage != null)
 				setImageName(messageInfo.characterImage);
 			balloon = new Balloon(this, balloonPositionMode, messageInfo.text[messageInfo.counter]);
             messageInfo.counter++;
@@ -379,7 +383,8 @@ class Character extends MovablePane {
 		MessageInfo(Object data) {
 			String text2;
 			int _timeout;
-			boolean partible=true;
+			boolean partible = true;
+
 			if(data instanceof Map){
 				Map<String,Object> mapData = (Map<String,Object>) data;
 				String characterImage = (String) mapData.getOrDefault("characterImage", null);
@@ -407,7 +412,7 @@ class Character extends MovablePane {
 					text2 = (String) mapData.get("text");
 				else if(mapData.containsKey("msgData"))
 					text2 = (String) mapData.get("msgData");
-				else text2="";
+				else text2 = "";
 
 				ob = mapData.getOrDefault("partible", true);
 				if(ob instanceof String)
@@ -417,10 +422,10 @@ class Character extends MovablePane {
 				if(data instanceof String)
 					text2 = (String) data;
 				else text2 = data.toString();
-				skippable=true;
+				skippable = true;
 				characterImage = null;
-				priority=DEFAULT_MESSAGE_PRIORITY;
-				_timeout = (int) Main.getProperties().getInteger("balloon.default_timeout", 200);
+				priority = DEFAULT_MESSAGE_PRIORITY;
+				_timeout = Main.getProperties().getInteger("balloon.default_timeout", 200);
 			}
 
 			if(partible) {
@@ -500,14 +505,14 @@ class Character extends MovablePane {
 				}
 				text = list.toArray(new String[list.size()]);
 			} else {
-				text=new String[1];
-				text[0]=text2;
+				text = new String[1];
+				text[0] = text2;
 			}
-			timeout = Math.max( 3000 , text2.length()/text.length * _timeout );
+			timeout = Math.max( 3000 , text2.length() / text.length * _timeout );
 		}
 
         boolean itsTimeToStop(){
-            return counter>=text.length;
+            return counter >= text.length;
         }
 
 		@Override

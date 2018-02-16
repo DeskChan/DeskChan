@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx;
 import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -47,7 +48,7 @@ class ImageSetSkin implements Skin {
 	public String getName() {
 		return Skin.getSkinsPath().relativize(path).toString();
 	}
-	
+
 	private List<Image> getImageArray(String name) {
 		List<Image> l = images.getOrDefault(name, null);
 		if (l != null) {
@@ -61,19 +62,26 @@ class ImageSetSkin implements Skin {
 					try (InputStream inputStream = Files.newInputStream(imgPath)) {
 						l.add(new Image(inputStream));
 					} catch (IOException e) {
-						Main.getInstance().getPluginProxy().log(e);
+						Main.getPluginProxy().log(e);
 					}
 				}
 			} catch (IOException e) {
-				Main.getInstance().getPluginProxy().log(e);
+				Main.getPluginProxy().log(e);
 			}
 		} else {
-			imagePath = imagePath.resolveSibling(imagePath.getFileName() + ".png");
-			if (Files.isReadable(imagePath)) {
-				try (InputStream inputStream = Files.newInputStream(imagePath)) {
-					l.add(new Image(inputStream));
-				} catch (IOException e) {
-					Main.getInstance().getPluginProxy().log(e);
+			File[] files = path.toFile().listFiles();
+			if (files == null) return l;
+
+			for (File file : files){
+				String fileName = file.getName(); int index = fileName.indexOf('.');
+				if (index >= 0) fileName = fileName.substring(0, index);
+
+				if (fileName.equals(name)){
+					try (InputStream inputStream = Files.newInputStream(file.toPath())) {
+						l.add(new Image(inputStream));
+					} catch (IOException e) {
+						Main.getPluginProxy().log(e);
+					}
 				}
 			}
 		}

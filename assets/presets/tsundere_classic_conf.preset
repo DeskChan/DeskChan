@@ -17,6 +17,7 @@
 		<confusion chance="0.5">
 		  	<impulsivity force="2"/>
           	<empathy force="-2"/>
+        <confusion/>
 		<anger chance="0.2"/>
 	</emotions>
 	<tags>

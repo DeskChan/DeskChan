@@ -86,7 +86,6 @@ public class App extends Application {
 		}});
 		character.say(new HashMap<String, Object>() {{
 			put("text", Main.getString("info.not-loading"));
-			put("characterImage", "HELLO");
 			put("priority", 19999);
 			put("timeout", 500000);
 		}});
@@ -315,47 +314,63 @@ public class App extends Application {
 			});
 		});
 
-		/* Set up options container as tab.
+		/* Toggle context menu at right click
         * Public message
-        * Params: Map
-        *           name: String! - text of tag
-        *           msgTag: String? - tag to send controls values when 'Save' button clicked
-        *           onClose: String? - tag to call when menu closed
-        *           controls: List! of Maps - look at documentation
+        * Params: check: Boolean! - turn menu on/off
         * Returns: None */
+		pluginProxy.addMessageListener("gui:toggle-context-menu", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Main.getProperties().put("character.enable_context_menu", data);
+			});
+		});
+
+		/* Open distributor window
+        * Public message
+        * Params: None
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:open-distributor", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				FileChooser packChooser = new FileChooser();
+				packChooser.setInitialDirectory(pluginProxy.getRootDirPath().toFile());
+				File f = packChooser.showOpenDialog(OptionsDialog.getInstance().getDialogPane().getScene().getWindow());
+				if (f != null)
+					pluginProxy.sendMessage("core:distribute-resources", f.toString());
+			});
+		});
+
+
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.registerPluginMenu(sender, (Map) data, true);
+				new ControlsPanel(sender, "tab", (Map) data).create();
 			});
 		});
 
-		/* Set up options container as submenu in 'Plugins' tab.
-        * Public message
-        * Params: look at gui:setup-options-tab
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.registerPluginMenu(sender, (Map) data, false);
+				new ControlsPanel(sender, "submenu", (Map) data).create();
 			});
 		});
 
-		/* Update values in options tab.
-        * Public message
-        * Params: look at gui:setup-options-tab
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.updatePluginMenu(sender, (Map) data, true);
+				new ControlsPanel(sender, "tab", (Map) data).update();
 			});
 		});
 
-		/* Update values in options submenu.
-        * Public message
-        * Params: look at gui:setup-options-tab
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				OptionsDialog.updatePluginMenu(sender, (Map) data, false);
+				new ControlsPanel(sender, "submenu", (Map) data).update();
+			});
+		});
+
+		/* DEPRECATED */
+		pluginProxy.addMessageListener("gui:set-panel", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				new ControlsPanel(sender, (Map) data);
 			});
 		});
 
@@ -364,23 +379,16 @@ public class App extends Application {
         * Params: None
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
-			showOptionsDialog();
+			OptionsDialog.open();
 		});
 
-		/* Show options submenu.
-        * Public message
-        * Params: Map
-        *           owner: String? - owner of menu
-        *           menu: String? - name of menu
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				if(data instanceof Map) {
-					Map map = (Map) data;
-					OptionsDialog.openSubMenu((String) map.get("owner"),
-											  (String) map.get("menu"));
+					new ControlsPanel(sender, "submenu", (Map) data).show();
 				} else {
-					OptionsDialog.openSubMenu(sender, data.toString());
+					new ControlsPanel(sender, data.toString()).show();
 				}
 			});
 		});
@@ -392,15 +400,7 @@ public class App extends Application {
         *           text: String? - text of notification
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				if (data instanceof Map) {
-					Map<String, Object> m = (Map<String, Object>) data;
-					showNotification((String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
-							(String) m.get("text"));
-				} else {
-					showNotification(Main.getString("default_messagebox_name"), data.toString());
-				}
-			});
+			new ControlsPanel(sender, "notification", (Map) data).show();
 		});
 
 		/* Play sound.
@@ -435,23 +435,17 @@ public class App extends Application {
 			});
 		});
 
-		/* Show custom window.
-        * Public message
-        * Params: look at gui:setup-options-tab
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				ControlsWindow.setupCustomWindow(sender, (Map<String,Object>) data);
+				new ControlsPanel(sender, "window", (Map) data).show();
 			});
 		});
 
-		/* Update values in custom window.
-        * Public message
-        * Params: look at gui:setup-options-tab
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				ControlsWindow.updateCustomWindow(sender, (Map<String,Object>) data);
+				new ControlsPanel(sender, "window", (Map) data).update();
 			});
 		});
 
@@ -773,7 +767,9 @@ public class App extends Application {
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				String pluginId = (String) data;
-				OptionsDialog.unregisterPluginMenus(pluginId);
+				for (ControlsPanel panel : ControlsPanel.getPanels(pluginId))
+					panel.delete();
+
 				TrayMenu.remove(pluginId);
 				Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
 				while (iterator.hasNext()) {
@@ -866,17 +862,6 @@ public class App extends Application {
 	/** Parsing value to double or returning default if we failed. **/
 	private Double getDouble(Map<String, Object> map, String key, double defaultValue) {
 		return getDouble(map.getOrDefault(key, defaultValue), defaultValue);
-	}
-
-	/** Show options dialog. **/
-	protected void showOptionsDialog() {
-		OptionsDialog optionsDialog = OptionsDialog.getInstance();
-		if (optionsDialog != null) {
-			optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
-		} else {
-			optionsDialog = new OptionsDialog();
-			optionsDialog.show();
-		}
 	}
 
 	/** Load all fonts from 'assets/fonts'. **/

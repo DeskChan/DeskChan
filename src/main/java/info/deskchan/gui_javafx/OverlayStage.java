@@ -81,6 +81,7 @@ class OverlayStage extends Stage {
 			Main.log("Cannot initialize SEPARATE stage");
 		}
 	}
+
 	public static void updateStage(){
 		String mode = Main.getProperties().getString("character.layer_mode");
 		if(mode == null){
@@ -89,6 +90,7 @@ class OverlayStage extends Stage {
 		}
 		updateStage(mode);
 	}
+
 	public static void updateStage(String name){
 		LayerMode mode;
 		if (name == null){
@@ -103,7 +105,8 @@ class OverlayStage extends Stage {
 		}
 		updateStage(mode);
 	}
-	private static void showConfirmation(String text){
+
+	private static boolean showConfirmation(String text){
 		Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
 		try {
 			((Stage) alert.getDialogPane().getScene().getWindow()).setAlwaysOnTop(true);
@@ -111,15 +114,15 @@ class OverlayStage extends Stage {
 		alert.setTitle(Main.getString("default_messagebox_name"));
 		alert.setContentText(Main.getString(text));
 		Optional<ButtonType> result = alert.showAndWait();
-		if(result.get() != ButtonType.OK){
-			return;
-		}
+		return (result.get() != ButtonType.OK);
 	}
+
 	public static void updateStage(LayerMode mode){
 		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC && instance != null)
-			showConfirmation("info.separated-stage");
+			if (showConfirmation("info.separated-stage")) return;
 		else if(mode == LayerMode.ALWAYS_TOP && SystemUtils.IS_OS_MAC)
-			showConfirmation("info.not-separated-stage");
+			if (showConfirmation("info.separated-stage")) return;
+
 		if(mode == currentMode) return;
 		try {
 			OverlayStage nextInstance = (OverlayStage) instances.get(mode).newInstance();
@@ -154,6 +157,7 @@ class OverlayStage extends Stage {
 	public static Set<LayerMode> getStages(){
 		return instances.keySet();
 	}
+
 	OverlayStage() {
 		stage = this;
 		setTitle(App.NAME);

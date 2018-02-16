@@ -1,5 +1,8 @@
 package info.deskchan.gui_javafx;
 
+import javafx.beans.property.Property;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,9 +35,11 @@ interface PluginOptionsControlItem {
 	default void setValue(Object value) { }
 	
 	default Object getValue() {  return null;  }
+
+	default ObservableValue getProperty() {  return null;  }
 	
 	Node getNode();
-	
+
 	static PluginOptionsControlItem create(Window parent, Map<String, Object> options) {
 		String type   = (String) options.get("type");
 		Object value  = options.get("value");
@@ -93,6 +98,9 @@ interface PluginOptionsControlItem {
 			case "FontPicker":
 				item = new FontPickerItem(parent);
 				break;
+			case "Separator":
+				item = new SeparatorItem();
+				break;
 		}
 
 		if (item == null) {
@@ -119,6 +127,7 @@ interface PluginOptionsControlItem {
 		if(disabled != null){
 			node.setDisable(disabled);
 		}
+
 		return item;
 	}
 	
@@ -147,23 +156,38 @@ interface PluginOptionsControlItem {
 		public void setValue(Object value) {
 			if (value != null) setText(value.toString());
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return getText();
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return this;
 		}
-		
+
 	}
-	
+
+	class SeparatorItem extends Separator implements PluginOptionsControlItem {
+
+		public SeparatorItem() {
+			super();
+		}
+
+		@Override
+		public Node getNode() {
+			return this;
+		}
+
+	}
+
 	class TextFieldItem implements PluginOptionsControlItem {
-		
+
 		TextField textField;
-		String enterTag=null;
+		String enterTag = null;
+		Property currentText = new SimpleStringProperty();
+
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			Boolean isPasswordField = (Boolean) options.getOrDefault("hideText", false);
@@ -171,32 +195,39 @@ interface PluginOptionsControlItem {
 
 			enterTag = (String)options.get("enterTag");
 			setValue(value);
-			if(enterTag != null){
-				textField.setOnKeyReleased(event -> {
-					if (event.getCode() == KeyCode.ENTER){
-						Main.getInstance().getPluginProxy().sendMessage(enterTag,new HashMap<String,Object>(){{
+
+			textField.setOnKeyReleased(event -> {
+				if (event.getCode() == KeyCode.ENTER) {
+					currentText.setValue(getValue());
+					if (enterTag != null) {
+						Main.getPluginProxy().sendMessage(enterTag, new HashMap<String, Object>() {{
 							put("value", getValue());
 						}});
 					}
-				});
-			}
+				}
+			});
 		}
 
 		@Override
 		public void setValue(Object value) {
 			textField.setText(value != null ? value.toString() : "");
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return textField.getText();
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return textField;
 		}
-		
+
+		@Override
+		public ObservableValue getProperty(){
+			return currentText;
+		}
+
 	}
 
 	class TextAreaItem implements PluginOptionsControlItem {
@@ -317,7 +348,7 @@ interface PluginOptionsControlItem {
 	}
 
 	class IntSpinnerItem implements PluginOptionsControlItem {
-		
+
 		private final Spinner<Integer> spinner = new ImprovedSpinner<>();
 
 		@Override
@@ -331,28 +362,32 @@ interface PluginOptionsControlItem {
 			if (options.get("msgTag") != null){
 				String msgTag = options.get("msgTag").toString();
 				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
+					Main.getPluginProxy().sendMessage(msgTag, newValue);
 				});
 			}
 		}
-		
+
 		@Override
 		public void setValue(Object value) {
 			try {
 				spinner.getValueFactory().setValue(((Number) value).intValue());
 			} catch (Exception e){ }
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return spinner.getValue();
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return spinner;
 		}
-		
+
+		@Override
+		public ObservableValue getProperty(){
+			return spinner.valueProperty();
+		}
 	}
 
 	class FloatSpinnerItem implements PluginOptionsControlItem {
@@ -370,7 +405,7 @@ interface PluginOptionsControlItem {
 			if (options.get("msgTag") != null){
 				String msgTag = options.get("msgTag").toString();
 				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
+					Main.getPluginProxy().sendMessage(msgTag, newValue);
 				});
 			}
 		}
@@ -390,6 +425,11 @@ interface PluginOptionsControlItem {
 		@Override
 		public Node getNode() {
 			return spinner;
+		}
+
+		@Override
+		public ObservableValue getProperty(){
+			return spinner.valueProperty();
 		}
 
 	}
@@ -420,7 +460,7 @@ interface PluginOptionsControlItem {
 			if (options.get("msgTag") != null){
 				String msgTag = options.get("msgTag").toString();
 				slider.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
+					Main.getPluginProxy().sendMessage(msgTag, newValue);
 				});
 			}
 
@@ -451,6 +491,11 @@ interface PluginOptionsControlItem {
 			return slider;
 		}
 
+		@Override
+		public ObservableValue getProperty(){
+			return slider.valueProperty();
+		}
+
 	}
 
 	class CheckBoxItem extends CheckBox implements PluginOptionsControlItem {
@@ -463,7 +508,7 @@ interface PluginOptionsControlItem {
 			if(msgTag != null){
 				selectedProperty().addListener((obs, oldValue, newValue) -> {
 					if(oldValue.equals(newValue)) return;
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, newValue);
+					Main.getPluginProxy().sendMessage(msgTag, newValue);
 				});
 			}
 		}
@@ -482,12 +527,16 @@ interface PluginOptionsControlItem {
 			return this;
 		}
 
+		@Override
+		public ObservableValue getProperty(){
+			return selectedProperty();
+		}
 	}
-	
+
 	class ComboBoxItem implements PluginOptionsControlItem {
-		
+
 		private final ComboBox<Object> comboBox = new ComboBox<>();
-		
+
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			List<Object> items = (List) options.get("values");
@@ -497,34 +546,38 @@ interface PluginOptionsControlItem {
 			String msgTag=(String)options.get("msgTag");
 			if(msgTag!=null){
 				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
+					Main.getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
 						put("value", newValue.toString());
 					}});
 				});
 			}
 		}
-		
+
 		@Override
 		public void setValue(Object value) {
 			comboBox.getSelectionModel().select(value != null ? (int) value : 0);
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return comboBox.getSelectionModel().getSelectedIndex();
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return comboBox;
 		}
-		
+
+		@Override
+		public ObservableValue getProperty(){
+			return comboBox.valueProperty();
+		}
 	}
-	
+
 	class ListBoxItem implements PluginOptionsControlItem {
-		
+
 		private final ListView<Object> listView = new ListView<>();
-		
+
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			List<Object> items = (List) options.get("values");
@@ -537,7 +590,7 @@ interface PluginOptionsControlItem {
 			String msgTag=(String)options.get("msgTag");
 			if(msgTag!=null){
 				listView.setOnMouseClicked((event) -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+					Main.getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
 						put("value", new ArrayList<>(listView.getSelectionModel().getSelectedItems()));
 						put("index", new ArrayList<>(listView.getSelectionModel().getSelectedIndex()));
 					}});
@@ -545,7 +598,7 @@ interface PluginOptionsControlItem {
 
 			}
 		}
-		
+
 		@Override
 		public void setValue(Object value) {
 			if (value == null || !(value instanceof List)) return;
@@ -558,47 +611,59 @@ interface PluginOptionsControlItem {
 				listView.getSelectionModel().select((int) i);
 			}
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return Arrays.asList(listView.getSelectionModel().getSelectedIndices().toArray());
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return listView;
 		}
-		
+
+		@Override
+		public ObservableValue getProperty(){
+			return listView.getSelectionModel().selectedIndexProperty();
+		}
+
 	}
-	
+
 	class ButtonItem extends Button implements PluginOptionsControlItem {
-		
+
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			String msgTag = (String) options.get("msgTag");
 			Object msgData = options.get("msgData");
+			Object dstPanel = options.get("dstPanel");
 
 			setValue(value);
 			if (msgTag != null) {
-				setOnAction(event -> Main.getInstance().getPluginProxy().sendMessage(msgTag, msgData));
+				setOnAction(event -> Main.getPluginProxy().sendMessage(msgTag, msgData));
+			} else if (dstPanel != null){
+				setOnAction(event -> ControlsPanel.open(dstPanel.toString()));
 			}
 		}
-		
+
 		@Override
 		public void setValue(Object value) {
 			setText(value != null ? value.toString() : "");
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return getText();
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return this;
 		}
-		
+
+		@Override
+		public ObservableValue getProperty(){
+			return textProperty();
+		}
 	}
 
 	class FilesManagerItem extends Button implements PluginOptionsControlItem {
@@ -647,12 +712,12 @@ interface PluginOptionsControlItem {
 	}
 
 	class FileFieldItem extends BorderPane implements PluginOptionsControlItem {
-		
+
 		private final TextField textField = new TextField();
 		private final Button selectButton = new Button("...");
 		private final Button clearButton = new Button("X");
 		private final FileChooser chooser = new FileChooser();
-		
+
 		FileFieldItem(Window parent) {
 			textField.setEditable(false);
 			setLeft(textField);
@@ -667,7 +732,7 @@ interface PluginOptionsControlItem {
 			setCenter(selectButton);
 			setMaxHeight(textField.getHeight());
 		}
-		
+
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			String path = (String) options.get("initialDirectory");
@@ -685,29 +750,33 @@ interface PluginOptionsControlItem {
 				}
 			}
 		}
-		
+
 		@Override
 		public void setValue(Object value) {
 			textField.setText(value != null ? value.toString() : "");
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return textField.getText();
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return this;
 		}
-		
+
+		@Override
+		public ObservableValue getProperty(){
+			return textField.textProperty();
+		}
 	}
-	
+
 	class DatePickerItem implements PluginOptionsControlItem {
-		
+
 		DatePicker picker = new DatePicker();
 		DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
-		
+
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			String format = (String) options.get("format");
@@ -716,12 +785,12 @@ interface PluginOptionsControlItem {
 			}
 			setValue(value);
 		}
-		
+
 		@Override
 		public Object getValue() {
 			return picker.getValue().format(formatter);
 		}
-		
+
 		@Override
 		public void setValue(Object value) {
 			LocalDate date;
@@ -731,15 +800,19 @@ interface PluginOptionsControlItem {
 				e.printStackTrace();
 				return;
 			}
-			
+
 			picker.setValue(date);
 		}
-		
+
 		@Override
 		public Node getNode() {
 			return picker;
 		}
-		
+
+		@Override
+		public ObservableValue getProperty(){
+			return picker.valueProperty();
+		}
 	}
 
 	class ColorPickerItem implements PluginOptionsControlItem {
@@ -752,7 +825,7 @@ interface PluginOptionsControlItem {
 			setValue(value);
 			if (msgTag != null) {
 				picker.setOnAction(event -> {
-					Main.getInstance().getPluginProxy().sendMessage(msgTag, picker.getValue().toString());
+					Main.getPluginProxy().sendMessage(msgTag, picker.getValue().toString());
 				});
 			}
 		}
@@ -785,14 +858,19 @@ interface PluginOptionsControlItem {
 		public Node getNode() {
 			return picker;
 		}
+
+		@Override
+		public ObservableValue getProperty(){
+			return picker.valueProperty();
+		}
 	}
 
 	class FontPickerItem extends ButtonItem {
 
 		FontSelectorDialog picker;
 		String msgTag;
-		String selectedFont;
 		private Window parent;
+		Property<String> selectedFont = new SimpleStringProperty();
 
 		public FontPickerItem(Window window){
 			parent = window;
@@ -808,8 +886,8 @@ interface PluginOptionsControlItem {
 				stage.setAlwaysOnTop(TemplateBox.checkForceOnTop());
 				Optional<Font> selectedFontOpt = picker.showAndWait();
 				if (selectedFontOpt.isPresent()) {
-					selectedFont = LocalFont.toString(selectedFontOpt.get());
-					setText(selectedFont);
+					selectedFont.setValue(LocalFont.toString(selectedFontOpt.get()));
+					setText(selectedFont.getValue());
 					if (msgTag != null)
 						Main.getPluginProxy().sendMessage(msgTag, getValue());
 					picker = new FontSelectorDialog(selectedFontOpt.get());
@@ -829,12 +907,12 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void setValue(Object value) {
-			selectedFont = (String) value;
+			selectedFont.setValue((String) value);
 			try {
 				if (selectedFont != null) {
-					Font font = LocalFont.fromString(selectedFont);
+					Font font = LocalFont.fromString(selectedFont.getValue());
 					picker = new FontSelectorDialog(font);
-					setText(selectedFont);
+					setText(selectedFont.getValue());
 					picker.initOwner(parent);
 					return;
 				}
@@ -845,6 +923,11 @@ interface PluginOptionsControlItem {
 			picker.initOwner(parent);
 			picker.setResizable(true);
 			picker.getDialogPane().setStyle(LocalFont.getDefaultFontCSS());
+		}
+
+		@Override
+		public ObservableValue getProperty(){
+			return selectedFont;
 		}
 	}
 }

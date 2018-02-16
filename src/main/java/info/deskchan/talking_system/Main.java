@@ -382,7 +382,7 @@ public class Main implements Plugin {
 				put("hint",getString("help.tags"));
 			}});
 			list.add(new HashMap<String, Object>() {{
-				put("type", "Label");
+				put("type", "Separator");
 				put("label", getString("primary_character_values"));
 			}});
 			for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
@@ -397,6 +397,9 @@ public class Main implements Plugin {
 				ch.put("hint", getString("help."+ CharacterFeatures.getFeatureName(i)));
 				list.add(ch);
 			}
+			list.add(new HashMap<String, Object>() {{
+				put("type", "Separator");
+			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "file");
 				put("type", "FileField");

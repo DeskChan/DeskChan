@@ -279,11 +279,7 @@ public class Main implements Plugin {
                 put("id", "options");
                 put("type", "Button");
                 put("value", pluginProxy.getString("options"));
-                put("msgTag", "gui:show-options-submenu");
-                put("msgData", new HashMap<String, Object>(){{
-                    put("owner", pluginProxy.getId());
-                    put("menu", pluginProxy.getString("options"));
-                }});
+                put("dstPanel", pluginProxy.getId() + ":" + pluginProxy.getString("options"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "name");

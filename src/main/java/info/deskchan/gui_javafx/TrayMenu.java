@@ -59,7 +59,7 @@ public class TrayMenu {
             Main.log("clicked to open");
             Platform.runLater( () -> {
                 Main.log("in thread, "+App.getTime(start));
-                App.getInstance().showOptionsDialog();
+                OptionsDialog.open();
                 Main.log("opened, "+App.getTime(start));
             });  }
     };

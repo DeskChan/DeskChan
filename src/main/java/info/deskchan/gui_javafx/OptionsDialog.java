@@ -8,23 +8,14 @@ import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.css.PseudoClass;
-import javafx.geometry.Insets;
-import javafx.geometry.Rectangle2D;
-import javafx.geometry.Side;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -42,17 +33,8 @@ class OptionsDialog extends TemplateBox {
 
 	private static OptionsDialog instance = null;
 
-	/** Top tabs container. **/
-	private TabPane tabPane = new TabPane();
-
 	/** Tab list list. **/
 	private ListView<String> tabListView = new ListView<>();
-	
-	/** Skin options sub menu, 'Appearance' tab. **/
-	private ControlsPane skinOptions;
-
-	/** Balloon options sub menu, 'Appearance' tab. **/
-	private ControlsPane balloonOptions;
 
 	/** List of rows representing registered plugins in the core, 'Plugins' tab. **/
 	private ListView<PluginListItem> pluginsList = new ListView<>();
@@ -60,14 +42,7 @@ class OptionsDialog extends TemplateBox {
 	/** Table of alternatives registered in the core, 'Alternatives' tab. **/
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
 
-	/** Table of rows representing commands registered in the core, 'Commands' tab. **/
-	private TableView<CommandItem> commandsTable=new TableView<>();
-
-	/** All tabs registered by plugins, plugin -> list of tabs. **/
-	private static Map<String, List<ControlsPane>> pluginsTabs = new HashMap<>();
-
-	/** All submenus registered by plugins, plugin -> list of menus. **/
-	private static Map<String, List<ControlsPane>> pluginsSubMenus = new HashMap<>();
+	private Pane controlsPane = new Pane();
 
 	static {
 		// Filling plugins list, 'plugin-load' sends full list of registered commands every time you subscribed to it
@@ -90,66 +65,61 @@ class OptionsDialog extends TemplateBox {
 				instance.pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
 			});
 		});
-
 	}
 
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
 		instance = this;
-		tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-		tabPane.setTabMaxWidth(0);
-		tabPane.setTabMaxHeight(0);
-		tabPane.setSide(Side.RIGHT);
-		tabPane.pseudoClassStateChanged(PseudoClass.getPseudoClass("right"), false);
-		tabPane.pseudoClassStateChanged(PseudoClass.getPseudoClass(TabPane.STYLE_CLASS_FLOATING), true);
+
 		tabListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		initTabs();
-		syncTabListViewItems();
-		tabPane.getTabs().addListener((ListChangeListener<Tab>) change -> syncTabListViewItems());
-		tabListView.getSelectionModel().selectedIndexProperty().addListener((observableValue, oldValue, newValue) ->
-				tabPane.getSelectionModel().select(newValue.intValue()));
-		HBox contentPane = new HBox();
-		contentPane.getChildren().add(tabListView);
-		contentPane.getChildren().add(tabPane);
-		/* !!! FIXME: Begin of dirty code !!! */
-		HBox.setMargin(tabPane, new Insets(0, -13, 0, 6));
-		Rectangle clipRect = new Rectangle();
-		clipRect.widthProperty().bind(contentPane.widthProperty().subtract(13));
-		clipRect.heightProperty().bind(contentPane.heightProperty());
-		contentPane.setClip(clipRect);
-		/* !!! End of dirty code !!! */
-		getDialogPane().setContent(contentPane);
-		setOnHidden(event -> {
-			instance = null;
-		});
+
+		tabListView.getSelectionModel().selectedIndexProperty().addListener(
+				(observableValue, oldValue, newValue) -> {
+					String selected = tabListView.getItems().get(newValue.intValue());
+					for (ControlsPanel tab : ControlsPanel.getPanels(ControlsPanel.PanelType.TAB)){
+						if (tab.name.equals(selected)) {
+							tab.show();
+							return;
+						}
+					}
+				}
+		);
+		GridPane gridPane = new GridPane();
+		ColumnConstraints column1 = new ColumnConstraints();
+		gridPane.add(tabListView, 0, 0, 1, 1);
+		column1.setPercentWidth(30);
+
+		ColumnConstraints column2 = new ColumnConstraints();
+		gridPane.add(controlsPane, 1, 0, 1, 1);
+		column2.setPercentWidth(70);
+
+		controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
+
+		gridPane.getColumnConstraints().addAll(column1, column2);
+		getDialogPane().setContent(gridPane);
 	}
-	
-	private void syncTabListViewItems() {
-		tabListView.getItems().clear();
-		for (Tab tab : tabPane.getTabs()) {
-			tabListView.getItems().add(tab.getText());
-		}
-		tabListView.getSelectionModel().select(tabPane.getSelectionModel().getSelectedIndex());
-	}
-	
+
 	static OptionsDialog getInstance() {
 		return instance;
 	}
 
 	/** Creating 'Appearance' tab. **/
-	public void initMainTab(){
+	private static void initMainTab(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "character_options");
 			put("type",  "Button");
 			put("label",  Main.getString("skin.options"));
 			put("value",  Main.getString("open"));
+			put("dstPanel", Main.getPluginProxy().getId() + ":" + Main.getString("skin"));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_options");
 			put("type",  "Button");
 			put("label",  Main.getString("balloon.options"));
 			put("value",  Main.getString("open"));
+			put("dstPanel", Main.getPluginProxy().getId() + ":" + Main.getString("balloon"));
 		}});
 		/*list.add(new HashMap<String, Object>() {{
 			put("id",    "interface_size");
@@ -181,7 +151,7 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("character.layer_mode"));
 			List<Object> values=FXCollections.observableList(new ArrayList<>());
 			values.addAll(OverlayStage.getStages());
-			int sel=-1;
+			int sel = -1;
 			OverlayStage.LayerMode mode = OverlayStage.getCurrentStage();
 			for(Object value : values){
 				sel++;
@@ -194,6 +164,7 @@ class OptionsDialog extends TemplateBox {
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "enable_context_menu");
 			put("type",  "CheckBox");
+			put("msgTag","gui:toggle-context-menu");
 			put("hint",   Main.getString("help.context_menu"));
 			put("label",  Main.getString("enable_context_menu"));
 			put("value",  Main.getProperties().getBoolean("character.enable_context_menu", true));
@@ -201,16 +172,19 @@ class OptionsDialog extends TemplateBox {
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "load_resource_pack");
 			put("type",  "Button");
+			put("msgTag","gui:open-distributor");
 			put("hint",   Main.getString("help.resources"));
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
 		}});
-		ControlsPane poTab = new ControlsPane(Main.getString("appearance"), list, null, null);
-		tabPane.getTabs().add(new Tab(poTab.name, poTab.createControlsPane(instance)));
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), ControlsPanel.PanelType.TAB, list).create();
+
+		characterOptions();
+		balloonOptions();
 	}
 
 	/** Creating 'Skin' options submenu. **/
-	private ControlsPane characterOptions(){
+	private static void characterOptions(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "skin");
@@ -247,12 +221,11 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		skinOptions = new ControlsPane(Main.getString("skin"), list, null, null);
-		return skinOptions;
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).create();
 	}
 
 	/** Creating 'Balloon' options submenu. **/
-	private ControlsPane balloonOptions(){
+	private static void balloonOptions(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "scale");
@@ -331,12 +304,13 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-balloon-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
-		balloonOptions = new ControlsPane(Main.getString("balloon"), list, null, null);
-		return balloonOptions;
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), ControlsPanel.PanelType.PANEL, list).create();
 	}
 
 	/** Creating 'Commands' tab. **/
-	private void initCommandsTab(){
+	private static void initCommandsTab(){
+		TableView<CommandItem> commandsTable = new TableView<>();
+
 		BorderPane commandTab = new BorderPane();
 		commandTab.setCenter(commandsTable);
 		commandTab.setPrefSize(400, 300);
@@ -456,11 +430,11 @@ class OptionsDialog extends TemplateBox {
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
 
-		tabPane.getTabs().add(new Tab(Main.getString("commands"), commandTab));
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).create();
 	}
 
 	private void initTabs() {
-		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
+		PluginProxyInterface pluginProxy = Main.getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 		double prefWidth  = 400 * App.getInterfaceMultiplierSize(),
@@ -476,9 +450,7 @@ class OptionsDialog extends TemplateBox {
 
 
 		/// plugins
-		BorderPane MainPluginsTab = new BorderPane();
 		ScrollPane pluginScrollPanel = new ScrollPane();
-		MainPluginsTab.setCenter(pluginScrollPanel);
 		pluginScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		pluginScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 		pluginScrollPanel.setPannable(true);
@@ -539,8 +511,8 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 		hbox.getChildren().add(button);
-		MainPluginsTab.setBottom(hbox);
-		tabPane.getTabs().add(new Tab(Main.getString("plugins"), MainPluginsTab));
+		pluginsTab.setBottom(hbox);
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), ControlsPanel.PanelType.TAB, pluginsTab).create();
 
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
@@ -578,7 +550,7 @@ class OptionsDialog extends TemplateBox {
 			}
 			alternativesTable.setRoot(root);
 		});
-		tabPane.getTabs().add(new Tab(Main.getString("alternatives"), alternativesTab));
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), ControlsPanel.PanelType.TAB, alternativesTab).create();
 
 		/// debug
 		BorderPane debugTab = new BorderPane();
@@ -592,7 +564,7 @@ class OptionsDialog extends TemplateBox {
 			String tag = debugMsgTag.getText();
 			String dataStr = debugMsgData.getText();
 			try {
-				Main.getInstance().getPluginProxy().sendMessage(tag, stringToMap(dataStr));
+				Main.getPluginProxy().sendMessage(tag, stringToMap(dataStr));
 			} catch (Throwable e) {
 				App.showThrowable(OptionsDialog.this.getDialogPane().getScene().getWindow(), e);
 			}
@@ -606,15 +578,7 @@ class OptionsDialog extends TemplateBox {
 		});
 
 		debugTab.setBottom(new HBox(button, reloadButton));
-		tabPane.getTabs().add(new Tab(Main.getString("debug"), debugTab));
-
-
-		/// Creating top tabs from registered tabs list
-		for (Map.Entry<String, List<ControlsPane>> entry : pluginsTabs.entrySet()) {
-			for (ControlsPane tab : entry.getValue()) {
-				tabPane.getTabs().add(new Tab(tab.name, tab.createControlsPane(instance)));
-			}
-		}
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), ControlsPanel.PanelType.TAB, debugTab).create();
 
 
 		/// about
@@ -657,41 +621,14 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 		gridPane.add(locales, 1, 5);
-		tabPane.getTabs().add(new Tab(Main.getString("about"), gridPane));
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), ControlsPanel.PanelType.TAB, gridPane).create();
 
+		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
+		/// Creating top tabs from registered tabs list
+		for (ControlsPanel tab : tabs)
+			registerTab(tab);
 
-		/// Creating additional listeners for 'Appearance' tab, must be after tabs initialization
-		for(Tab tab : getInstance().tabPane.getTabs()) {
-			if (!tab.getText().equals(Main.getString("appearance"))) continue;
-			GridPane pane = (GridPane) ((BorderPane) tab.getContent()).getChildren().get(0);
-			for (Node node : pane.getChildren()) {
-				if (node.getId() != null && node.getId().equals("enable_context_menu")){
-					((CheckBox) node).selectedProperty().addListener((property, oldValue, newValue) -> {
-						Main.getProperties().put("character.enable_context_menu", newValue);
-					});
-				}
-				if (node.getId() != null && node.getId().equals("load_resource_pack")) {
-					((Button) node).setOnAction(event -> {
-						try {
-							FileChooser packChooser=new FileChooser();
-							packChooser.setInitialDirectory(pluginProxy.getRootDirPath().toFile());
-							File f = packChooser.showOpenDialog(getDialogPane().getScene().getWindow());
-							pluginProxy.sendMessage("core:distribute-resources", f.toString());
-						} catch(Exception e){ }
-					});
-				}
-				if (node.getId() != null && node.getId().equals("balloon_options")){
-					((Button) node).setOnAction(event -> {
-						ControlsWindow.setupCustomWindow(Main.getInstance().getPluginProxy().getId(), balloonOptions());
-					});
-				}
-				if (node.getId() != null && node.getId().equals("character_options")){
-					((Button) node).setOnAction(event -> {
-						ControlsWindow.setupCustomWindow(Main.getInstance().getPluginProxy().getId(), characterOptions());
-					});
-				}
-			}
-		}
+		setPanel(tabs.get(0));
 	}
 
 	/** Open skin manager and wait for closing. **/
@@ -706,102 +643,66 @@ class OptionsDialog extends TemplateBox {
 			put("id",    "skin");
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
-		skinOptions.updateControlsPane(list);
+
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin")).update();
+
 	}
 
-	protected static void openSubMenu(String pluginId, String menuId) {
-		try {
-			for (ControlsPane container : pluginsSubMenus.get(pluginId)) {
-				if (container.name.equals(menuId)) {
-					ControlsWindow.setupCustomWindow(pluginId, container);
-				}
-			}
-		} catch (Exception e){
-			Main.log(e);
-		}
-	}
-
-	/** Register plugin menu, will be shown in options. Use updatePluginMenu to update its content.
-	 * @param plugin plugin name
-	 * @param data content of menu
-	 * @param isTab True - will be shown as top tab, False - will be shown as submenu button in 'Plugins' tab
-	 */
-	static void registerPluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
-		Map<String, List<ControlsPane>> menu = isTab ? pluginsTabs : pluginsSubMenus;
-		List<ControlsPane> tabs = menu.get(plugin);
-
-		String name = (String) data.getOrDefault("name", plugin);
-		List<Map<String, Object>> controls = (List) data.getOrDefault("controls", new LinkedList<>());
-		String msgTag = (String) data.get("msgTag");
-		String msgClose = (String) data.get("onClose");
-
-		ControlsPane pluginMenuContainer = new ControlsPane(name, controls, msgTag, msgClose);
-
-		if (tabs == null) {  // No menus registered by plugin
-			tabs = new ArrayList<>();
-			menu.put(plugin, tabs);
-			tabs.add(pluginMenuContainer);
-			return;
-		} else {
-			boolean found = false;
-			for (int i = 0; i < tabs.size(); i++) {
-				if (tabs.get(i).name.equals(name)) {
-					tabs.set(i, pluginMenuContainer);
-					found = true;
-					break;
-				}
-			}
-			if (!found) tabs.add(pluginMenuContainer);
-		}
-
-		/// Is options is currently shown, we update its content
+	static void registerTab(ControlsPanel panel) {
 		if (instance == null) return;
-		if (isTab) {
-			for (Tab tab : instance.tabPane.getTabs()) {
-				if (tab.getText().equals(name)) {
-					tab.setContent(pluginMenuContainer.createControlsPane(instance));
-					break;
-				}
-			}
-		} else {
-			for(PluginListItem pli : instance.pluginsList.getItems()){
-				if(pli.id.equals(plugin))
-					pli.updateOptionsSubMenu();
-			}
 
-		}
+		ListView<String> list = instance.tabListView;
+		if (list.getItems().contains(panel.name))
+			list.getItems().remove(panel.name);
+		list.getItems().add(panel.name);
 	}
 
-	/** Register plugin menu, will be shown in options. Use updatePluginMenu to update its content.
-	 * @param plugin plugin name
-	 * @param data content of menu
-	 * @param isTab True - will be shown as top tab, False - will be shown as submenu button in 'Plugins' tab
-	 */
-	static void updatePluginMenu(String plugin, Map<String, Object> data, boolean isTab) {
-		Map<String, List<ControlsPane>> menu = isTab ? pluginsTabs : pluginsSubMenus;
-
-		List<ControlsPane> tabs = menu.get(plugin);
-		String name = (String) data.getOrDefault("name", plugin);
-		List<Map<String, Object>> controls = (List) data.getOrDefault("controls", new LinkedList<>());
-		String msgTag   = (String) data.get("msgTag");
-		String msgClose = (String) data.get("onClose");
-
-		if (tabs == null) return;
-
-		for (int i = 0; i < tabs.size(); i++) {
-			if (tabs.get(i).name.equals(name)) {
-				tabs.get(i).updateControlsPane(controls);
+	static void registerSubmenu(ControlsPanel panel) {
+		if (instance == null) return;
+		for(PluginListItem pli : instance.pluginsList.getItems()){
+			if(pli.id.equals(panel.owner)) {
+				instance.pluginsList.getItems().remove(pli);
 				return;
 			}
 		}
 	}
 
-	/** Unregister all menus registered by plugin
-	 * @param plugin plugin name
-	 */
-	static void unregisterPluginMenus(String plugin) {
-		pluginsTabs.remove(plugin);
-		pluginsSubMenus.remove(plugin);
+	static void unregisterTab(ControlsPanel panel) {
+		if (instance == null) return;
+		int index = instance.tabListView.getSelectionModel().getSelectedIndex();
+		instance.tabListView.getItems().remove(panel.name);
+		instance.tabListView.getSelectionModel().select(index);
+	}
+
+	static void unregisterSubmenu(ControlsPanel panel) {
+		if (instance == null) return;
+		for(PluginListItem pli : instance.pluginsList.getItems()){
+			if(pli.id.equals(panel.owner)) {
+				instance.pluginsList.getItems().remove(pli);
+				return;
+			}
+		}
+	}
+
+	static void showPanel(ControlsPanel panel){
+		open();
+		instance.setPanel(panel);
+	}
+
+	private void setPanel(ControlsPanel panel){
+		controlsPane.getChildren().clear();
+		Pane pane = panel.createControlsPane(instance);
+		pane.prefHeightProperty().bind(controlsPane.heightProperty());
+		controlsPane.getChildren().add(pane);
+	}
+
+	protected static void open() {
+		OptionsDialog optionsDialog = OptionsDialog.getInstance();
+		if (optionsDialog == null)
+			optionsDialog = new OptionsDialog();
+
+		optionsDialog.show();
+		optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
 	}
 
 	// -- Technical classes --
@@ -810,8 +711,8 @@ class OptionsDialog extends TemplateBox {
 	private static class PluginListItem {
 
 		/** List of plugins cannot be simply removed. **/
-		private static final String[] importantPlugins=new String[]{
-				"core", "core_utils", Main.getInstance().getPluginProxy().getId()
+		private static final String[] importantPlugins = new String[]{
+				"core", "core_utils", Main.getPluginProxy().getId()
 		};
 
 		String id;
@@ -880,8 +781,8 @@ class OptionsDialog extends TemplateBox {
 			blacklistPluginButton = new Button(blacklisted ? locked : unlocked);
 			blacklistPluginButton.setTooltip(new Tooltip(Main.getString("info.blacklist-plugin")));
 			blacklistPluginButton.setOnAction(event -> {
-				for(String plname : importantPlugins) {
-					if (plname.equals(id)) {
+				for(String pluginId : importantPlugins) {
+					if (pluginId.equals(id)) {
 						if (alert())
 							item.toggleBlacklisted();
 						return;
@@ -898,16 +799,15 @@ class OptionsDialog extends TemplateBox {
 
 		/** Update all submenus content. **/
 		void updateOptionsSubMenu(){
-			List<ControlsPane> list = pluginsSubMenus.get(id);
+			List<ControlsPanel> list = ControlsPanel.getPanels(id, ControlsPanel.PanelType.SUBMENU);
 			menuBox.getChildren().clear();
 			if(list == null) return;
-			for(ControlsPane container : list){
+			for(ControlsPanel container : list){
 				Button button = new Button(container.name);
 				button.setOnAction((event) -> {
-					ControlsWindow.setupCustomWindow(id, container);
+					container.show();
 				});
 				menuBox.getChildren().add(button);
-				ControlsWindow.updateCustomWindow(id, container);
 			}
 		}
 

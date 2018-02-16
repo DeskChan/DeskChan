@@ -7,44 +7,40 @@ import java.util.List;
 import java.util.Map;
 
 class ControlsWindow extends TemplateBox {
+
     private static List<ControlsWindow> customWindowOpened = new LinkedList<>();
-    private ControlsPane controls;
-    private String owner;
-    public ControlsWindow(String name, String owner, ControlsPane controls){
-        super(name);
-        this.controls=controls;
-        this.owner=owner;
+    private ControlsPanel controls;
+
+    public ControlsWindow(ControlsPanel controls){
+        super(controls.name);
+        this.controls = controls;
         getDialogPane().setContent(this.controls.createControlsPane(this));
     }
+
     public String getOwnerName(){
-        return owner;
+        return controls.owner;
     }
-    public void setControls(ControlsPane controls) {
+
+    public void setControls(ControlsPanel controls) {
         this.controls = null;
         getDialogPane().setContent(null);
         this.controls = controls;
         getDialogPane().setContent(this.controls.createControlsPane(this));
     }
-    public void updateControls(List<Map<String,Object>> data){
-        if(data!=null)
-            controls.updateControlsPane(data);
-    }
-    public static void setupCustomWindow(String sender, Map<String, Object> data){
-        String name = (String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
-        setupCustomWindow(sender, new ControlsPane(name, (List<Map<String, Object>>) data.get("controls"),
-                (String) data.getOrDefault("msgTag", null), (String) data.getOrDefault("onClose", null)));
 
+    public void updateControls(List<Map<String,Object>> data){
+        if(data != null) controls.updateControlsPane(data);
     }
-    public static void setupCustomWindow(String sender, ControlsPane container){
-        String name = container.name;
+
+    public static void setupCustomWindow(ControlsPanel panel){
         for(ControlsWindow window : customWindowOpened){
-            if(window.getTitle().equals(name) && window.getOwnerName().equals(sender)){
-                window.setControls(container);
+            if(window.getTitle().equals(panel.name) && window.getOwnerName().equals(panel.owner)){
+                window.setControls(panel);
                 ((Stage) window.getDialogPane().getScene().getWindow()).toFront();
                 return;
             }
         }
-        ControlsWindow dialog = new ControlsWindow(name, sender, container);
+        ControlsWindow dialog = new ControlsWindow(panel);
         customWindowOpened.add(dialog);
         dialog.requestFocus();
         dialog.show();
@@ -59,23 +55,22 @@ class ControlsWindow extends TemplateBox {
             customWindowOpened.remove(dialog);
         });
     }
-    public static void updateCustomWindow(String sender, Map<String,Object> data){
-        String name = (String) data.getOrDefault("name", Main.getString("default_messagebox_name"));
-        List<Map<String,Object>> controls = (List<Map<String,Object>>) data.get("controls");
-        if(controls==null) return;
+
+    public static void updateCustomWindow(ControlsPanel panel){
         for(ControlsWindow window : customWindowOpened){
-            if(window.getTitle().equals(name)){
-                window.updateControls(controls);
+            if(window.getTitle().equals(panel.name) && window.getOwnerName().equals(panel.owner)){
+                window.setControls(panel);
                 window.requestFocus();
                 return;
             }
         }
+        setupCustomWindow(panel);
     }
-    public static void updateCustomWindow(String sender, ControlsPane container){
+
+    public static void closeCustomWindow(ControlsPanel panel){
         for(ControlsWindow window : customWindowOpened){
-            if(window.getTitle().equals(container.name)){
-                window.setControls(container);
-                window.requestFocus();
+            if(window.getTitle().equals(panel.name) && window.getOwnerName().equals(panel.owner)){
+                window.close();
                 return;
             }
         }
