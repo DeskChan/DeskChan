@@ -268,7 +268,7 @@ public class PhrasesList {
 			dummyPacks.add(new PhrasesPack(files.get(k)));
 
         for(int i = 0; i < packs.size(); i++){
-           	if (!dummyPacks.contains(packs.get(i))) continue;
+           	if (dummyPacks.contains(packs.get(i))) continue;
             packs.remove(i);
             i--;
         }

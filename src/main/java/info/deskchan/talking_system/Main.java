@@ -203,7 +203,7 @@ public class Main implements Plugin {
         * Returns: None */
 		pluginProxy.addMessageListener("talk:create-phrases-base", (sender, tag, dat) -> {
 			Map<String, Object> data = (Map) dat;
-			PhrasesList.saveTo((String) data.getOrDefault("url", MAIN_PHRASES_URL), (String) data.getOrDefault("filename", "new_quotes"));
+			PhrasesList.saveTo((String) data.getOrDefault("url", MAIN_PHRASES_URL), (String) data.getOrDefault("filename", "new_phrases"));
 		});
 
 		/* Print to screen character combinations with the lowest count of suitable phrases.
@@ -367,6 +367,7 @@ public class Main implements Plugin {
 				put("label", getString("usernames_list"));
 				put("value", currentCharacter.tags.getAsString("usernames"));
 			}});
+			System.out.println(currentCharacter.phrases.toList());
 			list.add(new HashMap<String, Object>() {{
 				put("id", "phrases");
 				put("type", "FilesManager");
@@ -436,6 +437,11 @@ public class Main implements Plugin {
 				}});
 			}});
 			list.add(buttons);
+			list.add(new HashMap<String, Object>() {{
+				put("id", "fromUrl");
+				put("type", "TextField");
+				put("label", getString("pack_from_url"));
+			}});
 			put("controls", list);
 		}});
 	}
@@ -453,6 +459,7 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
+				System.out.println(data.get("phrases"));
 				currentCharacter.phrases.set((List<String>) data.get("phrases"));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
@@ -496,6 +503,19 @@ public class Main implements Plugin {
 			list.put("text", errorMessage);
 			pluginProxy.sendMessage("gui:show-notification", list);
 			//System.out.println(errorMessage);
+		}
+
+		String fromUrl = (String) data.get("fromUrl");
+		if (fromUrl != null && fromUrl.length() > 0)
+			PhrasesList.saveTo(fromUrl, (String) data.getOrDefault("filename", "new_phrases"));
+
+		try {
+			for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
+				Number k = (Number) data.getOrDefault(CharacterFeatures.getFeatureName(i), 0);
+				currentCharacter.character.setValue(i, k.intValue());
+			}
+		} catch (Exception e) {
+			errorMessage += e.getMessage() + "\n";
 		}
 
 		resetTimer();

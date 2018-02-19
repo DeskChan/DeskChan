@@ -22,7 +22,11 @@ public class Main implements Plugin {
 
 		if(getProperties().containsKey("locale")) {
 			Locale.setDefault(new Locale(getProperties().getString("locale")));
-			PluginProxy.Companion.updateResourceBundle();
+			try {
+				PluginProxy.Companion.updateResourceBundle();
+			} catch (Exception e){
+				log(e);
+			}
 		}
 
 		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/strings");
@@ -35,6 +39,7 @@ public class Main implements Plugin {
 		} catch (InterruptedException e) {
 			log(e);
 		}
+
 		return true;
 	}
 	

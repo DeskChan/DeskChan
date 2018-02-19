@@ -17,12 +17,16 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.apache.commons.lang3.SystemUtils;
 import org.controlsfx.dialog.FontSelectorDialog;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -80,6 +84,9 @@ interface PluginOptionsControlItem {
 			case "FileField":
 				item = new FileFieldItem(parent);
 				break;
+			case "DirectoryField":
+				item = new DirectoryFieldItem(parent);
+				break;
 			case "DatePicker":
 				item = new DatePickerItem();
 				break;
@@ -100,6 +107,9 @@ interface PluginOptionsControlItem {
 				break;
 			case "Separator":
 				item = new SeparatorItem();
+				break;
+			case "Hyperlink":
+				item = new HyperlinkItem();
 				break;
 		}
 
@@ -236,8 +246,9 @@ interface PluginOptionsControlItem {
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			area = new TextArea();
-			area.setPadding(new Insets(5,5,5,5));
+			area.setPadding(new Insets(2,2,2,2));
 			Integer rowCount = (Integer) options.getOrDefault("rowCount", 5);
+			area.setWrapText(true);
 			area.setPrefRowCount(rowCount);
 			setValue(value);
 		}
@@ -711,44 +722,20 @@ interface PluginOptionsControlItem {
 
 	}
 
-	class FileFieldItem extends BorderPane implements PluginOptionsControlItem {
+	abstract class FileSystemChooserItem extends BorderPane implements PluginOptionsControlItem {
+		protected final TextField textField = new TextField();
+		protected final Button selectButton = new Button("...");
+		protected final Button clearButton = new Button("X");
+		protected Window parent;
 
-		private final TextField textField = new TextField();
-		private final Button selectButton = new Button("...");
-		private final Button clearButton = new Button("X");
-		private final FileChooser chooser = new FileChooser();
-
-		FileFieldItem(Window parent) {
+		FileSystemChooserItem(Window parent) {
 			textField.setEditable(false);
 			setLeft(textField);
 			clearButton.setOnAction(event -> textField.clear());
 			setRight(clearButton);
-			selectButton.setOnAction(event -> {
-				File file = chooser.showOpenDialog(parent);
-				if (file != null) {
-					textField.setText(file.getAbsolutePath());
-				}
-			});
 			setCenter(selectButton);
 			setMaxHeight(textField.getHeight());
-		}
-
-		@Override
-		public void init(Map<String, Object> options, Object value) {
-			String path = (String) options.get("initialDirectory");
-			if (path != null) {
-				chooser.setInitialDirectory(new File(path));
-			}
-			setValue(value);
-
-			List<Map<String, Object>> filters = (List) options.getOrDefault("filters", new ArrayList<>(0));
-			for (Map<String, Object> filter : filters) {
-				String description = (String) filter.get("description");
-				List<String> extensions = (List) filter.get("extensions");
-				if (description != null && extensions != null) {
-					chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description, extensions));
-				}
-			}
+			this.parent = parent;
 		}
 
 		@Override
@@ -769,6 +756,65 @@ interface PluginOptionsControlItem {
 		@Override
 		public ObservableValue getProperty(){
 			return textField.textProperty();
+		}
+	}
+
+	class FileFieldItem extends FileSystemChooserItem {
+		private final FileChooser chooser = new FileChooser();
+
+		FileFieldItem(Window parent) {	super(parent); 	}
+
+		@Override
+		public void init(Map<String, Object> options, Object value) {
+			String path = (String) options.get("initialDirectory");
+			if (path != null) {
+				chooser.setInitialDirectory(new File(path));
+			}
+			setValue(value);
+
+			final String msgTag = (String) options.get("msgTag");
+			selectButton.setOnAction(event -> {
+				File file = chooser.showOpenDialog(parent);
+				if (file != null) {
+					textField.setText(file.getAbsolutePath());
+					if (msgTag != null)
+						Main.getPluginProxy().sendMessage(msgTag, textField.getText());
+				}
+			});
+
+			List<Map<String, Object>> filters = (List) options.getOrDefault("filters", new ArrayList<>(0));
+			for (Map<String, Object> filter : filters) {
+				String description = (String) filter.get("description");
+				List<String> extensions = (List) filter.get("extensions");
+				if (description != null && extensions != null) {
+					chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(description, extensions));
+				}
+			}
+		}
+	}
+
+	class DirectoryFieldItem extends FileSystemChooserItem {
+		private final DirectoryChooser chooser = new DirectoryChooser();
+
+		DirectoryFieldItem(Window parent) {	 super(parent);  }
+
+		@Override
+		public void init(Map<String, Object> options, Object value) {
+			String path = (String) options.get("initialDirectory");
+			if (path != null) {
+				chooser.setInitialDirectory(new File(path));
+			}
+			setValue(value);
+
+			final String msgTag = (String) options.get("msgTag");
+			selectButton.setOnAction(event -> {
+				File file = chooser.showDialog(parent);
+				if (file != null) {
+					textField.setText(file.getAbsolutePath());
+					if (msgTag != null)
+						Main.getPluginProxy().sendMessage(msgTag, textField.getText());
+				}
+			});
 		}
 	}
 
@@ -928,6 +974,73 @@ interface PluginOptionsControlItem {
 		@Override
 		public ObservableValue getProperty(){
 			return selectedFont;
+		}
+	}
+
+	class HyperlinkItem extends Hyperlink implements PluginOptionsControlItem {
+
+		String link;
+
+		@Override
+		public void init(Map<String, Object> options, Object value) {
+			String msgTag = (String) options.get("msgTag");
+			link = (String) options.get("value");
+			if (link != null) link = wrap(link);
+			setValue(Main.getString("open"));
+
+			setOnAction(event -> {
+				if (msgTag != null) Main.getPluginProxy().sendMessage(msgTag, null);
+				if (link != null){
+					String[] command;
+					if (SystemUtils.IS_OS_WINDOWS)
+						command = new String[]{ "cmd", "/c", "start " + link };
+					else if (SystemUtils.IS_OS_LINUX)
+						command = new String[]{ "xdg-open", link };
+					else if (SystemUtils.IS_OS_MAC)
+						command = new String[]{ "open", link };
+					else return;
+					ProcessBuilder builder = new ProcessBuilder( command );
+					builder.redirectErrorStream(true);
+					try {
+						Process p = builder.start();
+						BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+						String line;
+						while (true) {
+							line = r.readLine();
+							if (line == null) {
+								break;
+							}
+							System.out.println(line);
+						}
+					} catch (Exception e){
+						Main.log(e);
+					}
+				}
+			});
+		}
+
+		@Override
+		public Object getValue() {
+			return link;
+		}
+
+		@Override
+		public void setValue(Object value) { link = (String) value; }
+
+		@Override
+		public Node getNode() {
+			return this;
+		}
+
+		@Override
+		public ObservableValue getProperty(){ return null; }
+
+		String wrap(String val){
+			if(val.charAt(0) != '"')
+				val = '"' + val;
+			if(val.charAt(val.length() - 1) != '"')
+				val = val+'"';
+			return val;
 		}
 	}
 }

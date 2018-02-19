@@ -81,6 +81,9 @@ interface PluginProxyInterface : MessageListener {
     /** Use this to get path to 'assets' folder, where stored program assets. **/
     val assetsDirPath: Path
 
+    /** Use this to get path to 'plugins/pluginId' folder, where stored plugin assets. **/
+    val pluginDirPath: Path
+
     /** Log text to file and console. **/
     fun log(text: String)
 

@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -7,7 +8,9 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.media.AudioClip;
 import javafx.scene.text.Font;
 import javafx.stage.*;
@@ -16,8 +19,6 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -342,14 +343,14 @@ public class App extends Application {
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "tab", (Map) data).create();
+				new ControlsPanel(sender, "tab", (Map) data).set();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "submenu", (Map) data).create();
+				new ControlsPanel(sender, "submenu", (Map) data).set();
 			});
 		});
 
@@ -400,7 +401,15 @@ public class App extends Application {
         *           text: String? - text of notification
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
-			new ControlsPanel(sender, "notification", (Map) data).show();
+			Platform.runLater(() -> {
+				if (data instanceof Map) {
+					Map<String, Object> m = (Map<String, Object>) data;
+					showNotification((String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
+							(String) m.get("text"));
+				} else {
+					showNotification(Main.getString("default_messagebox_name"), data.toString());
+				}
+			});
 		});
 
 		/* Play sound.
@@ -782,6 +791,20 @@ public class App extends Application {
 			});
 		});
 
+		MessageListener errorListener = new MessageListener() {
+			@Override
+			public void handleMessage(String sender, String tag, Object data) {
+				Platform.runLater(() -> {
+					Map map = (Map) data;
+					App.showThrowable(sender, (String) map.get("class"), (String) map.get("message"), (List) map.get("stacktrace"));
+				});
+			}
+		};
+
+		/* Show error alert. */
+		pluginProxy.addMessageListener("core-events:error", errorListener);
+		pluginProxy.addMessageListener("gui:show-error",    errorListener);
+
 		/* Registering all alternatives. */
 		pluginProxy.sendMessage("core:register-alternatives", Arrays.asList(
 				new HashMap<String, Object>() {{
@@ -895,25 +918,40 @@ public class App extends Application {
 	}
 
 	/** Show error dialog. **/
-	static void showThrowable(Window parent, Throwable e) {
-		Main.log(e);
+	static void showThrowable(Throwable e) {
+		showThrowable(Main.getPluginProxy().getId(), e.getClass().toString(), e.getMessage(), Arrays.asList(e.getStackTrace()));
+	}
+
+	static void showThrowable(String sender, String className, String message, List<Object> stacktrace) {
+		if (!Main.getProperties().getBoolean("error-alerting", true)) return;
+
 		Alert alert = new Alert(Alert.AlertType.ERROR);
-		alert.setTitle("Exception");
-		alert.initOwner(parent);
+		alert.setTitle(Main.getString("error"));
 		alert.initModality(Modality.WINDOW_MODAL);
-		alert.setHeaderText(e.getClass().getName());
-		alert.setContentText(e.getMessage());
-		StringWriter stringWriter = new StringWriter();
-		PrintWriter printWriter = new PrintWriter(stringWriter);
-		e.printStackTrace(printWriter);
-		String exceptionText = stringWriter.toString();
-		TextArea textArea = new TextArea(exceptionText);
+		alert.setHeaderText(className + " " + Main.getString("caused-by") + " " + sender);
+		alert.setContentText(message);
+		StringBuilder exceptionText = new StringBuilder ();
+		for (Object item : stacktrace)
+			exceptionText.append((item != null ? item.toString() : "null") + "\n");
+
+		TextArea textArea = new TextArea(exceptionText.toString());
 		textArea.setEditable(false);
 		textArea.setWrapText(true);
 		textArea.setMaxWidth(Double.MAX_VALUE);
 		textArea.setMaxHeight(Double.MAX_VALUE);
-		alert.getDialogPane().setExpandableContent(textArea);
-		alert.showAndWait();
+
+		CheckBox checkBox = new CheckBox(Main.getString("enable-error-alert"));
+		checkBox.setSelected(Main.getProperties().getBoolean("error-alerting", true));
+		checkBox.selectedProperty().addListener((obs, oldValue, newValue) -> {
+			Main.getProperties().put("error-alerting", newValue);
+		});
+
+		BorderPane pane = new BorderPane();
+		pane.setTop(checkBox);
+		pane.setCenter(textArea);
+
+		alert.getDialogPane().setExpandableContent(pane);
+		alert.show();
 	}
 
 	class DelayNotifier implements EventHandler<javafx.event.ActionEvent> {

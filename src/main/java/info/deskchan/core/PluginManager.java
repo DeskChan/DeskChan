@@ -63,6 +63,12 @@ public class PluginManager {
 		tryLoadPluginByClass(CorePlugin.class);
 		loadPluginsBlacklist();
 		getCorePath();
+
+		try {
+			PluginProxy.Companion.updateResourceBundle();
+		} catch (Exception e){
+			log(e);
+		}
 	}
 	
 	public String[] getArgs() {
@@ -202,15 +208,16 @@ public class PluginManager {
 			return;
 
 		for (MessageListener listener : listeners) {
-			try {
-				Debug.TimeTest send = new Debug.TimeTest() {
-					@Override
-					void run() { listener.handleMessage(sender, tag, data); }
-				};
-			} catch (Exception e){
-				log("Error while calling "+tag+", called by "+sender);
-				log(e);
-			}
+			Debug.TimeTest send = new Debug.TimeTest() {
+				@Override
+				void run() {
+					try {
+						listener.handleMessage(sender, tag, data);
+					} catch (Throwable e) {
+						log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
+					}
+				}
+			};
 		}
 	}
 
@@ -490,6 +497,11 @@ public class PluginManager {
 			log(e);
 		}
 	}
+
+	public void saveProperties(){
+		for (Map.Entry<String, PluginProxy> plugin : plugins.entrySet())
+			sendMessage("core", plugin.getKey() + ":save-properties", null);
+	}
 	
 	/* Plugins and data directories */
 
@@ -623,7 +635,9 @@ public class PluginManager {
 
 	/* Logging */
 
-	/** Log text to file and console. You cannot call this method, use your plugin's proxy. **/
+	/** Log stack and text of error thrown to file and console.
+	 * You cannot call this method, use your plugin's proxy. **/
+
 	static void log(String id, String message) {
 		String text = id + ": " + message;
 		System.err.println(text);
@@ -637,24 +651,33 @@ public class PluginManager {
 		}
 	}
 
-	/** Log stack and text of error thrown to file and console.
-	 * You cannot call this method, use your plugin's proxy. **/
-	static void log(String id, Throwable e) {
-		StringWriter stringWriter = new StringWriter();
-		PrintWriter printWriter = new PrintWriter(stringWriter);
-		e.printStackTrace(printWriter);
-		String[] lines = stringWriter.toString().split("\n");
-		for (String line : lines) {
-			log(id, line);
+	static void log(String id, String message, List<Object> stacktrace) {
+		log(id, message);
+		for (Object line : stacktrace) {
+			log(id, "   at " + line.toString());
 		}
-	}
-	
-	static void log(String message) {
-		log("core", message);
 	}
 
 	static void log(Throwable e) {
 		log("core", e);
 	}
-	
+
+	static void log(String message) {
+		log("core", message);
+	}
+
+	static void log(String id, Throwable e) {
+		while (e.getCause() != null) e = e.getCause();
+
+		List<Object> stackTrace = new ArrayList<>(Arrays.asList(e.getStackTrace()));
+		log(id, e.getClass().getSimpleName() + ":  " + e.getMessage(), stackTrace);
+
+		Map error = new HashMap();
+		error.put("class", e.getClass().getSimpleName());
+		error.put("message", e.getMessage());
+		error.put("stacktrace", stackTrace);
+
+		getInstance().sendMessage(id, "core-events:error", error);
+	}
+
 }

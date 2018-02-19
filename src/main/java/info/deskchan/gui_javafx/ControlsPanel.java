@@ -11,6 +11,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
 
+import java.rmi.NoSuchObjectException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,11 +22,13 @@ public class ControlsPanel {
 	private static Map<String, ControlsPanel> registeredPanels = new HashMap<>();
 
 	final String name;
-	private Pane panelPane;
+	Region panelPane;
+	BorderPane wrapper;
 	List<Map<String, Object>> controls;
 	String msgSave;
 	String msgClose;
 	String owner;
+	TemplateBox parentWindow;
 
 	enum PanelType { TAB, SUBMENU, WINDOW, PANEL, INFO }
 	PanelType type;
@@ -49,7 +52,7 @@ public class ControlsPanel {
 	ControlsPanel(String sender, String type, Map<String, Object> data) {
 		this (
 				sender,
-				data.getOrDefault("name", Main.getString("default_messagebox_name")).toString(),
+			   (String) data.get("name"),
 				type,
 			   (List<Map<String, Object>>) data.getOrDefault("controls", new LinkedList<Map>()),
 			   (String) data.get("msgTag"),
@@ -73,7 +76,7 @@ public class ControlsPanel {
 	ControlsPanel(String sender, Map<String, Object> data) {
 		this (
 				sender,
-			    data.getOrDefault("name", Main.getString("default_messagebox_name")).toString(),
+			   (String) data.get("name"),
 		        data.getOrDefault("type", "tab").toString(),
 		       (List<Map<String, Object>>) data.getOrDefault("controls", new LinkedList<Map>()),
 		       (String) data.get("msgTag"),
@@ -83,18 +86,28 @@ public class ControlsPanel {
 	}
 
 	ControlsPanel(String sender, String name, String type, List<Map<String, Object>> controls, String msgSave, String msgClose, String action) {
+		this.type = getType(type);
+
+		if (name == null){
+			switch (this.type){
+				case SUBMENU: name = Main.getString("options"); break;
+				case TAB: name = sender; break;
+				default: name = Main.getString("default_messagebox_name"); break;
+			}
+		}
 		this.name = name;
 		this.controls = controls;
 		this.msgSave  = msgSave;
 		this.msgClose = msgClose;
 		this.owner = sender;
-		this.type = getType(type);
+
 		if (action == null) return;
 		switch (action.toLowerCase()){
-			case "show": show();
-			case "hide": hide();
-			case "create": create();
-			case "update": update();
+			case "show":   show();   break;
+			case "hide":   hide();   break;
+			case "set":    set();    break;
+			case "update": update(); break;
+			case "delete": delete(); break;
 		}
 	}
 
@@ -102,43 +115,48 @@ public class ControlsPanel {
 		return owner + ":" + name;
 	}
 
-	public void create(){
+	public void set(){
 		ControlsPanel oldPanel = registeredPanels.put(getFullName(), this);
 		if (oldPanel != null){
-			oldPanel.delete();
 			if (type == null) type = oldPanel.type;
-		}
-		switch (type){
-			case TAB:{
-				OptionsDialog.registerTab(this);
-			} break;
-			case SUBMENU:{
-				OptionsDialog.registerSubmenu(this);
-			} break;
+			if (oldPanel.parentWindow != null && oldPanel.parentWindow.getDialogPane() != null && oldPanel.parentWindow.getDialogPane().getScene() != null) {
+				wrapper = oldPanel.wrapper;
+				createControlsPane(oldPanel.parentWindow);
+			}
+		} else {
+			switch (type) {
+				case TAB: {
+					OptionsDialog.registerTab(this);
+				}
+				break;
+				case SUBMENU: {
+					OptionsDialog.registerSubmenu(this);
+				}
+				break;
+			}
 		}
 	}
 
 	public void update(){
 		ControlsPanel currentPanel = registeredPanels.get(getFullName());
 		if (currentPanel == null)
-			create();
+			set();
 		else
 			currentPanel.updateControlsPane(controls);
 	}
 
 	public void show(){
 		ControlsPanel currentPanel = registeredPanels.get(getFullName());
-		if (currentPanel == null) {
-			create();
+		if (currentPanel == null || controls != null || panelPane != null) {
+			set();
 			currentPanel = this;
 		}
-
 		switch (currentPanel.type){
 			case WINDOW: case INFO:{
-				ControlsWindow.setupCustomWindow(this);
+				new ControlsWindow(currentPanel);
 			} break;
 			default:{
-				OptionsDialog.showPanel(this);
+				OptionsDialog.showPanel(currentPanel);
 			} break;
 		}
 	}
@@ -146,7 +164,7 @@ public class ControlsPanel {
 	public void hide(){
 		ControlsPanel currentPanel = registeredPanels.get(getFullName());
 		if (currentPanel == null) {
-			create();
+			set();
 			currentPanel = this;
 		}
 
@@ -154,14 +172,16 @@ public class ControlsPanel {
 			case WINDOW: case INFO:{
 				ControlsWindow.closeCustomWindow(this);
 			} break;
+			case TAB: case SUBMENU: case PANEL:{
+				OptionsDialog.showPanel(null);
+			} break;
 		}
 	}
 
 	public static void open(String panelName){
 		ControlsPanel panel = registeredPanels.get(panelName);
 		if (panel == null) {
-			System.out.println(registeredPanels.keySet());
-			Main.log("Unknown panel by name: " + panelName);
+			Main.log(new NoSuchObjectException("Unknown panel by name: " + panelName));
 			return;
 		}
 
@@ -169,6 +189,7 @@ public class ControlsPanel {
 	}
 
 	public void delete(){
+		hide();
 		switch (type){
 			case TAB:{
 				OptionsDialog.unregisterTab(this);
@@ -188,8 +209,12 @@ public class ControlsPanel {
 	}
 
 	Pane createControlsPane(TemplateBox parent) {
-		if (panelPane != null)
-			return panelPane;
+		parentWindow = parent;
+
+		if (panelPane != null) {
+			wrap(panelPane);
+			return wrapper;
+		}
 
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
@@ -208,7 +233,6 @@ public class ControlsPanel {
 		gridPane.getColumnConstraints().addAll(column1, column2, column3);
 
 		namedControls = new HashMap<>();
-		BorderPane borderPane = new BorderPane();
 
 		int row = 0;
 		for (Map<String, Object> controlInfo : controls) {
@@ -243,6 +267,17 @@ public class ControlsPanel {
 			}
 			row++;
 		}
+
+		ScrollPane nodeScrollPanel = new ScrollPane();
+		nodeScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+		nodeScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+		nodeScrollPanel.setFitToHeight(true);
+		nodeScrollPanel.setFitToWidth(true);
+		nodeScrollPanel.setStyle("-fx-background-color:transparent;");
+		nodeScrollPanel.setContent(gridPane);
+
+		wrap(nodeScrollPanel);
+
 		if (getSaveTag() != null) {
 			Button saveButton = new Button(Main.getString("save"));
 			saveButton.setOnAction(event -> {
@@ -251,34 +286,42 @@ public class ControlsPanel {
 					data.put(entry.getKey(), entry.getValue().getValue());
 					for (Map<String, Object> control : controls) {
 						String id = (String) control.get("id");
-						if (id != null) {
-							if (id.equals(entry.getKey())) {
-								control.put("value", entry.getValue().getValue());
-								break;
-							}
+						if (id != null && id.equals(entry.getKey())) {
+							control.put("value", entry.getValue().getValue());
+							break;
 						}
 					}
 				}
 				Main.getPluginProxy().sendMessage(getSaveTag(), data);
 			});
-			borderPane.setBottom(saveButton);
+			wrapper.setBottom(saveButton);
 		}
 		if (getCloseTag() != null) {
 			parent.addOnCloseRequest(event -> {
 				Main.getPluginProxy().sendMessage(getCloseTag(), null);
 			});
 		}
-		ScrollPane nodeScrollPanel = new ScrollPane();
-		nodeScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-		nodeScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-		nodeScrollPanel.setFitToHeight(true);
-		nodeScrollPanel.setFitToWidth(true);
-		nodeScrollPanel.setStyle("-fx-background-color:transparent;");
-		nodeScrollPanel.setContent(gridPane);
-		nodeScrollPanel.maxHeightProperty().bind(borderPane.prefHeightProperty());
 
-		borderPane.setTop(nodeScrollPanel);
-		return borderPane;
+		return wrapper;
+	}
+
+	void wrap(Region pane){
+		if (wrapper == null) {
+			wrapper = new BorderPane();
+		} else {
+			wrapper.getChildren().clear();
+		}
+		wrapper.setCenter(pane);
+
+		pane.prefHeightProperty().bind(wrapper.prefHeightProperty());
+		pane.minHeightProperty().bind(wrapper.minHeightProperty());
+		pane.maxHeightProperty().bind(wrapper.maxHeightProperty());
+
+		pane.prefWidthProperty().bind(wrapper.prefWidthProperty());
+		pane.minWidthProperty().bind(wrapper.minWidthProperty());
+		pane.maxWidthProperty().bind(wrapper.maxWidthProperty());
+
+		panelPane = pane;
 	}
 
 	PluginOptionsControlItem initItem(Map controlInfo, Window window){
@@ -302,10 +345,17 @@ public class ControlsPanel {
 	}
 
 	void updateControlsPane(List<Map<String, Object>> update) {
+		if (namedControls == null) return;
 		for (Map<String, Object> control : update) {
 			String id = (String) control.get("id");
+			if(id == null) continue;
+
+			PluginOptionsControlItem item = namedControls.get(id);
+			if (item == null) continue;
+
 			Object value = control.get("value");
-			if(value != null) namedControls.get(id).setValue(value);
+			if (value != null) namedControls.get(id).setValue(value);
+
 			Boolean disabled = App.getBoolean(control.get("disabled"), null);
 			if(disabled != null)
 				namedControls.get(id).getNode().setDisable(disabled);

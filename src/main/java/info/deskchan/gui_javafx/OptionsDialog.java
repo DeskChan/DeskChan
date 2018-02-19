@@ -98,6 +98,10 @@ class OptionsDialog extends TemplateBox {
 
 		gridPane.getColumnConstraints().addAll(column1, column2);
 		getDialogPane().setContent(gridPane);
+
+		addOnCloseRequest(event -> {
+			Main.getPluginProxy().sendMessage("core:save-all-properties", null);
+		});
 	}
 
 	static OptionsDialog getInstance() {
@@ -177,7 +181,7 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), ControlsPanel.PanelType.TAB, list).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), ControlsPanel.PanelType.TAB, list).set();
 
 		characterOptions();
 		balloonOptions();
@@ -221,7 +225,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Balloon' options submenu. **/
@@ -304,7 +308,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-balloon-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), ControlsPanel.PanelType.PANEL, list).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -313,10 +317,10 @@ class OptionsDialog extends TemplateBox {
 
 		BorderPane commandTab = new BorderPane();
 		commandTab.setCenter(commandsTable);
-		commandTab.setPrefSize(400, 300);
 
 		commandsTable.setEditable(true);
 		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
+		commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
 
 		// Events column
 		TableColumn eventCol = new TableColumn(Main.getString("events"));
@@ -430,15 +434,13 @@ class OptionsDialog extends TemplateBox {
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
 	private void initTabs() {
 		PluginProxyInterface pluginProxy = Main.getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
-		double prefWidth  = 400 * App.getInterfaceMultiplierSize(),
-			   prefHeight = 300 * App.getInterfaceMultiplierSize();
 
 
 		/// appearance
@@ -450,24 +452,16 @@ class OptionsDialog extends TemplateBox {
 
 
 		/// plugins
-		ScrollPane pluginScrollPanel = new ScrollPane();
-		pluginScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-		pluginScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-		pluginScrollPanel.setPannable(true);
-
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
-		pluginScrollPanel.setContent(pluginsTab);
-		pluginScrollPanel.setPannable(true);
-		pluginScrollPanel.setFitToHeight(true);
-		pluginScrollPanel.setFitToWidth(true);
 
-		pluginsList.setPrefSize(prefWidth, prefHeight);
+		pluginsList.minWidthProperty().bind(pluginsTab.prefWidthProperty());
+
 		// Setting row style
 		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
 			@Override
 			public ListCell<PluginListItem> call(ListView<PluginListItem> obj) {
-				ListCell<PluginListItem> cell = new ListCell<PluginListItem>(){
+				return new ListCell<PluginListItem>(){
 					@Override
 					protected void updateItem(PluginListItem t, boolean bln) {
 						super.updateItem(t, bln);
@@ -480,7 +474,6 @@ class OptionsDialog extends TemplateBox {
 						}
 					}
 				};
-				return cell;
 			}
 		});
 
@@ -506,18 +499,17 @@ class OptionsDialog extends TemplateBox {
 				try {
 					PluginManager.getInstance().loadPluginByPath(path);
 				} catch (Throwable e) {
-					App.showThrowable(OptionsDialog.this.getDialogPane().getScene().getWindow(), e);
+					Main.log(e);
 				}
 			}
 		});
 		hbox.getChildren().add(button);
 		pluginsTab.setBottom(hbox);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), ControlsPanel.PanelType.TAB, pluginsTab).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), ControlsPanel.PanelType.TAB, pluginsTab).set();
 
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
 		alternativesTab.setCenter(alternativesTable);
-		alternativesTable.setPrefSize(prefWidth, prefHeight);
 		{
 			TreeTableColumn<AlternativeTreeItem, String> column = new TreeTableColumn<>(Main.getString("tag"));
 			column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getValue().tag));
@@ -550,7 +542,7 @@ class OptionsDialog extends TemplateBox {
 			}
 			alternativesTable.setRoot(root);
 		});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), ControlsPanel.PanelType.TAB, alternativesTab).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), ControlsPanel.PanelType.TAB, alternativesTab).set();
 
 		/// debug
 		BorderPane debugTab = new BorderPane();
@@ -561,12 +553,12 @@ class OptionsDialog extends TemplateBox {
 
 		button = new Button(Main.getString("send"));
 		button.setOnAction(event -> {
-			String tag = debugMsgTag.getText();
+			String tag = debugMsgTag.getText().trim();
 			String dataStr = debugMsgData.getText();
 			try {
 				Main.getPluginProxy().sendMessage(tag, stringToMap(dataStr));
 			} catch (Throwable e) {
-				App.showThrowable(OptionsDialog.this.getDialogPane().getScene().getWindow(), e);
+				Main.log(e);
 			}
 		});
 
@@ -578,7 +570,7 @@ class OptionsDialog extends TemplateBox {
 		});
 
 		debugTab.setBottom(new HBox(button, reloadButton));
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), ControlsPanel.PanelType.TAB, debugTab).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), ControlsPanel.PanelType.TAB, debugTab).set();
 
 
 		/// about
@@ -621,7 +613,7 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 		gridPane.add(locales, 1, 5);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), ControlsPanel.PanelType.TAB, gridPane).create();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), ControlsPanel.PanelType.TAB, gridPane).set();
 
 		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
 		/// Creating top tabs from registered tabs list
@@ -691,8 +683,11 @@ class OptionsDialog extends TemplateBox {
 
 	private void setPanel(ControlsPanel panel){
 		controlsPane.getChildren().clear();
+		if (panel == null) return;
+
 		Pane pane = panel.createControlsPane(instance);
 		pane.prefHeightProperty().bind(controlsPane.heightProperty());
+		pane.prefWidthProperty().bind(controlsPane.widthProperty());
 		controlsPane.getChildren().add(pane);
 	}
 
@@ -701,8 +696,10 @@ class OptionsDialog extends TemplateBox {
 		if (optionsDialog == null)
 			optionsDialog = new OptionsDialog();
 
-		optionsDialog.show();
-		optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
+		if (!optionsDialog.isShowing()) {
+			optionsDialog.show();
+			optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
+		}
 	}
 
 	// -- Technical classes --

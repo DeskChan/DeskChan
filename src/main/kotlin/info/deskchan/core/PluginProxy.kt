@@ -30,6 +30,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     fun initialize(): Boolean {
         addMessageListener(id, this)
+        addMessageListener(id+":save-properties", MessageListener { sender, tag, data ->  properties.save() })
         return plugin.initialize(this)
     }
 
@@ -142,7 +143,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
                 val file_loader = URLClassLoader(urls)
                 plugin_strings = ResourceBundle.getBundle("strings", Locale.getDefault(), file_loader, UTF8Control())
             } catch (e: Exception) {
-                log("Cannot find strings bundle for ${id} at ${path}")
+                log("Cannot find strings bundle for ${id} at ${path}, using existing resources")
             }
         }
     }
@@ -171,15 +172,24 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
     override val dataDirPath: Path
         get() = PluginManager.getPluginDataDirPath(id)
 
+    override val pluginDirPath: Path
+        get() = PluginManager.getDefaultPluginDirPath(id)
+
     override val assetsDirPath: Path
         get() = PluginManager.getAssetsDirPath()
 
     override fun log(text: String) {
-        PluginManager.log(id, text)
+        sendMessage("core-events:log", mapOf("message" to text))
     }
 
     override fun log(e: Throwable) {
-        PluginManager.log(id, e)
+        var t: Throwable? = e
+        while (t?.cause != null) t = t.cause
+
+        val stacktrace = mutableListOf<String>()
+        t?.stackTrace?.forEach { stacktrace.add(it.toString()) }
+
+        sendMessage("core-events:error", mapOf("class" to t?.javaClass?.simpleName, "message" to t?.message, "stacktrace" to stacktrace))
     }
 
     companion object {
@@ -201,16 +211,9 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
         private var general_strings: ResourceBundle? = null
 
-        fun updateResourceBundle() {
-            try {
-                general_strings = ResourceBundle.getBundle("info/deskchan/strings", UTF8Control())
-            } catch (e: Exception) {
-                PluginManager.log("Cannot find resource bundle info/deskchan/strings")
-            }
-        }
-
-        init {
-            updateResourceBundle()
+        @Throws(Exception::class)
+        fun updateResourceBundle(){
+            general_strings = ResourceBundle.getBundle("info/deskchan/strings", UTF8Control())
         }
 
         fun getString(key: String): String {
@@ -228,7 +231,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         config.getDependencies().forEach {
             val r = PluginManager.getInstance().tryLoadPluginByName(it)
             if (!r) {
-                PluginManager.log("Failed to load dependency $it of plugin ${getId()}")
+                log(Exception("Failed to load dependency $it of plugin ${getId()}"))
                 return false
             }
         }

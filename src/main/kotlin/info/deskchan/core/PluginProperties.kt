@@ -1,5 +1,6 @@
 package info.deskchan.core
 
+import java.io.IOException
 import java.nio.file.Files
 import java.util.*
 
@@ -129,6 +130,7 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
 
     /** Saves properties to default location. **/
     fun save(){
+        if (size == 0) return
         val configPath = proxyInterface.dataDirPath.resolve("config.properties")
         try {
             val properties = Properties()
@@ -139,7 +141,7 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : HashM
             properties.store(ip, proxyInterface.getId() + " config")
             ip.close()
         } catch (e: Exception) {
-            proxyInterface.log("Cannot save file: " + configPath)
+            proxyInterface.log(IOException("Cannot save file: " + configPath, e))
         }
     }
 }

@@ -1,5 +1,6 @@
 package info.deskchan.core_utils;
 
+import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +16,7 @@ public class ResourceDistributor {
             resPath=Paths.get(resList);
             resources=Files.readAllLines(Paths.get(resList),  StandardCharsets.UTF_8);
         } catch (Exception e){
-            Main.log("Cannot find file specified for resource distribution");
+            Main.log(new FileNotFoundException("Cannot find file specified for resource distribution"));
             return;
         }
         for(String resource : resources){

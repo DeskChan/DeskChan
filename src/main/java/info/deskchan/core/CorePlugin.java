@@ -129,6 +129,28 @@ public class CorePlugin implements Plugin, MessageListener {
 			pluginProxy.sendMessage(sender, pluginDataDirPath.toString());
 		});
 
+		/* Catch exceptions from other plugins.
+		 * Public message
+		 * Params: class: String!
+		 *         message: String!
+		 *         stacktrace: List<String>
+		 * Returns: None  */
+		pluginProxy.addMessageListener("core-events:log", (sender, tag, data) -> {
+			Map error = (Map) data;
+			PluginManager.log(sender, (String) error.get("message"));
+		});
+
+		pluginProxy.addMessageListener("core-events:error", (sender, tag, data) -> {
+			Map error = (Map) data;
+			String message = (error.get("class") != null ? error.get("class") : "") +
+					         (error.get("message") != null ? ": " + error.get("message") : "");
+			PluginManager.log(sender, message , (List) error.get("stacktrace"));
+		});
+
+		pluginProxy.addMessageListener("core:save-all-properties", (sender, tag, data) -> {
+			PluginManager.getInstance().saveProperties();
+		});
+
 		CommandsProxy.initialize(pluginProxy);
 
 		return true;

@@ -8,7 +8,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 
@@ -78,14 +77,6 @@ class Main : Plugin, PluginLoader {
         manifestAttributes.forEach{
             config.append(it.key.toString(), it.value)
         }
-        try {
-            val resourceFilePath = manifestAttributes.getValue("resources")
-            val resourceBundle = extractResources(id, resourceFilePath, loader)
-
-            if (resourceBundle != null)
-                config.append("resources", resourceBundle.baseBundleName)
-
-        } catch (e: Exception){ }
 
         PluginManager.getInstance().initializePlugin(id, plugin, config)
     }
@@ -94,16 +85,6 @@ class Main : Plugin, PluginLoader {
         val jars = mutableListOf<File>()
         Files.walkFileTree(path, JarFinder(jars, this::log))
         return jars
-    }
-
-    private fun extractResources(id: String, resourceFilePath: String?, loader: ClassLoader) = when {
-        resourceFilePath != null -> try {
-            ResourceBundle.getBundle(resourceFilePath, Locale.getDefault(), loader)
-        } catch (e: Exception) {
-            log("Couldn't load a resource file of plugin \"$id\"")
-            null
-        }
-        else -> null
     }
 
     fun Attributes.groupValues(attribute: String): Set<String> {
