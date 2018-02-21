@@ -183,8 +183,17 @@ public class Main implements Plugin {
         * Params: value: String! - user speech text
         * Returns: None */
         pluginProxy.addMessageListener("chat:user-said", (sender, tag, dat) -> {
-            Map<String,Object> data = (Map) dat;
-            String value = (String) data.getOrDefault("value", "");
+            String value;
+            Map<String, Object> data;
+            if (!(dat instanceof Map)){
+                value = (String) dat;
+                data = new HashMap<>();
+                data.put("value", value);
+            } else {
+                data = (Map) dat;
+                value = (String) data.getOrDefault("value", "");
+            }
+
             history.add(new ChatPhrase(value, 1));
 
             if(properties.getBoolean("fixer", true)){

@@ -9,6 +9,7 @@ import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.media.AudioClip;
@@ -380,7 +381,9 @@ public class App extends Application {
         * Params: None
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
-			OptionsDialog.open();
+			Platform.runLater(() -> {
+				OptionsDialog.open();
+			});
 		});
 
 		/* DEPRECATED */
@@ -493,7 +496,9 @@ public class App extends Application {
         * Params: font: String! - font in inner format
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-balloon-font", (sender, tag, data) -> {
-			Balloon.setDefaultFont((String) data);
+			Platform.runLater(() ->
+					Balloon.setDefaultFont((String) data)
+			);
 		});
 
 		/* Set interface size.
@@ -517,8 +522,10 @@ public class App extends Application {
         * Params: opacity: Integer! - opacity, in percents (x100)
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-balloon-shadow-opacity", (sender, tag, data) -> {
-			float opacity = ((Number) data).floatValue();
-			Balloon.setShadowOpacity(opacity);
+			Platform.runLater(() -> {
+				float opacity = ((Number) data).floatValue();
+				Balloon.setShadowOpacity(opacity);
+			});
 		});
 
 		/* Set skin shadow opacity.
@@ -526,11 +533,13 @@ public class App extends Application {
         * Params: opacity: Integer! - opacity, in percents (x100)
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-skin-shadow-opacity", (sender, tag, data) -> {
-			float opacity = ((Number) data).floatValue();
-			Main.getProperties().getFloat("skin.shadow-opacity", opacity);
+			Platform.runLater(() -> {
+				float opacity = ((Number) data).floatValue();
+				Main.getProperties().getFloat("skin.shadow-opacity", opacity);
 
-			if (character != null)
-				character.setShadowOpacity(opacity);
+				if (character != null)
+					character.setShadowOpacity(opacity);
+			});
 		});
 
 		/* Open skin dialog.
@@ -954,6 +963,30 @@ public class App extends Application {
 		alert.show();
 	}
 
+	private static TemplateBox waitingAlert;
+	private static boolean needAlert;
+	static void showWaitingAlert(Runnable caller) {
+		needAlert = true;
+		if (waitingAlert == null)
+			Main.getPluginProxy().setTimer(800, (sender, data) -> {
+				if (!needAlert || waitingAlert != null) return;
+				waitingAlert = new TemplateBox(Main.getString("default_messagebox_name"));
+				waitingAlert.getDialogPane().setContent(new Label(Main.getString("wait")));
+				waitingAlert.show();
+			});
+
+		new Thread(() -> {
+			caller.run();
+			needAlert = false;
+			Platform.runLater(() -> {
+				if (waitingAlert != null) {
+					waitingAlert.close();
+					waitingAlert = null;
+				}
+			});
+		}).start();
+	}
+
 	class DelayNotifier implements EventHandler<javafx.event.ActionEvent> {
 		
 		private final Timeline timeline;
@@ -965,7 +998,7 @@ public class App extends Application {
 			delayNotifiers.add(this);
 			timeline.play();
 		}
-		
+
 		void stop() {
 			timeline.stop();
 			delayNotifiers.remove(this);
@@ -973,7 +1006,7 @@ public class App extends Application {
 		
 		@Override
 		public void handle(javafx.event.ActionEvent actionEvent) {
-			Main.getInstance().getPluginProxy().sendMessage(tag, null);
+			Main.getPluginProxy().sendMessage(tag, null);
 			stop();
 		}
 	}

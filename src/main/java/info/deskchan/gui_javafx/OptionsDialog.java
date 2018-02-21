@@ -44,6 +44,17 @@ class OptionsDialog extends TemplateBox {
 
 	private Pane controlsPane = new Pane();
 
+	private LinkedList<ControlsPanel> panelsHistory = new LinkedList<>();
+	private int panelIndex = 0;
+	private Hyperlink prevLink, nextLink;
+
+	private void updateLinks(){
+		prevLink.setDisable(panelIndex == 0);
+		prevLink.setVisited(false);
+		nextLink.setDisable(panelIndex == panelsHistory.size() - 1);
+		nextLink.setVisited(false);
+	}
+
 	static {
 		// Filling plugins list, 'plugin-load' sends full list of registered commands every time you subscribed to it
 		Main.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
@@ -85,13 +96,38 @@ class OptionsDialog extends TemplateBox {
 					}
 				}
 		);
+
+		HBox historyLinks = new HBox();
+		prevLink = new Hyperlink(Main.getString("back"));
+		nextLink = new Hyperlink(Main.getString("forward"));
+		prevLink.setOnAction((event) -> {
+			if (panelIndex > 0){
+				panelIndex--;
+				setPanel(panelsHistory.get(panelIndex));
+			}
+			updateLinks();
+		});
+		prevLink.setDisable(true);
+
+		nextLink.setOnAction((event) -> {
+			if (panelIndex < panelsHistory.size() - 1){
+				panelIndex++;
+				setPanel(panelsHistory.get(panelIndex));
+			}
+			updateLinks();
+		});
+		nextLink.setDisable(true);
+
+		historyLinks.getChildren().addAll(prevLink, nextLink);
+
 		GridPane gridPane = new GridPane();
 		ColumnConstraints column1 = new ColumnConstraints();
-		gridPane.add(tabListView, 0, 0, 1, 1);
+		gridPane.add(tabListView, 0, 0, 1, 2);
 		column1.setPercentWidth(30);
 
 		ColumnConstraints column2 = new ColumnConstraints();
-		gridPane.add(controlsPane, 1, 0, 1, 1);
+		gridPane.add(historyLinks, 1, 0, 1, 1);
+		gridPane.add(controlsPane, 1, 1, 1, 1);
 		column2.setPercentWidth(70);
 
 		controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
@@ -621,6 +657,7 @@ class OptionsDialog extends TemplateBox {
 			registerTab(tab);
 
 		setPanel(tabs.get(0));
+		panelsHistory.add(tabs.get(0));
 	}
 
 	/** Open skin manager and wait for closing. **/
@@ -679,27 +716,42 @@ class OptionsDialog extends TemplateBox {
 	static void showPanel(ControlsPanel panel){
 		open();
 		instance.setPanel(panel);
+		instance.appendToHistory(panel);
 	}
 
 	private void setPanel(ControlsPanel panel){
-		controlsPane.getChildren().clear();
-		if (panel == null) return;
+		Platform.runLater(() -> {
+			controlsPane.getChildren().clear();
+			if (panel == null) return;
 
-		Pane pane = panel.createControlsPane(instance);
-		pane.prefHeightProperty().bind(controlsPane.heightProperty());
-		pane.prefWidthProperty().bind(controlsPane.widthProperty());
-		controlsPane.getChildren().add(pane);
+			Pane pane = panel.createControlsPane(instance);
+			pane.prefHeightProperty().bind(controlsPane.heightProperty());
+			pane.prefWidthProperty().bind(controlsPane.widthProperty());
+			controlsPane.getChildren().add(pane);
+		});
+	}
+
+	private void appendToHistory(ControlsPanel panel){
+		panelIndex++;
+		while (panelsHistory.size() > panelIndex) panelsHistory.removeLast();
+		panelsHistory.add(panel);
+		while (panelsHistory.size() > 15) panelsHistory.removeFirst();
+		updateLinks();
 	}
 
 	protected static void open() {
-		OptionsDialog optionsDialog = OptionsDialog.getInstance();
-		if (optionsDialog == null)
-			optionsDialog = new OptionsDialog();
+		App.showWaitingAlert(() -> {
+			Platform.runLater(() -> {
+				OptionsDialog optionsDialog = OptionsDialog.getInstance();
+				if (optionsDialog == null)
+					optionsDialog = new OptionsDialog();
 
-		if (!optionsDialog.isShowing()) {
-			optionsDialog.show();
-			optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
-		}
+				if (!optionsDialog.isShowing()) {
+					optionsDialog.show();
+					optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
+				}
+			});
+		});
 	}
 
 	// -- Technical classes --

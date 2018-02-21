@@ -207,15 +207,21 @@ interface PluginOptionsControlItem {
 			setValue(value);
 
 			textField.setOnKeyReleased(event -> {
-				if (event.getCode() == KeyCode.ENTER) {
-					currentText.setValue(getValue());
-					if (enterTag != null) {
-						Main.getPluginProxy().sendMessage(enterTag, new HashMap<String, Object>() {{
-							put("value", getValue());
-						}});
-					}
-				}
+				if (event.getCode() == KeyCode.ENTER) event();
 			});
+			textField.focusedProperty().addListener(
+				(ObservableValue<? extends Boolean> arg0, Boolean oldValue, Boolean newValue) -> {
+					if (!newValue) event();
+			});
+		}
+
+		protected void event(){
+			currentText.setValue(getValue());
+			if (enterTag != null) {
+				App.showWaitingAlert(() ->
+						Main.getPluginProxy().sendMessage(enterTag, getValue())
+				);
+			}
 		}
 
 		@Override
@@ -373,7 +379,7 @@ interface PluginOptionsControlItem {
 			if (options.get("msgTag") != null){
 				String msgTag = options.get("msgTag").toString();
 				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getPluginProxy().sendMessage(msgTag, newValue);
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, newValue));
 				});
 			}
 		}
@@ -416,7 +422,7 @@ interface PluginOptionsControlItem {
 			if (options.get("msgTag") != null){
 				String msgTag = options.get("msgTag").toString();
 				spinner.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getPluginProxy().sendMessage(msgTag, newValue);
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, newValue));
 				});
 			}
 		}
@@ -471,7 +477,7 @@ interface PluginOptionsControlItem {
 			if (options.get("msgTag") != null){
 				String msgTag = options.get("msgTag").toString();
 				slider.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getPluginProxy().sendMessage(msgTag, newValue);
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, newValue));
 				});
 			}
 
@@ -519,7 +525,7 @@ interface PluginOptionsControlItem {
 			if(msgTag != null){
 				selectedProperty().addListener((obs, oldValue, newValue) -> {
 					if(oldValue.equals(newValue)) return;
-					Main.getPluginProxy().sendMessage(msgTag, newValue);
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, newValue));
 				});
 			}
 		}
@@ -557,9 +563,11 @@ interface PluginOptionsControlItem {
 			String msgTag=(String)options.get("msgTag");
 			if(msgTag!=null){
 				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
-					Main.getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
-						put("value", newValue.toString());
-					}});
+					App.showWaitingAlert(() ->
+						Main.getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
+							put("value", newValue.toString());
+						}})
+					);
 				});
 			}
 		}
@@ -592,21 +600,23 @@ interface PluginOptionsControlItem {
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			List<Object> items = (List) options.get("values");
-			if(items!=null && items.size()>0)
+
+			if(items != null && items.size( )> 0)
 				listView.setItems(FXCollections.observableList(items));
 			listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 			listView.setPrefHeight(150);
 
 			setValue(value);
-			String msgTag=(String)options.get("msgTag");
-			if(msgTag!=null){
+			String msgTag = (String) options.get("msgTag");
+			if(msgTag != null){
 				listView.setOnMouseClicked((event) -> {
-					Main.getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
-						put("value", new ArrayList<>(listView.getSelectionModel().getSelectedItems()));
-						put("index", new ArrayList<>(listView.getSelectionModel().getSelectedIndex()));
-					}});
+					App.showWaitingAlert(() ->
+						Main.getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+							put("value", new ArrayList<>(listView.getSelectionModel().getSelectedItems()));
+							put("index", new ArrayList<>(listView.getSelectionModel().getSelectedIndex()));
+						}})
+					);
 				});
-
 			}
 		}
 
@@ -650,9 +660,13 @@ interface PluginOptionsControlItem {
 
 			setValue(value);
 			if (msgTag != null) {
-				setOnAction(event -> Main.getPluginProxy().sendMessage(msgTag, msgData));
+				setOnAction(event ->
+						App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, msgData))
+				);
 			} else if (dstPanel != null){
-				setOnAction(event -> ControlsPanel.open(dstPanel.toString()));
+				setOnAction(event ->
+						App.showWaitingAlert(() -> ControlsPanel.open(dstPanel.toString()))
+				);
 			}
 		}
 
@@ -778,7 +792,7 @@ interface PluginOptionsControlItem {
 				if (file != null) {
 					textField.setText(file.getAbsolutePath());
 					if (msgTag != null)
-						Main.getPluginProxy().sendMessage(msgTag, textField.getText());
+						App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, textField.getText()));
 				}
 			});
 
@@ -812,7 +826,7 @@ interface PluginOptionsControlItem {
 				if (file != null) {
 					textField.setText(file.getAbsolutePath());
 					if (msgTag != null)
-						Main.getPluginProxy().sendMessage(msgTag, textField.getText());
+						App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, textField.getText()));
 				}
 			});
 		}
@@ -871,7 +885,7 @@ interface PluginOptionsControlItem {
 			setValue(value);
 			if (msgTag != null) {
 				picker.setOnAction(event -> {
-					Main.getPluginProxy().sendMessage(msgTag, picker.getValue().toString());
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, picker.getValue().toString()));
 				});
 			}
 		}
@@ -935,7 +949,7 @@ interface PluginOptionsControlItem {
 					selectedFont.setValue(LocalFont.toString(selectedFontOpt.get()));
 					setText(selectedFont.getValue());
 					if (msgTag != null)
-						Main.getPluginProxy().sendMessage(msgTag, getValue());
+						App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, getValue()));
 					picker = new FontSelectorDialog(selectedFontOpt.get());
 				} else {
 					picker = new FontSelectorDialog(picker.getResult());
@@ -989,7 +1003,8 @@ interface PluginOptionsControlItem {
 			setValue(Main.getString("open"));
 
 			setOnAction(event -> {
-				if (msgTag != null) Main.getPluginProxy().sendMessage(msgTag, null);
+				if (msgTag != null)
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, null));
 				if (link != null){
 					String[] command;
 					if (SystemUtils.IS_OS_WINDOWS)

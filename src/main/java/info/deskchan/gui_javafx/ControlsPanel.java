@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
@@ -55,7 +56,7 @@ public class ControlsPanel {
 			   (String) data.get("name"),
 				type,
 			   (List<Map<String, Object>>) data.getOrDefault("controls", new LinkedList<Map>()),
-			   (String) data.get("msgTag"),
+			    getMsgTag(data),
 			   (String) data.get("onClose"),
 			   (String) data.get("action")
 		);
@@ -79,7 +80,7 @@ public class ControlsPanel {
 			   (String) data.get("name"),
 		        data.getOrDefault("type", "tab").toString(),
 		       (List<Map<String, Object>>) data.getOrDefault("controls", new LinkedList<Map>()),
-		       (String) data.get("msgTag"),
+				getMsgTag(data),
 		       (String) data.get("onClose"),
 			   (String) data.get("action")
 		);
@@ -146,19 +147,25 @@ public class ControlsPanel {
 	}
 
 	public void show(){
-		ControlsPanel currentPanel = registeredPanels.get(getFullName());
-		if (currentPanel == null || controls != null || panelPane != null) {
+		ControlsPanel _currentPanel = registeredPanels.get(getFullName());
+		if (_currentPanel == null || controls != null || panelPane != null) {
 			set();
-			currentPanel = this;
+			_currentPanel = this;
 		}
-		switch (currentPanel.type){
-			case WINDOW: case INFO:{
-				new ControlsWindow(currentPanel);
-			} break;
-			default:{
-				OptionsDialog.showPanel(currentPanel);
-			} break;
-		}
+		final ControlsPanel currentPanel = _currentPanel;
+		App.showWaitingAlert(() -> {
+			switch (currentPanel.type) {
+				case WINDOW:
+				case INFO: {
+					Platform.runLater(() -> new ControlsWindow(currentPanel));
+				}
+				break;
+				default: {
+					OptionsDialog.showPanel(currentPanel);
+				}
+				break;
+			}
+		});
 	}
 
 	public void hide(){
@@ -170,7 +177,7 @@ public class ControlsPanel {
 
 		switch (currentPanel.type){
 			case WINDOW: case INFO:{
-				ControlsWindow.closeCustomWindow(this);
+				Platform.runLater(() -> ControlsWindow.closeCustomWindow(this));
 			} break;
 			case TAB: case SUBMENU: case PANEL:{
 				OptionsDialog.showPanel(null);
@@ -281,24 +288,28 @@ public class ControlsPanel {
 		if (getSaveTag() != null) {
 			Button saveButton = new Button(Main.getString("save"));
 			saveButton.setOnAction(event -> {
-				Map<String, Object> data = new HashMap<>();
-				for (Map.Entry<String, PluginOptionsControlItem> entry : namedControls.entrySet()) {
-					data.put(entry.getKey(), entry.getValue().getValue());
-					for (Map<String, Object> control : controls) {
-						String id = (String) control.get("id");
-						if (id != null && id.equals(entry.getKey())) {
-							control.put("value", entry.getValue().getValue());
-							break;
+				App.showWaitingAlert(() -> {
+					Map<String, Object> data = new HashMap<>();
+					for (Map.Entry<String, PluginOptionsControlItem> entry : namedControls.entrySet()) {
+						data.put(entry.getKey(), entry.getValue().getValue());
+						for (Map<String, Object> control : controls) {
+							String id = (String) control.get("id");
+							if (id != null && id.equals(entry.getKey())) {
+								control.put("value", entry.getValue().getValue());
+								break;
+							}
 						}
 					}
-				}
-				Main.getPluginProxy().sendMessage(getSaveTag(), data);
+					Main.getPluginProxy().sendMessage(getSaveTag(), data);
+				});
 			});
 			wrapper.setBottom(saveButton);
 		}
 		if (getCloseTag() != null) {
 			parent.addOnCloseRequest(event -> {
-				Main.getPluginProxy().sendMessage(getCloseTag(), null);
+				App.showWaitingAlert(() -> {
+					Main.getPluginProxy().sendMessage(getCloseTag(), null);
+				});
 			});
 		}
 
@@ -402,5 +413,10 @@ public class ControlsPanel {
 		} catch (Exception e){
 			throw new RuntimeException(e.getCause());
 		}
+	}
+
+	private static String getMsgTag(Map<String, Object> data){
+		if (data.get("msgTag") != null) return (String) data.get("msgTag");
+		return (String) data.get("onSave");
 	}
 }
