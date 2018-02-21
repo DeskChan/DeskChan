@@ -27,7 +27,7 @@ class InternetSearch {
         return query
     }
 
-    static String[][] variants = [[ 'google', 'гугл'   ],
+    static String[][] variants = [[ 'google', 'гугл', 'загугли'   ],
                            [ 'yandex', 'яндекс' ],
                            [ 'youtube', 'ютуб', 'тытруба' ],
                            [ 'wiki', 'wikipedia', 'вики', 'википедия' ],
@@ -43,7 +43,7 @@ class InternetSearch {
         instance.addMessageListener(pluginName + ':internet-search', { sender, tag, dat ->
             List<String> words = ((Map) dat).getOrDefault("query", new ArrayList())
             String text = ((Map) dat).getOrDefault("text", "")
-            if (text.contains('загугли')){
+            if (text.contains('гугл')){
                 String query = ""
                 for (String w : words){
                     query += w + " "
@@ -77,5 +77,11 @@ class InternetSearch {
                 commandName: pluginName + ':internet-search',
                 rule       : '{query:List} (найди|загугли) ?(в|на) ?(интернет|сети)'
         ])
+
+        instance.addMessageListener("recognition:get-words", {sender, tag, d ->
+            HashSet<String> set = new HashSet<>()
+            for (String[] s : variants) for (String w : s) set.add(w)
+            instance.sendMessage(sender, set)
+        })
     }
 }

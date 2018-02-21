@@ -126,6 +126,10 @@ public class Main implements Plugin {
             }
         });
 
+        pluginProxy.addMessageListener("recognition:get-words", (sender, tag, data) -> {
+            pluginProxy.sendMessage(sender, Parsers.getWords());
+        });
+
         log("loading completed");
         return true;
     }

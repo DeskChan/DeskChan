@@ -228,6 +228,11 @@ class OpenCommand{
                 instance.sendMessage("gui:show-notification", [name: 'Error output', text: error])
             }
         })
+        instance.addMessageListener("recognition:get-words", {sender, tag, d ->
+            HashSet<String> set = new HashSet<>()
+            for (LinkEntry s : entries) for (String w : s.keywords) set.add(w)
+            instance.sendMessage(sender, set)
+        })
     }
     static void createDefault(){
         switch(data.system){

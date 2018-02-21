@@ -295,6 +295,12 @@ public class Main implements Plugin {
 			DefaultTagsListeners.checkCondition(sender, data, quote -> !currentCharacter.tagsMatch(quote))
 		);
 
+		pluginProxy.addMessageListener("recognition:get-words", (sender, tag, data) -> {
+			HashSet<String> set = new HashSet<>();
+			set.add(currentCharacter.name);
+			pluginProxy.sendMessage(sender, set);
+		});
+
 		resetTimer();
 
 		return true;
@@ -367,7 +373,6 @@ public class Main implements Plugin {
 				put("label", getString("usernames_list"));
 				put("value", currentCharacter.tags.getAsString("usernames"));
 			}});
-			System.out.println(currentCharacter.phrases.toList());
 			list.add(new HashMap<String, Object>() {{
 				put("id", "phrases");
 				put("type", "FilesManager");

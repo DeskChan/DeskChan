@@ -27,6 +27,12 @@ dir.eachFileRecurse {
     radioMap.add(new Radio(it))
 }
 
+addMessageListener("recognition:get-words", {sender, tag, d ->
+    HashSet<String> set = new HashSet<>()
+    for (Radio r : radioMap) set.add(r.name)
+    sendMessage(sender, set)
+})
+
 def clarify(){
     sendMessage('DeskChan:request-say', 'CLARIFY')
     sendMessage('DeskChan:request-user-speech', null, { s, d ->

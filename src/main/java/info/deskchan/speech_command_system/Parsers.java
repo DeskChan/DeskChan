@@ -67,7 +67,7 @@ public class Parsers {
                 "десять", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто"
         };
         private static final String[][] hundreds = {
-                { "сто", "cотня" }, { "двести", "двухсотый" }, { "тристa", "трехсотый" }, { "четыреста", "четырехcoтый" }, { "пятьсот", "пятисотый" }, { "шестьсот", "шестисотый" }, { "семьсот", "семисотый" }, { "восемьсот", "восьмисотый" }, { "девятьсот", "девятисотый" }
+                { "сто", "сотня" }, { "двести", "двухсотый" }, { "триста", "трехсотый" }, { "четыреста", "четырёхсотый" }, { "пятьсот", "пятисотый" }, { "шестьсот", "шестисотый" }, { "семьсот", "семисотый" }, { "восемьсот", "восьмисотый" }, { "девятьсот", "девятисотый" }
         };
         private static final String[][] digits = {
                 {"ноль", "нулевой"},
@@ -179,7 +179,29 @@ public class Parsers {
             cache.put(word, max.one.clone());
             return max.one;
         }
+
+        public static Set<String> getWords(){
+            Set<String> words = new HashSet<>();
+
+            for (Pair w : floats) words.add((String) w.one);
+            for (String w : tenDigit) words.add(w);
+            for (String w : dozens) words.add(w);
+            for (String[] w : hundreds) for (String e : w) words.add(e);
+            for (String[] w : digits) for (String e : w) words.add(e);
+            for (Pair w : thousands) words.add((String) w.one);
+            for (String w : months) words.add(w);
+            for (String w : weekdays) words.add(w);
+            for (String[] w : timeCat) for (String e : w) words.add(e);
+            for (Pair w : offsets) words.add((String) w.one);
+            for (Pair w : dayTime) words.add((String) w.one);
+            for (String w : keywords) words.add(w);
+
+            return words;
+        }
     }
+
+    public static Set<String> getWords(){  return WordFinder.getWords();  }
+
     private static boolean correctOrder(Long a, Long b){
         return a.toString().length() < b.toString().length() && !(a < 10 && b < 20);
     }
