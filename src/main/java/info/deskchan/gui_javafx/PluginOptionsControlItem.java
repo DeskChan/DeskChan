@@ -126,6 +126,7 @@ interface PluginOptionsControlItem {
 			node.setClip(new Rectangle(width, height));
 		}
 		if(width != null && node instanceof Region) {
+			System.out.println("hi!");
 			((Region) node).setMinWidth(width);
 			((Region) node).setMaxWidth(width);
 		}
@@ -153,7 +154,6 @@ interface PluginOptionsControlItem {
 				getStyleClass().remove("label");
 				setFont(LocalFont.fromString(options.get("font").toString()));
 			}
-
 			try {
 				setAlignment(Pos.valueOf(options.getOrDefault("align", "CENTER").toString().toUpperCase()));
 			} catch (Exception e){
@@ -962,7 +962,7 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public Object getValue() {
-			return selectedFont;
+			return selectedFont.getValue();
 		}
 
 		@Override

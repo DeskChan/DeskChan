@@ -1,5 +1,6 @@
-package info.deskchan.gui_javafx;
+package info.deskchan.gui_javafx.panes;
 
+import info.deskchan.gui_javafx.*;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ContextMenu;
@@ -16,7 +17,7 @@ import javafx.stage.Screen;
 
 import java.util.*;
 
-class Character extends MovablePane {
+public class Character extends MovablePane {
 
 	private static final String DEFAULT_SKIN_NAME = "illia.image_set";
 
@@ -29,13 +30,12 @@ class Character extends MovablePane {
 	private String idleImageName = "normal";
 	private final DropShadow imageShadow = new DropShadow();
 	private PriorityQueue<MessageInfo> messageQueue = new PriorityQueue<>();
-	private Balloon balloon = null;
-	private Balloon.PositionMode balloonPositionMode;
+	private CharacterBalloon balloon = null;
 	private float scaleFactor = 1.0f;
 	private float skinOpacity = 1.0f;
 	private Color skinColor = null;
 
-	Character(String id, Skin skin) {
+	public Character(String id, Skin skin) {
 		this.id = id;
 
 		imageShadow.setRadius(10.0);
@@ -50,10 +50,6 @@ class Character extends MovablePane {
 
 		imageView.setMouseTransparent(true);
 
-		balloonPositionMode = Balloon.PositionMode.valueOf(
-				Main.getProperties().getString("character." + id + ".balloon_position_mode",
-						Balloon.PositionMode.AUTO.toString())
-		);
 		addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
 			startDrag(event);
 			Map<String, Object> m = new HashMap<>();
@@ -110,15 +106,15 @@ class Character extends MovablePane {
 					return false;
 				});
 
-		layoutXProperty().addListener(Balloon.updateBalloonLayoutX);
-		layoutYProperty().addListener(Balloon.updateBalloonLayoutY);
+		layoutXProperty().addListener(CharacterBalloon.updateBalloonLayoutX);
+		layoutYProperty().addListener(CharacterBalloon.updateBalloonLayoutY);
 	}
 
-	Skin getSkin() {
+	public Skin getSkin() {
 		return skin;
 	}
 
-	void setSkin(Skin skin) {
+	public void setSkin(Skin skin) {
 		if (skin == null) {
 			skin = Skin.load(DEFAULT_SKIN_NAME);
 			if (skin == null){
@@ -136,7 +132,7 @@ class Character extends MovablePane {
 		return imageName;
 	}
 
-	void setImageName(String name) {
+	public void setImageName(String name) {
 		imageName = ((name != null) && (name.length() > 0)) ? name : "normal";
 		updateImage();
 	}
@@ -146,7 +142,7 @@ class Character extends MovablePane {
 	}
 
 	@Override
-	void setDefaultPosition() {
+	public void setDefaultPosition() {
 		Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
 		setPosition(new Point2D(screenBounds.getMaxX() - getWidth(),
 				screenBounds.getMaxY() - getHeight()));
@@ -199,7 +195,7 @@ class Character extends MovablePane {
      * Use a number in the range of (0.0; 1.0) to make the image smaller.
      * @param scaleFactor a positive float-point number
      */
-	void resizeSkin(float scaleFactor) {
+	public void resizeSkin(float scaleFactor) {
 		if (scaleFactor == 0) {
 			return;
 		}
@@ -213,7 +209,7 @@ class Character extends MovablePane {
      * @param width nullable
      * @param height nullable
      */
-	void resizeSkin(Integer width, Integer height) {
+	public void resizeSkin(Integer width, Integer height) {
 	    Double scaleFactor = null;
 	    if (width != null) {
 	        scaleFactor = width / imageView.getImage().getWidth();
@@ -231,7 +227,7 @@ class Character extends MovablePane {
      * Use a positive value to zoom in the image, or a negative one to zoom it out.
      * @param scaleFactorIncrement a positive or negative float-point number
      */
-	void resizeSkinRelatively(float scaleFactorIncrement) {
+	public void resizeSkinRelatively(float scaleFactorIncrement) {
 		resizeSkin(scaleFactor + scaleFactorIncrement);
 	}
 
@@ -239,7 +235,7 @@ class Character extends MovablePane {
 	 * Changes the absolute value of the opacity of the image.
 	 * @param opacity a value in percents (x100)
 	 */
-	void changeOpacity(float opacity) {
+	public void changeOpacity(float opacity) {
 		opacity /= 100;
 
 		if (opacity < 0 || opacity > 0.99) {
@@ -258,18 +254,18 @@ class Character extends MovablePane {
 	 * Unlike the usual changeOpacity(), this method gets an old value of the scale factor and adds an increment to it.
 	 * @param opacityIncrement a positive or negative float-point number
 	 */
-	void changeOpacityRelatively(float opacityIncrement) {
+	public void changeOpacityRelatively(float opacityIncrement) {
 		changeOpacity(skinOpacity + opacityIncrement);
 	}
 
-	void setColorFilter(Color color) {
+	public void setColorFilter(Color color) {
 		if(!new Color(1,1,1,1).equals(color))
 			skinColor = color;
 		else skinColor=null;
 		updateImage(false);
 	}
 
-	void setColorFilter(double red, double green, double blue, double opacity) {
+	public void setColorFilter(double red, double green, double blue, double opacity) {
 		setColorFilter(new Color(red, green, blue, opacity));
 	}
 
@@ -282,16 +278,7 @@ class Character extends MovablePane {
 		setImageName(name);
 	}
 
-	Balloon.PositionMode getBalloonPositionMode() {
-		return balloonPositionMode;
-	}
-
-	void setBalloonPositionMode(Balloon.PositionMode mode) {
-		balloonPositionMode = mode;
-		Main.getProperties().put("character." + id + ".balloon_position_mode", mode.toString());
-	}
-
-	void say(Object data) {
+	public void say(Object data) {
 		if(OverlayStage.getCurrentStage() == OverlayStage.LayerMode.HIDE) return;
 		MessageInfo messageInfo = null;
 		if (data != null) {
@@ -323,14 +310,14 @@ class Character extends MovablePane {
 		} else {
 			if(messageInfo.characterImage != null)
 				setImageName(messageInfo.characterImage);
-			balloon = new Balloon(this, balloonPositionMode, messageInfo.text[messageInfo.counter]);
+			balloon = new CharacterBalloon(this, messageInfo.text[messageInfo.counter]);
             messageInfo.counter++;
 			balloon.setTimeout(messageInfo.timeout);
 			balloon.show();
 		}
 	}
 
-	float getScaleFactor() {
+	public float getScaleFactor() {
 	    return scaleFactor * 100;
     }
 

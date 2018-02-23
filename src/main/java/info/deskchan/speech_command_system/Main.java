@@ -71,6 +71,7 @@ public class Main implements Plugin {
                 text = (String) ((Map) data).getOrDefault("value", "");
             else text = data.toString();
 
+            if (text == null || text.trim().length() == 0) return;
             operateRequest(text);
         });
 

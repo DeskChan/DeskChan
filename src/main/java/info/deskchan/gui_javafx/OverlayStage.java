@@ -1,5 +1,7 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.gui_javafx.panes.Balloon;
+import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
@@ -22,7 +24,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import java.util.*;
 
-class OverlayStage extends Stage {
+public class OverlayStage extends Stage {
 
 	public enum LayerMode {
 		BROKEN,
@@ -167,7 +169,7 @@ class OverlayStage extends Stage {
 		setScene(scene);
 	}
 
-	static Rectangle2D getDesktopSize() {
+	public static Rectangle2D getDesktopSize() {
 		Rectangle2D rect = Screen.getPrimary().getBounds();
 		double minX = rect.getMinX(), minY = rect.getMinY();
 		double maxX = rect.getMaxX(), maxY = rect.getMaxY();
@@ -199,11 +201,11 @@ class OverlayStage extends Stage {
 
 	void showCharacter() {}
 	void hideCharacter() {}
-	void showBalloon(Balloon balloon) {}
-	void hideBalloon(Balloon balloon) {}
+	public void showBalloon(Balloon balloon) {}
+	public void hideBalloon(Balloon balloon) {}
 	synchronized void hideBalloons() {}
 
-	void relocate(Node node, double x, double y){
+	public void relocate(Node node, double x, double y){
 		node.setLayoutX(x - this.getX());
 		node.setLayoutY(y - this.getY());
 	}
@@ -254,14 +256,14 @@ class NormalStage extends OverlayStage{
 		root.getChildren().remove(App.getInstance().getCharacter());
 	}
 	@Override
-	void showBalloon(Balloon balloon){
+	public void showBalloon(Balloon balloon){
 		balloon.setDefaultPosition();
 		if(!root.getChildren().contains(balloon))
 			root.getChildren().add(balloon);
 		update();
 	}
 	@Override
-	void hideBalloon(Balloon balloon){
+	public void hideBalloon(Balloon balloon){
 		root.getChildren().remove(balloon);
 	}
 	synchronized void hideBalloons(){
@@ -297,7 +299,7 @@ class TopStage extends NormalStage{
 class OnlyBalloonStage extends TopStage{
 	OnlyBalloonStage(){
 		super();
-		App.getInstance().getCharacter().setBalloonPositionMode(Balloon.PositionMode.ABSOLUTE);
+		CharacterBalloon.setDefaultPositionMode(CharacterBalloon.PositionMode.ABSOLUTE.toString());
 	}
 	@Override
 	void showCharacter(){ }
@@ -307,7 +309,7 @@ class FrontNormalStage extends NormalStage{
 	FrontNormalStage(){
 		super();
 	}
-	void showBalloon(Balloon balloon){
+	public void showBalloon(Balloon balloon){
 		super.showBalloon(balloon);
 		toFront();
 	}
@@ -324,12 +326,12 @@ class HideStage extends OverlayStage{
 
 class ShowIfMessageStage extends TopStage{
 	@Override
-	void showBalloon(Balloon balloon){
+	public void showBalloon(Balloon balloon){
 		super.showBalloon(balloon);
 		show();
 	}
 	@Override
-	void hideBalloon(Balloon balloon){
+	public void hideBalloon(Balloon balloon){
 		Iterator<Node> i = root.getChildren().iterator();
 		while (i.hasNext()) {
 			Node s = i.next();
@@ -349,7 +351,7 @@ class ShowIfMessageStage extends TopStage{
 	@Override
 	public void showStage(){
 		show();
-		if(Balloon.getInstance()==null)
+		if(CharacterBalloon.getInstance()==null)
 			hide();
 	}
 }
@@ -456,11 +458,11 @@ class SeparateStage extends OverlayStage{
 		remove(App.getInstance().getCharacter());
 	}
 	@Override
-	void showBalloon(Balloon balloon){
+	public void showBalloon(Balloon balloon){
 		add(balloon);
 	}
 	@Override
-	void hideBalloon(Balloon balloon){
+	public void hideBalloon(Balloon balloon){
 		remove(balloon);
 	}
 	@Override
@@ -470,7 +472,7 @@ class SeparateStage extends OverlayStage{
 			while (i.hasNext()) {
 				try {
 					Node s = i.next();
-					if (s instanceof Balloon) {
+					if (s instanceof CharacterBalloon) {
 						children.remove(s);
 					}
 				} catch (ConcurrentModificationException e){
@@ -481,7 +483,7 @@ class SeparateStage extends OverlayStage{
 		});
 	}
 	@Override
-	void relocate(Node node, double x, double y){
+	public void relocate(Node node, double x, double y){
 		if(new Double(x).isNaN()) x = 0;
 		if(new Double(y).isNaN()) y = 0;
 		add(node);

@@ -16,7 +16,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.lang.Character;
 import java.util.*;
 
 public class KeyboardEventNotificator implements NativeKeyListener {
@@ -59,7 +58,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             if (listenerId < 0){
                 listenerId = pluginProxy.setTimer(30000, (s, d) -> {
                     listenerId = -1;
-                    Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+                    Main.getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
                         put("name", Main.getString("hotkeys"));
                         List<Map<String, Object>> list = new LinkedList<>();
                         list.add(new HashMap<String, Object>() {{
@@ -69,7 +68,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                         put("controls", list);
                     }});
                 });
-                Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+                Main.getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
                     put("name", Main.getString("hotkeys"));
                     List<Map<String, Object>> list = new LinkedList<>();
                     list.add(new HashMap<String, Object>() {{
@@ -81,7 +80,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             } else {
                 pluginProxy.cancelTimer(listenerId);
                 listenerId = -1;
-                Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+                Main.getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
                     put("name", Main.getString("hotkeys"));
                     List<Map<String, Object>> list = new LinkedList<>();
                     list.add(new HashMap<String, Object>() {{
@@ -141,7 +140,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
     }
 
     static void updateKeysInSubMenu(){
-        Main.getInstance().getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
+        Main.getPluginProxy().sendMessage("gui:update-options-submenu", new HashMap<String, Object>(){{
             put("name", Main.getString("hotkeys"));
             List<HashMap<String, Object>> list = new LinkedList<>();
 

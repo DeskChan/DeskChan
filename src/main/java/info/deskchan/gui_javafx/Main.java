@@ -59,33 +59,33 @@ public class Main implements Plugin {
 		}
 	}
 	
-	static Main getInstance() {
+	public static Main getInstance() {
 		return instance;
 	}
 
-	static PluginProxyInterface getPluginProxy() { return instance.pluginProxy; }
+	public static PluginProxyInterface getPluginProxy() { return instance.pluginProxy; }
 	
 	Semaphore getAppInitSem() {
 		return appInitSem;
 	}
-	
-	void quit() {
+
+	public void quit() {
 		pluginProxy.sendMessage("core:quit", 0);
 	}
-	
-	static void log(String text) {
+
+	public static void log(String text) {
 		getPluginProxy().log(text);
 	}
-	
-	static void log(Throwable e) {
+
+	public static void log(Throwable e) {
 		getPluginProxy().log(e);
 	}
 
 	public static String getString(String text){
 		return getPluginProxy().getString(text);
 	}
-	
-	static synchronized PluginProperties getProperties() {
+
+	public static synchronized PluginProperties getProperties() {
 		return getPluginProxy().getProperties();
 	}
 

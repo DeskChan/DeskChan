@@ -33,14 +33,16 @@ class TemplateBox extends Dialog<Void> {
 		openedDialogs.add(this);
 
 		final TemplateBox thisBox = this;
-		setOnCloseRequest(new EventHandler<DialogEvent>() {
-			@Override
-			public void handle(DialogEvent event) {
-				openedDialogs.remove(thisBox);
-				for(EventHandler<DialogEvent> handler : handlers){
-					handler.handle(event);
+		onCloseRequestProperty().addListener(observable -> {
+			setOnCloseRequest(new EventHandler<DialogEvent>() {
+				@Override
+				public void handle(DialogEvent event) {
+					openedDialogs.remove(thisBox);
+					for(EventHandler<DialogEvent> handler : handlers){
+						handler.handle(event);
+					}
 				}
-			}
+			});
 		});
 
 		applyStyle();

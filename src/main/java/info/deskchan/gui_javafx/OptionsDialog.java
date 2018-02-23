@@ -4,6 +4,7 @@ import info.deskchan.core.CommandsProxy;
 import info.deskchan.core.CoreInfo;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -25,7 +26,6 @@ import javafx.util.converter.DefaultStringConverter;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.lang.Character;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -268,6 +268,22 @@ class OptionsDialog extends TemplateBox {
 	private static void balloonOptions(){
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
+			put("id",    "skin-character");
+			put("type",  "FileField");
+			put("label",  Main.getString("balloon.path-character"));
+			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
+			put("msgTag","gui:set-character-balloon-path");
+			put("value",  Main.getProperties().getString("balloon.path-character"));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "skin-user");
+			put("type",  "FileField");
+			put("label",  Main.getString("balloon.path-user"));
+			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
+			put("msgTag","gui:set-user-balloon-path");
+			put("value",  Main.getProperties().getString("balloon.path-user"));
+		}});
+		list.add(new HashMap<String, Object>() {{
 			put("id",    "scale");
 			put("type",  "Spinner");
 			put("label",  Main.getString("scale_factor") + " (%)");
@@ -281,7 +297,7 @@ class OptionsDialog extends TemplateBox {
 			put("type",  "FontPicker");
 			put("msgTag","gui:set-balloon-font");
 			put("label",  Main.getString("balloon_font"));
-			put("value",  LocalFont.toString(Balloon.getDefaultFont()));
+			put("value",  Main.getProperties().put("balloon.font", LocalFont.defaultToString()));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_default_timeout");
@@ -298,14 +314,33 @@ class OptionsDialog extends TemplateBox {
 			put("hint",   Main.getString("help.balloon_position"));
 			put("label",  Main.getString("balloon_position_mode"));
 			List<Object> values =
-					FXCollections.observableList( Arrays.asList((Object[]) Balloon.PositionMode.values()) );
-			int sel=-1;
+					FXCollections.observableList( Arrays.asList((Object[]) CharacterBalloon.PositionMode.values()) );
+			int sel = -1;
+			String current = Main.getProperties().getString("balloon_position_mode", CharacterBalloon.PositionMode.ABSOLUTE.toString());
 			for(Object value : values){
 				sel++;
-				if(value.equals(App.getInstance().getCharacter().getBalloonPositionMode()))
+				if(value.toString().equals(current))
 					break;
 			}
 			put("msgTag","gui:change-balloon-position-mode");
+			put("values", values);
+			put("value",  sel);
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "balloon_direction_mode");
+			put("type",  "ComboBox");
+			put("hint",   Main.getString("help.balloon_direction"));
+			put("label",  Main.getString("balloon_direction_mode"));
+			List<Object> values =
+					FXCollections.observableList( Arrays.asList((Object[]) CharacterBalloon.DirectionMode.values()) );
+			int sel = -1;
+			String current = Main.getProperties().getString("balloon_direction_mode", CharacterBalloon.DirectionMode.STANDARD_DIRECTION.toString());
+			for(Object value : values){
+				sel++;
+				if(value.toString().equals(current))
+					break;
+			}
+			put("msgTag","gui:change-balloon-direction-mode");
 			put("values", values);
 			put("value",  sel);
 		}});
@@ -348,7 +383,7 @@ class OptionsDialog extends TemplateBox {
 	}
 
 	/** Creating 'Commands' tab. **/
-	private static void initCommandsTab(){
+	private static void initCommandsTab1(){
 		TableView<CommandItem> commandsTable = new TableView<>();
 
 		BorderPane commandTab = new BorderPane();
@@ -407,6 +442,8 @@ class OptionsDialog extends TemplateBox {
 			item.setMsgData(event.getNewValue());
 		});
 		msgCol.setMinWidth(120);
+
+		final TreeItem<CommandItem> root = new TreeItem<>();
 
 		// Filling list of commands
 		ObservableList<CommandItem> list = FXCollections.observableArrayList();
@@ -473,6 +510,145 @@ class OptionsDialog extends TemplateBox {
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
+	/** Creating 'Commands' tab. **/
+	private void initCommandsTab2(){
+		TreeTableView<CommandItem> commandsTable = new TreeTableView<>();
+		commandsTable.setShowRoot(false);
+
+		BorderPane commandTab = new BorderPane();
+		commandTab.setCenter(commandsTable);
+
+		commandsTable.setEditable(true);
+		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
+		commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
+
+		// Events column
+		TreeTableColumn eventCol = new TreeTableColumn(Main.getString("events"));
+		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
+		List events = CommandsProxy.getEventsList();
+		Collections.sort(events);
+		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
+				FXCollections.observableArrayList(events)));
+		eventCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setEvent(event.getNewValue());
+		});
+		eventCol.setMinWidth(120);
+
+		// Commands column
+		TreeTableColumn commandCol = new TreeTableColumn(Main.getString("commands"));
+		commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
+		List commands = CommandsProxy.getCommandsList();
+		Collections.sort(commands);
+		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
+				FXCollections.observableArrayList(commands)));
+		commandCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setCommand(event.getNewValue());
+		});
+		commandCol.setMinWidth(120);
+
+		// Rules column
+		TreeTableColumn ruleCol = new TreeTableColumn(Main.getString("rules"));
+		ruleCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("rule"));
+		ruleCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
+		ruleCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setRule(event.getNewValue());
+		});
+		ruleCol.setMinWidth(120);
+
+		// Parameters column
+		TreeTableColumn msgCol = new TreeTableColumn(Main.getString("parameters"));
+		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
+		msgCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
+		msgCol.setOnEditCommit(ev -> {
+			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
+			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+			item.setMsgData(event.getNewValue());
+		});
+		msgCol.setMinWidth(120);
+
+		final TreeItem<CommandItem> root = new TreeItem<>();
+		fillTreeTable(root);
+
+		// Setting columns
+		commandsTable.getColumns().addAll(eventCol, ruleCol, commandCol, msgCol);
+
+		// 'Delete' button
+		Button deleteButton = new Button(Main.getString("delete"));
+		deleteButton.setOnAction(event -> {
+			TreeItem item = commandsTable.getSelectionModel().getSelectedItem();
+			if (item == null) return;
+			item.getParent().getChildren().remove(item);
+		});
+
+		// 'Reset' button
+		Button resetButton = new Button(Main.getString("reset"));
+		resetButton.setOnAction(event -> {
+			CommandsProxy.reset();
+			fillTreeTable(root);
+		});
+
+		// 'Save' button
+		Button saveButton = new Button(Main.getString("save"));
+		saveButton.setOnAction(e -> {
+			ArrayList<Map<String, Object>> push = new ArrayList<>();
+			for (TreeItem<CommandItem> event : root.getChildren())
+				for (TreeItem<CommandItem> command : event.getChildren())
+					for (TreeItem<CommandItem> item : event.getChildren())
+						push.add(item.getValue().toMap());
+
+			CommandsProxy.setLinks(push);
+			CommandsProxy.save();
+		});
+
+		// 'Load' button
+		Button loadButton = new Button(Main.getString("load"));
+		loadButton.setOnAction(event -> {
+			CommandsProxy.load();
+			fillTreeTable(root);
+		});
+
+		// 'Add' button
+		Button addButton = new Button(Main.getString("add"));
+		addButton.setOnAction(event -> {
+			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), ControlsPanel.PanelType.WINDOW, commandTab).show();
+		});
+
+		// Adding buttons to form
+		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
+		commandTab.setBottom(buttons);
+
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
+	}
+
+	private void fillTreeTable(TreeItem<CommandItem> root){
+		for(Map<String,Object> entry : CommandsProxy.getLinksList()){
+			CommandItem item = new CommandItem(entry);
+			loop:
+			for (TreeItem<CommandItem> event : root.getChildren())
+				if (event.getValue().event.equals(item.event))
+					for (TreeItem<CommandItem> command : event.getChildren())
+						if (command.getValue().command.equals(item.command)){
+							command.getChildren().add(new TreeItem<>(item));
+							item = null;
+							break loop;
+						}
+			if (item != null){
+				TreeItem<CommandItem> treeItem = new TreeItem<>(item);
+				TreeItem<CommandItem> commandItem = new TreeItem<>();
+				commandItem.getChildren().add(treeItem);
+				TreeItem<CommandItem> eventItem = new TreeItem<>(item);
+				eventItem.getChildren().add(commandItem);
+				root.getChildren().add(eventItem);
+			}
+		}
+	}
+
 	private void initTabs() {
 		PluginProxyInterface pluginProxy = Main.getPluginProxy();
 		GridPane gridPane = new GridPane();
@@ -484,7 +660,7 @@ class OptionsDialog extends TemplateBox {
 
 
 		/// commands
-		initCommandsTab();
+		initCommandsTab1();
 
 
 		/// plugins
@@ -673,7 +849,7 @@ class OptionsDialog extends TemplateBox {
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin")).update();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).update();
 
 	}
 
@@ -929,12 +1105,14 @@ class OptionsDialog extends TemplateBox {
 		String command;
 		String rule;
 		Object msgData;
+		boolean realItem;
 
 		CommandItem(String event, String command, String rule, String msg) {
 			this.event = event;
 			this.command = command;
 			this.rule = rule;
 			this.msgData = msg;
+			this.realItem = true;
 		}
 
 		CommandItem(Map<String,Object> data) {
@@ -942,6 +1120,18 @@ class OptionsDialog extends TemplateBox {
 			this.command = (String) data.get("command");
 			this.rule = (String) data.get("rule");
 			this.msgData = data.get("msgData");
+			this.realItem = true;
+		}
+
+		CommandItem(String event, String command) {
+			this.event = event;
+			this.command = command;
+			this.realItem = false;
+		}
+
+		CommandItem(String event) {
+			this.event = event;
+			this.realItem = false;
 		}
 
 		public String getEvent(){         return event;            }

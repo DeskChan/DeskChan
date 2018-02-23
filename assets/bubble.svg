@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg">
-	<margin left="30" right="100" top="0" bottom="0" />
+	<margin left="20" right="90" top="0" bottom="0" />
 	<g>
 		<path 
 		style="fill: black; fill-opacity:1; stroke:#000000; stroke-width:2;"

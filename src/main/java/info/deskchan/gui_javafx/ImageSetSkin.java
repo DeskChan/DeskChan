@@ -24,14 +24,17 @@ class ImageSetSkin implements Skin {
 			{"waiting", "normal"}
 	};
 	private final Path path;
+	private final String skinName;
 	private final Map<String, List<Image>> images = new HashMap<>();
 	private final Path propertiesPath;
 	private final Properties properties = new Properties();
 	
 	ImageSetSkin(Path path) {
 		this.path = path;
-		propertiesPath = Main.getInstance().getPluginProxy().getDataDirPath().resolve(
-				"skin_" + getName() + ".properties"
+		skinName = Skin.getSkinsPath().relativize(path).toString().replaceAll("[\\\\/]", ".");
+
+		propertiesPath = Main.getPluginProxy().getDataDirPath().resolve(
+				"skin_" + skinName + ".properties"
 		);
 		try {
 			properties.load(Files.newBufferedReader(propertiesPath));
@@ -46,7 +49,7 @@ class ImageSetSkin implements Skin {
 	
 	@Override
 	public String getName() {
-		return Skin.getSkinsPath().relativize(path).toString();
+		return skinName;
 	}
 
 	private List<Image> getImageArray(String name) {
@@ -143,6 +146,8 @@ class ImageSetSkin implements Skin {
 				return;
 			}
 			properties.setProperty(key, value);
+			if (!propertiesPath.toFile().exists())
+				propertiesPath.toFile().createNewFile();
 			properties.store(Files.newBufferedWriter(propertiesPath), "Skin properties");
 		} catch (Throwable e) {
 			Main.log(e);

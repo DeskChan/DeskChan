@@ -25,7 +25,7 @@ class SkinManagerDialog extends TemplateBox {
 		getDialogPane().lookupButton(ButtonType.APPLY).addEventFilter(ActionEvent.ACTION, (event) -> {
 			event.consume();
 			Skin skin = skinsList.getSelectionModel().getSelectedItem();
-			Character character = App.getInstance().getCharacter();
+			info.deskchan.gui_javafx.panes.Character character = App.getInstance().getCharacter();
 			character.setSkin(skin);
 			character.setDefaultPosition();
 		});

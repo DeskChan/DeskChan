@@ -6,7 +6,7 @@ import javafx.scene.text.Font;
 public class LocalFont {
     private LocalFont(){ }
 
-    static Font defaultFont =  getSystemDefaultFont();
+    public static Font defaultFont =  getSystemDefaultFont();
 
     private static Font getSystemDefaultFont(){
         return Font.font(Font.getDefault().getName(), Font.getDefault().getSize() * App.getInterfaceMultiplierSize());

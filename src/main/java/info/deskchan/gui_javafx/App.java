@@ -2,6 +2,9 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.gui_javafx.panes.Balloon;
+import info.deskchan.gui_javafx.panes.CharacterBalloon;
+import info.deskchan.gui_javafx.panes.UserBalloon;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -38,7 +41,7 @@ public class App extends Application {
 			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader()
 	);
 
-	private Character character;
+	private info.deskchan.gui_javafx.panes.Character character;
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
 
 	static float getTime(long start){
@@ -50,7 +53,7 @@ public class App extends Application {
 		instance = this;
 		long start = System.currentTimeMillis();
 
-		character = new Character("main", Skin.load(Main.getProperties().getString("skin.name")));
+		character = new info.deskchan.gui_javafx.panes.Character("main", Skin.load(Main.getProperties().getString("skin.name")));
 		Main.log("character initialized, " + getTime(start));
 		// Hacking javafx Application class to hide app from programs panel
 		HackJavaFX.process();
@@ -58,6 +61,10 @@ public class App extends Application {
 		// Loading fonts from 'assets/fonts' folder
 		loadFonts();
 		Main.log("fonts loaded, " + getTime(start));
+		// Loading balloon asset
+		CharacterBalloon.updateDrawer();
+		UserBalloon.updateDrawer();
+		Main.log("balloon loaded, " + getTime(start));
 		// Trying to apply 'style.css' to application
 		Main.log("stylesheets overrided, " + getTime(start));
 		// Forbid auto closing program if there is no program windows
@@ -97,7 +104,7 @@ public class App extends Application {
 		return instance;
 	}
 	
-	Character getCharacter() {
+	info.deskchan.gui_javafx.panes.Character getCharacter() {
 		return character;
 	}
 
@@ -206,6 +213,28 @@ public class App extends Application {
 			});
 		});
 
+		/* Set current skin name of character's balloon .
+        * Public message
+        * Params: path: String! - path to skin
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-character-balloon-path", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Main.getProperties().put("balloon.path-character", (String) data);
+				CharacterBalloon.updateDrawer();
+			});
+		});
+
+		/* Set current skin name of user's balloon.
+        * Public message
+        * Params: path: String! - path to skin
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-user-balloon-path", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Main.getProperties().put("balloon.path-user", (String) data);
+				UserBalloon.updateDrawer();
+			});
+		});
+
 		/* Change skin opacity.
         * Public message
         * Params: value:Float! - absolute value, in percents (x100)
@@ -307,11 +336,11 @@ public class App extends Application {
 				if (data instanceof Map) {
 					Map m = (Map) data;
 					if (m.containsKey("value"))
-						Balloon.setScaleFactor(((Number) m.get("value")).floatValue());
+						CharacterBalloon.setScaleFactor(((Number) m.get("value")).floatValue());
 				} else if (data instanceof Number){
-					Balloon.setScaleFactor(((Number) data).floatValue());
+					CharacterBalloon.setScaleFactor(((Number) data).floatValue());
 				} else {
-					Balloon.setScaleFactor(Float.parseFloat(data.toString()));
+					CharacterBalloon.setScaleFactor(Float.parseFloat(data.toString()));
 				}
 			});
 		});
@@ -524,7 +553,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:set-balloon-shadow-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				float opacity = ((Number) data).floatValue();
-				Balloon.setShadowOpacity(opacity);
+				CharacterBalloon.setShadowOpacity(opacity);
 			});
 		});
 
@@ -729,7 +758,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Double value = getDouble(data, 100.0);
-				Balloon.setOpacity(value.floatValue());
+				CharacterBalloon.setOpacity(value.floatValue());
 			});
 		});
 
@@ -754,8 +783,22 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:change-balloon-position-mode", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
-				String value = (String) m.getOrDefault("value", "AUTO");
-				App.getInstance().getCharacter().setBalloonPositionMode(Balloon.PositionMode.valueOf(value));
+				String value = (String) m.get("value");
+				CharacterBalloon.setDefaultPositionMode(value);
+			});
+		});
+
+		/* Change balloon direction mode
+        * Public message
+        * Params: Map
+        *           value: String? - direction mode name, "STANDARD_DIRECTION" by default
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:change-balloon-direction-mode", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Map<String, Object> m = (Map<String, Object>) data;
+				String value = (String) m.get("value");
+				Main.getProperties().put("balloon_direction_mode", value);
+				CharacterBalloon.setDefaultDirectionMode(value);
 			});
 		});
 
@@ -778,6 +821,19 @@ public class App extends Application {
 						Main.getProperties().put("balloon.text-animation-delay", data.toString().equals("true"));
 					}
 				}
+			});
+		});
+
+		/* Raise user balloon. Replaces text inside if already on screen.
+        * Public message
+        * Params: Map
+        *           value: String? - start text
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:raise-user-balloon", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				System.out.println("hi!");
+				Map m = (Map) data;
+				UserBalloon.show(m != null ? (String) m.get("value") : null);
 			});
 		});
 
@@ -867,6 +923,14 @@ public class App extends Application {
 			put("commandName", "gui:show-options-dialog");
 			put("rule", "открой опции");
 		}});
+		pluginProxy.sendMessage("core:add-command", new HashMap(){{
+			put("tag", "gui:raise-user-balloon");
+		}});
+		pluginProxy.sendMessage("core:set-event-link", new HashMap<String, Object>(){{
+			put("eventName", "gui:keyboard-handle");
+			put("commandName", "gui:raise-user-balloon");
+			put("rule", "ALT+Q");
+		}});
 	}
 
 	/** Parsing value to double or returning default if we failed. **/
@@ -908,7 +972,7 @@ public class App extends Application {
 		} catch (IOException e) {
 			Main.log(e);
 		}
-		Balloon.setDefaultFont(Main.getProperties().getString("balloon.font"));
+		CharacterBalloon.setDefaultFont(Main.getProperties().getString("balloon.font"));
 		LocalFont.setDefaultFont(Main.getProperties().getString("interface.font"));
 	}
 

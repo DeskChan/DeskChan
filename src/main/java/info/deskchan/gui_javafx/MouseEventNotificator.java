@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * This class provides some convenient means for Nodes to help them to handle mouse events.
  * For now, it processes different types of clicks and scrolling by the mouse wheel.
  */
-class MouseEventNotificator {
+public class MouseEventNotificator {
     private Node sender;
     private String senderName;
 
@@ -44,7 +44,7 @@ class MouseEventNotificator {
      * @param sender an event target Node
      * @param senderName a name that will be used as a component of `gui-events:*` messages
      */
-    MouseEventNotificator(Node sender, String senderName) {
+    public MouseEventNotificator(Node sender, String senderName) {
         this.sender = sender;
         this.senderName = senderName;
     }
@@ -160,7 +160,7 @@ class MouseEventNotificator {
      * Enables handling of click events for the node.
      * @return itself to let you use a chain of calls
      */
-    MouseEventNotificator setOnClickListener() {
+    public MouseEventNotificator setOnClickListener() {
         sender.addEventFilter(MouseEvent.MOUSE_CLICKED, this::notifyClickEvent);
         return this;
     }
@@ -169,7 +169,7 @@ class MouseEventNotificator {
      * Enables handling of mouse moved events for the node.
      * @return itself to let you use a chain of calls
      */
-    MouseEventNotificator setOnMovedListener() {
+    public MouseEventNotificator setOnMovedListener() {
         sender.addEventFilter(MouseEvent.MOUSE_MOVED, this::notifyMovedEvent);
         return this;
     }
@@ -181,7 +181,7 @@ class MouseEventNotificator {
      * @param intersectionTestFunc a function that takes an event object and must return boolean
      * @return itself to let you use a chain of calls
      */
-    MouseEventNotificator setOnScrollListener(Function<NativeMouseWheelEvent, Boolean> intersectionTestFunc) {
+    public MouseEventNotificator setOnScrollListener(Function<NativeMouseWheelEvent, Boolean> intersectionTestFunc) {
         if (SystemUtils.IS_OS_WINDOWS) {
             if (!GlobalScreen.isNativeHookRegistered()) {
                 try {
@@ -205,7 +205,7 @@ class MouseEventNotificator {
     /**
      * Removes all event listeners that were set earlier.
      */
-    void cleanListeners() {
+    public void cleanListeners() {
         // All methods have their own internal checks for the case when a filter is not set and equals null.
         sender.removeEventFilter(MouseEvent.MOUSE_CLICKED, this::notifyClickEvent);
         sender.removeEventFilter(ScrollEvent.SCROLL, this::notifyScrollEvent);

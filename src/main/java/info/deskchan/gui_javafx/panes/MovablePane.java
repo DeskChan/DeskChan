@@ -1,5 +1,7 @@
-package info.deskchan.gui_javafx;
+package info.deskchan.gui_javafx.panes;
 
+import info.deskchan.gui_javafx.Main;
+import info.deskchan.gui_javafx.OverlayStage;
 import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
@@ -9,7 +11,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 
-class MovablePane extends Pane {
+public class MovablePane extends Pane {
 	
 	private static final int SNAP_DISTANCE = 10;
 	
@@ -89,7 +91,7 @@ class MovablePane extends Pane {
 			OverlayStage.getInstance().relocate(this, x, y);
 		else super.relocate(x,y);
 	}
-	void setDefaultPosition() {
+	public void setDefaultPosition() {
 		setPosition(new Point2D(0, 0));
 	}
 	
@@ -155,7 +157,7 @@ class MovablePane extends Pane {
 		return key.toString();
 	}
 	
-	protected void loadPositionFromStorage() {
+	public void loadPositionFromStorage() {
 		try {
 			final String key = getCurrentPositionStorageKey();
 			if (key != null) {
