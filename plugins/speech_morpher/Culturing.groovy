@@ -27,7 +27,6 @@ class Culturing {
             if(pluginData.culturizationMod != "none")
                 text = culturise(text, pluginData.culturizationMod)
             phrase.replace("text", text)
-            phrase.replace("priority", 4997)
             instance.sendMessage("DeskChan:request-say#" + partTag, phrase)
         })
     }

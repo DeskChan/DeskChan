@@ -14,7 +14,6 @@ class Stuttering {
             if(pluginData.powerOfStuttering != "none")
                 text = stutter(text, pluginData.powerOfStuttering)
             phrase.replace("text", text)
-            phrase.replace("priority", 4996)
             instance.sendMessage("DeskChan:request-say#" + partTag, phrase)
         })
     }

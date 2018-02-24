@@ -135,7 +135,7 @@ class OptionsDialog extends TemplateBox {
 		gridPane.getColumnConstraints().addAll(column1, column2);
 		getDialogPane().setContent(gridPane);
 
-		addOnCloseRequest(event -> {
+		setOnHiding(event -> {
 			Main.getPluginProxy().sendMessage("core:save-all-properties", null);
 		});
 	}

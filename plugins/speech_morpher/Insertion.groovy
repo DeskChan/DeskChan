@@ -34,7 +34,6 @@ class Insertion {
             if(pluginData.nekonization || pluginData.obscenization)
                 text = insert(text, pluginData.nekonization, pluginData.obscenization, firstLoop)
             phrase.replace("text", text)
-            phrase.replace("priority", 4999)
             instance.sendMessage("DeskChan:request-say#" + partTag, phrase)
         })
     }

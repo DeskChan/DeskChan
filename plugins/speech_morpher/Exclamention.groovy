@@ -12,7 +12,6 @@ class Exclamention {
             if(pluginData.exclamentionMod != "none")
                 text = exclaim(text, pluginData.exclamentionMod)
             phrase.replace("text", text)
-            phrase.replace("priority", 4998)
             instance.sendMessage("DeskChan:request-say#" + partTag, phrase)
         })
     }

@@ -14,6 +14,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.media.AudioClip;
 import javafx.scene.text.Font;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 public class App extends Application {
 
 	static final String NAME = "DeskChan";
-	static final URL ICON_URL = App.class.getResource("icon.png");
+	public static final URL ICON_URL = App.class.getResource("icon.png");
 	
 	private static App instance = null;
 	static final List<SkinLoader> skinLoaders = Arrays.asList(
@@ -831,7 +832,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:raise-user-balloon", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				System.out.println("hi!");
+				System.out.println("got!");
 				Map m = (Map) data;
 				UserBalloon.show(m != null ? (String) m.get("value") : null);
 			});
@@ -999,6 +1000,8 @@ public class App extends Application {
 		if (!Main.getProperties().getBoolean("error-alerting", true)) return;
 
 		Alert alert = new Alert(Alert.AlertType.ERROR);
+		((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().add(new Image(App.ICON_URL.toString()));
+
 		alert.setTitle(Main.getString("error"));
 		alert.initModality(Modality.WINDOW_MODAL);
 		alert.setHeaderText(className + " " + Main.getString("caused-by") + " " + sender);

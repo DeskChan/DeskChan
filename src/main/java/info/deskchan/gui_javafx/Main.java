@@ -70,7 +70,7 @@ public class Main implements Plugin {
 	}
 
 	public void quit() {
-		pluginProxy.sendMessage("core:quit", 0);
+		pluginProxy.sendMessage("core:quit", PluginManager.isDebugBuild() ? 0 : 2000);
 	}
 
 	public static void log(String text) {

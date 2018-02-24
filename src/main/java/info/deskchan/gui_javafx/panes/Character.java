@@ -1,8 +1,12 @@
 package info.deskchan.gui_javafx.panes;
 
 import info.deskchan.gui_javafx.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Light;
@@ -14,6 +18,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
+import javafx.util.Duration;
 
 import java.util.*;
 
@@ -24,7 +29,7 @@ public class Character extends MovablePane {
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
 
 	private final String id;
-	private ImageView imageView = new ImageView();
+	private AnimatedImageView imageView = new AnimatedImageView();
 	private Skin skin = null;
 	private String imageName = "normal";
 	private String idleImageName = "normal";
@@ -159,12 +164,12 @@ public class Character extends MovablePane {
 		}
 		double oldWidth = imageView.getFitWidth();
 		double oldHeight = imageView.getFitHeight();
-		double newWidth = image.getWidth() * scaleFactor;
-		double newHeight = image.getHeight() * scaleFactor;
+		double newWidth = imageView.getWidth() * scaleFactor;
+		double newHeight = imageView.getHeight() * scaleFactor;
 
 		imageView.setFitWidth(newWidth);
 		imageView.setFitHeight(newHeight);
-		resize(imageView.getFitWidth(), imageView.getFitHeight());
+		resize(newWidth, newHeight);
 
 		Lighting lighting = null;
 		if (skinColor != null && !skinColor.equals(new Color(1,1,1,1))) {
@@ -507,11 +512,90 @@ public class Character extends MovablePane {
 			return -(priority - messageInfo.priority);
 		}
 
-
+		@Override
+		public String toString(){
+        	String t = "";
+        	for (String item : text) t += item;
+        	return "[" + characterImage + "]: " + t + " / " + priority;
+		}
 		private enum ParsingState {
 			SENTENCE,
 			END_OF_SENTENCE,
 			PRE_SENTENCE
+		}
+	}
+
+	class AnimatedImageView extends Parent implements EventHandler<javafx.event.ActionEvent> {
+
+		private ImageView mainImage = new ImageView();
+		private ImageView secondImage = new ImageView();
+		private Timeline timeline;
+
+		AnimatedImageView(){
+			getChildren().add(mainImage);
+			getChildren().add(secondImage);
+			secondImage.setOpacity(0);
+		}
+
+		public void setImage(Image image){
+			swap();
+			mainImage.setImage(image);
+			mainImage.setOpacity(0);
+			secondImage.setOpacity(1);
+			timeline = new Timeline(new KeyFrame(Duration.millis(20), this));
+			timeline.setCycleCount(Timeline.INDEFINITE);
+			timeline.play();
+		}
+
+		@Override
+		public void handle(javafx.event.ActionEvent actionEvent) {
+			double opacity = mainImage.getOpacity() + 0.1;
+			mainImage.setOpacity(opacity);
+			secondImage.setOpacity(1 - opacity);
+			if (opacity >= 1){
+				secondImage.setImage(null);
+				timeline.stop();
+			}
+		}
+
+		private void swap(){
+			ImageView t = mainImage;
+			mainImage = secondImage;
+			secondImage = t;
+		}
+
+		public Image getImage(){ return mainImage.getImage(); }
+
+		public double getWidth(){
+			return Math.max(
+				  mainImage.getImage() != null ?   mainImage.getImage().getWidth() : 0,
+				secondImage.getImage() != null ? secondImage.getImage().getWidth() : 0
+			);
+		}
+
+		public double getHeight(){
+			return Math.max(
+				  mainImage.getImage() != null ?   mainImage.getImage().getHeight() : 0,
+				secondImage.getImage() != null ? secondImage.getImage().getHeight() : 0
+			);
+		}
+
+		public double getFitWidth(){
+			return Math.max(mainImage.getFitWidth(), secondImage.getFitWidth());
+		}
+
+		public double getFitHeight(){
+			return Math.max(mainImage.getFitHeight(), secondImage.getFitHeight());
+		}
+
+		public void setFitWidth(double width){
+			mainImage.setFitWidth(width);
+			secondImage.setFitWidth(width);
+		}
+
+		public void setFitHeight(double height){
+			mainImage.setFitHeight(height);
+			secondImage.setFitHeight(height);
 		}
 
 	}

@@ -30,7 +30,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     fun initialize(): Boolean {
         addMessageListener(id, this)
-        addMessageListener(id+":save-properties", MessageListener { sender, tag, data ->  properties.save() })
+        addMessageListener(id+":save-properties", MessageListener { sender, tag, data -> properties.save() })
         return plugin.initialize(this)
     }
 
