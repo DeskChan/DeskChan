@@ -44,7 +44,7 @@ public class CharacterBalloon extends Balloon {
 	protected Character character = null;
 	protected Timeline timeoutTimeline = null;
 	protected final Text content;
-	protected PositionMode positionMode = PositionMode.ABSOLUTE;
+	protected PositionMode positionMode = PositionMode.AUTO;
 	protected DirectionMode directionMode = DirectionMode.STANDARD_DIRECTION;
 	protected long lastClick = -1;
 
@@ -202,8 +202,8 @@ public class CharacterBalloon extends Balloon {
 		double x = character.localToScreen(character.getBoundsInLocal()).getMinX();
 		double width = prefWidth(-1);
 
-		boolean rightAlign = width - x < 0;
-		x += rightAlign ? (-width) : character.getWidth();
+		boolean rightAlign = x - width < 0;
+		x += rightAlign ? character.getWidth() : (-width);
 		relocate(x, getPosition().getY());
 
 		bubblePane.invert(rightAlign, directionMode);
@@ -223,6 +223,7 @@ public class CharacterBalloon extends Balloon {
 	}
 
 	public void setFont(Font font){
+		System.out.println(font);
 		content.setFont(font);
 	}
 

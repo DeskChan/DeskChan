@@ -538,6 +538,7 @@ public class Character extends MovablePane {
 		}
 
 		public void setImage(Image image){
+			if (mainImage.getImage() == image) return;
 			swap();
 			mainImage.setImage(image);
 			mainImage.setOpacity(0);

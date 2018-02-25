@@ -58,9 +58,7 @@ public class TrayMenu {
             long start = System.currentTimeMillis();
             Main.log("clicked to open");
             Platform.runLater( () -> {
-                Main.log("in thread, "+App.getTime(start));
                 OptionsDialog.open();
-                Main.log("opened, "+App.getTime(start));
             });  }
     };
     private static MenuItemAction frontMenuItemAction = new MenuItemAction() {

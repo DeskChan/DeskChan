@@ -135,6 +135,8 @@ class OptionsDialog extends TemplateBox {
 		gridPane.getColumnConstraints().addAll(column1, column2);
 		getDialogPane().setContent(gridPane);
 
+		getDialogPane().setMinHeight(500 * App.getInterfaceScale());
+
 		setOnHiding(event -> {
 			Main.getPluginProxy().sendMessage("core:save-all-properties", null);
 		});
@@ -168,7 +170,7 @@ class OptionsDialog extends TemplateBox {
 			put("max",    5);
 			put("msgTag","gui:set-interface-size");
 			put("label",  Main.getString("interface_size"));
-			put("value",  App.getInterfaceMultiplierSize());
+			put("value",  App.getInterfaceScale());
 		}});*/
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "interface_font");
@@ -912,6 +914,7 @@ class OptionsDialog extends TemplateBox {
 		while (panelsHistory.size() > panelIndex) panelsHistory.removeLast();
 		panelsHistory.add(panel);
 		while (panelsHistory.size() > 15) panelsHistory.removeFirst();
+		panelIndex = Math.min(panelIndex, 14);
 		updateLinks();
 	}
 
@@ -924,8 +927,10 @@ class OptionsDialog extends TemplateBox {
 
 				if (!optionsDialog.isShowing()) {
 					optionsDialog.show();
-					optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
 				}
+				Stage stage = (Stage) optionsDialog.getDialogPane().getScene().getWindow();
+				stage.setIconified(false);
+				optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
 			});
 		});
 	}
@@ -948,8 +953,8 @@ class OptionsDialog extends TemplateBox {
 		Label label;
 		Tooltip tooltip;
 		Pane pane = new Pane();
-		String locked   = "🔒";
-		String unlocked = "🔓";
+		private static final String locked   = "🔒";
+		private static final String unlocked = "🔓";
 
 		PluginListItem(String id, boolean blacklisted) {
 			this.id = id;

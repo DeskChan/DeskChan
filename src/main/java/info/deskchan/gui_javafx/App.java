@@ -987,7 +987,7 @@ public class App extends Application {
 	}
 
 	/** Get interface size multiplier. **/
-	static double getInterfaceMultiplierSize(){
+	static double getInterfaceScale(){
 		return Main.getProperties().getDouble("interface-size", Screen.getPrimary().getDpi() / 96);
 	}
 

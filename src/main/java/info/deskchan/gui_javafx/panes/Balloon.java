@@ -226,6 +226,7 @@ public class Balloon extends MovablePane {
                 DocumentBuilder builder = factory.newDocumentBuilder();
                 return builder.parse(path);
             } catch (Exception e) {
+                Main.log(e);
                 return null;
             }
         }
@@ -291,7 +292,6 @@ public class Balloon extends MovablePane {
 
         public SVGBalloonDrawer(String path){
             Document document = getDocument(path);
-
             try {
                 margin = getMargin(document);
 
@@ -300,7 +300,6 @@ public class Balloon extends MovablePane {
                 XPathExpression expression = xpath.compile("//path");
 
                 NodeList svgPaths = (NodeList) expression.evaluate(document, XPathConstants.NODESET);
-
                 ArrayList<SVGPath> shapes = new ArrayList<>();
                 for(int i=0; i<svgPaths.getLength(); i++) {
                     try {

@@ -64,4 +64,10 @@ class TemplateBox extends Dialog<Void> {
 		getDialogPane().getScene().getStylesheets().clear();
 		getDialogPane().getScene().getStylesheets().add(App.getStylesheet());
 	}
+
+	public static void updateFont(){
+		String style = LocalFont.getDefaultFontCSS();
+		for (TemplateBox dialog : openedDialogs)
+			dialog.getDialogPane().setStyle(style);
+	}
 }

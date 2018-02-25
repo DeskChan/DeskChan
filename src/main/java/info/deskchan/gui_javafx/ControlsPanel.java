@@ -265,7 +265,7 @@ public class ControlsPanel {
 			} else {
 				Text labelNode = new Text(label + ":");
 				labelNode.setFont(LocalFont.defaultFont);
-				labelNode.setWrappingWidth(250 * App.getInterfaceMultiplierSize());
+				labelNode.setWrappingWidth(250 * App.getInterfaceScale());
 				gridPane.add(labelNode, 0, row);
 				gridPane.add(node, 1, row);
 			}

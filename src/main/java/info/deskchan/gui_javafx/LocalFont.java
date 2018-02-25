@@ -9,7 +9,7 @@ public class LocalFont {
     public static Font defaultFont =  getSystemDefaultFont();
 
     private static Font getSystemDefaultFont(){
-        return Font.font(Font.getDefault().getName(), Font.getDefault().getSize() * App.getInterfaceMultiplierSize());
+        return Font.font(Font.getDefault().getName(), Font.getDefault().getSize() * App.getInterfaceScale());
     }
 
     public static String getDefaultFontCSS(){
@@ -39,6 +39,7 @@ public class LocalFont {
             defaultFont = fromString(font);
         Main.getProperties().put("interface.font", toString(defaultFont));
         TrayMenu.getContextMenu().setStyle(getDefaultFontCSS());
+        TemplateBox.updateFont();
     }
 
     private static LimitHashMap<String, Font> hash = new LimitHashMap<>(10);

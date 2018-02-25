@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg xmlns="http://www.w3.org/2000/svg">
-	<margin left="20" right="90" top="0" bottom="0" />
-	<g>
-		<path 
-		style="fill: black; fill-opacity:1; stroke:#000000; stroke-width:2;"
-		d="M57.2,7c-21.6,0-48.6,10.6-45.6,49c3.4,43,11,122.3,11.4,125.9c0,0.1,0,0.1,0,0.2		c5.3,32.8,35.6,43.8,65.6,43.8h201.1c73.4,0,69.2-40.2,73.4-81l61.6-7.8l-57.2-37.5l3.2-43.6c3.1-37.8-19.9-48.1-46.3-48.8H57.2V7z"/>
-        <path 
-		style="fill: white; stroke:#000000; stroke-width:2;"
-		d="M45.8,0C24.2,0-2.8,10.5,0.2,48.9c3.4,43,11,122.3,11.4,125.9c0,0.1,0,0.1,0,0.2c5.3,32.8,35.6,43.8,65.6,43.8
-		h201.1c73.4,0,69.2-40.2,73.4-81l61.6-7.8l-57.2-37.5l3.2-43.6c3.1-37.8-19.9-48.1-46.3-48.8H45.8V0z"/>
+    <margin  right="70" top="0" left="40" bottom="0" />
+    <text style="fill: white; text-alignment: center;" />
+	<g> 
+		<path style="fill:#50769C; stroke:#E4ECF2; stroke-width:4;"
+       		d="M312.4,101.2v18c0,9.6-7.8,17.4-17.2,17.4h-278c-9.5,0-17.2-7.8-17.2-17.4V17.4C0,7.8,7.8,0,17.2,0h278
+			c9.5,0,17.2,7.8,17.2,17.4v30.3l27.5,54.3L312.4,101.2z"/>
 	</g>
 </svg>
