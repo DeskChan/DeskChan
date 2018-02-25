@@ -218,70 +218,70 @@ public class ControlsPanel {
 	Pane createControlsPane(TemplateBox parent) {
 		parentWindow = parent;
 
-		if (panelPane != null) {
-			wrap(panelPane);
-			return wrapper;
-		}
-
-		GridPane gridPane = new GridPane();
-		gridPane.getStyleClass().add("grid-pane");
-
-		float columnGrowPercentage = columnGrow * 100;
-
-		ColumnConstraints column1 = new ColumnConstraints();
-		column1.setPercentWidth(columnGrowPercentage);
-
-		ColumnConstraints column2 = new ColumnConstraints();
-		column2.setPercentWidth(90 - columnGrowPercentage);
-
-		ColumnConstraints column3 = new ColumnConstraints();
-		column3.setPercentWidth(5);
-
-		gridPane.getColumnConstraints().addAll(column1, column2, column3);
-
-		namedControls = new HashMap<>();
-
-		int row = 0;
-		for (Map<String, Object> controlInfo : controls) {
-			String label = (String) controlInfo.get("label");
-			String hint = (String) controlInfo.get("hint");
-
-			Node node;
-			if (controlInfo.containsKey("elements")){
-				HBox box = new HBox();
-				node = box;
-				for (Map element : (List<Map>) controlInfo.get("elements")) {
-					PluginOptionsControlItem item = initItem(element, parent.getDialogPane().getScene().getWindow());
-					if (item != null) box.getChildren().add(item.getNode());
-				}
-			} else {
-				PluginOptionsControlItem item = initItem(controlInfo, parent.getDialogPane().getScene().getWindow());
-				if (item != null)
-					node = item.getNode();
-				else continue;
-			}
-			if (label == null) {
-				gridPane.add(node, 0, row, 2, 1);
-			} else {
-				Text labelNode = new Text(label + ":");
-				labelNode.setFont(LocalFont.defaultFont);
-				labelNode.setWrappingWidth(250 * App.getInterfaceScale());
-				gridPane.add(labelNode, 0, row);
-				gridPane.add(node, 1, row);
-			}
-			if(hint != null){
-				gridPane.add(new Hint(hint),2,row);
-			}
-			row++;
-		}
-
 		ScrollPane nodeScrollPanel = new ScrollPane();
 		nodeScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		nodeScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 		nodeScrollPanel.setFitToHeight(true);
 		nodeScrollPanel.setFitToWidth(true);
 		nodeScrollPanel.setStyle("-fx-background-color:transparent;");
-		nodeScrollPanel.setContent(gridPane);
+
+		if (panelPane != null) {
+			nodeScrollPanel.setContent(panelPane);
+		} else {
+
+			GridPane gridPane = new GridPane();
+			gridPane.getStyleClass().add("grid-pane");
+
+			float columnGrowPercentage = columnGrow * 100;
+
+			ColumnConstraints column1 = new ColumnConstraints();
+			column1.setPercentWidth(columnGrowPercentage);
+
+			ColumnConstraints column2 = new ColumnConstraints();
+			column2.setPercentWidth(90 - columnGrowPercentage);
+
+			ColumnConstraints column3 = new ColumnConstraints();
+			column3.setPercentWidth(5);
+
+			gridPane.getColumnConstraints().addAll(column1, column2, column3);
+
+			namedControls = new HashMap<>();
+
+			int row = 0;
+			for (Map<String, Object> controlInfo : controls) {
+				String label = (String) controlInfo.get("label");
+				String hint = (String) controlInfo.get("hint");
+
+				Node node;
+				if (controlInfo.containsKey("elements")) {
+					HBox box = new HBox();
+					node = box;
+					for (Map element : (List<Map>) controlInfo.get("elements")) {
+						PluginOptionsControlItem item = initItem(element, parent.getDialogPane().getScene().getWindow());
+						if (item != null) box.getChildren().add(item.getNode());
+					}
+				} else {
+					PluginOptionsControlItem item = initItem(controlInfo, parent.getDialogPane().getScene().getWindow());
+					if (item != null)
+						node = item.getNode();
+					else continue;
+				}
+				if (label == null) {
+					gridPane.add(node, 0, row, 2, 1);
+				} else {
+					Text labelNode = new Text(label + ":");
+					labelNode.setFont(LocalFont.defaultFont);
+					labelNode.setWrappingWidth(250 * App.getInterfaceScale());
+					gridPane.add(labelNode, 0, row);
+					gridPane.add(node, 1, row);
+				}
+				if (hint != null) {
+					gridPane.add(new Hint(hint), 2, row);
+				}
+				row++;
+			}
+			nodeScrollPanel.setContent(gridPane);
+		}
 
 		wrap(nodeScrollPanel);
 

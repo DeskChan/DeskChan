@@ -1,19 +1,65 @@
-import java.nio.file.Files
+log("loading speech_morpher plugin")
 
-pluginName = "speech_morpher"
+class Bridge {
+    def split (String text){  return Spliter.split(text)     }
+    def insert(String text, ArrayList insertions){  return Insertion.insert(text, insertions)  }
+}
 
-log("loading speech_morpher plugin");
+properties = getProperties()
 
-subpluginEnableList = [
-    "enableNekonization",
-    "enableObscenization",
-    "enableCulturization",
-    "enableUnculturization",
-    "enableStuttering",
-    "enableExclamention",
-    "enableUnexclamention"
-]
+class Module {
+    String name
+    def instance
+    static int priority = 5000
+    def proxy
 
+    Module(path, proxy) throws Exception {
+        this.proxy = proxy
+        name = path.getName()
+        if (name.indexOf('.') >= 0)
+            name = name.substring(0, name.lastIndexOf('.'))
+
+
+        try {
+            instance = new GroovyClassLoader().parseClass(path).newInstance()
+            instance.initialize(new Bridge())
+        } catch (Exception e){ }
+        proxy.sendMessage("core:register-alternative",
+                ["srcTag": "DeskChan:request-say", "dstTag": proxy.getId()+":"+name, "priority": priority--])
+
+        proxy.addMessageListener( proxy.getId() + ":" + name, { sender, tag, data ->
+            if (proxy.getProperties().getBoolean(name, true))
+                data = morphPhrase(data)
+            proxy.sendMessage("DeskChan:request-say#" + proxy.getId() + ":" + name, data)
+        })
+    }
+
+    void setPreset(Map preset){ instance.setPreset(preset) }
+
+    Map morphPhrase(Map phrase){
+        try {
+            return instance.morphPhrase(phrase)
+        } catch (Exception e){
+            proxy.log(e)
+            return phrase
+        }
+    }
+
+    String getName(Locale locale){ return instance.getName(locale) }
+
+
+}
+modules = new ArrayList<Module>()
+
+File dir = getPluginDirPath().resolve("modules").toFile()
+dir.listFiles().each {
+    try {
+        modules.add(new Module(it, this))
+    } catch (Exception e){
+        log(e)
+    }
+}
+/*
 class PluginData {
     def instance
     def preset
@@ -92,94 +138,49 @@ class PluginData {
         }
     }
 }
-
-def setSettings(enableList) {
-    def properties = getProperties()
-    def configPath = getDataDirPath().resolve("config.properties")
-    if(!Files.exists(configPath)) {
-        for(String entry : subpluginEnableList)
-            properties.putIfHasNot(entry, false)
-    }
-    if(enableList) {
-         for(String entry : subpluginEnableList)
-             properties.put(entry, enableList.get(entry))
-    }
-    getProperties().save()
-}
+*/
 
 void setupMenu(){
+    def controls = []
+    for (Module module : modules)
+        controls.add([
+             type: 'CheckBox', id: module.name, label: module.getName(), value: getProperties().getBoolean(module.name, true)
+        ])
     sendMessage('gui:setup-options-submenu', [
             name: getString("options"),
-            msgTag: pluginName + ":save-options",
-            controls: [
-            [
-                    type: 'CheckBox', id: 'enableNekonization', label: 'Включить неко-вставки',
-                    value: getProperties().getBoolean('enableNekonization')
-            ],
-            [
-                    type: 'CheckBox', id: 'enableObscenization', label: 'Включить обсценые вставки',
-                    value: getProperties().getBoolean('enableObscenization')
-            ],
-            [
-                    type: 'CheckBox', id: 'enableExclamention', label: 'Включить усиление восклицания',
-                    value: getProperties().getBoolean('enableExclamention')
-            ],
-            [
-                    type: 'CheckBox', id: 'enableUnexclamention', label: 'Включить ослабление восклицания',
-                    value: getProperties().getBoolean('enableUnexclamention')
-            ],
-            [
-                    type: 'CheckBox', id: 'enableCulturization', label: 'Включить автозамену на литературные аналоги',
-                    value: getProperties().getBoolean('enableCulturization')
-            ],
-            [
-                    type: 'CheckBox', id: 'enableUnculturization', label: 'Включить автозамену на разговорные аналоги',
-                    value: getProperties().getBoolean('enableUnculturization')
-            ],
-            [
-                    type: 'CheckBox', id: 'enableStuttering', label: 'Включить заикание',
-                    value: getProperties().getBoolean('enableStuttering')
-            ]
-    ]])
+            msgTag: getId() + ":save-options",
+            controls: controls
+    ])
 }
 
 Map preset
 
-addMessageListener("talk:character-updated", {sender, tag, data ->
+void setPreset(data){
     preset = data
+    for (Module module : modules)
+        module.setPreset(preset)
+}
+
+addMessageListener("talk:character-updated", {sender, tag, data ->
+    setPreset(data)
+
 })
 sendMessage("talk:get-preset", null, {sender, data ->
-    preset = data
+    setPreset(data)
 })
 
-getProperties().load()
+properties.load()
 setupMenu()
 
-def pluginData = new PluginData(this, getProperties())
-pluginData.preset = preset
-pluginData.calculatePluginMode()
-
-addMessageListener(pluginName + ":save-options", {sender, tag, data ->
-    def enableList = [:]
-    for(String entry : subpluginEnableList){
-        enableList.put(entry, data.get(entry))
-    }
-    setSettings(enableList)
-    pluginData.calculatePluginMode()
+addMessageListener(getId() + ":save-options", {sender, tag, data ->
+    for (def entry : data.entrySet())
+        properties.put(entry.key, entry.value)
+    properties.save()
 })
 
-addMessageListener(pluginName + ":supply-resource", {sender, tag, data ->
-    def enableList = [:]
-    for(String entry : subpluginEnableList) {
-        if(data.contains(entry))
-            enableList.put(entry, data.get(entry))
-    }
-    setSettings(enableList)
+addMessageListener(getId() + ":supply-resource", {sender, tag, data ->
+    for (def entry : data.entrySet())
+        properties.put(entry.key, entry.value)
 })
 
-
-Insertion.initialize(pluginName, pluginData)
-Exclamention.initialize(pluginName, pluginData)
-Culturing.initialize(pluginName, pluginData)
-Stuttering.initialize(pluginName, pluginData)
-log("loading speech_morpher completed");
+log("loading speech_morpher completed")

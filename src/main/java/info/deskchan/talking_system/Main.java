@@ -195,6 +195,19 @@ public class Main implements Plugin {
 			}
 		});
 
+		/* Add plugin's phrases pack
+        * Public message
+        * Params: path: String! - path to pack
+        *      or
+        *         List<String>! - paths to packs
+        * Returns: None */
+		pluginProxy.addMessageListener("talk:add-plugin-phrases", (sender, tag, data) -> {
+			if (data instanceof List)
+				currentCharacter.phrases.add((List) data, PhrasesPack.PackType.PLUGIN);
+			else
+				currentCharacter.phrases.add(data.toString(), PhrasesPack.PackType.PLUGIN);
+		});
+
 		/* Download phrases from JSON at url and save them to file
         * Technical message
         * Params: Map
@@ -240,7 +253,7 @@ public class Main implements Plugin {
 										Files.copy(resFile,newPath);
 									type=newPath.toString();
 								}
-								currentCharacter.phrases.add(type);
+								currentCharacter.phrases.add(type, PhrasesPack.PackType.USER);
 								currentCharacter.updatePhrases();
 							}
 						}
@@ -377,7 +390,7 @@ public class Main implements Plugin {
 				put("id", "phrases");
 				put("type", "FilesManager");
 				put("label", getString("quotes_list"));
-				put("value", currentCharacter.phrases.toList());
+				put("value", currentCharacter.phrases.toList(PhrasesPack.PackType.USER));
 				put("hint",getString("help.quotes_pack"));
 			}});
 			list.add(new HashMap<String, Object>() {{

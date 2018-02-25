@@ -1,52 +1,34 @@
+import java.util.regex.Pattern
+
 class Spliter {
+    static final String marks = '.!?'
     static def split(text) {
-        def textParts = []
-        def partNumber = 0
-        textParts[partNumber] = ""
-        // This variable have true, if last symbol is "." or "!" or "?".
-        def lastIsNotLetter = false
-        for(def i : text) {
-                if(i == "," || i == ";") {
-                    textParts[partNumber] += i
-                    partNumber++
-                    textParts[partNumber] = ""
-                    lastIsNotLetter = false
+        text += " "
+        def sentencePart = ""
+        def sentence = []
+        def sentences = []
+        char last = 0
+        for(char c : text) {
+            if(c == "," || c == ";") {
+                sentence += sentencePart.trim()
+                sentence += c.toString()
+                sentencePart = ""
+                last = c
+                continue
+            } else if(marks.contains(c.toString())) {
+                if (!marks.contains(last.toString())){
+                    sentence += sentencePart.trim()
+                    sentencePart = ""
                 }
-                else if(i == ".") {
-                    if(!lastIsNotLetter) {
-                        textParts[partNumber] += i
-                        partNumber++
-                        textParts[partNumber] = ""
-                        lastIsNotLetter = true
-                    }
-                    else
-                        textParts[partNumber - 1] += i
-                }
-                else if(i == "!") {
-                    if(!lastIsNotLetter) {
-                        textParts[partNumber] += i
-                        partNumber++
-                        textParts[partNumber] = ""
-                        lastIsNotLetter = true
-                    }
-                    else
-                        textParts[partNumber - 1] += i
-                }
-                else if(i == "?") {
-                    if(!lastIsNotLetter) {
-                        textParts[partNumber] += i
-                        partNumber++
-                        textParts[partNumber] = ""
-                        lastIsNotLetter = true
-                    }
-                    else
-                        textParts[partNumber - 1] += i
-                }
-                else {
-                    textParts[partNumber] += i
-                    lastIsNotLetter = false
-                }
+            } else if (marks.contains(last.toString())){
+                sentence += sentencePart.trim()
+                sentencePart = ""
+                sentences.add(sentence)
+                sentence = []
             }
-        return textParts
+            sentencePart += c
+            last = c
+        }
+        return sentences
     }
 }

@@ -23,14 +23,19 @@ import java.nio.file.Paths;
 import java.util.*;
 
 class PhrasesPack {
+
+	public enum PackType { USER, PLUGIN }
+
+	protected PackType packType;
 	protected Path packFile;
 	protected String packName;
 	protected ArrayList<Phrase> phrases = new ArrayList<>();
 	protected boolean loaded;
 
-	public PhrasesPack(String file) {
+	public PhrasesPack(String file, PackType packType) {
 		packName = file;
 		packFile = Paths.get(file).normalize();
+		this.packType = packType;
 
 		if (!packFile.getFileName().toString().contains("."))
 			packFile = Paths.get(file + ".phrases").normalize();
@@ -43,6 +48,10 @@ class PhrasesPack {
 			packName = packName.substring(0, packName.lastIndexOf("."));
 
 		loaded = false;
+	}
+
+	public PackType getPackType() {
+		return packType;
 	}
 
 	public void load(){
@@ -222,29 +231,35 @@ public class PhrasesList {
 		return list;
 	}
 
-	public List<String> toList(){
+	public List<String> toList(PhrasesPack.PackType packType){
 		List<String> list = new LinkedList<>();
-		for (PhrasesPack pack : packs)
-			list.add(pack.getFile());
+		for (PhrasesPack pack : packs) {
+			if (packType == null || pack.packType == packType)
+				list.add(pack.getFile());
+		}
 
 		return list;
 	}
 
 	public void add(List<String> files){
+		add(files, PhrasesPack.PackType.USER);
+	}
+
+	public void add(List<String> files, PhrasesPack.PackType type){
 		for (String file : files)
-			add(file, true);
+			add(file, type, true);
 
         update();
     }
 
-	public PhrasesPack add(String file) {
-		return add(file, true);
+	public PhrasesPack add(String file, PhrasesPack.PackType packType) {
+		return add(file, packType, true);
 	}
 
-	private PhrasesPack add(String file, boolean update) {
+	private PhrasesPack add(String file, PhrasesPack.PackType packType, boolean update) {
 		PhrasesPack pack;
 		try {
-			pack = new PhrasesPack(file);
+			pack = new PhrasesPack(file, packType);
 		} catch (Exception e){
 			Main.log("Error while reading file " + file + ": " + e.getMessage());
 			return null;
@@ -262,10 +277,14 @@ public class PhrasesList {
 		return pack;
 	}
 
-    public void set(List<String> files){
+	public void set(List<String> files){
+		set(files, PhrasesPack.PackType.USER);
+	}
+
+    public void set(List<String> files, PhrasesPack.PackType type){
 		ArrayList<PhrasesPack> dummyPacks = new ArrayList();
 		for(int k = 0;k < files.size(); k++)
-			dummyPacks.add(new PhrasesPack(files.get(k)));
+			dummyPacks.add(new PhrasesPack(files.get(k), type));
 
         for(int i = 0; i < packs.size(); i++){
            	if (dummyPacks.contains(packs.get(i))) continue;

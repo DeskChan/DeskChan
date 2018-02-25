@@ -116,8 +116,7 @@ public class YahooServer implements WeatherServer{
             }
             stream.close();
         } catch(Exception e){
-            Main.log("Error while reading data from weather server");
-            Main.log(e);
+            Main.log("Error while reading data from weather server: " + e.getMessage());
             return null;
         }
 
