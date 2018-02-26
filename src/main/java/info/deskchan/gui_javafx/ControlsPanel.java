@@ -283,6 +283,7 @@ public class ControlsPanel {
 				row++;
 			}
 			nodeScrollPanel.setContent(gridPane);
+			nodeScrollPanel.minWidthProperty().bind(gridPane.widthProperty());
 		}
 
 		wrap(nodeScrollPanel);
@@ -330,9 +331,9 @@ public class ControlsPanel {
 		pane.minHeightProperty().bind(wrapper.minHeightProperty());
 		pane.maxHeightProperty().bind(wrapper.maxHeightProperty());
 
-		pane.prefWidthProperty().bind(wrapper.prefWidthProperty());
-		pane.minWidthProperty().bind(wrapper.minWidthProperty());
-		pane.maxWidthProperty().bind(wrapper.maxWidthProperty());
+		wrapper.prefWidthProperty().bind(pane.prefWidthProperty());
+		wrapper.minWidthProperty().bind(pane.minWidthProperty());
+		wrapper.maxWidthProperty().bind(pane.maxWidthProperty());
 
 		panelPane = pane;
 	}

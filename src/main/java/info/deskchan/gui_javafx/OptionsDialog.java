@@ -132,6 +132,7 @@ class OptionsDialog extends TemplateBox {
 		gridPane.add(historyLinks, 1, 0, 1, 1);
 		gridPane.add(controlsPane, 1, 1, 1, 1);
 		column2.setPercentWidth(70);
+		column2.prefWidthProperty().bind(controlsPane.prefWidthProperty());
 
 		controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
 
@@ -139,6 +140,7 @@ class OptionsDialog extends TemplateBox {
 		getDialogPane().setContent(gridPane);
 
 		getDialogPane().setMinHeight(500 * App.getInterfaceScale());
+		getDialogPane().setMinWidth(900 * App.getInterfaceScale());
 
 		setOnHiding(event -> {
 			Main.getPluginProxy().sendMessage("core:save-all-properties", null);

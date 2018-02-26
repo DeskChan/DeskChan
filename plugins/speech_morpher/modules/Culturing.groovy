@@ -64,7 +64,7 @@ class Culturing{
                     int pos = 1+random.nextInt(i.size()-1)
                     word = i[pos]
                     if (Character.isUpperCase(firstLetter))
-                        word[0] = word[0].toUpperCase()
+                        word = word[0].toUpperCase() + word[1..word.length()-1]
                     break
                 }
             }

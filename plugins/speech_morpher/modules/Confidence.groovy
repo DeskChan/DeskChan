@@ -59,7 +59,7 @@ class Confidence {
 
         def positions = []
         while (positions.size() < hesitationCount){
-            int pos = random.nextInt(words.size())
+            int pos = random.nextInt((int) (words.size()*0.6))
             if (!positions.contains(pos))
                 positions.add(pos)
         }
