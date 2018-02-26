@@ -33,14 +33,13 @@ class Module {
             proxy.sendMessage("DeskChan:request-say#" + proxy.getId() + ":" + name, data)
         })
     }
-
     void setPreset(Map preset){ instance.setPreset(preset) }
 
     Map morphPhrase(Map phrase){
         try {
             return instance.morphPhrase(phrase)
         } catch (Exception e){
-            proxy.log(e)
+            proxy.log(new Exception("Cannot morph phrase " + phrase + " with module " + name, e))
             return phrase
         }
     }

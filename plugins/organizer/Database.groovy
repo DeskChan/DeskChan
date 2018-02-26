@@ -34,6 +34,7 @@ class Database{
         entries.add(entry)
     }
     static class DatabaseEntry{
+        public static Object instance
         public static String defaultSound
         int type
         long time
@@ -83,6 +84,7 @@ class Database{
     Database(Object instance){
         entries = new LinkedList<DatabaseEntry>()
         this.instance=instance
+        DatabaseEntry.instance = instance
         load()
     }
     List getListOfEntries(){

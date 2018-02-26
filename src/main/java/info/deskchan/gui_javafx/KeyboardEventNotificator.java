@@ -191,12 +191,9 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             return keyCode;
         }
 
-        private static final boolean invert = SystemUtils.IS_OS_WINDOWS;
-
         @Override
         public String toString(){
-            return Integer.toString(keyCode) +
-                  (KeyboardCommand.isDuplicate(this) ? "-" + Math.abs(rawCode%2 - (invert ? 1 : 0)) : "");
+            return Integer.toString(keyCode);
         }
     }
 
@@ -320,7 +317,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                 }
                 if(!contains) continue;
 
-                Main.getInstance().getPluginProxy().sendMessage(command.tag, command.msgData);
+                Main.getPluginProxy().sendMessage(command.tag, command.msgData);
             }
         }
 
@@ -349,8 +346,13 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         private static final List<Integer> duplicates = new ArrayList<>();
         static {
             try {
+                String os = "unix";
+                if (SystemUtils.IS_OS_WINDOWS) os = "win";
+                else if (SystemUtils.IS_OS_LINUX) os = "unix";
+                else if (SystemUtils.IS_OS_MAC) os = "mac";
+
                 BufferedReader in = new BufferedReader(
-                        new InputStreamReader(App.class.getResourceAsStream("keycodes.json"), "UTF8"));
+                        new InputStreamReader(App.class.getResourceAsStream("keycodes-" + os + ".json"), "UTF8"));
 
                 String keycodes = "", str;
                 while ((str = in.readLine()) != null) keycodes += str;
