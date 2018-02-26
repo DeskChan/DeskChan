@@ -367,6 +367,12 @@ public class PluginManager {
 			return true;
 		}
 
+		try {
+			loadPluginByPackageName("info.deskchan." + name);
+			return true;
+		} catch (Throwable e) { }
+
+
 		// 2. If the plugin can be found in the plugins directory, it's loaded.
 		Path path = getDefaultPluginDirPath(name);
 

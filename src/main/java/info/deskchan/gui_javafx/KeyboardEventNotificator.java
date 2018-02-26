@@ -95,7 +95,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         GlobalScreen.addNativeKeyListener(instance);
 
         // testing keywords parsing
-        KeyboardCommand.test();
+        //KeyboardCommand.test();
     }
 
     private static void setSubmenu(){

@@ -73,6 +73,9 @@ class OptionsDialog extends TemplateBox {
 		Main.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				if (instance == null) return;
+				//for (PluginListItem item : instance.pluginsList.getItems())
+				//	System.out.println(item.id.equals(data) + " " + item.blacklisted);
+
 				instance.pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
 			});
 		});
@@ -868,7 +871,7 @@ class OptionsDialog extends TemplateBox {
 		if (instance == null) return;
 		for(PluginListItem pli : instance.pluginsList.getItems()){
 			if(pli.id.equals(panel.owner)) {
-				instance.pluginsList.getItems().remove(pli);
+				pli.updateOptionsSubMenu();
 				return;
 			}
 		}
@@ -876,25 +879,23 @@ class OptionsDialog extends TemplateBox {
 
 	static void unregisterTab(ControlsPanel panel) {
 		if (instance == null) return;
-		int index = instance.tabListView.getSelectionModel().getSelectedIndex();
 		instance.tabListView.getItems().remove(panel.name);
-		instance.tabListView.getSelectionModel().select(index);
 	}
 
 	static void unregisterSubmenu(ControlsPanel panel) {
 		if (instance == null) return;
 		for(PluginListItem pli : instance.pluginsList.getItems()){
 			if(pli.id.equals(panel.owner)) {
-				instance.pluginsList.getItems().remove(pli);
+				pli.updateOptionsSubMenu();
 				return;
 			}
 		}
 	}
+	private static ControlsPanel panelToOpen = null;
 
 	static void showPanel(ControlsPanel panel){
+		panelToOpen = panel;
 		open();
-		instance.setPanel(panel);
-		instance.appendToHistory(panel);
 	}
 
 	private void setPanel(ControlsPanel panel){
@@ -931,6 +932,12 @@ class OptionsDialog extends TemplateBox {
 				Stage stage = (Stage) optionsDialog.getDialogPane().getScene().getWindow();
 				stage.setIconified(false);
 				optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
+
+				if (panelToOpen != null){
+					optionsDialog.setPanel(panelToOpen);
+					optionsDialog.appendToHistory(panelToOpen);
+					panelToOpen = null;
+				}
 			});
 		});
 	}
@@ -942,7 +949,7 @@ class OptionsDialog extends TemplateBox {
 
 		/** List of plugins cannot be simply removed. **/
 		private static final String[] importantPlugins = new String[]{
-				"core", "core_utils", Main.getPluginProxy().getId()
+				"core", "core_utils", Main.getPluginProxy().getId(), "talking_system"
 		};
 
 		String id;
@@ -1011,13 +1018,13 @@ class OptionsDialog extends TemplateBox {
 			blacklistPluginButton = new Button(blacklisted ? locked : unlocked);
 			blacklistPluginButton.setTooltip(new Tooltip(Main.getString("info.blacklist-plugin")));
 			blacklistPluginButton.setOnAction(event -> {
-				for(String pluginId : importantPlugins) {
-					if (pluginId.equals(id)) {
-						if (alert())
-							item.toggleBlacklisted();
-						return;
+				if (!blacklisted)
+					for(String pluginId : importantPlugins) {
+						if (pluginId.equals(id)) {
+							if (alert()) item.toggleBlacklisted();
+							return;
+						}
 					}
-				}
 				item.toggleBlacklisted();
 			});
 

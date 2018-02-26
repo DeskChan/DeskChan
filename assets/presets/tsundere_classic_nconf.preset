@@ -9,16 +9,12 @@
 		<attitude value="1"/>
 		<experience value="1"/>
 		<manner value="0"/>
-		<relation value="1"/>
+		<relationship value="1"/>
 	</character>
 	<emotions>
 	    <happiness chance="0.2"/>
 		<sorrow chance="0.1"/>
-		<confusion chance="0.5">
-		  	<impulsivity force="2"/>
-          	<empathy force="-2"/>
-          	<selfconfidence force="-1"/>
-		</confusion>
+		<confusion chance="0.5" impulsivity="2" empathy="-2" selfconfidence"-1"/>
 		<anger chance="0.2"/>
 	</emotions>
 	<tags>

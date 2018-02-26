@@ -486,7 +486,6 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				System.out.println(data.get("phrases"));
 				currentCharacter.phrases.set((List<String>) data.get("phrases"));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
@@ -544,6 +543,9 @@ public class Main implements Plugin {
 		} catch (Exception e) {
 			errorMessage += e.getMessage() + "\n";
 		}
+
+		if (errorMessage.length() > 0)
+			Main.log(new Exception(errorMessage));
 
 		resetTimer();
 

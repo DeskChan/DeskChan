@@ -195,7 +195,6 @@ interface PluginOptionsControlItem {
 	class TextFieldItem implements PluginOptionsControlItem {
 
 		TextField textField;
-		String enterTag = null;
 		Property currentText = new SimpleStringProperty();
 
 		@Override
@@ -203,25 +202,31 @@ interface PluginOptionsControlItem {
 			Boolean isPasswordField = (Boolean) options.getOrDefault("hideText", false);
 			textField = (isPasswordField) ? new PasswordField() : new TextField();
 
-			enterTag = (String)options.get("enterTag");
+			String enterTag  = (String) options.get("enterTag");
+			String focusTag  = (String) options.get("onFocusLostTag");
+			String changeTag = (String) options.get("onChangeTag");
 			setValue(value);
 
-			textField.setOnKeyReleased(event -> {
-				if (event.getCode() == KeyCode.ENTER) event();
-			});
-			textField.focusedProperty().addListener(
-				(ObservableValue<? extends Boolean> arg0, Boolean oldValue, Boolean newValue) -> {
-					if (!newValue) event();
-			});
+			if (enterTag != null)
+				textField.setOnKeyReleased(event -> {
+					if (event.getCode() == KeyCode.ENTER) event(enterTag);
+				});
+			if (focusTag != null)
+				textField.focusedProperty().addListener(
+					(ObservableValue<? extends Boolean> arg0, Boolean oldValue, Boolean newValue) -> {
+						if (!newValue) event(focusTag);
+				});
+			if (changeTag != null)
+				textField.textProperty().addListener((observable, oldValue, newValue) -> {
+					event(focusTag);
+				});
 		}
 
-		protected void event(){
+		protected void event(String tag){
 			currentText.setValue(getValue());
-			if (enterTag != null) {
-				App.showWaitingAlert(() ->
-						Main.getPluginProxy().sendMessage(enterTag, getValue())
-				);
-			}
+			App.showWaitingAlert(() ->
+				Main.getPluginProxy().sendMessage(tag, getValue())
+			);
 		}
 
 		@Override

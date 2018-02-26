@@ -72,7 +72,7 @@ dependencies {
 }
 
 ext.appName = 'DeskChan'
-project.version = '0.2.7'
+project.version = '0.2.8'
 
 mainClassName = 'info.deskchan.core.MainKt'
 

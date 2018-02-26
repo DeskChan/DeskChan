@@ -79,7 +79,7 @@ public class ControlsPanel {
 				sender,
 			   (String) data.get("name"),
 		        data.getOrDefault("type", "tab").toString(),
-		       (List<Map<String, Object>>) data.getOrDefault("controls", new LinkedList<Map>()),
+		       (List<Map<String, Object>>) data.get("controls"),
 				getMsgTag(data),
 		       (String) data.get("onClose"),
 			   (String) data.get("action")
@@ -110,6 +110,7 @@ public class ControlsPanel {
 			case "update": update(); break;
 			case "delete": delete(); break;
 		}
+
 	}
 
 	public String getFullName(){
@@ -205,6 +206,7 @@ public class ControlsPanel {
 				OptionsDialog.unregisterSubmenu(this);
 			} break;
 		}
+		registeredPanels.remove(getFullName());
 	}
 
 	private String getSaveTag(){

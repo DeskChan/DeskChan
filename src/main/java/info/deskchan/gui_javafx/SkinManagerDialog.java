@@ -21,13 +21,11 @@ class SkinManagerDialog extends TemplateBox {
 		}
 		getDialogPane().setContent(skinsList);
 		getDialogPane().getButtonTypes().add(ButtonType.APPLY);
-		getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 		getDialogPane().lookupButton(ButtonType.APPLY).addEventFilter(ActionEvent.ACTION, (event) -> {
 			event.consume();
 			Skin skin = skinsList.getSelectionModel().getSelectedItem();
 			info.deskchan.gui_javafx.panes.Character character = App.getInstance().getCharacter();
 			character.setSkin(skin);
-			character.setDefaultPosition();
 		});
 	}
 	

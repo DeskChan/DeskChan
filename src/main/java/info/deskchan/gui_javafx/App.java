@@ -996,7 +996,7 @@ public class App extends Application {
 		showThrowable(Main.getPluginProxy().getId(), e.getClass().toString(), e.getMessage(), Arrays.asList(e.getStackTrace()));
 	}
 
-	static void showThrowable(String sender, String className, String message, List<Object> stacktrace) {
+	static void showThrowable(String sender, String className, String message, List<StackTraceElement> stacktrace) {
 		if (!Main.getProperties().getBoolean("error-alerting", true)) return;
 
 		Alert alert = new Alert(Alert.AlertType.ERROR);

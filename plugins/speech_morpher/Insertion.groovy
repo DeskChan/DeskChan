@@ -11,7 +11,6 @@ class Insertion {
         def pos = random.nextInt((int) (sentence.size()/2 + 1))
 
         def insertion = insertions[random.nextInt(insertions.size())]
-        println(sentence + " " + sentence.size() + " " + pos)
         if (pos == 0) {
             String ins = insertion[0].toUpperCase() + insertion.substring(1)
             sentence = [ins, ","] + sentence

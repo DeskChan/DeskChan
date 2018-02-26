@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
@@ -66,8 +67,10 @@ class TemplateBox extends Dialog<Void> {
 	}
 
 	public static void updateFont(){
-		String style = LocalFont.getDefaultFontCSS();
-		for (TemplateBox dialog : openedDialogs)
-			dialog.getDialogPane().setStyle(style);
+		Platform.runLater(() -> {
+			String style = LocalFont.getDefaultFontCSS();
+			for (TemplateBox dialog : openedDialogs)
+				dialog.getDialogPane().setStyle(style);
+		});
 	}
 }

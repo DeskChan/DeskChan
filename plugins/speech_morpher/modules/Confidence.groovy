@@ -41,8 +41,9 @@ class Confidence {
                     i = i.replace(".", "...")
                 }
             }
+            boolean c = false
             for (String p : part)
-                finalText += " " + p
+                finalText += ((c = !c) ? " " : "") + p
             finalText += i
         }
         return finalText
@@ -64,13 +65,15 @@ class Confidence {
         }
 
         for (int pos : positions){
-            if (!words[pos].matches('[A-zА-я]+'))
+            if (!words[pos].matches('[A-z\\u0400-\\u04FF]+'))
                 continue
-            int count = 1+random.nextInt(-characteristicSum-1)
+            int count = 1 + random.nextInt(Math.min(-characteristicSum-1, 4))
             def word = ""
             for (int i=0; i<count; i++)
                 word += words[pos][0]+"-"
-            word += words[pos][0] + words[pos][1..words[pos].length()-1]
+            word += words[pos][0]
+            if (words[pos].length() > 2) word += words[pos][1..words[pos].length()-1]
+            else if (words[pos].length() == 2) word += words[pos][1]
             words[pos] = word
         }
 

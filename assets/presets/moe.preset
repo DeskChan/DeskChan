@@ -9,7 +9,7 @@
 		<attitude value="1"/>
 		<experience value="-3"/>
 		<manner value="0"/>
-		<relation value="2"/>
+		<relationship value="2"/>
 	</character>
 	<emotions>
 	    <happiness chance="0.3"/>

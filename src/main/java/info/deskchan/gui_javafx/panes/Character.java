@@ -154,6 +154,8 @@ public class Character extends MovablePane {
 	}
 
 	private void updateImage(boolean reloadImage) {
+		double oldWidth = imageView.getFitWidth();
+		double oldHeight = imageView.getFitHeight();
 	    if (reloadImage) {
             imageView.setImage(getImage());
         }
@@ -162,11 +164,8 @@ public class Character extends MovablePane {
 	    	setSkin(null);
 	    	return;
 		}
-		double oldWidth = imageView.getFitWidth();
-		double oldHeight = imageView.getFitHeight();
 		double newWidth = imageView.getWidth() * scaleFactor;
 		double newHeight = imageView.getHeight() * scaleFactor;
-
 		imageView.setFitWidth(newWidth);
 		imageView.setFitHeight(newHeight);
 		resize(newWidth, newHeight);
@@ -568,35 +567,27 @@ public class Character extends MovablePane {
 		public Image getImage(){ return mainImage.getImage(); }
 
 		public double getWidth(){
-			return Math.max(
-				  mainImage.getImage() != null ?   mainImage.getImage().getWidth() : 0,
-				secondImage.getImage() != null ? secondImage.getImage().getWidth() : 0
-			);
+			return mainImage.getImage() != null ? mainImage.getImage().getWidth() : 0;
 		}
 
 		public double getHeight(){
-			return Math.max(
-				  mainImage.getImage() != null ?   mainImage.getImage().getHeight() : 0,
-				secondImage.getImage() != null ? secondImage.getImage().getHeight() : 0
-			);
+			return mainImage.getImage() != null ?   mainImage.getImage().getHeight() : 0;
 		}
 
 		public double getFitWidth(){
-			return Math.max(mainImage.getFitWidth(), secondImage.getFitWidth());
+			return mainImage.getFitWidth();
 		}
 
 		public double getFitHeight(){
-			return Math.max(mainImage.getFitHeight(), secondImage.getFitHeight());
+			return mainImage.getFitHeight();
 		}
 
 		public void setFitWidth(double width){
 			mainImage.setFitWidth(width);
-			secondImage.setFitWidth(width);
 		}
 
 		public void setFitHeight(double height){
 			mainImage.setFitHeight(height);
-			secondImage.setFitHeight(height);
 		}
 
 	}

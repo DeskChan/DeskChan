@@ -55,6 +55,7 @@ class Culturing{
                     symbols += word[i]
                 else break
 
+            if (word.length() == symbols.length()) continue
             word = word.substring(0, word.length() - symbols.length())
 
             char firstLetter = word[0]
@@ -71,7 +72,20 @@ class Culturing{
         }
         if (currentCulture < -1) {
             int pos = (-2 - currentCulture)*3
-            finalText = bridge.insert(finalText, obsceneInsertions[pos..pos+3])
+            finalText = bridge.insert(finalText, obsceneInsertions[pos..pos+2])
+        }
+        if (currentCulture < -2){
+            char last = 0
+            StringBuilder sb = new StringBuilder()
+            for (char c : finalText){
+                if (c == last) continue
+                if (c == 'и' && random.nextFloat() > 0.8) c = 'е'
+                if (c == 'е' && random.nextFloat() > 0.8) c = 'и'
+                if (c == 'о' && random.nextFloat() > 0.8) c = 'а'
+                if (c.isUpperCase() && random.nextFloat() > 0.5) c = c.toLowerCase()
+                sb.append(c)
+            }
+            finalText = sb.toString()
         }
         phrase.put("text", finalText)
         return phrase
