@@ -2,11 +2,13 @@ package info.deskchan.gui_javafx;
 
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogEvent;
 import javafx.scene.image.Image;
+import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -73,4 +75,23 @@ class TemplateBox extends Dialog<Void> {
 				dialog.getDialogPane().setStyle(style);
 		});
 	}
+
+	private void printHTML(Pane node, int indent){
+		String _indent = "";
+		for (int i=0; i<indent; i++) _indent += "  ";
+		for (Node child : node.getChildren()){
+			System.out.print(_indent + "<div" + (child.getId() != null ? (" id=\"" + child.getId() + "\"") : "") + " class=\"" + child.getClass().getSimpleName().toLowerCase() + "\">");
+			if (child instanceof Pane && ((Pane) child).getChildren().size() > 0) {
+				System.out.println();
+				printHTML((Pane) child, indent + 1);
+				System.out.print(_indent);
+			}
+			System.out.println("</div>");
+		}
+	}
+
+	public void printHTML(){
+		printHTML(getDialogPane(), 0);
+	}
+
 }
