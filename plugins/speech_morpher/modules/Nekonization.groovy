@@ -1,4 +1,4 @@
-class Culturing {
+class Nekonization {
     def bridge
     void initialize(bridge){  this.bridge = bridge  }
 
@@ -6,22 +6,20 @@ class Culturing {
             "ня", "нян", "мур", "мяу",
     ]
 
-    boolean active = true
-    void setPreset(Map preset){
+    boolean checkActive(Map preset){
+        boolean active
         try {
             String species = (String) preset.get("tags").get("species")
             active = species.contains("neko") && !species.contains("!neko")
         } catch (Exception e) {
             active = false
         }
+        return active
     }
 
     Map morphPhrase(Map phrase){
-        println(active)
-        if (!active) return phrase
         def text = phrase.get("text")
         text = bridge.insert(text, insertions)
-        println(text)
         phrase.put("text", text)
         return phrase
     }

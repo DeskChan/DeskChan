@@ -308,15 +308,6 @@ public class Main implements Plugin {
 			DefaultTagsListeners.checkCondition(sender, data, quote -> !currentCharacter.tagsMatch(quote))
 		);
 
-		/// Error handling
-		Main.getPluginProxy().addMessageListener("core-events:error", (sender, tag, data) -> {
-			currentCharacter.phrases.requestRandomQuote( "ERROR", null, quote -> {
-				Map ret = quote.toMap();
-				ret.put("priority", 5000);
-				pluginProxy.sendMessage("DeskChan:say", ret);
-			});
-		});
-
 		pluginProxy.addMessageListener("recognition:get-words", (sender, tag, data) -> {
 			HashSet<String> set = new HashSet<>();
 			set.add(currentCharacter.name);

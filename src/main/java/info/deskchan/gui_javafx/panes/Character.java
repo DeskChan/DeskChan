@@ -542,8 +542,10 @@ public class Character extends MovablePane {
 			mainImage.setImage(image);
 			mainImage.setOpacity(0);
 			secondImage.setOpacity(1);
+			if (timeline != null)
+				timeline.stop();
 			timeline = new Timeline(new KeyFrame(Duration.millis(20), this));
-			timeline.setCycleCount(Timeline.INDEFINITE);
+			timeline.setCycleCount(10);
 			timeline.play();
 		}
 
@@ -552,10 +554,8 @@ public class Character extends MovablePane {
 			double opacity = mainImage.getOpacity() + 0.1;
 			mainImage.setOpacity(opacity);
 			secondImage.setOpacity(1 - opacity);
-			if (opacity >= 1){
+			if (opacity >= 1)
 				secondImage.setImage(null);
-				timeline.stop();
-			}
 		}
 
 		private void swap(){

@@ -214,7 +214,8 @@ public class PluginManager {
 					try {
 						listener.handleMessage(sender, tag, data);
 					} catch (Throwable e) {
-						log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
+						if (!tag.equals("core-events:error"))
+							log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
 					}
 				}
 			};

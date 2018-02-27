@@ -37,15 +37,16 @@ class Culturing{
 
     int currentCulture = 0
 
-    void setPreset(Map preset){
+    boolean checkActive(Map preset){
         currentCulture = preset.getOrDefault("manner", 0)
+        return (currentCulture < 0)
     }
 
     Map morphPhrase(Map phrase){
-        if (currentCulture >= 0) return phrase
         def text = phrase.get("text")
         def words = text.split(" ")
         def finalText = ""
+        def culture = currentCulture < 0 ? currentCulture : -2
 
         for(String word : words) {
             String symbols = ""
@@ -60,7 +61,7 @@ class Culturing{
 
             char firstLetter = word[0]
             for(def i : replacementsList) {
-                if(i[0].equals(word.toLowerCase()) && -random.nextFloat()*currentCulture > 0.8) {
+                if(i[0].equals(word.toLowerCase()) && -random.nextFloat()*culture > 0.8) {
                     int pos = 1+random.nextInt(i.size()-1)
                     word = i[pos]
                     if (Character.isUpperCase(firstLetter))
@@ -70,11 +71,11 @@ class Culturing{
             }
             finalText += " " + word + symbols
         }
-        if (currentCulture < -1) {
-            int pos = (-2 - currentCulture)*3
+        if (culture < -1) {
+            int pos = (-2 - culture)*3
             finalText = bridge.insert(finalText, obsceneInsertions[pos..pos+2])
         }
-        if (currentCulture < -2){
+        if (culture < -2){
             char last = 0
             StringBuilder sb = new StringBuilder()
             for (char c : finalText){

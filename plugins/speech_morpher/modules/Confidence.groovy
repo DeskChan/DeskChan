@@ -5,16 +5,16 @@ class Confidence {
     static def random = new Random(System.currentTimeMillis())
 
     int characteristicSum = 0
-    void setPreset(Map preset){
+    boolean checkActive(Map preset){
         characteristicSum =
                 (   preset.get("selfconfidence") +
                     preset.get("attitude") +
            Math.max(preset.get("energy"), 0)) *
           (Math.max(preset.get("impulsivity"), 0) + 2)
+        return (characteristicSum != 0)
     }
 
     Map morphPhrase(Map phrase){
-        if (characteristicSum == 0) phrase
         def text = phrase.get("text")
         text = exclaim(text)
         text = stutter(text)
@@ -50,18 +50,17 @@ class Confidence {
     }
 
     def stutter(text) {
-        if (characteristicSum >= 0) return text
-
         String[] words = text.split(" ")
 
         def hesitationCount = Math.min(words.length, Math.max(-characteristicSum + random.nextInt(4) - 2, 0))
         if (hesitationCount == 0) return text
 
         def positions = []
-        while (positions.size() < hesitationCount){
-            int pos = random.nextInt((int) (words.size()*0.6))
-            if (!positions.contains(pos))
-                positions.add(pos)
+        int p = (int) (words.size() * 0.6)
+        while (p > 0 && positions.size() < hesitationCount) {
+            p = random.nextInt(p)
+            if (!positions.contains(p))
+                positions.add(p)
         }
 
         for (int pos : positions){
