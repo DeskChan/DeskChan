@@ -114,6 +114,16 @@ try {
 ext.appVersion = "$version-r$gitCommitCount"
 ext.fullAppName = "$appName-$appVersion"
 
+allprojects {
+	tasks.withType(JavaCompile) {
+		options.encoding = 'UTF-8'
+	}
+
+	tasks.withType(Test) {
+		systemProperty "file.encoding", "UTF-8"
+	}
+}
+
 // At first, the application is assembled to this directory. And only then it packs into a zip file.
 ext.launch4jDir = "${buildDir}/launch4j"
 
