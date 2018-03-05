@@ -89,7 +89,7 @@ class TemplateBox extends Dialog<Void> {
 			for (int i=0; i<indent; i++) _indent += "  ";
 			System.out.print(_indent+"<p" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"text\">");
 			System.out.print(((Text) node).getText());
-			System.out.print("</p>");
+			System.out.println("</p>");
 		}
 	}
 
@@ -102,7 +102,7 @@ class TemplateBox extends Dialog<Void> {
 		String itemClass = getClassName(node);
 		switch (itemClass){
 			case "grid-pane": {
-				System.out.print(_indent + "<table" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + itemClass + "\">");
+				System.out.println(_indent + "<table" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + itemClass + "\">");
 				GridPane grid = (GridPane) node;
 				int w=0,h=0;
 				for (Node item : grid.getChildren()) {
@@ -117,7 +117,7 @@ class TemplateBox extends Dialog<Void> {
 						Node cell = getNodeFromGridPane(grid, i, j);
 						System.out.println(_indent+"  <td>");
 						printHTML(cell, indent + 2);
-						System.out.println(_indent+"  <td/>");
+						System.out.println(_indent+"  </td>");
 					}
 					System.out.println(_indent+"</tr>");
 				}
@@ -142,11 +142,11 @@ class TemplateBox extends Dialog<Void> {
 				System.out.println(_indent + "<ul" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
 				ListView view = (ListView) node;
 				for (Object item : view.getItems())
-					System.out.println(_indent+"  <li>"+item.toString()+"</li>");
+					System.out.println(_indent+"  <li class=\"list-cell\">"+item.toString()+"</li>");
 				System.out.println(_indent + "</ul>");
 			} break;
 			case "scroll-pane": {
-				System.out.println(_indent + "<div " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
+				System.out.println(_indent + "<div" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
 				printHTML(((ScrollPane) node).getContent(), indent+1);
 				System.out.println(_indent + "</div>");
 			} break;
@@ -156,12 +156,30 @@ class TemplateBox extends Dialog<Void> {
 					printHTML(child, indent + 1);
 				System.out.println(_indent + "</div>");
 			} break;
+			case "check-box": {
+				System.out.println(_indent + "<input type=\"checkbox\" " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\"/>");
+			} break;
+			case "button": case "font-picker": case "color-picker": {
+				System.out.print(_indent + "<input type=\"button\" " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\" ");
+				System.out.println("value=\"" + ((Button) node).getText() + "\" />");
+			} break;
+			case "combo-box": {
+				System.out.println(_indent + "<select " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\"><option>Variant</option></select>");
+			} break;
+			case "improved-spinner": {
+				System.out.print(_indent + "<input type=\"number\" " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\" ");
+				System.out.println("value=\"" + ((Spinner) node).getValue() + "\" />");
+			} break;
+			case "text-field": {
+				System.out.print(_indent + "<input type=\"text\" " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\" ");
+				System.out.println("value=\"" + ((TextField) node).getText() + "\" />");
+			} break;
 			default: {
 				String classTag = node instanceof Labeled ? "p" : "div";
 				System.out.print(_indent + "<" + classTag + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
 				if (node instanceof Labeled)
 					System.out.print(((Labeled) node).getText());
-				System.out.println(_indent + "</" + classTag + ">");
+				System.out.println("</" + classTag + ">");
 			} break;
 		}
 	}

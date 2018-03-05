@@ -84,6 +84,7 @@ class OptionsDialog extends TemplateBox {
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
 		instance = this;
+		getDialogPane().setId("options-window");
 
 		tabListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		initTabs();
@@ -101,8 +102,11 @@ class OptionsDialog extends TemplateBox {
 		);
 
 		HBox historyLinks = new HBox();
+		historyLinks.setId("pagination");
 		prevLink = new Hyperlink(Main.getString("back"));
+		prevLink.setId("back");
 		nextLink = new Hyperlink(Main.getString("forward"));
+		nextLink.setId("forward");
 		prevLink.setOnAction((event) -> {
 			if (panelIndex > 0){
 				panelIndex--;
@@ -909,6 +913,7 @@ class OptionsDialog extends TemplateBox {
 			pane.prefHeightProperty().bind(controlsPane.heightProperty());
 			pane.prefWidthProperty().bind(controlsPane.widthProperty());
 			controlsPane.getChildren().add(pane);
+			printHTML();
 		});
 	}
 

@@ -311,6 +311,7 @@ public class ControlsPanel {
 	void wrap(){
 		if (wrapper == null) {
 			wrapper = new BorderPane();
+			wrapper.setId(getFullName());
 		} else {
 			wrapper.getChildren().clear();
 		}
