@@ -220,17 +220,7 @@ public class ControlsPanel {
 	Pane createControlsPane(TemplateBox parent) {
 		parentWindow = parent;
 
-		ScrollPane nodeScrollPanel = new ScrollPane();
-		nodeScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-		nodeScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-		nodeScrollPanel.setFitToHeight(true);
-		nodeScrollPanel.setFitToWidth(true);
-		nodeScrollPanel.setStyle("-fx-background-color:transparent;");
-
-		if (panelPane != null) {
-			nodeScrollPanel.setContent(panelPane);
-		} else {
-
+		if (panelPane == null){
 			GridPane gridPane = new GridPane();
 			gridPane.getStyleClass().add("grid-pane");
 
@@ -282,11 +272,10 @@ public class ControlsPanel {
 				}
 				row++;
 			}
-			nodeScrollPanel.setContent(gridPane);
-			nodeScrollPanel.minWidthProperty().bind(gridPane.widthProperty());
+			panelPane = gridPane;
 		}
 
-		wrap(nodeScrollPanel);
+		wrap();
 
 		if (getSaveTag() != null) {
 			Button saveButton = new Button(Main.getString("save"));
@@ -319,23 +308,31 @@ public class ControlsPanel {
 		return wrapper;
 	}
 
-	void wrap(Region pane){
+	void wrap(){
 		if (wrapper == null) {
 			wrapper = new BorderPane();
 		} else {
 			wrapper.getChildren().clear();
 		}
-		wrapper.setCenter(pane);
 
-		pane.prefHeightProperty().bind(wrapper.prefHeightProperty());
-		pane.minHeightProperty().bind(wrapper.minHeightProperty());
-		pane.maxHeightProperty().bind(wrapper.maxHeightProperty());
+		ScrollPane nodeScrollPanel = new ScrollPane();
+		nodeScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+		nodeScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+		nodeScrollPanel.setFitToHeight(true);
+		nodeScrollPanel.setFitToWidth(true);
+		nodeScrollPanel.minWidthProperty().bind(panelPane.widthProperty());
+		nodeScrollPanel.setStyle("-fx-background-color:transparent;");
+		nodeScrollPanel.setContent(panelPane);
 
-		wrapper.prefWidthProperty().bind(pane.prefWidthProperty());
-		wrapper.minWidthProperty().bind(pane.minWidthProperty());
-		wrapper.maxWidthProperty().bind(pane.maxWidthProperty());
+		wrapper.setCenter(nodeScrollPanel);
 
-		panelPane = pane;
+		panelPane.prefHeightProperty().bind(wrapper.prefHeightProperty());
+		panelPane.minHeightProperty().bind(wrapper.minHeightProperty());
+		panelPane.maxHeightProperty().bind(wrapper.maxHeightProperty());
+
+		wrapper.prefWidthProperty().bind(panelPane.prefWidthProperty());
+		wrapper.minWidthProperty().bind(panelPane.minWidthProperty());
+		wrapper.maxWidthProperty().bind(panelPane.maxWidthProperty());
 	}
 
 	PluginOptionsControlItem initItem(Map controlInfo, Window window){

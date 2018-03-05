@@ -399,17 +399,14 @@ public class App extends Application {
 			});
 		});
 
-		/* DEPRECATED */
+
 		pluginProxy.addMessageListener("gui:set-panel", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				new ControlsPanel(sender, (Map) data);
 			});
 		});
 
-		/* Show options dialog.
-        * Public message
-        * Params: None
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				OptionsDialog.open();
