@@ -23,6 +23,7 @@ public class ControlsPanel {
 	private static Map<String, ControlsPanel> registeredPanels = new HashMap<>();
 
 	final String name;
+	final String id;
 	Region panelPane;
 	BorderPane wrapper;
 	List<Map<String, Object>> controls;
@@ -38,34 +39,38 @@ public class ControlsPanel {
 
 	private static float columnGrow = 0.5f;
 
-	ControlsPanel(String sender, String name) {
+	ControlsPanel(String sender, String name, String id) {
 		this.name = name;
 		this.owner = sender;
+		this.id = id;
 	}
 
-	ControlsPanel(String sender, String name, PanelType type, Pane panel) {
+	ControlsPanel(String sender, String name, String id,PanelType type, Pane panel) {
 		this.name = name;
 		this.owner = sender;
+		this.id = id;
 		this.panelPane = panel;
 		this.type = type;
 	}
 
-	ControlsPanel(String sender, String type, Map<String, Object> data) {
+	ControlsPanel(String sender, String type, String id, Map<String, Object> data) {
 		this (
 				sender,
-			   (String) data.get("name"),
+				(String) data.get("name"),
 				type,
-			   (List<Map<String, Object>>) data.getOrDefault("controls", new LinkedList<Map>()),
-			    getMsgTag(data),
-			   (String) data.get("onClose"),
-			   (String) data.get("action")
+				id,
+				(List<Map<String, Object>>) data.getOrDefault("controls", new LinkedList<Map>()),
+				getMsgTag(data),
+				(String) data.get("onClose"),
+				(String) data.get("action")
 		);
 	}
 
-	ControlsPanel(String sender, String name, PanelType type, List<Map<String, Object>> controls) {
+	ControlsPanel(String sender, String name, String id, PanelType type, List<Map<String, Object>> controls) {
 		this (
 				sender,
 				name,
+				id,
 				type.toString(),
 				controls,
 				null,
@@ -77,16 +82,17 @@ public class ControlsPanel {
 	ControlsPanel(String sender, Map<String, Object> data) {
 		this (
 				sender,
-			   (String) data.get("name"),
-		        data.getOrDefault("type", "tab").toString(),
-		       (List<Map<String, Object>>) data.get("controls"),
+				(String) data.get("name"),
+				(String) data.get("id"),
+				data.getOrDefault("type", "tab").toString(),
+				(List<Map<String, Object>>) data.get("controls"),
 				getMsgTag(data),
-		       (String) data.get("onClose"),
-			   (String) data.get("action")
+				(String) data.get("onClose"),
+				(String) data.get("action")
 		);
 	}
 
-	ControlsPanel(String sender, String name, String type, List<Map<String, Object>> controls, String msgSave, String msgClose, String action) {
+	ControlsPanel(String sender, String name, String id, String type, List<Map<String, Object>> controls, String msgSave, String msgClose, String action) {
 		this.type = getType(type);
 
 		if (name == null){
@@ -97,6 +103,7 @@ public class ControlsPanel {
 			}
 		}
 		this.name = name;
+		this.id = id;
 		this.controls = controls;
 		this.msgSave  = msgSave;
 		this.msgClose = msgClose;

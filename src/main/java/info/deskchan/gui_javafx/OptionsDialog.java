@@ -11,6 +11,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -128,8 +129,50 @@ class OptionsDialog extends TemplateBox {
 		historyLinks.getChildren().addAll(prevLink, nextLink);
 
 		GridPane gridPane = new GridPane();
+		VBox vbox = new VBox();
+		vbox.getChildren().add(tabListView);
+		GridPane aboutPane = new GridPane();
+		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
+		label.setFont(new Font(LocalFont.defaultFont.getName(), LocalFont.defaultFont.getSize() * 2));
+		label.setFont(new Font(LocalFont.defaultFont.getName(), LocalFont.defaultFont.getSize() * 2));
+		aboutPane.add(label, 0, 0);
+		aboutPane.add(new Label(Main.getString("about.site")), 0, 1);
+		Hyperlink hyperlink = new Hyperlink();
+		hyperlink.setText(CoreInfo.get("PROJECT_SITE_URL"));
+		hyperlink.setOnAction(event -> {
+			App.getInstance().getHostServices().showDocument(hyperlink.getText());
+		});
+		aboutPane.add(hyperlink, 0, 2);
+		aboutPane.add(new Label(Main.getString("about.git_branch")), 0, 3);
+		aboutPane.add(new Label(CoreInfo.get("GIT_BRANCH_NAME")), 0, 4);
+		aboutPane.add(new Label(Main.getString("about.git_commit_hash")), 0, 5);
+		aboutPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 0, 6);
+		aboutPane.add(new Label(Main.getString("about.build_datetime")),0, 7);
+		aboutPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 0, 8);
+		aboutPane.add(new Label(Main.getString("Language")), 0, 9);
+		ComboBox<String> locales=new ComboBox<>();
+		for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+			locales.getItems().add(locale.getValue());
+			if(Locale.getDefault().getLanguage().equals(locale.getKey()))
+				locales.getSelectionModel().select(locale.getValue());
+		}
+		locales.valueProperty().addListener( (obj,oldValue,newValue) -> {
+			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+				if(locale.getValue().equals(newValue)){
+					TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
+					dialog.setContentText(Main.getString("info.restart"));
+					dialog.requestFocus();
+					dialog.show();
+					Locale.setDefault(new Locale(locale.getKey()));
+					Main.getProperties().put("locale", locale.getKey());
+					break;
+				}
+			}
+		});
+		aboutPane.add(locales, 0, 10);
+		vbox.getChildren().add(aboutPane);
+		gridPane.add(vbox, 0, 0, 1, 2);
 		ColumnConstraints column1 = new ColumnConstraints();
-		gridPane.add(tabListView, 0, 0, 1, 2);
 		column1.setPercentWidth(30);
 
 		ColumnConstraints column2 = new ColumnConstraints();
@@ -228,7 +271,7 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), ControlsPanel.PanelType.TAB, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", ControlsPanel.PanelType.TAB, list).set();
 
 		characterOptions();
 		balloonOptions();
@@ -272,7 +315,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Balloon' options submenu. **/
@@ -390,7 +433,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-balloon-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), "balloon", ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -518,7 +561,7 @@ class OptionsDialog extends TemplateBox {
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -627,14 +670,14 @@ class OptionsDialog extends TemplateBox {
 		// 'Add' button
 		Button addButton = new Button(Main.getString("add"));
 		addButton.setOnAction(event -> {
-			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), ControlsPanel.PanelType.WINDOW, commandTab).show();
+			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), "add", ControlsPanel.PanelType.WINDOW, commandTab).show();
 		});
 
 		// Adding buttons to form
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
 	private void fillTreeTable(TreeItem<CommandItem> root){
@@ -728,7 +771,7 @@ class OptionsDialog extends TemplateBox {
 		});
 		hbox.getChildren().add(button);
 		pluginsTab.setBottom(hbox);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), ControlsPanel.PanelType.TAB, pluginsTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), "plugins", ControlsPanel.PanelType.TAB, pluginsTab).set();
 
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
@@ -765,7 +808,7 @@ class OptionsDialog extends TemplateBox {
 			}
 			alternativesTable.setRoot(root);
 		});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), ControlsPanel.PanelType.TAB, alternativesTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), "alternatives", ControlsPanel.PanelType.TAB, alternativesTab).set();
 
 		/// debug
 		BorderPane debugTab = new BorderPane();
@@ -793,58 +836,7 @@ class OptionsDialog extends TemplateBox {
 		});
 
 		debugTab.setBottom(new HBox(button, reloadButton));
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), ControlsPanel.PanelType.TAB, debugTab).set();
-
-
-		/// about
-		gridPane = new GridPane();
-		gridPane.getStyleClass().add("grid-pane");
-		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-		label.setFont(new Font(LocalFont.defaultFont.getName(), LocalFont.defaultFont.getSize() * 2));
-		gridPane.add(label, 0, 0, 2, 1);
-		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
-		Hyperlink hyperlink = new Hyperlink();
-		hyperlink.setText(CoreInfo.get("PROJECT_SITE_URL"));
-		hyperlink.setOnAction(event -> {
-			App.getInstance().getHostServices().showDocument(hyperlink.getText());
-		});
-		gridPane.add(hyperlink, 1, 1);
-		gridPane.add(new Label(Main.getString("about.git_branch")), 0, 2);
-		gridPane.add(new Label(CoreInfo.get("GIT_BRANCH_NAME")), 1, 2);
-		gridPane.add(new Label(Main.getString("about.git_commit_hash")), 0, 3);
-		gridPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 1, 3);
-		gridPane.add(new Label(Main.getString("about.build_datetime")), 0, 4);
-		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
-		gridPane.add(new Label(Main.getString("Language")), 0, 5);
-		ComboBox<String> locales=new ComboBox<>();
-		for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-			locales.getItems().add(locale.getValue());
-			if(Locale.getDefault().getLanguage().equals(locale.getKey()))
-				locales.getSelectionModel().select(locale.getValue());
-		}
-		locales.valueProperty().addListener( (obj,oldValue,newValue) -> {
-			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-				if(locale.getValue().equals(newValue)){
-					TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
-					dialog.setContentText(Main.getString("info.restart"));
-					dialog.requestFocus();
-					dialog.show();
-					Locale.setDefault(new Locale(locale.getKey()));
-					Main.getProperties().put("locale", locale.getKey());
-					break;
-				}
-			}
-		});
-		gridPane.add(locales, 1, 5);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), ControlsPanel.PanelType.TAB, gridPane).set();
-
-		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
-		/// Creating top tabs from registered tabs list
-		for (ControlsPanel tab : tabs)
-			registerTab(tab);
-
-		setPanel(tabs.get(0));
-		panelsHistory.add(tabs.get(0));
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.TAB, debugTab).set();
 	}
 
 	/** Open skin manager and wait for closing. **/
@@ -860,7 +852,7 @@ class OptionsDialog extends TemplateBox {
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).update();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).update();
 
 	}
 

@@ -152,6 +152,7 @@ void setupMenu(){
         ])
     sendMessage('gui:setup-options-submenu', [
             name: getString("options"),
+            id: "options",
             msgTag: getId() + ":save-options",
             controls: controls
     ])
