@@ -228,7 +228,7 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), ControlsPanel.PanelType.TAB, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", ControlsPanel.PanelType.TAB, list).set();
 
 		characterOptions();
 		balloonOptions();
@@ -272,7 +272,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Balloon' options submenu. **/
@@ -390,7 +390,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-balloon-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), "balloon", ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -518,7 +518,7 @@ class OptionsDialog extends TemplateBox {
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -627,14 +627,14 @@ class OptionsDialog extends TemplateBox {
 		// 'Add' button
 		Button addButton = new Button(Main.getString("add"));
 		addButton.setOnAction(event -> {
-			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), ControlsPanel.PanelType.WINDOW, commandTab).show();
+			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), "add", ControlsPanel.PanelType.WINDOW, commandTab).show();
 		});
 
 		// Adding buttons to form
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
 	private void fillTreeTable(TreeItem<CommandItem> root){
@@ -728,7 +728,7 @@ class OptionsDialog extends TemplateBox {
 		});
 		hbox.getChildren().add(button);
 		pluginsTab.setBottom(hbox);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), ControlsPanel.PanelType.TAB, pluginsTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), "plugins", ControlsPanel.PanelType.TAB, pluginsTab).set();
 
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
@@ -765,7 +765,7 @@ class OptionsDialog extends TemplateBox {
 			}
 			alternativesTable.setRoot(root);
 		});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), ControlsPanel.PanelType.TAB, alternativesTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), "alternatives", ControlsPanel.PanelType.TAB, alternativesTab).set();
 
 		/// debug
 		BorderPane debugTab = new BorderPane();
@@ -793,7 +793,7 @@ class OptionsDialog extends TemplateBox {
 		});
 
 		debugTab.setBottom(new HBox(button, reloadButton));
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), ControlsPanel.PanelType.TAB, debugTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.TAB, debugTab).set();
 
 
 		/// about
@@ -836,7 +836,7 @@ class OptionsDialog extends TemplateBox {
 			}
 		});
 		gridPane.add(locales, 1, 5);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), ControlsPanel.PanelType.TAB, gridPane).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), "about", ControlsPanel.PanelType.TAB, gridPane).set();
 
 		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
 		/// Creating top tabs from registered tabs list
@@ -860,7 +860,7 @@ class OptionsDialog extends TemplateBox {
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).update();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).update();
 
 	}
 

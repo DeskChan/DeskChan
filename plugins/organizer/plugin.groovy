@@ -20,6 +20,7 @@ properties.load()
 sendMessage( 'gui:set-panel',
         [ 'name': getString('menu'),
           'type': getString('submenu'),
+          'id':   'menu',
           'action': 'set',
           'controls': [
              [
@@ -48,6 +49,7 @@ void setupEventsMenu(){
     sendMessage( 'gui:set-panel',
         [ 'name': getString('shedule'),
           'type': 'window',
+          'id':   'shedule',
           'action': 'set',
           'msgTag': 'organizer:add-event',
           'controls': [
@@ -116,6 +118,7 @@ void setupEventsMenu(){
 sendMessage( 'gui:set-panel',
         [ 'name': getString('timer'),
           'type': 'window',
+          'id':   'timer',
           'action': 'set',
           'msgTag': 'organizer:add-timer',
           'controls': [
@@ -175,6 +178,7 @@ Database.DatabaseEntry.defaultSound = defaultSoundFolder.resolve("communication-
 addMessageListener('organizer:check-sound', { sender, tag, data ->
     sendMessage( 'gui:set-panel',
             [ 'name': getString('shedule'),
+              'id':   'shedule',
               'action': 'update',
               'controls': [[
                                    'id': 'sound',
@@ -185,6 +189,7 @@ addMessageListener('organizer:check-sound', { sender, tag, data ->
 addMessageListener('organizer:check-timer-sound', { sender, tag, data ->
     sendMessage( 'gui:set-panel',
             [ 'name': getString('timer'),
+              'id':   'timer',
               'action': 'update',
               'controls': [[
                                    'id': 'sound',
@@ -277,6 +282,7 @@ sendMessage('core:set-event-link', [
 sendMessage( 'gui:set-panel',
         [ 'name': getString('stopwatch'),
           'type': 'window',
+          'id':   'stopwatch',
           'action': 'set',
           'controls': [
                   [
@@ -315,6 +321,7 @@ sendMessage( 'gui:set-panel',
 addMessageListener('organizer:open-stopwatch', { sender, tag, data ->
     sendMessage('gui:set-panel', [
             'name': getString('stopwatch'),
+            'id':   'stopwatch',
             'action': 'show'
             ]
     )
@@ -326,6 +333,7 @@ def updateMenu(){
     sec = seconds - minutes*60 - hours*3600
     sendMessage( 'gui:set-panel',
             [ 'name': getString('stopwatch'),
+              'id':   'stopwatch',
               'action': 'update',
               'controls': [
                       [  'id': 'time',    'value': sprintf('%02d:%02d:%02d', [hours, minutes, sec])  ],
@@ -348,6 +356,7 @@ addMessageListener('organizer:start-stopwatch', { sender, tag, data ->
     timerId = setTimer(1000, -1, { s, d -> tick()})
     sendMessage( 'gui:set-panel',
             [ 'name': getString('stopwatch'),
+              'id':   'stopwatch',
               'action': 'update',
               'controls': [
                       [  'id': 'time',    'value': '00:00:00'  ],
@@ -371,6 +380,7 @@ addMessageListener('organizer:pause-stopwatch', { sender, tag, data ->
     }
     sendMessage( 'gui:set-panel',
             [ 'name': getString('stopwatch'),
+              'id':   'stopwatch',
               'action': 'update',
               'controls': [
                       [  'id': 'button1', 'value': getString('reset')  ],
@@ -392,6 +402,7 @@ tomatoPause = true
 sendMessage( 'gui:set-panel',
         [ 'name': getString('tomato'),
           'type': 'panel',
+          'id':   'tomato',
           'action': 'set',
           'msgTag': 'organizer:tomato-save-options',
           'controls': [
@@ -433,6 +444,7 @@ addMessageListener('organizer:tomato-save-options', { sender, tag, data ->
         sendMessage('gui:set-panel',
              [
                  'name'    : getString('tomato'),
+                 'id'      : 'tomato',
                  'action'  : 'update',
                  'controls': [
                          ['id': 'active', 'value': getString('not-active')],
@@ -474,6 +486,7 @@ addMessageListener('organizer:toggle-tomato', { sender, tag, data ->
             int ts = tomatoTimer - tm
             sendMessage( 'gui:set-panel',
                     [ 'name': getString('tomato'),
+                      'id':   'tomato',
                       'action': 'update',
                       'controls': [
                         [  'id': 'active',
@@ -493,6 +506,7 @@ addMessageListener('organizer:toggle-tomato', { sender, tag, data ->
     }
     sendMessage( 'gui:set-panel',
             [ 'name': getString('tomato'),
+              'id':   'tomato',
               'action': 'update',
               'controls': [
                  [  'id': 'start',  'value': getString( tomatoActive ? 'stop' : 'start' )  ],

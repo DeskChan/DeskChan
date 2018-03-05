@@ -374,28 +374,28 @@ public class App extends Application {
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "tab", (Map) data).set();
+				new ControlsPanel(sender, "tab", "tab", (Map) data).set();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "submenu", (Map) data).set();
+				new ControlsPanel(sender, "submenu", "submenu", (Map) data).set();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "tab", (Map) data).update();
+				new ControlsPanel(sender, "tab", "tab", (Map) data).update();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "submenu", (Map) data).update();
+				new ControlsPanel(sender, "submenu", "submenu", (Map) data).update();
 			});
 		});
 
@@ -417,9 +417,9 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				if(data instanceof Map) {
-					new ControlsPanel(sender, "submenu", (Map) data).show();
+					new ControlsPanel(sender, "submenu", "submenu", (Map) data).show();
 				} else {
-					new ControlsPanel(sender, data.toString()).show();
+					new ControlsPanel(sender, data.toString(), data.toString()).show();
 				}
 			});
 		});
@@ -477,14 +477,14 @@ public class App extends Application {
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "window", (Map) data).show();
+				new ControlsPanel(sender, "window", "window", (Map) data).show();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "window", (Map) data).update();
+				new ControlsPanel(sender, "window", "window", (Map) data).update();
 			});
 		});
 
