@@ -370,9 +370,11 @@ public class Main implements Plugin {
 	}
 
 	void updateOptionsTab() {
-		pluginProxy.sendMessage("gui:setup-options-tab", new HashMap<String, Object>() {{
+		pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
 			put("name", getString("character"));
+			put("id", "character");
 			put("msgTag", "talk:save-options");
+			put("action", "set");
 			List<Map<String, Object>> list = new LinkedList<>();
 			list.add(new HashMap<String, Object>() {{
 				put("id", "name");

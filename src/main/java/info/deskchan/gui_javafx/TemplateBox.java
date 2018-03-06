@@ -102,7 +102,7 @@ class TemplateBox extends Dialog<Void> {
 		String itemClass = getClassName(node);
 		switch (itemClass){
 			case "grid-pane": {
-				System.out.println(_indent + "<table" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + itemClass + "\">");
+				System.out.println(_indent + "<table realclass=\"GridPane\"" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + ">");
 				GridPane grid = (GridPane) node;
 				int w=0,h=0;
 				for (Node item : grid.getChildren()) {
@@ -124,10 +124,11 @@ class TemplateBox extends Dialog<Void> {
 				System.out.println(_indent + "</table>");
 			} break;
 			default: {
-				System.out.println(_indent + "<div" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + itemClass + "\">");
+				String c = node.getClass().getSimpleName();
+				System.out.println(_indent + "<" + c + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + itemClass + "\">");
 				for (Node child : node.getChildren())
 					printHTML(child, indent + 1);
-				System.out.println(_indent + "</div>");
+				System.out.println(_indent + "</"+c+">");
 			} break;
 		}
 	}
@@ -139,22 +140,27 @@ class TemplateBox extends Dialog<Void> {
 		String className = getClassName(node);
 		switch (className){
 			case "list-view": {
-				System.out.println(_indent + "<ul" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
+				System.out.println(_indent + "<ul realclass=\"ListView\"" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
 				ListView view = (ListView) node;
 				for (Object item : view.getItems())
 					System.out.println(_indent+"  <li class=\"list-cell\">"+item.toString()+"</li>");
 				System.out.println(_indent + "</ul>");
 			} break;
 			case "scroll-pane": {
-				System.out.println(_indent + "<div" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
+				System.out.println(_indent + "<ScrollPane" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
 				printHTML(((ScrollPane) node).getContent(), indent+1);
-				System.out.println(_indent + "</div>");
+				System.out.println(_indent + "</ScrollPane>");
+			} break;
+			case "hyperlink": {
+				System.out.print(_indent + "<a" + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"hyperlink\" href=\"#\">");
+				System.out.print(((Hyperlink) node).getText());
+				System.out.println("</a>");
 			} break;
 			case "button-bar": {
-				System.out.println(_indent + "<div " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
+				System.out.println(_indent + "<ButtonBar " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
 				for (Node child : ((ButtonBar) node).getButtons())
 					printHTML(child, indent + 1);
-				System.out.println(_indent + "</div>");
+				System.out.println(_indent + "</ButtonBar>");
 			} break;
 			case "check-box": {
 				System.out.println(_indent + "<input type=\"checkbox\" " + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\"/>");
@@ -175,7 +181,7 @@ class TemplateBox extends Dialog<Void> {
 				System.out.println("value=\"" + ((TextField) node).getText() + "\" />");
 			} break;
 			default: {
-				String classTag = node instanceof Labeled ? "p" : "div";
+				String classTag = node.getClass().getSimpleName();
 				System.out.print(_indent + "<" + classTag + (node.getId() != null ? (" id=\"" + node.getId() + "\"") : "") + " class=\"" + className + "\">");
 				if (node instanceof Labeled)
 					System.out.print(((Labeled) node).getText());

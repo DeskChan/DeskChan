@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core.CoreInfo;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.gui_javafx.panes.Balloon;
@@ -829,7 +830,6 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:raise-user-balloon", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				System.out.println("got!");
 				Map m = (Map) data;
 				UserBalloon.show(m != null ? (String) m.get("value") : null);
 			});
@@ -851,6 +851,33 @@ public class App extends Application {
 						delayNotifier.timeline.stop();
 					}
 				}
+			});
+		});
+
+		/* Change language
+        * Public message
+        * Params: String! - language key
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-language", (sender, tag, data) -> {
+			final String newValue;
+			if (data instanceof Map)
+				newValue = ((Map) data).get("value").toString();
+			else
+				newValue = data.toString();
+
+			Platform.runLater(() -> {
+				for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+					if(locale.getValue().equals(newValue)){
+						TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
+						dialog.setContentText(Main.getString("info.restart"));
+						dialog.requestFocus();
+						dialog.show();
+						Locale.setDefault(new Locale(locale.getKey()));
+						Main.getProperties().put("locale", locale.getKey());
+						return;
+					}
+				}
+				Main.log(new Exception("Unknown language key: " + newValue));
 			});
 		});
 

@@ -121,7 +121,7 @@ public class ControlsPanel {
 	}
 
 	public String getFullName(){
-		return owner + ":" + name;
+		return owner + ":" + (id != null ? id : name);
 	}
 
 	public void set(){

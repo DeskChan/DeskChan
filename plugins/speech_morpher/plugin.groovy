@@ -150,11 +150,13 @@ void setupMenu(){
         controls.add([
              type: 'ComboBox', id: module.name, label: module.getName(), value: getProperties().getInteger(module.name, 1), values: ["OFF", "BY_PRESET", "ALWAYS"]
         ])
-    sendMessage('gui:setup-options-submenu', [
+    sendMessage('gui:set-panel', [
             name: getString("options"),
             id: "options",
+            type: 'submenu',
             msgTag: getId() + ":save-options",
-            controls: controls
+            controls: controls,
+            action: "set"
     ])
 }
 

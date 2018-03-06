@@ -17,7 +17,6 @@ import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -86,7 +85,11 @@ class OptionsDialog extends TemplateBox {
 		instance = this;
 		getDialogPane().setId("options-window");
 
+		// Left panel
+
+		/// Menu
 		tabListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		tabListView.setId("options-menu");
 		initTabs();
 
 		tabListView.getSelectionModel().selectedIndexProperty().addListener(
@@ -101,6 +104,29 @@ class OptionsDialog extends TemplateBox {
 				}
 		);
 
+		/// Info
+		GridPane infoPane = new GridPane();
+		infoPane.setId("info-pane");
+		infoPane.add(new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION")), 0, 0, 2, 1);
+		infoPane.add(new Label(Main.getString("about.site")), 0, 1);
+		Hyperlink siteLink = new Hyperlink(CoreInfo.get("PROJECT_SITE_URL"));
+		siteLink.setOnAction(event -> {
+				App.getInstance().getHostServices().showDocument(siteLink.getText());
+		});
+		infoPane.add(siteLink, 1, 1);
+		infoPane.add(new Label(Main.getString("about.git_branch")), 0, 2);
+		infoPane.add(new Label(CoreInfo.get("GIT_BRANCH_NAME")), 1, 2);
+		infoPane.add(new Label(Main.getString("about.build_datetime")), 0, 3);
+		infoPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 3);
+		//infoPane.add(new Label(Main.getString("about.git_commit_hash")), 0, 4);
+		//infoPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 1, 4);
+
+		/// Init
+		VBox leftPanelBox = new VBox();
+		leftPanelBox.setId("leftPanel");
+		leftPanelBox.getChildren().addAll(tabListView, infoPane);
+
+		// Pagination
 		HBox historyLinks = new HBox();
 		historyLinks.setId("pagination");
 		prevLink = new Hyperlink(Main.getString("back"));
@@ -127,9 +153,10 @@ class OptionsDialog extends TemplateBox {
 
 		historyLinks.getChildren().addAll(prevLink, nextLink);
 
+        // Main grid
 		GridPane gridPane = new GridPane();
 		ColumnConstraints column1 = new ColumnConstraints();
-		gridPane.add(tabListView, 0, 0, 1, 2);
+		gridPane.add(leftPanelBox, 0, 0, 1, 2);
 		column1.setPercentWidth(30);
 
 		ColumnConstraints column2 = new ColumnConstraints();
@@ -143,6 +170,7 @@ class OptionsDialog extends TemplateBox {
 		gridPane.getColumnConstraints().addAll(column1, column2);
 		getDialogPane().setContent(gridPane);
 
+		// Set size
 		getDialogPane().setMinHeight(500 * App.getInterfaceScale());
 		getDialogPane().setMinWidth(900 * App.getInterfaceScale());
 
@@ -200,7 +228,7 @@ class OptionsDialog extends TemplateBox {
 			put("type",  "ComboBox");
 			put("hint",   Main.getString("help.layer_mode"));
 			put("label",  Main.getString("character.layer_mode"));
-			List<Object> values=FXCollections.observableList(new ArrayList<>());
+			List<Object> values = FXCollections.observableList(new ArrayList<>());
 			values.addAll(OverlayStage.getStages());
 			int sel = -1;
 			OverlayStage.LayerMode mode = OverlayStage.getCurrentStage();
@@ -227,6 +255,19 @@ class OptionsDialog extends TemplateBox {
 			put("hint",   Main.getString("help.resources"));
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "language");
+			put("type",  "ComboBox");
+			put("msgTag","gui:set-language");
+			put("label",  Main.getString("language"));
+			List<Object> values = FXCollections.observableList(new ArrayList<>());
+			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+				values.add(locale.getValue());
+				if(Locale.getDefault().getLanguage().equals(locale.getKey()))
+					put("value", values.size()-1);
+			}
+			put("values", values);
 		}});
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", ControlsPanel.PanelType.TAB, list).set();
 
@@ -795,48 +836,6 @@ class OptionsDialog extends TemplateBox {
 		debugTab.setBottom(new HBox(button, reloadButton));
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.TAB, debugTab).set();
 
-
-		/// about
-		gridPane = new GridPane();
-		gridPane.getStyleClass().add("grid-pane");
-		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-		label.setFont(new Font(LocalFont.defaultFont.getName(), LocalFont.defaultFont.getSize() * 2));
-		gridPane.add(label, 0, 0, 2, 1);
-		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
-		Hyperlink hyperlink = new Hyperlink();
-		hyperlink.setText(CoreInfo.get("PROJECT_SITE_URL"));
-		hyperlink.setOnAction(event -> {
-			App.getInstance().getHostServices().showDocument(hyperlink.getText());
-		});
-		gridPane.add(hyperlink, 1, 1);
-		gridPane.add(new Label(Main.getString("about.git_branch")), 0, 2);
-		gridPane.add(new Label(CoreInfo.get("GIT_BRANCH_NAME")), 1, 2);
-		gridPane.add(new Label(Main.getString("about.git_commit_hash")), 0, 3);
-		gridPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 1, 3);
-		gridPane.add(new Label(Main.getString("about.build_datetime")), 0, 4);
-		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
-		gridPane.add(new Label(Main.getString("Language")), 0, 5);
-		ComboBox<String> locales=new ComboBox<>();
-		for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-			locales.getItems().add(locale.getValue());
-			if(Locale.getDefault().getLanguage().equals(locale.getKey()))
-				locales.getSelectionModel().select(locale.getValue());
-		}
-		locales.valueProperty().addListener( (obj,oldValue,newValue) -> {
-			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-				if(locale.getValue().equals(newValue)){
-					TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
-					dialog.setContentText(Main.getString("info.restart"));
-					dialog.requestFocus();
-					dialog.show();
-					Locale.setDefault(new Locale(locale.getKey()));
-					Main.getProperties().put("locale", locale.getKey());
-					break;
-				}
-			}
-		});
-		gridPane.add(locales, 1, 5);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), "about", ControlsPanel.PanelType.TAB, gridPane).set();
 
 		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
 		/// Creating top tabs from registered tabs list

@@ -278,7 +278,8 @@ public class Main implements Plugin {
                 put("value", historyToChat());
             }});
             put("controls", list);
-            put("name",pluginProxy.getString("chat"));
+            put("name", pluginProxy.getString("chat"));
+            put("id", "chat");
             put("type", "window");
             put("onClose","chat:closed");
             put("action", "set");

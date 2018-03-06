@@ -135,7 +135,7 @@ buildConfig {
 	version = appVersion
 	buildConfigField 'String', 'GIT_COMMIT_HASH', gitCommitHash
 	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
-	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd HH:mm:ssZ')
+	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('HH:mm dd/MM/yyyy')
 	buildConfigField 'String', 'PROJECT_SITE_URL', 'http://deskchan.info/'
 	buildConfigField 'String', 'AUTHOR', 'DeskChan Project <support@deskchan.info> (http://deskchan.info)'
 }
