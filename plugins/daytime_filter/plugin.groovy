@@ -65,7 +65,7 @@ updateSkin()
 final tagApply = getId() + ':apply'
 
 
-sendMessage('gui:setup-options-submenu', [name: getString("options"), msgTag: tagApply, controls: [
+sendMessage('gui:setup-options-submenu', [name: getString("options"), id: "options", msgTag: tagApply, controls: [
     [
         type: 'CheckBox', id: 'enabled', label: 'Фильтры по времени суток',
         value: isEnabled()
