@@ -11,7 +11,7 @@ import java.util.Map;
 
 
 public class CorePluginTests {
-    private static PluginManager pluginManager;
+    /*private static PluginManager pluginManager;
 
     private Map<String, List<CorePlugin.AlternativeInfo>> alternatives = null;
     private static PluginProxy pluginProxy = null;
@@ -128,7 +128,7 @@ public class CorePluginTests {
         Assert.assertEquals(list.get(1).priority, 400);
         
         pluginProxy.sendMessage("DeskChan:test", null);
-    }
+    }*/
 }
 
 
