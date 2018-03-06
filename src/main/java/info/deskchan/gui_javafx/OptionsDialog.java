@@ -11,6 +11,8 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -155,6 +157,7 @@ class OptionsDialog extends TemplateBox {
 
         // Main grid
 		GridPane gridPane = new GridPane();
+		gridPane.setId("options-grid");
 		ColumnConstraints column1 = new ColumnConstraints();
 		gridPane.add(leftPanelBox, 0, 0, 1, 2);
 		column1.setPercentWidth(30);
@@ -166,6 +169,7 @@ class OptionsDialog extends TemplateBox {
 		column2.prefWidthProperty().bind(controlsPane.prefWidthProperty());
 
 		controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
+		controlsPane.setId("controls");
 
 		gridPane.getColumnConstraints().addAll(column1, column2);
 		getDialogPane().setContent(gridPane);
@@ -828,9 +832,12 @@ class OptionsDialog extends TemplateBox {
 
 		Button reloadButton = new Button(Main.getString("reload-style"));
 		reloadButton.setOnAction(event -> {
+			Bounds insets = new BoundingBox(instance.getX(), instance.getY(), instance.getWidth(), instance.getHeight());
 			instance.applyStyle();
 			instance.hide();
 			instance.show();
+			instance.setX(insets.getMinX()); instance.setY(insets.getMinY());
+			instance.setWidth(insets.getWidth()); instance.setHeight(insets.getHeight());
 		});
 
 		debugTab.setBottom(new HBox(button, reloadButton));
@@ -912,7 +919,6 @@ class OptionsDialog extends TemplateBox {
 			pane.prefHeightProperty().bind(controlsPane.heightProperty());
 			pane.prefWidthProperty().bind(controlsPane.widthProperty());
 			controlsPane.getChildren().add(pane);
-			printHTML();
 		});
 	}
 
