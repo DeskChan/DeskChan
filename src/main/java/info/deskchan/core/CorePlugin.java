@@ -28,12 +28,15 @@ public class CorePlugin implements Plugin, MessageListener {
 			Map<String, Object> m = new HashMap<>();
 			m.put("delay", delay);
 			pluginProxy.log("Plugin " + sender + " requested application quit in " + delay / 1000 + " seconds.");
-			if(delay > 20)
-				pluginProxy.sendMessage("core-utils:notify-after-delay", m, (s, d) -> PluginManager.getInstance().quit() );
-			else
-			{
+			if(delay > 20) {
+				Timer quitTimer = new Timer();
+				quitTimer.schedule(new TimerTask() {
+					@Override public void run() {
+						PluginManager.getInstance().quit();
+					}
+				}, delay);
+			} else {
 				PluginManager.getInstance().quit();
-				System.exit(0);
 			}
 
 		});
