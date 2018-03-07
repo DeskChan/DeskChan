@@ -16,10 +16,10 @@
     -fx-padding: 10px;
 }
 
-.list-view {
-    -fx-background-color: rgba(0,0,0,0);
+#options-menu {
+    -fx-background-color: transparent;
 }
 
-.list-cell:empty {
+#options-menu .list-cell:empty {
     -fx-opacity: 0;
 }

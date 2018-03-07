@@ -262,7 +262,7 @@ public class Main implements Plugin {
                 put("id", "options");
                 put("type", "Button");
                 put("value", pluginProxy.getString("options"));
-                put("dstPanel", pluginProxy.getId() + ":" + pluginProxy.getString("options"));
+                put("dstPanel", pluginProxy.getId() + "-options");
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "name");

@@ -195,14 +195,14 @@ class OptionsDialog extends TemplateBox {
 			put("type",  "Button");
 			put("label",  Main.getString("skin.options"));
 			put("value",  Main.getString("open"));
-			put("dstPanel", Main.getPluginProxy().getId() + ":" + Main.getString("skin"));
+			put("dstPanel", Main.getPluginProxy().getId() + "-skin");
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_options");
 			put("type",  "Button");
 			put("label",  Main.getString("balloon.options"));
 			put("value",  Main.getString("open"));
-			put("dstPanel", Main.getPluginProxy().getId() + ":" + Main.getString("balloon"));
+			put("dstPanel", Main.getPluginProxy().getId() + "-balloon");
 		}});
 		/*list.add(new HashMap<String, Object>() {{
 			put("id",    "interface_size");
@@ -562,6 +562,7 @@ class OptionsDialog extends TemplateBox {
 		// Adding buttons to form
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
+		buttons.setId("controls-bottom-buttons");
 
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
@@ -677,6 +678,7 @@ class OptionsDialog extends TemplateBox {
 
 		// Adding buttons to form
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
+		buttons.setId("controls-bottom-buttons");
 		commandTab.setBottom(buttons);
 
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
@@ -756,6 +758,7 @@ class OptionsDialog extends TemplateBox {
 
 		// Load button
 		HBox hbox = new HBox();
+		hbox.setId("controls-bottom-buttons");
 		Button button = new Button(Main.getString("load"));
 		button.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
@@ -836,11 +839,12 @@ class OptionsDialog extends TemplateBox {
 			instance.applyStyle();
 			instance.hide();
 			instance.show();
-			instance.setX(insets.getMinX()); instance.setY(insets.getMinY());
-			instance.setWidth(insets.getWidth()); instance.setHeight(insets.getHeight());
+			instance.setX(insets.getMinX()); instance.setY(insets.getMinY()); instance.setWidth(insets.getWidth());
 		});
 
-		debugTab.setBottom(new HBox(button, reloadButton));
+		HBox buttons = new HBox(button, reloadButton);
+		buttons.setId("controls-bottom-buttons");
+		debugTab.setBottom(buttons);
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.TAB, debugTab).set();
 
 
@@ -989,6 +993,9 @@ class OptionsDialog extends TemplateBox {
 			// Filling row content
 			hbox.getChildren().clear();
 			hbox.getChildren().addAll(label, pane, menuBox);
+
+			label.setId("pluginName");
+			menuBox.setId("pluginMenuBox");
 
 			// Adding tooltip with plugin information
 			try {

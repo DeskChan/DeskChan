@@ -121,7 +121,7 @@ public class ControlsPanel {
 	}
 
 	public String getFullName(){
-		return owner + ":" + (id != null ? id : name);
+		return owner + "-" + (id != null ? id : name);
 	}
 
 	public void set(){
@@ -302,7 +302,9 @@ public class ControlsPanel {
 					Main.getPluginProxy().sendMessage(getSaveTag(), data);
 				});
 			});
-			wrapper.setBottom(saveButton);
+			HBox box = new HBox(saveButton);
+			box.setId("controls-bottom-buttons");
+			wrapper.setBottom(box);
 		}
 		if (getCloseTag() != null) {
 			parent.addOnCloseRequest(event -> {
@@ -324,7 +326,7 @@ public class ControlsPanel {
 		}
 
 		ScrollPane nodeScrollPanel = new ScrollPane();
-		nodeScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+		nodeScrollPanel.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 		nodeScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 		nodeScrollPanel.setFitToHeight(true);
 		nodeScrollPanel.setFitToWidth(true);
@@ -333,14 +335,6 @@ public class ControlsPanel {
 		nodeScrollPanel.setContent(panelPane);
 
 		wrapper.setCenter(nodeScrollPanel);
-
-		panelPane.prefHeightProperty().bind(wrapper.prefHeightProperty());
-		panelPane.minHeightProperty().bind(wrapper.minHeightProperty());
-		panelPane.maxHeightProperty().bind(wrapper.maxHeightProperty());
-
-		wrapper.prefWidthProperty().bind(panelPane.prefWidthProperty());
-		wrapper.minWidthProperty().bind(panelPane.minWidthProperty());
-		wrapper.maxWidthProperty().bind(panelPane.maxWidthProperty());
 	}
 
 	PluginOptionsControlItem initItem(Map controlInfo, Window window){

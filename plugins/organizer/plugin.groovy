@@ -25,19 +25,19 @@ sendMessage( 'gui:set-panel',
           'controls': [
              [
                  'type': 'Button',
-                 'dstPanel': 'organizer:'+getString('shedule'),
+                 'dstPanel': 'organizer-shedule',
                  'value': getString('shedule')
              ],[
                   'type': 'Button',
-                  'dstPanel': 'organizer:'+getString('timer'),
+                  'dstPanel': 'organizer-timer',
                   'value': getString('timer')
              ],[
                   'type': 'Button',
-                  'dstPanel': 'organizer:'+getString('stopwatch'),
+                  'dstPanel': 'organizer-stopwatch',
                   'value': getString('stopwatch')
              ],[
                   'type': 'Button',
-                  'dstPanel': 'organizer:'+getString('tomato'),
+                  'dstPanel': 'organizer-tomato',
                   'value': getString('tomato')
              ]
           ]

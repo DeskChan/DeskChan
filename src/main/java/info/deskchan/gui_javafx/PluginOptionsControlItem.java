@@ -616,9 +616,9 @@ interface PluginOptionsControlItem {
 			if(msgTag != null){
 				listView.setOnMouseClicked((event) -> {
 					App.showWaitingAlert(() ->
-						Main.getPluginProxy().sendMessage(msgTag,new HashMap<String,Object>(){{
+						Main.getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
 							put("value", new ArrayList<>(listView.getSelectionModel().getSelectedItems()));
-							put("index", new ArrayList<>(listView.getSelectionModel().getSelectedIndex()));
+							put("index", listView.getSelectionModel().getSelectedIndex());
 						}})
 					);
 				});
