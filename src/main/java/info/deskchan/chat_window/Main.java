@@ -101,7 +101,7 @@ public class Main implements Plugin {
             chatIsOpened = true;
             pluginProxy.sendMessage("DeskChan:request-say", "START_DIALOG");
             pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
-                put("name", pluginProxy.getString("chat"));
+                put("id", "chat");
                 put("action", "show");
             }});
         });
@@ -315,7 +315,7 @@ public class Main implements Plugin {
     void setupChat() {
         if(!chatIsOpened) return;
         pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
-            put("name", pluginProxy.getString("chat"));
+            put("id", "chat");
             put("action", "update");
             LinkedList<HashMap<String, Object>> list = new LinkedList<>();
             list.add(new HashMap<String, Object>() {{
@@ -336,9 +336,12 @@ public class Main implements Plugin {
 
     /** Options window drawing. **/
     void setupOptions(){
-        pluginProxy.sendMessage("gui:setup-options-submenu", new HashMap<String, Object>() {{
+        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+            put("id", "options");
             put("name", pluginProxy.getString("options"));
             put("msgTag", "chat:save-options");
+            put("type", "submenu");
+            put("action", "set");
             List<HashMap<String, Object>> list = new LinkedList<>();
             list.add(new HashMap<String, Object>() {{
                 put("id", "fixer");
