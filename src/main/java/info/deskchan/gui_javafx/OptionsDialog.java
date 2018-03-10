@@ -11,9 +11,8 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -85,7 +84,7 @@ class OptionsDialog extends TemplateBox {
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
 		instance = this;
-		getDialogPane().setId("options-window");
+		setId("options-window");
 
 		// Left panel
 
@@ -107,29 +106,30 @@ class OptionsDialog extends TemplateBox {
 		);
 
 		/// Info
-		GridPane infoPane = new GridPane();
-		infoPane.setId("info-pane");
-		infoPane.add(new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION")), 0, 0, 2, 1);
-		infoPane.add(new Label(Main.getString("about.site")), 0, 1);
 		Hyperlink siteLink = new Hyperlink(CoreInfo.get("PROJECT_SITE_URL"));
 		siteLink.setOnAction(event -> {
-				App.getInstance().getHostServices().showDocument(siteLink.getText());
+			App.getInstance().getHostServices().showDocument(siteLink.getText());
 		});
-		infoPane.add(siteLink, 1, 1);
-		infoPane.add(new Label(Main.getString("about.git_branch")), 0, 2);
-		infoPane.add(new Label(CoreInfo.get("GIT_BRANCH_NAME")), 1, 2);
-		infoPane.add(new Label(Main.getString("about.build_datetime")), 0, 3);
-		infoPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 3);
-		//infoPane.add(new Label(Main.getString("about.git_commit_hash")), 0, 4);
-		//infoPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 1, 4);
 
-		/// Init
-		VBox leftPanelBox = new VBox();
-		leftPanelBox.setId("leftPanel");
-		leftPanelBox.getChildren().addAll(tabListView, infoPane);
+		FlowPane infoPane = new FlowPane();
+		infoPane.setId("info-pane");
+		infoPane.getChildren().addAll(
+				getFlowPane("build-name", new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"))),
+				getFlowPane("about-site", new Label(Main.getString("about.site")), siteLink),
+				getFlowPane("about-git_branch", new Label(Main.getString("about.git_branch")),
+						new Label(CoreInfo.get("GIT_BRANCH_NAME"))
+				),
+				getFlowPane("about-build_datetime", new Label(Main.getString("about.build_datetime")),
+						new Label(CoreInfo.get("BUILD_DATETIME"))
+				),
+				getFlowPane("about-git_commit_hash", new Label(Main.getString("about.git_commit_hash")),
+						new ControlsPanel.Hint(CoreInfo.get("GIT_COMMIT_HASH"), Main.getString("open"))
+				)
+		);
+		infoPane.setFocusTraversable(false);
 
 		// Pagination
-		HBox historyLinks = new HBox();
+		FlowPane historyLinks = new FlowPane();
 		historyLinks.setId("pagination");
 		prevLink = new Hyperlink(Main.getString("back"));
 		prevLink.setId("back");
@@ -156,27 +156,18 @@ class OptionsDialog extends TemplateBox {
 		historyLinks.getChildren().addAll(prevLink, nextLink);
 
         // Main grid
-		GridPane gridPane = new GridPane();
-		gridPane.setId("options-grid");
-		ColumnConstraints column1 = new ColumnConstraints();
-		gridPane.add(leftPanelBox, 0, 0, 1, 2);
-		column1.setPercentWidth(30);
+		StackPane stackPane = new StackPane();
+		stackPane.setId("options-grid");
+		stackPane.getChildren().addAll(tabListView, historyLinks, infoPane, controlsPane);
 
-		ColumnConstraints column2 = new ColumnConstraints();
-		gridPane.add(historyLinks, 1, 0, 1, 1);
-		gridPane.add(controlsPane, 1, 1, 1, 1);
-		column2.setPercentWidth(70);
-		column2.prefWidthProperty().bind(controlsPane.prefWidthProperty());
-
-		controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
+		//controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
 		controlsPane.setId("controls");
 
-		gridPane.getColumnConstraints().addAll(column1, column2);
-		getDialogPane().setContent(gridPane);
+		getDialogPane().setContent(stackPane);
 
 		// Set size
-		getDialogPane().setMinHeight(500 * App.getInterfaceScale());
-		getDialogPane().setMinWidth(900 * App.getInterfaceScale());
+		//getDialogPane().setMinHeight(500 * App.getInterfaceScale());
+		//getDialogPane().setMinWidth(900 * App.getInterfaceScale());
 
 		setOnHiding(event -> {
 			Main.getPluginProxy().sendMessage("core:save-all-properties", null);
@@ -226,6 +217,14 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:switch-interface-front");
 			put("label",  Main.getString("interface.on_top"));
 			put("value",  TemplateBox.checkForceOnTop());
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "interface-skin");
+			put("type",  "FileField");
+			put("label",  Main.getString("interface.path-skin"));
+			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
+			put("msgTag","gui:set-interface-style");
+			put("value",  Main.getProperties().getString("interface.path-skin"));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "layer_mode");
@@ -447,7 +446,7 @@ class OptionsDialog extends TemplateBox {
 
 		commandsTable.setEditable(true);
 		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
-		commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
+		//commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
 
 		// Events column
 		TableColumn eventCol = new TableColumn(Main.getString("events"));
@@ -577,7 +576,7 @@ class OptionsDialog extends TemplateBox {
 
 		commandsTable.setEditable(true);
 		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
-		commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
+		//commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
 
 		// Events column
 		TreeTableColumn eventCol = new TreeTableColumn(Main.getString("events"));
@@ -725,7 +724,7 @@ class OptionsDialog extends TemplateBox {
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
 
-		pluginsList.minWidthProperty().bind(pluginsTab.prefWidthProperty());
+		//pluginsList.minWidthProperty().bind(pluginsTab.prefWidthProperty());
 
 		// Setting row style
 		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
@@ -835,11 +834,9 @@ class OptionsDialog extends TemplateBox {
 
 		Button reloadButton = new Button(Main.getString("reload-style"));
 		reloadButton.setOnAction(event -> {
-			Bounds insets = new BoundingBox(instance.getX(), instance.getY(), instance.getWidth(), instance.getHeight());
 			instance.applyStyle();
 			instance.hide();
 			instance.show();
-			instance.setX(insets.getMinX()); instance.setY(insets.getMinY()); instance.setWidth(insets.getWidth());
 		});
 
 		HBox buttons = new HBox(button, reloadButton);
@@ -920,8 +917,8 @@ class OptionsDialog extends TemplateBox {
 			if (panel == null) return;
 
 			Pane pane = panel.createControlsPane(instance);
-			pane.prefHeightProperty().bind(controlsPane.heightProperty());
-			pane.prefWidthProperty().bind(controlsPane.widthProperty());
+			//pane.prefHeightProperty().bind(controlsPane.heightProperty());
+			//pane.prefWidthProperty().bind(controlsPane.widthProperty());
 			controlsPane.getChildren().add(pane);
 		});
 	}
@@ -1246,5 +1243,11 @@ class OptionsDialog extends TemplateBox {
 
 		JSONObject json = new JSONObject(text);
 		return json.toMap();
+	}
+
+	private static FlowPane getFlowPane(String id, Node... items){
+		FlowPane pane = new FlowPane(items);
+		pane.setId(id);
+		return pane;
 	}
 }

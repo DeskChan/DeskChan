@@ -1,32 +1,61 @@
 package info.deskchan.gui_javafx;
 
+import com.sun.javafx.css.Declaration;
+import com.sun.javafx.css.Rule;
+import com.sun.javafx.css.Selector;
+import com.sun.javafx.css.Stylesheet;
+import com.sun.javafx.css.parser.CSSParser;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.LinkedList;
 
 class TemplateBox extends Dialog<Void> {
 
-	// SO YOU SHOULD NOT CALL setOnCloseRequest from outside PLEASE
-
 	public static LinkedList<TemplateBox> openedDialogs = new LinkedList<>();
 	private LinkedList<EventHandler<DialogEvent>> handlers = new LinkedList<>();
+	private StageStyle stageStyle = null;
+	Point2D dragDelta = new Point2D(0, 0);
 
 	public TemplateBox(String name) {
+		setDialogPane(new BoxPane());
 		setTitle(name);
+
+		applyStyle();
+
 		initModality(Modality.NONE);
+
 		String style = LocalFont.getDefaultFontCSS();
+
 		getDialogPane().setStyle(
 				style
 		);
+
+		/*setAlwaysOnTop(checkForceOnTop());
+		getIcons().add(new Image(App.ICON_URL.toString()));
+
+		ButtonType closeButton = new ButtonType(Main.getString("close"), ButtonBar.ButtonData.CANCEL_CLOSE);
+		getDialogPane().getButtonTypes().add(closeButton);
+		getDialogPane().lookupButton(closeButton).addEventFilter(ActionEvent.ACTION, (event) -> {
+			event.consume();
+			Platform.runLater(() -> close());
+		});*/
+
 		Stage stage = (Stage) getDialogPane().getScene().getWindow();
 		stage.setAlwaysOnTop(checkForceOnTop());
 		stage.getIcons().add(new Image(App.ICON_URL.toString()));
@@ -39,6 +68,7 @@ class TemplateBox extends Dialog<Void> {
 			setOnCloseRequest(new EventHandler<DialogEvent>() {
 				@Override
 				public void handle(DialogEvent event) {
+					System.out.println("closed");
 					openedDialogs.remove(thisBox);
 					for(EventHandler<DialogEvent> handler : handlers){
 						handler.handle(event);
@@ -47,11 +77,17 @@ class TemplateBox extends Dialog<Void> {
 			});
 		});
 
-		applyStyle();
-	}
-	
-	public void requestFocus() {
-		getDialogPane().getScene().getWindow().requestFocus();
+		getDialogPane().setOnMousePressed(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent mouseEvent) {
+				dragDelta = new Point2D(stage.getX() - mouseEvent.getScreenX(), stage.getY() - mouseEvent.getScreenY());
+			}
+		});
+		getDialogPane().setOnMouseDragged(new EventHandler<MouseEvent>() {
+			@Override public void handle(MouseEvent mouseEvent) {
+				stage.setX(mouseEvent.getScreenX() + dragDelta.getX());
+				stage.setY(mouseEvent.getScreenY() + dragDelta.getY());
+			}
+		});
 	}
 
 	public static boolean checkForceOnTop(){
@@ -63,18 +99,107 @@ class TemplateBox extends Dialog<Void> {
 	}
 
 	protected void applyStyle() {
-		getDialogPane().getScene().getStylesheets().clear();
-		getDialogPane().getScene().getStylesheets().add(App.getStylesheet());
+		try {
+			getDialogPane().getScene().getStylesheets().clear();
+			String stylesheet = App.getStylesheet();
+			setStyling(stylesheet);
+			getDialogPane().getScene().getStylesheets().add(stylesheet);
+		} catch (Exception e){
+			Main.log(new Exception("Error parsing style file: " + e.getMessage(), e));
+		}
 	}
 
-	public static void updateFont(){
+	protected void setStyling(String style){
+		CSSParser parser = new CSSParser();
+		try {
+			String set = null;
+			Selector selected = null;
+
+			Stylesheet css = parser.parse(new URL(style));
+
+			Selector w = Selector.createSelector("Window"),
+					 n = Selector.createSelector("." + getDialogPane().getId());
+
+			boolean cw, cn;
+
+			for (Rule rule : css.getRules()) {
+				cw = cn = false;
+				if ((cw = rule.getSelectors().contains(w)) || (cn = rule.getSelectors().contains(n))){
+					for (Declaration declaration : rule.getDeclarations()) {
+						if (!declaration.getProperty().equals("pfx-stage-style")) continue;
+						try {
+							String value = declaration.getParsedValue().getValue().toString().substring(6);
+							if (cn || (cw && selected != n))
+								set = value;
+						} catch (Exception e){ }
+					}
+				}
+			}
+			if (set == null){
+				if (stageStyle != null) return;
+				stageStyle = StageStyle.DECORATED;
+			} else {
+				StageStyle newStageStyle = StageStyle.valueOf(set.toUpperCase());
+
+				if (newStageStyle == stageStyle) return;
+				stageStyle = newStageStyle;
+			}
+		} catch (IOException ex) {
+			Main.log(ex);
+			stageStyle = StageStyle.DECORATED;
+		}
+		try {
+			if (stageStyle == StageStyle.TRANSPARENT)
+				getDialogPane().getScene().setFill(Color.TRANSPARENT);
+			initStyle(stageStyle);
+		} catch (Exception e){
+			App.showNotification(Main.getString("error"), "Please, restart the program to apply changes");
+			Main.log(e);
+		}
+	}
+
+	//public void setContentText(String text){
+	//	getDialogPane().setContentText(text);
+	//}
+
+	public static void updateStyle(){
 		Platform.runLater(() -> {
 			String style = LocalFont.getDefaultFontCSS();
-			for (TemplateBox dialog : openedDialogs)
+			for (TemplateBox dialog : openedDialogs) {
 				dialog.getDialogPane().setStyle(style);
+				dialog.applyStyle();
+				dialog.hide();
+				dialog.show();
+			}
 		});
 	}
 
+	//public DialogPane getDialogPane(){  return pane; }
+
+	public void setId(String id){ getDialogPane().getStyleClass().add(id); }
+
+	public void requestFocus(){ getDialogPane().requestFocus(); }
+
+
+	class BoxPane extends DialogPane {
+		Region background = new Region();
+
+		BoxPane(){
+			background.setId("background");
+			getChildren().add(background);
+		}
+		@Override
+		protected void layoutChildren(){
+			background.toBack();
+			background.resizeRelocate(0, 0, getWidth(), getHeight());
+			try {
+				for (Object node : getChildren().toArray())
+					if (node instanceof ButtonBar)
+						((ButtonBar) node).toFront();
+			} catch (RuntimeException ex){ }
+			super.layoutChildren();
+		}
+	}
 
 	/*--   HTML Generation   --*/
 

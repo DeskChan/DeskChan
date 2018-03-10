@@ -234,13 +234,13 @@ public class ControlsPanel {
 			float columnGrowPercentage = columnGrow * 100;
 
 			ColumnConstraints column1 = new ColumnConstraints();
-			column1.setPercentWidth(columnGrowPercentage);
+			//column1.setPercentWidth(columnGrowPercentage);
 
 			ColumnConstraints column2 = new ColumnConstraints();
-			column2.setPercentWidth(90 - columnGrowPercentage);
+			//column2.setPercentWidth(90 - columnGrowPercentage);
 
 			ColumnConstraints column3 = new ColumnConstraints();
-			column3.setPercentWidth(5);
+			//column3.setPercentWidth(5);
 
 			gridPane.getColumnConstraints().addAll(column1, column2, column3);
 
@@ -270,7 +270,6 @@ public class ControlsPanel {
 				} else {
 					Text labelNode = new Text(label + ":");
 					labelNode.setFont(LocalFont.defaultFont);
-					labelNode.setWrappingWidth(250 * App.getInterfaceScale());
 					gridPane.add(labelNode, 0, row);
 					gridPane.add(node, 1, row);
 				}
@@ -330,8 +329,8 @@ public class ControlsPanel {
 		nodeScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 		nodeScrollPanel.setFitToHeight(true);
 		nodeScrollPanel.setFitToWidth(true);
-		nodeScrollPanel.minWidthProperty().bind(panelPane.widthProperty());
-		nodeScrollPanel.setStyle("-fx-background-color:transparent;");
+		//nodeScrollPanel.minWidthProperty().bind(panelPane.widthProperty());
+		//nodeScrollPanel.setStyle("-fx-background-color:transparent;");
 		nodeScrollPanel.setContent(panelPane);
 
 		wrapper.setCenter(nodeScrollPanel);
@@ -375,9 +374,14 @@ public class ControlsPanel {
 		}
 	}
 
-	class Hint extends Button{
+	static class Hint extends Button{
+
 		Hint(String text){
-			setText("?");
+			this(text, "?");
+		}
+		Hint(String text, String buttonText){
+			setText(buttonText);
+			getStyleClass().setAll("hint");
 			Tooltip tooltip = new Tooltip(text);
 			tooltip.setAutoHide(true);
 			setTooltip(tooltip);

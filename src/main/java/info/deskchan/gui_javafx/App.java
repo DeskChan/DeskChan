@@ -215,6 +215,17 @@ public class App extends Application {
 			});
 		});
 
+		/* Set current style file.
+        * Public message
+        * Params: path: String! - path to skin
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-interface-style", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Main.getProperties().put("interface.path-skin", (String) data);
+				TemplateBox.updateStyle();
+			});
+		});
+
 		/* Set current skin name of character's balloon .
         * Public message
         * Params: path: String! - path to skin
@@ -988,7 +999,7 @@ public class App extends Application {
 	/** Load all fonts from 'assets/fonts'. **/
 	private void loadFonts() {
 		try (DirectoryStream<Path> directoryStream =
-					 Files.newDirectoryStream(Main.getInstance().getPluginProxy().getAssetsDirPath().resolve("fonts"))) {
+					 Files.newDirectoryStream(Main.getPluginProxy().getAssetsDirPath().resolve("fonts"))) {
 			for (Path fontPath : directoryStream) {
 				if (fontPath.getFileName().toString().endsWith(".ttf")) {
 					Font.loadFont(Files.newInputStream(fontPath), 10);
@@ -1003,9 +1014,14 @@ public class App extends Application {
 
 	/** Trying to apply 'style.css' to application. **/
 	public static String getStylesheet(){
+		String stylefile = Main.getProperties().getString(
+				"interface.path-skin",
+				Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toString()
+		);
 		try {
-			return Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toUri().toURL().toString();
+			return new File(stylefile).toURI().toURL().toString();
 		} catch (Exception e){
+			Main.log(e);
 			return App.class.getResource("style.css").toExternalForm();
 		}
 	}

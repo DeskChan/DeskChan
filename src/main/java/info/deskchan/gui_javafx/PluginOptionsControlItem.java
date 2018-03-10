@@ -126,7 +126,6 @@ interface PluginOptionsControlItem {
 			node.setClip(new Rectangle(width, height));
 		}
 		if(width != null && node instanceof Region) {
-			System.out.println("hi!");
 			((Region) node).setMinWidth(width);
 			((Region) node).setMaxWidth(width);
 		}
