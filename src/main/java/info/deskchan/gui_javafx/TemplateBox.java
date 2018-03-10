@@ -183,7 +183,7 @@ class TemplateBox extends Dialog<Void> {
 
 	class BoxPane extends DialogPane {
 		Region background = new Region();
-
+		boolean onFront = false;
 		BoxPane(){
 			background.setId("background");
 			getChildren().add(background);
@@ -192,11 +192,13 @@ class TemplateBox extends Dialog<Void> {
 		protected void layoutChildren(){
 			background.toBack();
 			background.resizeRelocate(0, 0, getWidth(), getHeight());
-			try {
-				for (Object node : getChildren().toArray())
-					if (node instanceof ButtonBar)
-						((ButtonBar) node).toFront();
-			} catch (RuntimeException ex){ }
+			if (!onFront)
+			for (Object node : getChildren().toArray())
+				if (node instanceof ButtonBar) {
+					((ButtonBar) node).toFront();
+					onFront = true;
+					break;
+				}
 			super.layoutChildren();
 		}
 	}

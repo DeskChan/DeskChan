@@ -971,9 +971,11 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void setValue(Object value) {
+			if (value != null && value.toString().length() == 0)
+				value = null;
 			selectedFont.setValue((String) value);
 			try {
-				if (selectedFont != null) {
+				if (selectedFont.getValue() != null) {
 					Font font = LocalFont.fromString(selectedFont.getValue());
 					picker = new FontSelectorDialog(font);
 					setText(selectedFont.getValue());

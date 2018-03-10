@@ -6,10 +6,10 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 import javafx.stage.Window;
 
 import java.rmi.NoSuchObjectException;
@@ -268,7 +268,7 @@ public class ControlsPanel {
 				if (label == null) {
 					gridPane.add(node, 0, row, 2, 1);
 				} else {
-					Text labelNode = new Text(label + ":");
+					Label labelNode = new Label(label + ":");
 					labelNode.setFont(LocalFont.defaultFont);
 					gridPane.add(labelNode, 0, row);
 					gridPane.add(node, 1, row);

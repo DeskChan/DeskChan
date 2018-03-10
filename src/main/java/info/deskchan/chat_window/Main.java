@@ -169,14 +169,15 @@ public class Main implements Plugin {
                 history.add(new ChatPhrase(text, 0));
                 if (!chatIsOpened) return;
 
-                pluginProxy.sendMessage("gui:update-custom-window", new HashMap<String, Object>() {{
+                pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+                    put("id", "chat");
+                    put("action", "update");
                     LinkedList<HashMap<String, Object>> list = new LinkedList<>();
                     list.add(new HashMap<String, Object>() {{
                         put("id", "textname");
                         put("value", historyToChat());
                     }});
                     put("controls", list);
-                    put("name", pluginProxy.getString("chat"));
                 }});
             });
         });
