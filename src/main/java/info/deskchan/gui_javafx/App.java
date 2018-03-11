@@ -1014,10 +1014,11 @@ public class App extends Application {
 
 	/** Trying to apply 'style.css' to application. **/
 	public static String getStylesheet(){
-		String stylefile = Main.getProperties().getString(
-				"interface.path-skin",
-				Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toString()
-		);
+		String stylefile = Main.getProperties().getString("interface.path-skin");
+
+		if (stylefile == null || !new File(stylefile).exists())
+			stylefile = Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toString();
+
 		try {
 			return new File(stylefile).toURI().toURL().toString();
 		} catch (Exception e){

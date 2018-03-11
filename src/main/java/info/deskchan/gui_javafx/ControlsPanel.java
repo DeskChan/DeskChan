@@ -31,6 +31,7 @@ public class ControlsPanel {
 	String msgClose;
 	String owner;
 	TemplateBox parentWindow;
+	boolean predefinedPane = false;
 
 	enum PanelType { TAB, SUBMENU, WINDOW, PANEL, INFO }
 	PanelType type;
@@ -51,6 +52,7 @@ public class ControlsPanel {
 		this.id = id;
 		this.panelPane = panel;
 		this.type = type;
+		predefinedPane = true;
 	}
 
 	ControlsPanel(String sender, String type, String id, Map<String, Object> data) {
@@ -226,7 +228,7 @@ public class ControlsPanel {
 
 	Pane createControlsPane(TemplateBox parent) {
 
-		if (panelPane == null || parent != parentWindow){
+		if (!predefinedPane && (panelPane == null || parent != parentWindow)){
 			GridPane gridPane = new GridPane();
 			gridPane.getStyleClass().add("grid-pane");
 
