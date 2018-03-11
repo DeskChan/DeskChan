@@ -646,9 +646,18 @@ public class PluginManager {
 	/** Log stack and text of error thrown to file and console.
 	 * You cannot call this method, use your plugin's proxy. **/
 
-	static void log(String id, String message) {
+	static void log(String id, String message){
+		log(id,message,false);
+	}
+
+	static void log(String id, String message,Boolean isError) {
 		String text = id + ": " + message;
-		System.err.println(text);
+		if (isError){
+			System.err.println(text);
+		}
+		else {
+			System.out.println(text);
+		}
 		if (logStream != null) {
 			try {
 				logStream.write((text + "\n").getBytes("UTF-8"));
@@ -660,9 +669,9 @@ public class PluginManager {
 	}
 
 	static void log(String id, String message, List<Object> stacktrace) {
-		log(id, message);
+		log(id, message,true);
 		for (Object line : stacktrace) {
-			log(id, "   at " + line.toString());
+			log(id, "   at " + line.toString(),true);
 		}
 	}
 
