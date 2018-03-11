@@ -6,26 +6,26 @@ public enum LoggerLevel {
      */
     OFF(0),
     /**
-     * Designates informational messages that highlight the progress
-     * of the application at coarse-grained level.
+     * Designates error events that might still allow the application to continue running.
      */
-    INFO(1),
+    ERROR(1),
     /**
      * Designates potentially harmful situations.
      */
     WARN(2),
     /**
+     * Designates informational messages that highlight the progress
+     * of the application at coarse-grained level.
+     */
+    INFO(3),
+    /**
      * Designates fine-grained informational events that are most useful to debug an application.
      */
-    DEBUG(3),
+    DEBUG(4),
     /**
      * Designates finer-grained informational events than the DEBUG.
      */
-    TRACE(4),
-    /**
-     * Designates error events that might still allow the application to continue running.
-     */
-    ERROR(5);
+    TRACE(5);
 
     private final int level;
 

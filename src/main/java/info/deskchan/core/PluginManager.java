@@ -653,14 +653,16 @@ public class PluginManager {
 	static void log(String id, String message,LoggerLevel level) {
 		String text = id + ": " + message;
 
-		if (level.getValue()>=LoggerLevel.INFO.getValue()&&level.getValue()<=LoggerLevel.TRACE.getValue()) {
-			System.out.println(text);
-		}
-		else if (level.equals(LoggerLevel.ERROR))
-		{
+		if (level.equals(LoggerLevel.ERROR)){
 			System.err.println(text);
+			writeStringToLogStream(text);
+		} else if (level.getValue()>=LoggerLevel.WARN.getValue()&&level.getValue()<=LoggerLevel.TRACE.getValue()){
+			System.out.println(text);
+			writeStringToLogStream(text);
 		}
+	}
 
+	static void writeStringToLogStream(String text){
 		if (logStream != null) {
 			try {
 				logStream.write((text + "\n").getBytes("UTF-8"));
@@ -670,6 +672,7 @@ public class PluginManager {
 			}
 		}
 	}
+
 
 	static void log(String id, String message, List<Object> stacktrace) {
 		log(id, message,LoggerLevel.ERROR);
