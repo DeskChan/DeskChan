@@ -128,11 +128,13 @@ public class MouseEventNotificator {
         double nodeX = screenX - sender.getLayoutX();
         double nodeY = screenY - sender.getLayoutY();
 
-        if (sender.contains(nodeX, nodeY)) {
-            if (intersectionTestFunc.apply(event)) {
-                impl_notifyScrollEvent(event.getWheelRotation(), screenX, screenY, nodeX, nodeY);
+        try {
+            if (sender.contains(nodeX, nodeY)) {
+                if (intersectionTestFunc.apply(event)) {
+                    impl_notifyScrollEvent(event.getWheelRotation(), screenX, screenY, nodeX, nodeY);
+                }
             }
-        }
+        } catch (Exception e){ }
     }
 
     /**

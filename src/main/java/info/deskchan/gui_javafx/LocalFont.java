@@ -39,7 +39,7 @@ public class LocalFont {
             defaultFont = fromString(font);
         Main.getProperties().put("interface.font", toString(defaultFont));
         TrayMenu.getContextMenu().setStyle(getDefaultFontCSS());
-        TemplateBox.updateFont();
+        TemplateBox.updateStyle();
     }
 
     private static LimitHashMap<String, Font> hash = new LimitHashMap<>(10);

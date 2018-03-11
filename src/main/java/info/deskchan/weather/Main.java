@@ -135,8 +135,9 @@ public class Main implements Plugin {
         }
     }
     void setupOptionsTab() {
-        pluginProxy.sendMessage("gui:setup-options-submenu", new HashMap<String, Object>() {{
+        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
             put("name", getString("options"));
+            put("id", "options");
             put("msgTag", "weather:update-city");
             List<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
             list.add(new HashMap<String, Object>() {{

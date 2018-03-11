@@ -30,6 +30,7 @@ public class TrayMenu {
             systemTray.setStatus(App.NAME);
             trayRef = systemTray;
         }
+        contextMenu.setId("context-menu");
     }
     public static void add(String sender, String name, String msgTag, Object msgData){
         menuItems.add(new PluginAction(sender, name, msgTag, msgData));

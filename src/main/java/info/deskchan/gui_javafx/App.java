@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core.CoreInfo;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.gui_javafx.panes.Balloon;
@@ -214,6 +215,17 @@ public class App extends Application {
 			});
 		});
 
+		/* Set current style file.
+        * Public message
+        * Params: path: String! - path to skin
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-interface-style", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				Main.getProperties().put("interface.path-skin", (String) data);
+				TemplateBox.updateStyle();
+			});
+		});
+
 		/* Set current skin name of character's balloon .
         * Public message
         * Params: path: String! - path to skin
@@ -374,42 +386,39 @@ public class App extends Application {
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "tab", (Map) data).set();
+				new ControlsPanel(sender, "tab", "tab", (Map) data).set();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "submenu", (Map) data).set();
+				new ControlsPanel(sender, "submenu", "submenu", (Map) data).set();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "tab", (Map) data).update();
+				new ControlsPanel(sender, "tab", "tab", (Map) data).update();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "submenu", (Map) data).update();
+				new ControlsPanel(sender, "submenu", "submenu", (Map) data).update();
 			});
 		});
 
-		/* DEPRECATED */
+
 		pluginProxy.addMessageListener("gui:set-panel", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				new ControlsPanel(sender, (Map) data);
 			});
 		});
 
-		/* Show options dialog.
-        * Public message
-        * Params: None
-        * Returns: None */
+		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				OptionsDialog.open();
@@ -420,9 +429,9 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-options-submenu", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				if(data instanceof Map) {
-					new ControlsPanel(sender, "submenu", (Map) data).show();
+					new ControlsPanel(sender, "submenu", "submenu", (Map) data).show();
 				} else {
-					new ControlsPanel(sender, data.toString()).show();
+					new ControlsPanel(sender, data.toString(), data.toString()).show();
 				}
 			});
 		});
@@ -480,14 +489,14 @@ public class App extends Application {
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "window", (Map) data).show();
+				new ControlsPanel(sender, "window", "window", (Map) data).show();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-custom-window", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				new ControlsPanel(sender, "window", (Map) data).update();
+				new ControlsPanel(sender, "window", "window", (Map) data).update();
 			});
 		});
 
@@ -832,7 +841,6 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:raise-user-balloon", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				System.out.println("got!");
 				Map m = (Map) data;
 				UserBalloon.show(m != null ? (String) m.get("value") : null);
 			});
@@ -854,6 +862,33 @@ public class App extends Application {
 						delayNotifier.timeline.stop();
 					}
 				}
+			});
+		});
+
+		/* Change language
+        * Public message
+        * Params: String! - language key
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:set-language", (sender, tag, data) -> {
+			final String newValue;
+			if (data instanceof Map)
+				newValue = ((Map) data).get("value").toString();
+			else
+				newValue = data.toString();
+
+			Platform.runLater(() -> {
+				for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+					if(locale.getValue().equals(newValue)){
+						TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
+						dialog.setContentText(Main.getString("info.restart"));
+						dialog.requestFocus();
+						dialog.show();
+						Locale.setDefault(new Locale(locale.getKey()));
+						Main.getProperties().put("locale", locale.getKey());
+						return;
+					}
+				}
+				Main.log(new Exception("Unknown language key: " + newValue));
 			});
 		});
 
@@ -964,7 +999,7 @@ public class App extends Application {
 	/** Load all fonts from 'assets/fonts'. **/
 	private void loadFonts() {
 		try (DirectoryStream<Path> directoryStream =
-					 Files.newDirectoryStream(Main.getInstance().getPluginProxy().getAssetsDirPath().resolve("fonts"))) {
+					 Files.newDirectoryStream(Main.getPluginProxy().getAssetsDirPath().resolve("fonts"))) {
 			for (Path fontPath : directoryStream) {
 				if (fontPath.getFileName().toString().endsWith(".ttf")) {
 					Font.loadFont(Files.newInputStream(fontPath), 10);
@@ -979,9 +1014,14 @@ public class App extends Application {
 
 	/** Trying to apply 'style.css' to application. **/
 	public static String getStylesheet(){
+		String stylefile = Main.getProperties().getString(
+				"interface.path-skin",
+				Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toString()
+		);
 		try {
-			return Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toUri().toURL().toString();
+			return new File(stylefile).toURI().toURL().toString();
 		} catch (Exception e){
+			Main.log(e);
 			return App.class.getResource("style.css").toExternalForm();
 		}
 	}
@@ -996,7 +1036,7 @@ public class App extends Application {
 		showThrowable(Main.getPluginProxy().getId(), e.getClass().toString(), e.getMessage(), Arrays.asList(e.getStackTrace()));
 	}
 
-	static void showThrowable(String sender, String className, String message, List<Object> stacktrace) {
+	static void showThrowable(String sender, String className, String message, List<StackTraceElement> stacktrace) {
 		if (!Main.getProperties().getBoolean("error-alerting", true)) return;
 
 		Alert alert = new Alert(Alert.AlertType.ERROR);

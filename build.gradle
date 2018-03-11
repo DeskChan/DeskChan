@@ -72,7 +72,7 @@ dependencies {
 }
 
 ext.appName = 'DeskChan'
-project.version = '0.2.7'
+project.version = '0.2.8'
 
 mainClassName = 'info.deskchan.core.MainKt'
 
@@ -114,6 +114,16 @@ try {
 ext.appVersion = "$version-r$gitCommitCount"
 ext.fullAppName = "$appName-$appVersion"
 
+allprojects {
+	tasks.withType(JavaCompile) {
+		options.encoding = 'UTF-8'
+	}
+
+	tasks.withType(Test) {
+		systemProperty "file.encoding", "UTF-8"
+	}
+}
+
 // At first, the application is assembled to this directory. And only then it packs into a zip file.
 ext.launch4jDir = "${buildDir}/launch4j"
 
@@ -125,7 +135,7 @@ buildConfig {
 	version = appVersion
 	buildConfigField 'String', 'GIT_COMMIT_HASH', gitCommitHash
 	buildConfigField 'String', 'GIT_BRANCH_NAME', gitBranchName
-	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('yyyy-MM-dd HH:mm:ssZ')
+	buildConfigField 'String', 'BUILD_DATETIME', new Date().format('HH:mm dd/MM/yyyy')
 	buildConfigField 'String', 'PROJECT_SITE_URL', 'http://deskchan.info/'
 	buildConfigField 'String', 'AUTHOR', 'DeskChan Project <support@deskchan.info> (http://deskchan.info)'
 }

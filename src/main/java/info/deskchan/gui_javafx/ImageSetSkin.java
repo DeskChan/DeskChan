@@ -19,7 +19,7 @@ class ImageSetSkin implements Skin {
 			{"angry", "serious", "rage", "cry", "sad"},
 			{"sceptic", "facepalm", "despair", "disgusted"},
 			{"shy", "sorry", "tired"},
-			{"scared", "shocked", "tired"},
+			{"scared", "shocked", "tired", "surprised"},
 			{"love", "bounty"},
 			{"waiting", "normal"}
 	};

@@ -13,6 +13,7 @@ class ControlsWindow extends TemplateBox {
         this.controls = controls;
         getDialogPane().setContent(controls.createControlsPane(this));
         setResizable(true);
+        setId(controls.getFullName());
 
         customWindowOpened.add(this);
         requestFocus();
@@ -27,6 +28,7 @@ class ControlsWindow extends TemplateBox {
         getDialogPane().getScene().getWindow().setOnHiding(event -> {
             customWindowOpened.remove(this);
         });
+
     }
 
     public static void closeCustomWindow(ControlsPanel panel){

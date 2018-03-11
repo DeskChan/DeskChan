@@ -168,7 +168,7 @@ public class StandardEmotionsController implements EmotionsController{
 				int index = CharacterFeatures.getFeatureIndex(feature);
 				if (index < 0) continue;
 				try {
-					int force = obj.getJSONObject(feature).getInt("force");
+					int force = obj.getInt(feature);
 					influencesList.add(new int[]{index, force});
 				} catch (Exception e){ }
 			}

@@ -12,12 +12,12 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -73,6 +73,9 @@ class OptionsDialog extends TemplateBox {
 		Main.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				if (instance == null) return;
+				//for (PluginListItem item : instance.pluginsList.getItems())
+				//	System.out.println(item.id.equals(data) + " " + item.blacklisted);
+
 				instance.pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
 			});
 		});
@@ -81,8 +84,13 @@ class OptionsDialog extends TemplateBox {
 	OptionsDialog() {
 		super(Main.getString("deskchan_options"));
 		instance = this;
+		setId("options-window");
 
+		// Left panel
+
+		/// Menu
 		tabListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		tabListView.setId("options-menu");
 		initTabs();
 
 		tabListView.getSelectionModel().selectedIndexProperty().addListener(
@@ -97,9 +105,36 @@ class OptionsDialog extends TemplateBox {
 				}
 		);
 
-		HBox historyLinks = new HBox();
+		/// Info
+		Hyperlink siteLink = new Hyperlink(CoreInfo.get("PROJECT_SITE_URL"));
+		siteLink.setOnAction(event -> {
+			App.getInstance().getHostServices().showDocument(siteLink.getText());
+		});
+
+		FlowPane infoPane = new FlowPane();
+		infoPane.setId("info-pane");
+		infoPane.getChildren().addAll(
+				getFlowPane("build-name", new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"))),
+				getFlowPane("about-site", new Label(Main.getString("about.site")), siteLink),
+				getFlowPane("about-git_branch", new Label(Main.getString("about.git_branch")),
+						new Label(CoreInfo.get("GIT_BRANCH_NAME"))
+				),
+				getFlowPane("about-build_datetime", new Label(Main.getString("about.build_datetime")),
+						new Label(CoreInfo.get("BUILD_DATETIME"))
+				),
+				getFlowPane("about-git_commit_hash", new Label(Main.getString("about.git_commit_hash")),
+						new ControlsPanel.Hint(CoreInfo.get("GIT_COMMIT_HASH"), Main.getString("open"))
+				)
+		);
+		infoPane.setFocusTraversable(false);
+
+		// Pagination
+		FlowPane historyLinks = new FlowPane();
+		historyLinks.setId("pagination");
 		prevLink = new Hyperlink(Main.getString("back"));
+		prevLink.setId("back");
 		nextLink = new Hyperlink(Main.getString("forward"));
+		nextLink.setId("forward");
 		prevLink.setOnAction((event) -> {
 			if (panelIndex > 0){
 				panelIndex--;
@@ -120,22 +155,19 @@ class OptionsDialog extends TemplateBox {
 
 		historyLinks.getChildren().addAll(prevLink, nextLink);
 
-		GridPane gridPane = new GridPane();
-		ColumnConstraints column1 = new ColumnConstraints();
-		gridPane.add(tabListView, 0, 0, 1, 2);
-		column1.setPercentWidth(30);
+        // Main grid
+		StackPane stackPane = new StackPane();
+		stackPane.setId("options-grid");
+		stackPane.getChildren().addAll(tabListView, historyLinks, infoPane, controlsPane);
 
-		ColumnConstraints column2 = new ColumnConstraints();
-		gridPane.add(historyLinks, 1, 0, 1, 1);
-		gridPane.add(controlsPane, 1, 1, 1, 1);
-		column2.setPercentWidth(70);
+		//controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
+		controlsPane.setId("controls");
 
-		controlsPane.maxHeightProperty().bind(gridPane.heightProperty());
+		getDialogPane().setContent(stackPane);
 
-		gridPane.getColumnConstraints().addAll(column1, column2);
-		getDialogPane().setContent(gridPane);
-
-		getDialogPane().setMinHeight(500 * App.getInterfaceScale());
+		// Set size
+		//getDialogPane().setMinHeight(500 * App.getInterfaceScale());
+		//getDialogPane().setMinWidth(900 * App.getInterfaceScale());
 
 		setOnHiding(event -> {
 			Main.getPluginProxy().sendMessage("core:save-all-properties", null);
@@ -154,14 +186,14 @@ class OptionsDialog extends TemplateBox {
 			put("type",  "Button");
 			put("label",  Main.getString("skin.options"));
 			put("value",  Main.getString("open"));
-			put("dstPanel", Main.getPluginProxy().getId() + ":" + Main.getString("skin"));
+			put("dstPanel", Main.getPluginProxy().getId() + "-skin");
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_options");
 			put("type",  "Button");
 			put("label",  Main.getString("balloon.options"));
 			put("value",  Main.getString("open"));
-			put("dstPanel", Main.getPluginProxy().getId() + ":" + Main.getString("balloon"));
+			put("dstPanel", Main.getPluginProxy().getId() + "-balloon");
 		}});
 		/*list.add(new HashMap<String, Object>() {{
 			put("id",    "interface_size");
@@ -187,11 +219,19 @@ class OptionsDialog extends TemplateBox {
 			put("value",  TemplateBox.checkForceOnTop());
 		}});
 		list.add(new HashMap<String, Object>() {{
+			put("id",    "interface-skin");
+			put("type",  "FileField");
+			put("label",  Main.getString("interface.path-skin"));
+			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
+			put("msgTag","gui:set-interface-style");
+			put("value",  Main.getProperties().getString("interface.path-skin"));
+		}});
+		list.add(new HashMap<String, Object>() {{
 			put("id",    "layer_mode");
 			put("type",  "ComboBox");
 			put("hint",   Main.getString("help.layer_mode"));
 			put("label",  Main.getString("character.layer_mode"));
-			List<Object> values=FXCollections.observableList(new ArrayList<>());
+			List<Object> values = FXCollections.observableList(new ArrayList<>());
 			values.addAll(OverlayStage.getStages());
 			int sel = -1;
 			OverlayStage.LayerMode mode = OverlayStage.getCurrentStage();
@@ -219,7 +259,20 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), ControlsPanel.PanelType.TAB, list).set();
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "language");
+			put("type",  "ComboBox");
+			put("msgTag","gui:set-language");
+			put("label",  Main.getString("language"));
+			List<Object> values = FXCollections.observableList(new ArrayList<>());
+			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+				values.add(locale.getValue());
+				if(Locale.getDefault().getLanguage().equals(locale.getKey()))
+					put("value", values.size()-1);
+			}
+			put("values", values);
+		}});
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", ControlsPanel.PanelType.TAB, list).set();
 
 		characterOptions();
 		balloonOptions();
@@ -263,7 +316,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Balloon' options submenu. **/
@@ -381,7 +434,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-balloon-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), "balloon", ControlsPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -393,7 +446,7 @@ class OptionsDialog extends TemplateBox {
 
 		commandsTable.setEditable(true);
 		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
-		commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
+		//commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
 
 		// Events column
 		TableColumn eventCol = new TableColumn(Main.getString("events"));
@@ -508,8 +561,9 @@ class OptionsDialog extends TemplateBox {
 		// Adding buttons to form
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
 		commandTab.setBottom(buttons);
+		buttons.setId("controls-bottom-buttons");
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -522,7 +576,7 @@ class OptionsDialog extends TemplateBox {
 
 		commandsTable.setEditable(true);
 		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
-		commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
+		//commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
 
 		// Events column
 		TreeTableColumn eventCol = new TreeTableColumn(Main.getString("events"));
@@ -618,14 +672,15 @@ class OptionsDialog extends TemplateBox {
 		// 'Add' button
 		Button addButton = new Button(Main.getString("add"));
 		addButton.setOnAction(event -> {
-			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), ControlsPanel.PanelType.WINDOW, commandTab).show();
+			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), "add", ControlsPanel.PanelType.WINDOW, commandTab).show();
 		});
 
 		// Adding buttons to form
 		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
+		buttons.setId("controls-bottom-buttons");
 		commandTab.setBottom(buttons);
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), ControlsPanel.PanelType.TAB, commandTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
 	private void fillTreeTable(TreeItem<CommandItem> root){
@@ -669,7 +724,7 @@ class OptionsDialog extends TemplateBox {
 		BorderPane pluginsTab = new BorderPane();
 		pluginsTab.setCenter(pluginsList);
 
-		pluginsList.minWidthProperty().bind(pluginsTab.prefWidthProperty());
+		//pluginsList.minWidthProperty().bind(pluginsTab.prefWidthProperty());
 
 		// Setting row style
 		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
@@ -702,6 +757,7 @@ class OptionsDialog extends TemplateBox {
 
 		// Load button
 		HBox hbox = new HBox();
+		hbox.setId("controls-bottom-buttons");
 		Button button = new Button(Main.getString("load"));
 		button.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
@@ -719,7 +775,7 @@ class OptionsDialog extends TemplateBox {
 		});
 		hbox.getChildren().add(button);
 		pluginsTab.setBottom(hbox);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), ControlsPanel.PanelType.TAB, pluginsTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), "plugins", ControlsPanel.PanelType.TAB, pluginsTab).set();
 
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
@@ -756,7 +812,7 @@ class OptionsDialog extends TemplateBox {
 			}
 			alternativesTable.setRoot(root);
 		});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), ControlsPanel.PanelType.TAB, alternativesTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), "alternatives", ControlsPanel.PanelType.TAB, alternativesTab).set();
 
 		/// debug
 		BorderPane debugTab = new BorderPane();
@@ -783,51 +839,11 @@ class OptionsDialog extends TemplateBox {
 			instance.show();
 		});
 
-		debugTab.setBottom(new HBox(button, reloadButton));
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), ControlsPanel.PanelType.TAB, debugTab).set();
+		HBox buttons = new HBox(button, reloadButton);
+		buttons.setId("controls-bottom-buttons");
+		debugTab.setBottom(buttons);
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.TAB, debugTab).set();
 
-
-		/// about
-		gridPane = new GridPane();
-		gridPane.getStyleClass().add("grid-pane");
-		Label label = new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"));
-		label.setFont(new Font(LocalFont.defaultFont.getName(), LocalFont.defaultFont.getSize() * 2));
-		gridPane.add(label, 0, 0, 2, 1);
-		gridPane.add(new Label(Main.getString("about.site")), 0, 1);
-		Hyperlink hyperlink = new Hyperlink();
-		hyperlink.setText(CoreInfo.get("PROJECT_SITE_URL"));
-		hyperlink.setOnAction(event -> {
-			App.getInstance().getHostServices().showDocument(hyperlink.getText());
-		});
-		gridPane.add(hyperlink, 1, 1);
-		gridPane.add(new Label(Main.getString("about.git_branch")), 0, 2);
-		gridPane.add(new Label(CoreInfo.get("GIT_BRANCH_NAME")), 1, 2);
-		gridPane.add(new Label(Main.getString("about.git_commit_hash")), 0, 3);
-		gridPane.add(new Label(CoreInfo.get("GIT_COMMIT_HASH")), 1, 3);
-		gridPane.add(new Label(Main.getString("about.build_datetime")), 0, 4);
-		gridPane.add(new Label(CoreInfo.get("BUILD_DATETIME")), 1, 4);
-		gridPane.add(new Label(Main.getString("Language")), 0, 5);
-		ComboBox<String> locales=new ComboBox<>();
-		for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-			locales.getItems().add(locale.getValue());
-			if(Locale.getDefault().getLanguage().equals(locale.getKey()))
-				locales.getSelectionModel().select(locale.getValue());
-		}
-		locales.valueProperty().addListener( (obj,oldValue,newValue) -> {
-			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-				if(locale.getValue().equals(newValue)){
-					TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
-					dialog.setContentText(Main.getString("info.restart"));
-					dialog.requestFocus();
-					dialog.show();
-					Locale.setDefault(new Locale(locale.getKey()));
-					Main.getProperties().put("locale", locale.getKey());
-					break;
-				}
-			}
-		});
-		gridPane.add(locales, 1, 5);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("about"), ControlsPanel.PanelType.TAB, gridPane).set();
 
 		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
 		/// Creating top tabs from registered tabs list
@@ -851,7 +867,7 @@ class OptionsDialog extends TemplateBox {
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), ControlsPanel.PanelType.PANEL, list).update();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).update();
 
 	}
 
@@ -868,7 +884,7 @@ class OptionsDialog extends TemplateBox {
 		if (instance == null) return;
 		for(PluginListItem pli : instance.pluginsList.getItems()){
 			if(pli.id.equals(panel.owner)) {
-				instance.pluginsList.getItems().remove(pli);
+				pli.updateOptionsSubMenu();
 				return;
 			}
 		}
@@ -876,25 +892,23 @@ class OptionsDialog extends TemplateBox {
 
 	static void unregisterTab(ControlsPanel panel) {
 		if (instance == null) return;
-		int index = instance.tabListView.getSelectionModel().getSelectedIndex();
 		instance.tabListView.getItems().remove(panel.name);
-		instance.tabListView.getSelectionModel().select(index);
 	}
 
 	static void unregisterSubmenu(ControlsPanel panel) {
 		if (instance == null) return;
 		for(PluginListItem pli : instance.pluginsList.getItems()){
 			if(pli.id.equals(panel.owner)) {
-				instance.pluginsList.getItems().remove(pli);
+				pli.updateOptionsSubMenu();
 				return;
 			}
 		}
 	}
+	private static ControlsPanel panelToOpen = null;
 
 	static void showPanel(ControlsPanel panel){
+		panelToOpen = panel;
 		open();
-		instance.setPanel(panel);
-		instance.appendToHistory(panel);
 	}
 
 	private void setPanel(ControlsPanel panel){
@@ -903,8 +917,8 @@ class OptionsDialog extends TemplateBox {
 			if (panel == null) return;
 
 			Pane pane = panel.createControlsPane(instance);
-			pane.prefHeightProperty().bind(controlsPane.heightProperty());
-			pane.prefWidthProperty().bind(controlsPane.widthProperty());
+			//pane.prefHeightProperty().bind(controlsPane.heightProperty());
+			//pane.prefWidthProperty().bind(controlsPane.widthProperty());
 			controlsPane.getChildren().add(pane);
 		});
 	}
@@ -931,6 +945,12 @@ class OptionsDialog extends TemplateBox {
 				Stage stage = (Stage) optionsDialog.getDialogPane().getScene().getWindow();
 				stage.setIconified(false);
 				optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
+
+				if (panelToOpen != null){
+					optionsDialog.setPanel(panelToOpen);
+					optionsDialog.appendToHistory(panelToOpen);
+					panelToOpen = null;
+				}
 			});
 		});
 	}
@@ -942,7 +962,7 @@ class OptionsDialog extends TemplateBox {
 
 		/** List of plugins cannot be simply removed. **/
 		private static final String[] importantPlugins = new String[]{
-				"core", "core_utils", Main.getPluginProxy().getId()
+				"core", "core_utils", Main.getPluginProxy().getId(), "talking_system"
 		};
 
 		String id;
@@ -970,6 +990,9 @@ class OptionsDialog extends TemplateBox {
 			// Filling row content
 			hbox.getChildren().clear();
 			hbox.getChildren().addAll(label, pane, menuBox);
+
+			label.setId("pluginName");
+			menuBox.setId("pluginMenuBox");
 
 			// Adding tooltip with plugin information
 			try {
@@ -1011,13 +1034,13 @@ class OptionsDialog extends TemplateBox {
 			blacklistPluginButton = new Button(blacklisted ? locked : unlocked);
 			blacklistPluginButton.setTooltip(new Tooltip(Main.getString("info.blacklist-plugin")));
 			blacklistPluginButton.setOnAction(event -> {
-				for(String pluginId : importantPlugins) {
-					if (pluginId.equals(id)) {
-						if (alert())
-							item.toggleBlacklisted();
-						return;
+				if (!blacklisted)
+					for(String pluginId : importantPlugins) {
+						if (pluginId.equals(id)) {
+							if (alert()) item.toggleBlacklisted();
+							return;
+						}
 					}
-				}
 				item.toggleBlacklisted();
 			});
 
@@ -1220,5 +1243,11 @@ class OptionsDialog extends TemplateBox {
 
 		JSONObject json = new JSONObject(text);
 		return json.toMap();
+	}
+
+	private static FlowPane getFlowPane(String id, Node... items){
+		FlowPane pane = new FlowPane(items);
+		pane.setId(id);
+		return pane;
 	}
 }

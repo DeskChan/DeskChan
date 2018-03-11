@@ -2,7 +2,7 @@
      "56": [ "LEFT ALT", "ALT", "LEFTALT", "АЛТ", "ЛЕВЫЙАЛТ" ],
    "3640": [ "RIGHT ALT", "RIGHTALT", "ПРАВЫЙАЛТ" ],
       "1": [ "ESC", "ESCAPE", "ЕСК", "ВЫХОД", "ЕСКЕЙП" ],
- "  3639": [ "PRINT SCREEN", "PRINTSCRN", "PRNTSCRN", "PRTSCRN", "PRTSCN", "PRTSC", "PRSC", "PRTSCR", "PRINT", "PRINTSCREN", "ПРИНТ", "ПРИНТСКРИН", "СКРИН" ],
+   "3639": [ "PRINT SCREEN", "PRINTSCRN", "PRNTSCRN", "PRTSCRN", "PRTSCN", "PRTSC", "PRSC", "PRTSCR", "PRINT", "PRINTSCREN", "ПРИНТ", "ПРИНТСКРИН", "СКРИН" ],
      "70": [ "SCROLL LOCK", "SCROLOCK", "SCROL", "СКРОЛ", "СКРОЛ", "СКРОЛОК" ],
    "3653": [ "PAUSE", "BREAK", "PAUSEBREAK", "ПАУЗА", "БРЕЙК", "ПАУЗБРЕЙК" ],
      "41": [ "~", "`",  "Ё", "TILDE", "ТИЛДА" ],

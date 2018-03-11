@@ -130,13 +130,11 @@ public class DefaultTagsListeners {
 
             /// sleepTime
             try {
-                tag = (Collection) quote.get("sleepTime");
-
-                if (tag != null) {
-                    Calendar left = Calendar.getInstance(), right = Calendar.getInstance();
+                if (quote.containsKey("sleepTime")) {
+                    Calendar left = Calendar.getInstance();
                     while(left.get(Calendar.HOUR_OF_DAY) != 22) left.add(Calendar.HOUR_OF_DAY, -1);
-                    left.set(Calendar.MINUTE, 0);
-                    while(right.get(Calendar.HOUR_OF_DAY) != 4) left.add(Calendar.HOUR_OF_DAY, 1);
+                    Calendar right = (Calendar) left.clone();
+                    while(right.get(Calendar.HOUR_OF_DAY) != 4) right.add(Calendar.HOUR_OF_DAY, 1);
                     right.set(Calendar.MINUTE, 0);
                     Calendar current = Calendar.getInstance();
                     if(current.getTimeInMillis() < left.getTimeInMillis() ||

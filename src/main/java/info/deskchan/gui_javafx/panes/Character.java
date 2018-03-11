@@ -154,6 +154,8 @@ public class Character extends MovablePane {
 	}
 
 	private void updateImage(boolean reloadImage) {
+		double oldWidth = imageView.getFitWidth();
+		double oldHeight = imageView.getFitHeight();
 	    if (reloadImage) {
             imageView.setImage(getImage());
         }
@@ -162,11 +164,8 @@ public class Character extends MovablePane {
 	    	setSkin(null);
 	    	return;
 		}
-		double oldWidth = imageView.getFitWidth();
-		double oldHeight = imageView.getFitHeight();
 		double newWidth = imageView.getWidth() * scaleFactor;
 		double newHeight = imageView.getHeight() * scaleFactor;
-
 		imageView.setFitWidth(newWidth);
 		imageView.setFitHeight(newHeight);
 		resize(newWidth, newHeight);
@@ -543,8 +542,10 @@ public class Character extends MovablePane {
 			mainImage.setImage(image);
 			mainImage.setOpacity(0);
 			secondImage.setOpacity(1);
+			if (timeline != null)
+				timeline.stop();
 			timeline = new Timeline(new KeyFrame(Duration.millis(20), this));
-			timeline.setCycleCount(Timeline.INDEFINITE);
+			timeline.setCycleCount(10);
 			timeline.play();
 		}
 
@@ -553,10 +554,8 @@ public class Character extends MovablePane {
 			double opacity = mainImage.getOpacity() + 0.1;
 			mainImage.setOpacity(opacity);
 			secondImage.setOpacity(1 - opacity);
-			if (opacity >= 1){
+			if (opacity >= 1)
 				secondImage.setImage(null);
-				timeline.stop();
-			}
 		}
 
 		private void swap(){
@@ -568,35 +567,27 @@ public class Character extends MovablePane {
 		public Image getImage(){ return mainImage.getImage(); }
 
 		public double getWidth(){
-			return Math.max(
-				  mainImage.getImage() != null ?   mainImage.getImage().getWidth() : 0,
-				secondImage.getImage() != null ? secondImage.getImage().getWidth() : 0
-			);
+			return mainImage.getImage() != null ? mainImage.getImage().getWidth() : 0;
 		}
 
 		public double getHeight(){
-			return Math.max(
-				  mainImage.getImage() != null ?   mainImage.getImage().getHeight() : 0,
-				secondImage.getImage() != null ? secondImage.getImage().getHeight() : 0
-			);
+			return mainImage.getImage() != null ?   mainImage.getImage().getHeight() : 0;
 		}
 
 		public double getFitWidth(){
-			return Math.max(mainImage.getFitWidth(), secondImage.getFitWidth());
+			return mainImage.getFitWidth();
 		}
 
 		public double getFitHeight(){
-			return Math.max(mainImage.getFitHeight(), secondImage.getFitHeight());
+			return mainImage.getFitHeight();
 		}
 
 		public void setFitWidth(double width){
 			mainImage.setFitWidth(width);
-			secondImage.setFitWidth(width);
 		}
 
 		public void setFitHeight(double height){
 			mainImage.setFitHeight(height);
-			secondImage.setFitHeight(height);
 		}
 
 	}

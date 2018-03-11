@@ -11,7 +11,82 @@
 }
 
 .grid-pane {
-    -fx-hgap: 6px;
-    -fx-vgap: 6px;
-    -fx-padding: 10px;
+    -fx-hgap: 2px;
+    -fx-vgap: 2px;
+    -fx-padding: 5px;
+}
+
+#options-menu {
+    -fx-background-color: transparent;
+    -fx-max-height: 30em;
+    -fx-max-width: 15em;
+    -fx-translate-x: 1em;
+    -fx-translate-y: 2em;
+}
+
+#options-menu .list-cell:empty {
+    -fx-opacity: 0;
+}
+
+.options-window {
+	-fx-min-width: 70em;
+	-fx-min-height: 40em;
+}
+
+.dialog-pane > *{
+    -fx-alignment: top-left;
+}
+
+.grid-pane {
+    -fx-hgap: 1em;
+    -fx-vgap: 1em;
+    -fx-padding: 1em;
+    -fx-background-color: transparent;
+}
+
+#pagination  {
+	-fx-translate-x: 18em;
+}
+
+#controls {
+	-fx-translate-x: 18em;
+    -fx-translate-y: 2em;
+	-fx-max-height: 30em;
+	-fx-pref-width: 50em;
+	-fx-max-width: 50em;
+
+}
+.scroll-pane, .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+#controls BorderPane {
+	-fx-max-height: 30em;
+	-fx-pref-width: 50em;
+	-fx-max-width: 50em;
+		-fx-border-color: #DDD;
+}
+#controls, #controls BorderPane, #controls BorderPane .scroll-pane {
+    -fx-background-color: #FAFAFA;
+}
+
+
+#info-pane {
+    -fx-max-height: 3em;
+    -fx-max-width: 15em;
+    -fx-padding: 10;
+	-fx-translate-x: 0.5em;
+	-fx-translate-y: 22em;
+	-fx-vgap: 1em;
+	-fx-orientation: horizontal;
+}
+#info-pane > FlowPane {
+    -fx-pref-width: 15em;
+    -fx-hgap: 1em;
+}
+#info-pane #about-git_commit_hash .hint > .text{
+    -fx-fill: #0096c9;
+}
+#info-pane #about-git_commit_hash .hint > .text:hover{
+    -fx-fill: blue;
+    -fx-underline: true;
 }

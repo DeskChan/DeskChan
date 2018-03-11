@@ -100,7 +100,10 @@ public class Main implements Plugin {
         pluginProxy.addMessageListener("chat:open", (sender, tag, data) -> {
             chatIsOpened = true;
             pluginProxy.sendMessage("DeskChan:request-say", "START_DIALOG");
-            setupChat();
+            pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+                put("id", "chat");
+                put("action", "show");
+            }});
         });
 
         pluginProxy.sendMessage("core:add-command", new HashMap(){{
@@ -166,14 +169,15 @@ public class Main implements Plugin {
                 history.add(new ChatPhrase(text, 0));
                 if (!chatIsOpened) return;
 
-                pluginProxy.sendMessage("gui:update-custom-window", new HashMap<String, Object>() {{
+                pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+                    put("id", "chat");
+                    put("action", "update");
                     LinkedList<HashMap<String, Object>> list = new LinkedList<>();
                     list.add(new HashMap<String, Object>() {{
                         put("id", "textname");
                         put("value", historyToChat());
                     }});
                     put("controls", list);
-                    put("name", pluginProxy.getString("chat"));
                 }});
             });
         });
@@ -253,9 +257,38 @@ public class Main implements Plugin {
             put("msgTag", "chat:open");
         }});
 
-        log("setup chat window completed");
-        setupChat();
+        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+            LinkedList<HashMap<String, Object>> list = new LinkedList<>();
+            list.add(new HashMap<String, Object>() {{
+                put("id", "options");
+                put("type", "Button");
+                put("value", pluginProxy.getString("options"));
+                put("dstPanel", pluginProxy.getId() + "-options");
+            }});
+            list.add(new HashMap<String, Object>() {{
+                put("id", "name");
+                put("type", "TextField");
+                put("width", 500d);
+                put("enterTag","chat:user-said");
+            }});
+            list.add(new HashMap<String, Object>() {{
+                put("id", "textname");
+                put("type", "CustomizableTextArea");
+                put("width", 500d);
+                put("height", 300d);
+                put("value", historyToChat());
+            }});
+            put("controls", list);
+            put("name", pluginProxy.getString("chat"));
+            put("id", "chat");
+            put("type", "window");
+            put("onClose","chat:closed");
+            put("action", "set");
+        }});
+
         setupOptions();
+        log("setup chat window completed");
+
         return true;
     }
 
@@ -282,38 +315,34 @@ public class Main implements Plugin {
     /** Chat drawing. **/
     void setupChat() {
         if(!chatIsOpened) return;
-        pluginProxy.sendMessage("gui:show-custom-window", new HashMap<String, Object>() {{
+        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+            put("id", "chat");
+            put("action", "update");
             LinkedList<HashMap<String, Object>> list = new LinkedList<>();
             list.add(new HashMap<String, Object>() {{
                 put("id", "options");
-                put("type", "Button");
                 put("value", pluginProxy.getString("options"));
-                put("dstPanel", pluginProxy.getId() + ":" + pluginProxy.getString("options"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "name");
-                put("type", "TextField");
-                put("width", 500d);
-                put("enterTag","chat:user-said");
+                put("value", "");
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "textname");
-                put("type", "CustomizableTextArea");
-                put("width", 500d);
-                put("height", 300d);
                 put("value", historyToChat());
             }});
             put("controls", list);
-            put("name",pluginProxy.getString("chat"));
-            put("onClose","chat:closed");
         }});
     }
 
     /** Options window drawing. **/
     void setupOptions(){
-        pluginProxy.sendMessage("gui:setup-options-submenu", new HashMap<String, Object>() {{
+        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+            put("id", "options");
             put("name", pluginProxy.getString("options"));
             put("msgTag", "chat:save-options");
+            put("type", "submenu");
+            put("action", "set");
             List<HashMap<String, Object>> list = new LinkedList<>();
             list.add(new HashMap<String, Object>() {{
                 put("id", "fixer");

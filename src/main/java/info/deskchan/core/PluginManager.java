@@ -214,7 +214,8 @@ public class PluginManager {
 					try {
 						listener.handleMessage(sender, tag, data);
 					} catch (Throwable e) {
-						log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
+						if (!tag.equals("core-events:error"))
+							log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
 					}
 				}
 			};
@@ -367,6 +368,12 @@ public class PluginManager {
 			return true;
 		}
 
+		try {
+			loadPluginByPackageName("info.deskchan." + name);
+			return true;
+		} catch (Throwable e) { }
+
+
 		// 2. If the plugin can be found in the plugins directory, it's loaded.
 		Path path = getDefaultPluginDirPath(name);
 
@@ -434,6 +441,7 @@ public class PluginManager {
 			}
 			logStream = null;
 		}
+		System.exit(0);
 	}
 
 	/** Get list of plugins. **/
