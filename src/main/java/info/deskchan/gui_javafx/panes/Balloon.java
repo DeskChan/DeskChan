@@ -224,7 +224,7 @@ public class Balloon extends MovablePane {
             try {
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder builder = factory.newDocumentBuilder();
-                return builder.parse(path);
+                return builder.parse(new File(path).toURI().toURL().toString());
             } catch (Exception e) {
                 Main.log(e);
                 return null;
