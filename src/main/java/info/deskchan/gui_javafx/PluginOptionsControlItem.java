@@ -223,6 +223,7 @@ interface PluginOptionsControlItem {
 
 		protected void event(String tag){
 			currentText.setValue(getValue());
+			if (tag != null)
 			App.showWaitingAlert(() ->
 				Main.getPluginProxy().sendMessage(tag, getValue())
 			);

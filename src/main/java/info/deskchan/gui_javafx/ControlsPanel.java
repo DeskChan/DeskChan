@@ -225,9 +225,8 @@ public class ControlsPanel {
 	}
 
 	Pane createControlsPane(TemplateBox parent) {
-		parentWindow = parent;
 
-		if (panelPane == null){
+		if (panelPane == null || parent != parentWindow){
 			GridPane gridPane = new GridPane();
 			gridPane.getStyleClass().add("grid-pane");
 
@@ -280,6 +279,8 @@ public class ControlsPanel {
 			}
 			panelPane = gridPane;
 		}
+
+		parentWindow = parent;
 
 		wrap();
 

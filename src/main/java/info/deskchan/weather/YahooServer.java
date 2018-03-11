@@ -63,22 +63,27 @@ public class YahooServer implements WeatherServer{
 
         now=null;
         int i;
-        for(i=0;i<limit;i++) forecasts[i]=null;
+        for(i=0; i<limit; i++) forecasts[i]=null;
 
         JSONObject json = getQuery();
-        if(json==null) return;
+        if(json == null) return;
 
         try{
-            json=json.getJSONObject("query");
+            json = json.getJSONObject("query");
             if(!json.has("results") || !(json.get("results") instanceof JSONObject)) return;
-            json=json.getJSONObject("results");
-            json=json.getJSONObject("channel");
-            json=json.getJSONObject("item");
+            json = json.getJSONObject("results");
+            json = json.getJSONObject("channel");
+            json = json.getJSONObject("item");
             Calendar cal = Calendar.getInstance();
             cal.setTime(new Date());
-            JSONArray array=json.getJSONArray("forecast");
-            for(i=0;i<limit;i++){
-                forecasts[i]=new DayForecast((Calendar) cal.clone(),array.getJSONObject(i).getInt("high"),array.getJSONObject(i).getInt("low"),getWeatherString(array.getJSONObject(i).getInt("code")));
+            JSONArray array = json.getJSONArray("forecast");
+            for(i=0; i<limit && i<array.length(); i++){
+                JSONObject dayForecast = array.getJSONObject(i);
+                forecasts[i] = new DayForecast((Calendar) cal.clone(),
+                        dayForecast.getInt("high"),
+                        dayForecast.getInt("low"),
+                        getWeatherString(dayForecast.getInt("code"))
+                );
                 cal.add(Calendar.DATE,1);
             }
             json=json.getJSONObject("condition");
@@ -86,6 +91,7 @@ public class YahooServer implements WeatherServer{
             lastUpdate=new Date();
         } catch (Exception e){
             Main.log("Error while parsing data from weather server");
+            Main.log(json.toString());
             Main.log(e);
             return;
         }
