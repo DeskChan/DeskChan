@@ -185,6 +185,7 @@ task assembleProxyInterface(type: Jar, group: 'desk-chan') {
 		include 'info/deskchan/core/PluginProxyInterface.class'
 		include 'info/deskchan/core/Plugin.class'
 		include 'info/deskchan/core/PluginProperties.class'
+		include 'info/deskchan/core/LoggerLevel.class'
 	}
 	manifest {
 		attributes 'Main-Class': "info.deskchan.${baseName}.Main", 'Implementation-Version': appVersion
