@@ -182,6 +182,10 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         sendMessage("core-events:log", mapOf("message" to text))
     }
 
+    override fun log(text: String, level: LoggerLevel) {
+        sendMessage("core-events:log", mapOf("message" to text,"level" to level))
+    }
+
     override fun log(e: Throwable) {
         var t: Throwable? = e
         while (t?.cause != null) t = t.cause

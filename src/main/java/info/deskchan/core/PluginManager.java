@@ -643,12 +643,26 @@ public class PluginManager {
 
 	/* Logging */
 
-	/** Log stack and text of error thrown to file and console.
+	/** Log info to file and console.
 	 * You cannot call this method, use your plugin's proxy. **/
 
-	static void log(String id, String message) {
+	static void log(String id, String message){
+		log(id,message,LoggerLevel.INFO);
+	}
+
+	static void log(String id, String message,LoggerLevel level) {
 		String text = id + ": " + message;
-		System.err.println(text);
+
+		if (level.equals(LoggerLevel.ERROR)){
+			System.err.println(text);
+			writeStringToLogStream(text);
+		} else if (level.getValue()>=LoggerLevel.WARN.getValue()&&level.getValue()<=LoggerLevel.TRACE.getValue()){
+			System.out.println(text);
+			writeStringToLogStream(text);
+		}
+	}
+
+	static void writeStringToLogStream(String text){
 		if (logStream != null) {
 			try {
 				logStream.write((text + "\n").getBytes("UTF-8"));
@@ -659,10 +673,11 @@ public class PluginManager {
 		}
 	}
 
+
 	static void log(String id, String message, List<Object> stacktrace) {
-		log(id, message);
+		log(id, message,LoggerLevel.ERROR);
 		for (Object line : stacktrace) {
-			log(id, "   at " + line.toString());
+			log(id, "   at " + line.toString(),LoggerLevel.ERROR);
 		}
 	}
 
