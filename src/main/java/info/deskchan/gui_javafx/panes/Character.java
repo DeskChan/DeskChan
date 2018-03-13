@@ -229,10 +229,10 @@ public class Character extends MovablePane {
      * Scales the image relatively. Unlike the usual resizeSprite(), this method
      * gets an old value of the scale factor and adds an increment to it.
      * Use a positive value to zoom in the image, or a negative one to zoom it out.
-     * @param scaleFactorIncrement a positive or negative float-point number
+     * @param scaleFactorIncrement a positive or negative float-point value in percentage
      */
 	public void resizeSkinRelatively(float scaleFactorIncrement) {
-		resizeSkin(scaleFactor + scaleFactorIncrement);
+		resizeSkin(scaleFactor * 100 + scaleFactorIncrement);
 	}
 
 	/**
@@ -256,10 +256,10 @@ public class Character extends MovablePane {
 	/**
 	 * Changes the value of the opacity of the image relatively.
 	 * Unlike the usual changeOpacity(), this method gets an old value of the scale factor and adds an increment to it.
-	 * @param opacityIncrement a positive or negative float-point number
+	 * @param opacityIncrement a positive or negative float-point value in percentage
 	 */
 	public void changeOpacityRelatively(float opacityIncrement) {
-		changeOpacity(skinOpacity + opacityIncrement);
+		changeOpacity(skinOpacity * 100 + opacityIncrement);
 	}
 
 	public void setColorFilter(Color color) {
