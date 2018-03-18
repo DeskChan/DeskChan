@@ -551,7 +551,7 @@ public class PluginManager {
 			for(File file : files){
 				if(file.isFile()){
 					if(FilenameUtils.getBaseName(file.toString()).equals(name)){
-						return file.toPath();
+						return Paths.get(FilenameUtils.getFullPath(file.toString()));
 					}
 				} else if(file.isDirectory()){
 					if(file.getName().equals(name)){
