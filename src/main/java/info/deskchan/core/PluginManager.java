@@ -353,7 +353,7 @@ public class PluginManager {
 		try {
 			return loadPluginByPath(path);
 		} catch (Throwable e) {
-			log(e);
+			log(e.getMessage());
 		}
 		return false;
 	}
@@ -397,7 +397,11 @@ public class PluginManager {
 			if (files.length > 1) {
 				log("Too many plugins with similar names (" + name + ")!");
 			}
-			return loadPluginByPath(files[0].toPath());
+			try {
+				return loadPluginByPath(files[0].toPath());
+			} catch (Exception e){
+				log(e.getMessage());
+			}
 		}
 
 		// 5. Otherwise, the plugin cannot be loaded by name.
