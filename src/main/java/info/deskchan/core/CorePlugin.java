@@ -132,17 +132,19 @@ public class CorePlugin implements Plugin, MessageListener {
 			pluginProxy.sendMessage(sender, pluginDataDirPath.toString());
 		});
 
+
+		pluginProxy.addMessageListener("core-events:log", (sender, tag, data) -> {
+			Map mapLog = (Map) data;
+			LoggerLevel level = (LoggerLevel) mapLog.getOrDefault("level",LoggerLevel.INFO);
+			PluginManager.log(sender, (String) mapLog.get("message"),level);
+		});
+
 		/* Catch exceptions from other plugins.
 		 * Public message
 		 * Params: class: String!
 		 *         message: String!
 		 *         stacktrace: List<String>
 		 * Returns: None  */
-		pluginProxy.addMessageListener("core-events:log", (sender, tag, data) -> {
-			Map error = (Map) data;
-			PluginManager.log(sender, (String) error.get("message"));
-		});
-
 		pluginProxy.addMessageListener("core-events:error", (sender, tag, data) -> {
 			Map error = (Map) data;
 			String message = (error.get("class") != null ? error.get("class") : "") +
