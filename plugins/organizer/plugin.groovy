@@ -13,6 +13,8 @@ format = new SimpleDateFormat ('dd.MM.yyyy')
 def properties = getProperties()
 properties.load()
 
+sendMessage("talk:add-plugin-phrases", getPluginDirPath().resolve('organizer.phrases'))
+
 
 /* -- Menu setup -- */
 

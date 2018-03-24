@@ -155,15 +155,9 @@ class Database{
 
     def notify(Database.DatabaseEntry entry){
         def delay = entry.time - Calendar.instance.getTimeInMillis()
-        String message
-        if(entry.type==0)
-            message="Ты планировал событие \""+entry.eventId+"\". Оно наступило!"
-        else if(entry.type==1)
-            message="Ты ставил таймер \""+entry.eventId+"\". Он закончился!"
-        else return
 
         entry.timerId = instance.setTimer(delay, { sender, data ->
-            instance.sendMessage('DeskChan:say',[ 'text': message, 'timeout': 20, 'priority': 10000, 'partible': false ])
+            instance.sendMessage('DeskChan:request-say',[ 'purpose': "ALARM", 'timeout': 20, 'priority': 10000, 'partible': false ])
             if(entry.soundPath!=null)
                 instance.sendMessage('gui:play-sound',[ 'file': entry.soundPath, /*'count': 10*/ ])
             entries -= entry

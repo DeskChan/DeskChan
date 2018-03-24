@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<phrases>
+    <phrase>
+        <text>Динь-дон! Динь-дон! Будильник звонит!</text>
+        <purpose>ALARM</purpose>
+        <sprite>AUTO</sprite>
+        <range>
+            <impulsivity>2 | 4</impulsivity>
+            <energy>2 | 4</energy>
+            <attitude>0 | 4</attitude>
+        </range>
+    </phrase>
+    <phrase>
+        <text>Ты ставил напоминание. И вот я напоминаю.</text>
+        <purpose>SERIOUS</purpose>
+        <sprite>AUTO</sprite>
+        <range>
+            <manner>0 | 4</manner>
+        </range>
+    </phrase>
+    <phrase>
+        <text>Rise and shine, Мr. {userF}.</text>
+        <purpose>ALARM</purpose>
+        <sprite>NORMAL</sprite>
+        <interests>games</interests>
+    </phrase>
+    <phrase>
+        <text>Твой час настал, {user}.</text>
+        <purpose>ALARM</purpose>
+        <sprite>AUTO</sprite>
+    </phrase>
+    <phrase>
+        <text>Ой, что это тут звенит? Ты ничего не ставил, случаем?</text>
+        <purpose>ALARM</purpose>
+        <sprite>CURIOUS</sprite>
+        <range>
+            <empathy>1 | 4</empathy>
+            <impulsivity>0 | 4</impulsivity>
+            <experience>-4 | 0</experience>
+        </range>
+    </phrase>
+    <phrase>
+        <text>Нужный человек в нужном месте может перевернуть мир! Время настало!</text>
+        <purpose>ALARM</purpose>
+        <sprite>HAPPY</sprite>
+        <range>
+            <impulsivity>1 | 4</impulsivity>
+            <attitude>2 | 4</attitude>
+            <experience>-2 | 2</experience>
+        </range>
+    </phrase>
+    <phrase>
+        <text>Так, время пришло. Что ты там задумывал?</text>
+        <purpose>ALARM</purpose>
+        <sprite>SERIOUS</sprite>
+        <range>
+            <empathy>-4 | 1</empathy>
+            <selfconfidence>-1 | 4</selfconfidence>
+            <attitude>-4 | 1</attitude>
+        </range>
+    </phrase>
+    <phrase>
+        <text>Рота, подъём!</text>
+        <purpose>ALARM</purpose>
+        <sprite>ANGRY</sprite>
+        <range>
+            <impulsivity>3 | 4</impulsivity>
+            <selfconfidence>0 | 4</selfconfidence>
+        </range>
+    </phrase>
+</phrases>
