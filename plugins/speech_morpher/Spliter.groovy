@@ -1,8 +1,8 @@
-import java.util.regex.Pattern
-
 class Spliter {
     static final String marks = '.!?'
     static def split(text) {
+        if (!marks.contains(text[text.length() - 1]))
+            text += '.'
         text += " "
         def sentencePart = ""
         def sentence = []

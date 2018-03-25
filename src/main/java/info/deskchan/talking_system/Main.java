@@ -348,14 +348,10 @@ public class Main implements Plugin {
 
 			ret.replace("characterImage", characterImage);
 		}
-
-		if(data != null){
-			ret.put("priority", data.getOrDefault("priority", DEFAULT_PRIORITY));
-			ret.put("dstTag", data.getOrDefault("sender", "DeskChan:say"));
-		} else {
-			ret.put("priority", DEFAULT_PRIORITY);
-			ret.put("dstTag", "DeskChan:say");
-		}
+		ret.put("priority", DEFAULT_PRIORITY);
+		ret.put("dstTag", "DeskChan:say");
+		if(data != null)
+			ret.putAll(data);
 
 		pluginProxy.sendMessage("DeskChan:request-say#talk:request-say", ret);
 	}

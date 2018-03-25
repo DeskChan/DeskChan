@@ -114,6 +114,8 @@ public class UserBalloon extends Balloon {
 
         instance.content.setText(text);
         instance.show();
+        instance.requestFocus();
+        instance.toFront();
     }
 
     void close() {
