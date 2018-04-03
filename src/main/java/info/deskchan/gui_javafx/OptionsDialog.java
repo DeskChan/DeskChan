@@ -3,7 +3,6 @@ package info.deskchan.gui_javafx;
 import info.deskchan.core.CommandsProxy;
 import info.deskchan.core.CoreInfo;
 import info.deskchan.core.PluginManager;
-import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -82,9 +81,8 @@ class OptionsDialog extends TemplateBox {
 	}
 
 	OptionsDialog() {
-		super(Main.getString("deskchan_options"));
+		super("options-window", Main.getString("deskchan_options"));
 		instance = this;
-		setId("options-window");
 
 		// Left panel
 
@@ -259,19 +257,6 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("load_resource_pack"));
 			put("value",  Main.getString("load"));
 		}});
-		list.add(new HashMap<String, Object>() {{
-			put("id",    "language");
-			put("type",  "ComboBox");
-			put("msgTag","gui:set-language");
-			put("label",  Main.getString("language"));
-			List<Object> values = FXCollections.observableList(new ArrayList<>());
-			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-				values.add(locale.getValue());
-				if(Locale.getDefault().getLanguage().equals(locale.getKey()))
-					put("value", values.size()-1);
-			}
-			put("values", values);
-		}});
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", ControlsPanel.PanelType.TAB, list).set();
 
 		characterOptions();
@@ -435,6 +420,105 @@ class OptionsDialog extends TemplateBox {
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), "balloon", ControlsPanel.PanelType.PANEL, list).set();
+	}
+
+	/** Creating 'Balloon' options submenu. **/
+	private static void generalOptions(){
+		List<Map<String, Object>> list = new LinkedList<>();
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "language");
+			put("type",  "ComboBox");
+			put("msgTag","gui:set-language");
+			put("label",  Main.getString("language"));
+			List<Object> values = FXCollections.observableList(new ArrayList<>());
+			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+				values.add(locale.getValue());
+				if(Locale.getDefault().getLanguage().equals(locale.getKey()))
+					put("value", values.size()-1);
+			}
+			put("values", values);
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "redirect-recognition");
+			put("type",  "CheckBox");
+			put("label",  Main.getString("redirect-recognition"));
+			put("msgTag","gui:toggle-redirect-recognition");
+			put("value",  Main.getProperties().getBoolean("redirect-recognition", false));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "alternatives");
+			put("type",  "Button");
+			put("label",  Main.getString("alternatives"));
+			put("dstPanel", Main.getPluginProxy().getId()+"-alternatives");
+			put("value",  Main.getString("open"));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "debug");
+			put("type",  "Button");
+			put("label",  Main.getString("debug-window"));
+			put("dstPanel", Main.getPluginProxy().getId()+"-debug");
+			put("value",  Main.getString("open"));
+		}});
+		list.add(new HashMap<String, Object>() {{
+			put("id",    "open_log");
+			put("type",  "Button");
+			put("msgTag","gui:open-log-file");
+			put("label",  Main.getString("open_log"));
+			put("value",  Main.getString("open"));
+		}});
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("general_options"), "general", ControlsPanel.PanelType.TAB, list).set();
+
+		/// alternatives
+		BorderPane alternativesTab = new BorderPane();
+		TreeTableView<AlternativeTreeItem> alternativesTable = instance.alternativesTable;
+		alternativesTab.setCenter(alternativesTable);
+		{
+			TreeTableColumn<AlternativeTreeItem, String> column = new TreeTableColumn<>(Main.getString("tag"));
+			column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getValue().tag));
+			alternativesTable.getColumns().add(column);
+			column = new TreeTableColumn<>(Main.getString("plugin"));
+			column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getValue().plugin));
+			alternativesTable.getColumns().add(column);
+			column = new TreeTableColumn<>(Main.getString("priority"));
+			column.setCellValueFactory(param -> {
+				int priority = param.getValue().getValue().priority;
+				return new ReadOnlyStringWrapper((priority >= 0) ? String.valueOf(priority) : null);
+			});
+			alternativesTable.getColumns().add(column);
+		}
+		alternativesTable.setShowRoot(false);
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), "alternatives", ControlsPanel.PanelType.PANEL, alternativesTab).set();
+
+		/// debug
+		BorderPane debugTab = new BorderPane();
+		TextField debugMsgTag = new TextField("DeskChan:say");
+		debugTab.setTop(debugMsgTag);
+		TextArea debugMsgData = new TextArea("{\n\"text\": \"Test\"\n}");
+		debugTab.setCenter(debugMsgData);
+
+		Button button = new Button(Main.getString("send"));
+		button.setOnAction(event -> {
+			String tag = debugMsgTag.getText().trim();
+			String dataStr = debugMsgData.getText();
+			try {
+				Main.getPluginProxy().sendMessage(tag, stringToMap(dataStr));
+			} catch (Throwable e) {
+				Main.log(e);
+			}
+		});
+
+		Button reloadButton = new Button(Main.getString("reload-style"));
+		reloadButton.setOnAction(event -> {
+			instance.applyStyle();
+			instance.hide();
+			instance.show();
+		});
+
+		HBox buttons = new HBox(button, reloadButton);
+		buttons.setId("controls-bottom-buttons");
+		debugTab.setBottom(buttons);
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.PANEL, debugTab).set();
+
 	}
 
 	/** Creating 'Commands' tab. **/
@@ -707,10 +791,11 @@ class OptionsDialog extends TemplateBox {
 	}
 
 	private void initTabs() {
-		PluginProxyInterface pluginProxy = Main.getPluginProxy();
 		GridPane gridPane = new GridPane();
 		gridPane.getStyleClass().add("grid-pane");
 
+		/// general
+		generalOptions();
 
 		/// appearance
 		initMainTab();
@@ -719,6 +804,25 @@ class OptionsDialog extends TemplateBox {
 		/// commands
 		initCommandsTab1();
 
+
+		/// update alternatives tabls
+		Main.getPluginProxy().sendMessage("core:query-alternatives-map", null, (sender, data) -> {
+			Map<String, List<Map<String, Object>>> map = (Map) data;
+			final TreeItem<AlternativeTreeItem> root = new TreeItem<>();
+			for (Map.Entry<String, List<Map<String, Object>>> entry : map.entrySet()) {
+				final TreeItem<AlternativeTreeItem> group = new TreeItem<>(new AlternativeTreeItem(entry.getKey()));
+				for (Map<String, Object> m2 : entry.getValue()) {
+					final TreeItem<AlternativeTreeItem> item = new TreeItem<>(new AlternativeTreeItem(
+							m2.get("tag").toString(),
+							m2.get("plugin").toString(),
+							(int) m2.get("priority")
+					));
+					group.getChildren().add(item);
+				}
+				root.getChildren().add(group);
+			}
+			alternativesTable.setRoot(root);
+		});
 
 		/// plugins
 		BorderPane pluginsTab = new BorderPane();
@@ -776,74 +880,6 @@ class OptionsDialog extends TemplateBox {
 		hbox.getChildren().add(button);
 		pluginsTab.setBottom(hbox);
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), "plugins", ControlsPanel.PanelType.TAB, pluginsTab).set();
-
-		/// alternatives
-		BorderPane alternativesTab = new BorderPane();
-		alternativesTab.setCenter(alternativesTable);
-		{
-			TreeTableColumn<AlternativeTreeItem, String> column = new TreeTableColumn<>(Main.getString("tag"));
-			column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getValue().tag));
-			alternativesTable.getColumns().add(column);
-			column = new TreeTableColumn<>(Main.getString("plugin"));
-			column.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().getValue().plugin));
-			alternativesTable.getColumns().add(column);
-			column = new TreeTableColumn<>(Main.getString("priority"));
-			column.setCellValueFactory(param -> {
-				int priority = param.getValue().getValue().priority;
-				return new ReadOnlyStringWrapper((priority >= 0) ? String.valueOf(priority) : null);
-			});
-			alternativesTable.getColumns().add(column);
-		}
-		alternativesTable.setShowRoot(false);
-		pluginProxy.sendMessage("core:query-alternatives-map", null, (sender, data) -> {
-			Map<String, List<Map<String, Object>>> map = (Map) data;
-			final TreeItem<AlternativeTreeItem> root = new TreeItem<>();
-			for (Map.Entry<String, List<Map<String, Object>>> entry : map.entrySet()) {
-				final TreeItem<AlternativeTreeItem> group = new TreeItem<>(new AlternativeTreeItem(entry.getKey()));
-				for (Map<String, Object> m2 : entry.getValue()) {
-					final TreeItem<AlternativeTreeItem> item = new TreeItem<>(new AlternativeTreeItem(
-							m2.get("tag").toString(),
-							m2.get("plugin").toString(),
-							(int) m2.get("priority")
-					));
-					group.getChildren().add(item);
-				}
-				root.getChildren().add(group);
-			}
-			alternativesTable.setRoot(root);
-		});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), "alternatives", ControlsPanel.PanelType.TAB, alternativesTab).set();
-
-		/// debug
-		BorderPane debugTab = new BorderPane();
-		TextField debugMsgTag = new TextField("DeskChan:say");
-		debugTab.setTop(debugMsgTag);
-		TextArea debugMsgData = new TextArea("{\n\"text\": \"Test\"\n}");
-		debugTab.setCenter(debugMsgData);
-
-		button = new Button(Main.getString("send"));
-		button.setOnAction(event -> {
-			String tag = debugMsgTag.getText().trim();
-			String dataStr = debugMsgData.getText();
-			try {
-				Main.getPluginProxy().sendMessage(tag, stringToMap(dataStr));
-			} catch (Throwable e) {
-				Main.log(e);
-			}
-		});
-
-		Button reloadButton = new Button(Main.getString("reload-style"));
-		reloadButton.setOnAction(event -> {
-			instance.applyStyle();
-			instance.hide();
-			instance.show();
-		});
-
-		HBox buttons = new HBox(button, reloadButton);
-		buttons.setId("controls-bottom-buttons");
-		debugTab.setBottom(buttons);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.TAB, debugTab).set();
-
 
 		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
 		/// Creating top tabs from registered tabs list

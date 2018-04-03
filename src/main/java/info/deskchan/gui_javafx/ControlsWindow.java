@@ -9,7 +9,7 @@ class ControlsWindow extends TemplateBox {
     private ControlsPanel controls;
 
     public ControlsWindow(ControlsPanel controls){
-        super(controls.name);
+        super(controls.getFullName(), controls.name);
         this.controls = controls;
         getDialogPane().setContent(controls.createControlsPane(this));
         setResizable(true);

@@ -11,10 +11,11 @@ class SkinManagerDialog extends TemplateBox {
 	private ListView<Skin> skinsList = new ListView<>();
 	
 	SkinManagerDialog(Window parent) {
-		super("skin_manager");
+		super("skin_manager", Main.getString("skin_manager"));
 		initOwner(parent);
 		initModality(Modality.WINDOW_MODAL);
-		skinsList.setPrefSize(400, 300);
+		skinsList.setPrefSize(400 * App.getInterfaceScale(), 400 * App.getInterfaceScale());
+		setResizable(true);
 		//TreeTableView<SkinOrPack> skinsTree = new TreeTableView<>();
 		for (String skinName : Skin.getSkinList()) {
 			skinsList.getItems().add(Skin.load(skinName));

@@ -20,13 +20,14 @@ public class FilesManagerDialog extends TemplateBox{
         return list;
     }
     public FilesManagerDialog(Window parent, List<String> files){
-        super(Main.getString("file_manager"));
+        super("file-manager", Main.getString("file_manager"));
         initOwner(parent);
         for (String file : files) {
             if(file != null)
                 filesList.getItems().add(file);
         }
         getDialogPane().setContent(filesList);
+        setResizable(true);
         ButtonType addButton=new ButtonType(Main.getString("add"));
         ButtonType removeButton=new ButtonType(Main.getString("remove"));
         getDialogPane().getButtonTypes().add(addButton);

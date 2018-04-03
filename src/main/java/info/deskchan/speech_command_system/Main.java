@@ -131,6 +131,14 @@ public class Main implements Plugin {
             pluginProxy.sendMessage(sender, Parsers.getWords());
         });
 
+        pluginProxy.sendMessage("core:register-alternative",
+                new HashMap<String, Object>() {{
+                    put("srcTag", "DeskChan:voice-recognition");
+                    put("dstTag", "speech:get");
+                    put("priority", 50);
+                }}
+        );
+
         log("loading completed");
         return true;
     }

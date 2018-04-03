@@ -243,7 +243,7 @@ public class ControlsPanel {
 			ColumnConstraints column3 = new ColumnConstraints();
 			//column3.setPercentWidth(5);
 
-			gridPane.getColumnConstraints().addAll(column1, column2, column3);
+			gridPane.getColumnConstraints().addAll(column1, column2);
 
 			namedControls = new HashMap<>();
 
@@ -256,6 +256,7 @@ public class ControlsPanel {
 				if (controlInfo.containsKey("elements")) {
 					HBox box = new HBox();
 					node = box;
+					box.setId((String) controlInfo.get("id"));
 					for (Map element : (List<Map>) controlInfo.get("elements")) {
 						PluginOptionsControlItem item = initItem(element, parent.getDialogPane().getScene().getWindow());
 						if (item != null) box.getChildren().add(item.getNode());
@@ -275,6 +276,10 @@ public class ControlsPanel {
 					gridPane.add(node, 1, row);
 				}
 				if (hint != null) {
+					if (column3 != null) {
+						gridPane.getColumnConstraints().add(column3);
+						column3 = null;
+					}
 					gridPane.add(new Hint(hint), 2, row);
 				}
 				row++;
