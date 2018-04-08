@@ -156,6 +156,23 @@ public class CorePlugin implements Plugin, MessageListener {
 			PluginManager.getInstance().saveProperties();
 		});
 
+		pluginProxy.sendMessage("core:register-alternatives", Arrays.asList(
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:voice-recognition");
+					put("dstTag", "DeskChan:user-said");
+					put("priority", 50);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:user-said");
+					put("dstTag", "core:inform-no-speech-function");
+					put("priority", 1);
+				}}
+		));
+
+		pluginProxy.addMessageListener("core:inform-no-speech-function", (sender, tag, data) -> {
+			pluginProxy.sendMessage("DeskChan:say", pluginProxy.getString("no-conversation"));
+		});
+
 		CommandsProxy.initialize(pluginProxy);
 
 		return true;

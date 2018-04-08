@@ -131,14 +131,6 @@ public class Main implements Plugin {
             pluginProxy.sendMessage(sender, Parsers.getWords());
         });
 
-        pluginProxy.sendMessage("core:register-alternative",
-                new HashMap<String, Object>() {{
-                    put("srcTag", "DeskChan:voice-recognition");
-                    put("dstTag", "speech:get");
-                    put("priority", 50);
-                }}
-        );
-
         log("loading completed");
         return true;
     }
@@ -227,7 +219,7 @@ public class Main implements Plugin {
                 System.out.println("3: " + ret);
             pluginProxy.sendMessage(best.tag, ret);
         } else {
-            pluginProxy.sendMessage("DeskChan:say", pluginProxy.getString("no-conversation"));
+            pluginProxy.sendMessage("DeskChan:user-said#speech:get", pluginProxy.getString("no-conversation"));
         }
     }
     static void log(String text) {
