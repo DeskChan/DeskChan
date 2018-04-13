@@ -4,11 +4,10 @@ import org.apache.commons.io.IOUtils
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.*
 
 
@@ -36,8 +35,8 @@ class PluginConfig {
     /** Append fields from map. **/
     fun append(map: Map<String, Any?>){
         map.forEach { t, u ->
-            if(u!=null && u!="")
-                data[t.toLowerCase()]=u
+            if(u != null && u != "")
+                data[t.toLowerCase()] = u
         }
     }
 
@@ -47,15 +46,15 @@ class PluginConfig {
     }
 
     /** Append fields from json file by its path. **/
-    fun appendFromJson(path: Path){
-        if (!Files.isReadable(path) || Files.isDirectory(path)) {
+    fun appendFromJson(file: File){
+        if (!file.canRead() || file.isDirectory) {
             return
         }
 
         val manifestStr = try {
-            IOUtils.toString(Files.newInputStream(path), "UTF-8")
+            IOUtils.toString(file.inputStream(), "UTF-8")
         } catch (e: IOException) {
-            PluginManager.log("Couldn't read file: $path")
+            PluginManager.log("Couldn't read file: $file")
             PluginManager.log(e)
             ""
         }
@@ -64,12 +63,12 @@ class PluginConfig {
         try {
             json = JSONObject(manifestStr)
         } catch (e: JSONException) {
-            PluginManager.log("Invalid manifest file: $path")
+            PluginManager.log("Invalid manifest file: $file")
             PluginManager.log(e)
             return
         }
         json.toMap().forEach { t, u ->
-            if(u!=null && u!=""){
+            if(u != null && u != ""){
                 data[t.toLowerCase()] = when (u) {
                     is JSONArray ->  u.toList()
                     is JSONObject -> u.toMap()

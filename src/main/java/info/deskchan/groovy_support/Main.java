@@ -60,7 +60,7 @@ public class Main implements Plugin, PluginLoader {
 		plugin.setPluginDirPath(path.getParent());
 		PluginConfig config = new PluginConfig("Groovy");
 		path = path.getParent().resolve("manifest.json");
-		config.appendFromJson(path);
+		config.appendFromJson(path.toFile());
 		PluginManager.getInstance().initializePlugin(id, plugin, config);
 	}
 }

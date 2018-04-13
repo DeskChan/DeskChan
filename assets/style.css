@@ -34,11 +34,12 @@
     -fx-max-width: 18em;
     -fx-translate-y: 2.1em;
     -fx-translate-x: 0em;
+    -fx-max-height: 22em;
 
 }
 #options-menu .list-cell {
     -fx-text-fill: white;
-    -fx-font-size: 1.7em;
+    -fx-font-size: 1.4em;
     -fx-background-color: light;
     -fx-alignment: center;
     -fx-font-weight: bold;

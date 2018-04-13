@@ -72,7 +72,8 @@ public class Main implements Plugin {
             else text = data.toString();
 
             if (text == null || text.trim().length() == 0) return;
-            operateRequest(text);
+            if (!operateRequest(text))
+                pluginProxy.sendMessage("DeskChan:user-said#speech:get", data);
         });
 
         /* Check if speech matches to rule.
@@ -177,7 +178,7 @@ public class Main implements Plugin {
     }
 
     /** Operate user speech request with commands. **/
-    void operateRequest(String text){
+    boolean operateRequest(String text){
         ArrayList<String> words = PhraseComparison.toClearWords(text);
         Command best = null;
         for(Command command : commands){
@@ -218,9 +219,8 @@ public class Main implements Plugin {
             if(debugBuild)
                 System.out.println("3: " + ret);
             pluginProxy.sendMessage(best.tag, ret);
-        } else {
-            pluginProxy.sendMessage("DeskChan:user-said#speech:get", pluginProxy.getString("no-conversation"));
         }
+        return best != null;
     }
     static void log(String text) {
         pluginProxy.log(text);

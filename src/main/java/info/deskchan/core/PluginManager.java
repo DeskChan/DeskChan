@@ -660,7 +660,7 @@ public class PluginManager {
 		if (level.equals(LoggerLevel.ERROR)){
 			System.err.println(text);
 			writeStringToLogStream(text);
-		} else if (level.getValue()>=LoggerLevel.WARN.getValue()&&level.getValue()<=LoggerLevel.TRACE.getValue()){
+		} else if (level.getValue() >= LoggerLevel.WARN.getValue() && level.getValue() <= LoggerLevel.TRACE.getValue()){
 			System.out.println(text);
 			writeStringToLogStream(text);
 		}
