@@ -22,16 +22,14 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
 
    override fun initialize(pluginProxy: PluginProxyInterface):Boolean {
       this.pluginProxy = pluginProxy
-      println("type: "+pluginProxy.getConfigField("type"))
+      //println("type: "+pluginProxy.getConfigField("type"))
       val processBuilder = when(pluginProxy.getConfigField("type")){
          "Python" -> java.lang.ProcessBuilder("python", pluginFile.absolutePath)
          else -> null
       }
       if (processBuilder == null) return false
 
-      println(pluginProxy.pluginDirPath)
       processBuilder.directory(pluginProxy.pluginDirPath.toFile())
-      processBuilder.redirectOutput(ProcessBuilder.Redirect.PIPE)
 
       process = processBuilder.start()
 
@@ -53,67 +51,86 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       return true
    }
 
+   var buffer = mutableListOf<String>()
    fun checkThread() {
       while (true){
          Thread.sleep(50)
-         if (!process.isAlive) {
+
+         if (!process.isAlive && !err.ready() && !input.ready()) {
             pluginProxy.log(Exception("Process stopped working by unknown reason"))
             return
          }
 
-         if (err.ready()) {
+         var s:String
+         try {
+            //println("waiting for another message")
+            s = input.readLine().trim()
+            //println("==== got: "+s)
+         } catch (e: Exception){
+            //println("breaking with exception")
             val errline = err.readText()
-            pluginProxy.log(errline)
+            pluginProxy.log(Exception(errline))
+            break
          }
-         if (!input.ready()) continue
-         val line = input.readLine()
 
-         if (line.startsWith("msg")){
+         if (s.trim() != "#"){
+            buffer.add(s)
+            continue
+         } else if (buffer.size == 0)
+            continue
+
+         val lines = buffer
+         buffer = mutableListOf()
+         val line = lines[0]
+         //println("===== starting with: " + line)
+         if (line.trim().isEmpty()) continue
+
+         if (line.startsWith("msg")) {
             val msg = extract(line, 2)[1]
-            val lines = readToMessageEnd()
-            val res:Any
-            if (lines.size > 0){
-               if (lines.size > 1){
-                  if (lines.size > 2)
-                     res = pluginProxy.sendMessage(msg, deserialize(extract(lines[0], 2)[1]),
-                             ExternListener(extract(lines[1], 2)[1].toInt()),
-                             ExternListener(extract(lines[2], 2)[1].toInt())
-                     )
-                  else
-                     res = pluginProxy.sendMessage(msg, deserialize(extract(lines[0], 2)[1]),
-                                             ExternListener(extract(lines[1], 2)[1].toInt())
-                     )
-               } else
-                  res = pluginProxy.sendMessage(msg, deserialize(extract(lines[0], 2)[1]))
+            val result: Any
+            var data: Any? = null
+            var ret: Int? = null
+            var resp: Int? = null
+            lines.forEach {
+               if      (it.startsWith("data")) data = deserialize(extract(it, 2)[1])
+               else if (it.startsWith("resp")) resp = extract(it, 2)[1].toInt()
+               else if (it.startsWith("ret"))  ret  = extract(it, 2)[1].toInt()
+            }
+            //println(if (data != null) data.toString() else "null" + " " + ret + " " + resp)
+            if (resp != null){
+               if (ret != null)
+                  result = pluginProxy.sendMessage(msg, data, ExternListener(resp!!), ExternListener(ret!!))
+               else
+                  result = pluginProxy.sendMessage(msg, data, ExternListener(resp!!))
             } else
-               res = pluginProxy.sendMessage(msg, null)
-            write("done " + res)
+               result = pluginProxy.sendMessage(msg, data)
+            write("done " + result)
             continue
          }
 
-         if (line.startsWith("add")){
-            val msg = extract(line, 2)
+         if (line.startsWith("add")) {
+            val msg = extract(line, 3)
             pluginProxy.addMessageListener(msg[1], ExternListener(msg[2].toInt()))
             write("done")
             continue
          }
 
-         if (line.startsWith("rm")){
-            val msg = extract(line, 2)
+         if (line.startsWith("rm")) {
+            val msg = extract(line, 3)
             pluginProxy.removeMessageListener(msg[1], ExternListener(msg[2].toInt()))
             listeners.remove(msg[2].toInt())
             write("done")
             continue
          }
 
-         if (line.startsWith("timer")){
-            val msg = extract(line, 2)
+         if (line.startsWith("timer")) {
+            val msg = extract(line, 4)
             val res = pluginProxy.setTimer(msg[1].toLong(), msg[2].toInt(), ExternListener(msg[3].toInt()))
             write("done " + res)
             continue
          }
 
-         if (line.startsWith("Xtimer")){
+         if (line.startsWith("Xtimer")) {
             val msg = extract(line, 2)
             pluginProxy.cancelTimer(msg[1].toInt())
             listeners.remove(msg[1].toInt())
@@ -121,51 +138,56 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
             continue
          }
 
-         if (line.startsWith(">prop")){
+         if (line.startsWith(">prop")) {
             val msg = extract(line, 2)
             val res = pluginProxy.getProperties().get(msg[1])
             write("done " + res)
             continue
          }
 
-         if (line.startsWith("<prop")){
-            val msg = extract(line, 2)
+         if (line.startsWith("<prop")) {
+            val msg = extract(line, 3)
             pluginProxy.getProperties().set(msg[1], msg[2])
             write("done")
             continue
          }
 
-         if (line.startsWith(">conf")){
+         if (line.startsWith(">conf")) {
             val msg = extract(line, 2)
             val res = pluginProxy.getConfigField(msg[1])
             write("done " + res)
             continue
          }
 
-         if (line.startsWith("<conf")){
-            val msg = extract(line, 2)
+         if (line.startsWith("<conf")) {
+            val msg = extract(line, 3)
             pluginProxy.setConfigField(msg[1], msg[2])
             write("done")
             continue
          }
 
-         if (line.startsWith(">str")){
+         if (line.startsWith(">str")) {
             val msg = extract(line, 2)
             write("done " + pluginProxy.getString(msg[1]))
             continue
          }
 
-         if (line.startsWith("err")){
+         if (line.startsWith("err")) {
             val msg = extract(line, 2)
-            val error:Map<String, Any?> = deserialize(msg[1]) as Map<String, Any?>
+            val error: Map<String, Any?> = deserialize(msg[1]) as Map<String, Any?>
             pluginProxy.sendMessage("core-events:error", mapOf("class" to error["c"], "message" to error["m"], "stacktrace" to error["t"]))
             write("done")
             continue
          }
 
-         if (line.startsWith("log")){
+         if (line.startsWith("log")) {
             val msg = extract(line, 2)
             pluginProxy.log(msg[1])
+            write("done")
+            continue
+         }
+
+         if (line.startsWith("initcmpl")){
             write("done")
             continue
          }
@@ -174,28 +196,18 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       }
    }
 
-   fun readToMessageEnd():List<String> {
-      var line:String? = input.readLine()
-      val lines = mutableListOf<String>()
-      while (line != null && line != "#") {
-         lines.add(line)
-         line = input.readLine()
-      }
-      return lines
-   }
-
    fun write(data:Any?){
+      //println("alive: "+process.isAlive + " / " + data.toString())
       if (!process.isAlive) return
 
-      println(process.isAlive.toString() + " " + input.ready() + " " + err.ready() + " " + data.toString())
       output.write(serialize(data) + "\r\n")
       output.flush()
-
    }
 
    override fun unload(){
       write("unload")
       pluginProxy.log("Waiting for process exit")
+      process.destroyForcibly()
       process.waitFor()
       pluginProxy.getProperties().save()
    }
@@ -273,14 +285,16 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
          listeners.put(seq, this)
       }
       override fun handle(sender:String, data: Any?){
-         write("call")
+         //println("-- handling1 " + seq.toString() + " " + sender + " " + data)
+         write("call "+seq)
          write("sender "+sender)
          write("data "+serialize(data))
          write("#")
       }
 
       override fun handleMessage(sender: String?, tag: String?, data: Any?) {
-         write("call")
+         //println("-- handling2 " + seq.toString() + " " + sender + " " + tag + " " + data)
+         write("call "+seq)
          write("sender "+sender)
          write("tag "+tag)
          write("data "+serialize(data))
