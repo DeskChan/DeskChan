@@ -15,6 +15,13 @@ public class PluginManager {
 	private static final PluginManager instance = new PluginManager();
 
 	private final Map<String, PluginProxy> plugins = new HashMap<>();
+
+	// This map contain keys of two types:
+	//  - some:tag  - just common messages
+	//  - some:tag# - special messages: answers, passing inside alternatives chains and so on
+	// This separation was added in order to prevent getting common and special messages duplicating each other
+	// when you're subscribing to any message
+	// To remove such separation, you need to change this files inside core: PluginManager, CorePlugin, PluginProxy
 	private final Map<String, Set<MessageListener>> messageListeners = new HashMap<>();
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Set<String> blacklistedPlugins = new HashSet<>();
@@ -27,7 +34,7 @@ public class PluginManager {
 	Set<MessageListener> getMessageListeners(String key){
 		int delimiterPas = key.indexOf('#');
 		if (delimiterPas >= 0)
-			key = key.substring(0, delimiterPas);
+			key = key.substring(0, delimiterPas + 1);
 
 		return messageListeners.get(key);
 	}
@@ -162,7 +169,7 @@ public class PluginManager {
 
 	/**  Register tag listener. All messages that sending to <b>tag</b> will be automatically sent to <b>listener.handle</b>.  **/
 	void registerMessageListener(String tag, MessageListener listener) {
-		Set<MessageListener> listeners = getMessageListeners(tag);
+		Set<MessageListener> listeners = messageListeners.get(tag);
 		if (listeners == null) {
 			listeners = new HashSet<>();
 			messageListeners.put(tag, listeners);
@@ -177,7 +184,7 @@ public class PluginManager {
 
 	/**  Unregister tag listener. **/
 	void unregisterMessageListener(String tag, MessageListener listener) {
-		Set<MessageListener> listeners = getMessageListeners(tag);
+		Set<MessageListener> listeners = messageListeners.get(tag);
 		if (listeners != null) {
 			listeners.remove(listener);
 			if (listeners.size() == 0) {
@@ -188,7 +195,7 @@ public class PluginManager {
 
 	/**  Get listeners count. **/
 	int getMessageListenersCount(String tag) {
-		Set<MessageListener> listeners = getMessageListeners(tag);
+		Set<MessageListener> listeners = messageListeners.get(tag);
 		if (listeners != null) {
 			return listeners.size();
 		}

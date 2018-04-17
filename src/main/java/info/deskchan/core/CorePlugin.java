@@ -196,6 +196,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			list = new LinkedList<>();
 			alternatives.put(srcTag, list);
 			pluginProxy.addMessageListener(srcTag, this);
+			pluginProxy.addMessageListener(srcTag+"#", this);
 		}
 
 		Iterator<AlternativeInfo> iterator = list.iterator();
@@ -236,6 +237,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		if (list.isEmpty()) {
 			alternatives.remove(srcTag);
 			pluginProxy.removeMessageListener(srcTag, this);
+			pluginProxy.removeMessageListener(srcTag+"#", this);
 			pluginProxy.log("No more alternatives for " + srcTag);
 		}
 	}
