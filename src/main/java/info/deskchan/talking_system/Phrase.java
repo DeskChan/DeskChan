@@ -313,7 +313,7 @@ public class Phrase {
 			map.put("timeout", timeout);
 
 		map.put("characterImage", spriteType);
-		map.put("purpose", purposeType != null ? purposeType : Arrays.asList(defaultPurpose));
+		map.put("purpose", getPurposes());
 		map.put("hash", this.hashCode());
 		map.put("blocks", blocks);
 
@@ -339,7 +339,11 @@ public class Phrase {
 		return s.toString();
 	}
 
-	protected String getPurposesAsString(){
+	public List<String> getPurposes(){
+		return purposeType != null ? purposeType : Arrays.asList(defaultPurpose);
+	}
+
+	public String getPurposesAsString(){
 		if (purposeType == null || purposeType.size() == 0)
 			return defaultPurpose;
 
@@ -348,5 +352,9 @@ public class Phrase {
 			sb.append(purpose + ", ");
 		sb.setLength(sb.length() - 2);
 		return sb.toString();
+	}
+
+	public String getPhraseText(){
+		return phraseText;
 	}
 }

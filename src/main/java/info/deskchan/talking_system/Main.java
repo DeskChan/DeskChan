@@ -14,15 +14,17 @@ import java.util.*;
 
 public class Main implements Plugin {
 	private static PluginProxyInterface pluginProxy;
+	private static Main instance;
 
 	/** Major phrases pack. **/
-	private final static String MAIN_PHRASES_URL =
-			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/phrases_ru!A20:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+	private final static HashMap<String, String> MAIN_PHRASES_URL = new HashMap<String, String>(){{
+		put("ru", "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/phrases_ru!A3:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI");
+		put("en", "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/phrases_en!A3:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI");
+	}};
 
 	/** Not official pack from developers. **/
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
-
 
 	/** Current character preset. **/
 	private CharacterPreset currentCharacter;
@@ -35,6 +37,7 @@ public class Main implements Plugin {
 
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
+		instance = this;
 		pluginProxy = newPluginProxy;
 		pluginProxy.getProperties().load();
 		pluginProxy.setResourceBundle("info/deskchan/talking_system/strings");
@@ -49,16 +52,17 @@ public class Main implements Plugin {
 		if(getProperties().getBoolean("quotesAutoSync", true)) {
 			Thread syncThread = new Thread() {
 				public void run() {
-					if(PhrasesList.saveTo(MAIN_PHRASES_URL, "main")) {
+					if(PhrasesList.saveTo(MAIN_PHRASES_URL.get(Locale.getDefault().toString()), "main_"+Locale.getDefault())) {
 						PhrasesList.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
 						currentCharacter.phrases.reload();
+						currentCharacter.inform();
 					}
 				}
 			};
 			syncThread.start();
 		}
 
-		currentCharacter.inform();
+		//info.deskchan.talking_system.classification.Main.initialize(pluginProxy);
 
 		/* Building DeskChan:request-say chain. */
 		pluginProxy.sendMessage("core:register-alternatives", new ArrayList<Map>(){{
@@ -206,6 +210,7 @@ public class Main implements Plugin {
 				currentCharacter.phrases.add((List) data, PhrasesPack.PackType.PLUGIN);
 			else
 				currentCharacter.phrases.add(data.toString(), PhrasesPack.PackType.PLUGIN);
+			currentCharacter.inform();
 		});
 
 		/* Download phrases from JSON at url and save them to file
@@ -246,9 +251,9 @@ public class Main implements Plugin {
 							if (type.equals("#default")) {
 								currentCharacter.phrases = PhrasesList.getDefault(currentCharacter.character);
 							} else {
-								if(!type.startsWith(pluginProxy.getDataDirPath().toString())){
-									Path resFile=Paths.get(type);
-									Path newPath=pluginProxy.getDataDirPath().resolve(resFile.getFileName());
+								if(!type.startsWith(getPhrasesDirPath().toString())){
+									Path resFile = Paths.get(type);
+									Path newPath = getPhrasesDirPath().resolve(resFile.getFileName());
 									if(!newPath.toFile().exists())
 										Files.copy(resFile,newPath);
 									type=newPath.toString();
@@ -504,7 +509,6 @@ public class Main implements Plugin {
 			currentCharacter = CharacterPreset.getFromFileUnsafe(Paths.get(val));
 		}
 		currentCharacter.updatePhrases();
-		currentCharacter.inform();
 
 		try {
 			getProperties().put("messageTimeout", (Integer) data.getOrDefault("message_interval", 40) * 1000);
@@ -532,6 +536,8 @@ public class Main implements Plugin {
 		} catch (Exception e) {
 			errorMessage += e.getMessage() + "\n";
 		}
+
+		currentCharacter.inform();
 
 		if (errorMessage.length() > 0)
 			Main.log(new Exception(errorMessage));
@@ -576,6 +582,10 @@ public class Main implements Plugin {
 		return path;
 	}
 
+	public static CharacterPreset getCharacterPreset(){
+		return instance.currentCharacter;
+	}
+
 	@Override
 	public void unload() {
 		saveSettings();
@@ -584,6 +594,8 @@ public class Main implements Plugin {
 	static PluginProxyInterface getPluginProxy() {
 		return pluginProxy;
 	}
+
+	static Path getPhrasesDirPath(){ return getPluginProxy().getAssetsDirPath().resolve("phrases"); }
 
 	static PluginProperties getProperties() { return getPluginProxy().getProperties(); }
 

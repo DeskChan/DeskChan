@@ -40,8 +40,8 @@ class PhrasesPack {
 		if (!packFile.getFileName().toString().contains("."))
 			packFile = Paths.get(file + ".phrases").normalize();
 		if (!packFile.isAbsolute())
-			packFile = Main.getDataDirPath().resolve(packFile);
-		else if (packFile.startsWith(Main.getDataDirPath()))
+			packFile = Main.getPhrasesDirPath().resolve(packFile);
+		else if (packFile.startsWith(Main.getPhrasesDirPath().normalize()))
 			packName = packFile.getFileName().toString();
 
 		if (packName.contains("."))
@@ -111,7 +111,7 @@ class PhrasesPack {
 
 	public void printPhrasesLack(String purpose){
 		System.out.println(packName);
-		
+
 		int minimumsCount = 10;
 		CharacterController[] characters = new CharacterController[minimumsCount];
 		int[] matchingPhrasesCounts = new int[minimumsCount];
@@ -295,6 +295,13 @@ public class PhrasesList {
         add(files);
     }
 
+    public List<Phrase> getAllPhrases(){
+    	List<Phrase> list = new ArrayList<>();
+    	for (PhrasesPack pack : packs)
+    		list.addAll(pack.phrases);
+    	return list;
+	}
+
 	public void reload(){
 		for(PhrasesPack pack : packs){
 			pack.load();
@@ -420,7 +427,14 @@ public class PhrasesList {
 				}
 			}
 			doc.appendChild(mainNode);
-			Path address = Main.getDataDirPath().resolve(filename + ".phrases");
+			Path address = Main.getPhrasesDirPath();
+			System.out.println(address + " " + address.toFile().exists());
+			if (!address.toFile().exists())
+				if (!address.toFile().mkdir())
+					throw new Exception("Can't create folder at assets/phrases");
+
+			address = address.resolve(filename + ".phrases");
+
 			try {
 				Transformer tr = TransformerFactory.newInstance().newTransformer();
 				tr.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -429,7 +443,7 @@ public class PhrasesList {
 				tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 				tr.transform(new DOMSource(doc), new StreamResult(Files.newOutputStream(address)));
 			} catch (Exception er) {
-				Main.log("Error while rewriting file " + filename + ".phrases" + ": " + er);
+				throw new Exception("Error while rewriting file " + filename + ".phrases", er);
 			}
 		} catch (Exception e) {
 			Main.log(e);
@@ -442,7 +456,14 @@ public class PhrasesList {
 	public void saveTo(Phrase quote, String file) {
 		Document doc;
 		Node mainNode;
-		Path address = Main.getDataDirPath().resolve(file + ".phrases");
+		Path address = Main.getPhrasesDirPath();
+		if (!address.toFile().exists()){
+			if (!address.toFile().mkdir()) {
+				Main.log(new Exception("Can't create folder at assets/phrases"));
+				return;
+			}
+		}
+		address = address.resolve(file + ".phrases");
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		boolean newFile = false;
 		try {
