@@ -150,6 +150,7 @@ public class Main implements Plugin {
     void setupOptionsTab() {
         pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
             put("name", getString("options"));
+            put("type", "submenu");
             put("id", "options");
             put("msgTag", "weather:update-city");
             put("action", "set");

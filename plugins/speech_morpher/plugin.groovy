@@ -34,6 +34,7 @@ class Module {
             proxy.sendMessage("DeskChan:request-say#" + proxy.getId() + ":" + name, data)
         })
     }
+
     void checkActive(Map preset){
         try {
             active = instance.checkActive(preset)
@@ -160,12 +161,9 @@ void setupMenu(){
     ])
 }
 
-Map preset
-
 void setPreset(data){
-    preset = data
     for (Module module : modules)
-        module.checkActive(preset)
+        module.checkActive(data)
 }
 
 addMessageListener("talk:character-updated", {sender, tag, data ->

@@ -279,10 +279,10 @@
     -fx-background-color: light;
 }
 .check-box .mark {
-    -fx-background-color: white;
+    -fx-background-color: common;
 }
 .check-box:selected .mark {
-    -fx-background-color: common;
+    -fx-background-color: white;
 }
 
 

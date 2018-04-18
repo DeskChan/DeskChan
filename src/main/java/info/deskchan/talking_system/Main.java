@@ -304,14 +304,22 @@ public class Main implements Plugin {
 
 		// Standard phrases parsers
 		/// OS
-		Main.getPluginProxy().addMessageListener("talk:remove-quote", DefaultTagsListeners::parseForTagsRemove);
+		pluginProxy.addMessageListener("talk:remove-quote", DefaultTagsListeners::parseForTagsRemove);
 		/// Time
-		Main.getPluginProxy().addMessageListener("talk:reject-quote", DefaultTagsListeners::parseForTagsReject);
+		pluginProxy.addMessageListener("talk:reject-quote", DefaultTagsListeners::parseForTagsReject);
 
 		/// Character preset
-		Main.getPluginProxy().addMessageListener("talk:remove-quote", (sender, tag, data) ->
+		pluginProxy.addMessageListener("talk:remove-quote", (sender, tag, data) ->
 			DefaultTagsListeners.checkCondition(sender, data, quote -> !currentCharacter.tagsMatch(quote))
 		);
+
+		pluginProxy.addMessageListener("core-events:error", (sender, tag, data) -> {
+			currentCharacter.phrases.requestRandomQuote("ERROR", null, (quote) -> {
+				Map ret = quote.toMap();
+				ret.put("priority", 5000);
+				pluginProxy.sendMessage("DeskChan:say", ret);
+			});
+		});
 
 		pluginProxy.addMessageListener("recognition:get-words", (sender, tag, data) -> {
 			HashSet<String> set = new HashSet<>();
