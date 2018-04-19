@@ -200,7 +200,7 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       //println("alive: "+process.isAlive + " / " + data.toString())
       if (!process.isAlive) return
 
-      output.write(serialize(data) + "\r\n")
+      output.write(serialize(data) + "\n")
       output.flush()
    }
 
@@ -219,12 +219,12 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
               is Collection<*> -> dataToJSON(data)
               is Map<*,*> -> dataToJSON(data)
               is Nullable -> null
-              else -> data.toString()
+              else -> data.toString().replace("\n", "\t")
            }
 
    fun dataToJSON(data:Map<*,*>):String {
       val obj: JSONObject = JSONObject()
-      data.entries.forEach { obj.put(it.key.toString(), serialize(it.value)) }
+      data.entries.forEach { obj.put(it.key.toString().replace("\n", "\t"), serialize(it.value)) }
       return obj.toString()
    }
 
@@ -242,29 +242,31 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
 
       if (data is JSONArray) return JSONToData(data)
       if (data is JSONObject) return JSONToData(data)
+
+      val rdata = data.toString().replace("\t", "\n")
       try {
-         return JSONToData(JSONArray(data.toString()))
+         return JSONToData(JSONArray(rdata))
       } catch (e:Exception){ }
       try {
-         return JSONToData(JSONObject(data.toString()))
+         return JSONToData(JSONObject(rdata))
       } catch (e:Exception){ }
       try {
-         return data.toString().toDouble()
+         return rdata.toDouble()
       } catch (e:Exception){ }
       try {
-         return data.toString().toInt()
+         return rdata.toInt()
       } catch (e:Exception){ }
       try {
-         if (data.toString().toLowerCase() == "true")  return true
-         if (data.toString().toLowerCase() == "false") return false
+         if (rdata.toLowerCase() == "true")  return true
+         if (rdata.toLowerCase() == "false") return false
       } catch (e:Exception){ }
-      return data.toString()
+      return rdata
    }
 
 
    fun JSONToData(data: JSONObject):Any? {
       val obj = mutableMapOf<String, Any?>()
-      data.toMap().forEach { obj.put(it.key.toString(), deserialize(it.value)) }
+      data.toMap().forEach { obj.put(it.key.toString().replace("\t", "\n"), deserialize(it.value)) }
       return obj
    }
 
