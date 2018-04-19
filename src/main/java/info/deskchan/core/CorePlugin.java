@@ -3,6 +3,11 @@ package info.deskchan.core;
 import java.nio.file.Path;
 import java.util.*;
 
+
+// This plugin contains
+//   - Alternatives infrastructure
+//   - Fallbacks for some major DeskChan functions
+//   - Commands interface initialization
 public class CorePlugin implements Plugin, MessageListener {
 	
 	protected PluginProxyInterface pluginProxy = null;
@@ -132,7 +137,11 @@ public class CorePlugin implements Plugin, MessageListener {
 			pluginProxy.sendMessage(sender, pluginDataDirPath.toString());
 		});
 
-
+		/* Catch logging from other plugins.
+		 * Public message
+		 * Params: level: LoggerLevel
+		 *         message: String!
+		 * Returns: None  */
 		pluginProxy.addMessageListener("core-events:log", (sender, tag, data) -> {
 			Map mapLog = (Map) data;
 			LoggerLevel level = (LoggerLevel) mapLog.getOrDefault("level",LoggerLevel.INFO);
@@ -152,6 +161,10 @@ public class CorePlugin implements Plugin, MessageListener {
 			PluginManager.log(sender, message , (List) error.get("stacktrace"));
 		});
 
+		/* Asks all plugins to save their properties on disk
+		 * Public message
+		 * Params: None
+		 * Returns: None  */
 		pluginProxy.addMessageListener("core:save-all-properties", (sender, tag, data) -> {
 			PluginManager.getInstance().saveProperties();
 		});
@@ -166,11 +179,37 @@ public class CorePlugin implements Plugin, MessageListener {
 					put("srcTag", "DeskChan:user-said");
 					put("dstTag", "core:inform-no-speech-function");
 					put("priority", 1);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:notify");
+					put("dstTag", "core:notify");
+					put("priority", 1);
 				}}
 		));
 
 		pluginProxy.addMessageListener("core:inform-no-speech-function", (sender, tag, data) -> {
 			pluginProxy.sendMessage("DeskChan:say", pluginProxy.getString("no-conversation"));
+		});
+
+		pluginProxy.addMessageListener("core:notify", (sender, tag, data) -> {
+			Map ntf = (Map) data;
+			if (ntf.containsKey("message"))
+				pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
+					put("text", ntf.get("message"));
+				}});
+			if (ntf.containsKey("speech"))
+				pluginProxy.sendMessage("DeskChan:say", new HashMap(){{
+					put("text", ntf.get("speech"));
+					if (ntf.containsKey("priority"))
+						put("priority", ntf.get("priority"));
+				}});
+			else
+				pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
+					put("purpose", ntf.getOrDefault("speech-purpose", "NOTIFY"));
+					if (ntf.containsKey("priority"))
+						put("priority", ntf.get("priority"));
+				}});
+
 		});
 
 		CommandsProxy.initialize(pluginProxy);

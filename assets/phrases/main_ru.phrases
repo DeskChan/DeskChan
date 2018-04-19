@@ -73,6 +73,10 @@
         <purpose>DO_WORK</purpose>
     </phrase>
     <phrase>
+        <text>Тебе пришло уведомление, {user}.</text>
+        <purpose>NOTIFY</purpose>
+    </phrase>
+    <phrase>
         <text>Отдохни, {user}.</text>
         <purpose>RELAX</purpose>
     </phrase>

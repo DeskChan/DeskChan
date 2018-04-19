@@ -201,10 +201,11 @@ class OpenCommand{
             Process process = line.execute()
             Thread.start {
                 process.waitFor()
-                if(process.exitValue()==0)
-                    instance.sendMessage("DeskChan:say","Ура, всё хорошо поработало!")
-                else instance.sendMessage("DeskChan:say","Ой, что-то не получилось. Код ошибки: "+process.exitValue())
-                instance.sendMessage("gui:show-notification",[text : process.text])
+
+                if(process.exitValue() == 0)
+                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'DONE', 'message': process.text])
+                else
+                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'ERROR', 'message': 'Error code '+process.exitValue() + " / " + process.text])
             }
         })
 
@@ -221,9 +222,10 @@ class OpenCommand{
                     }
                 }
                 process.waitFor()
-                if (process.exitValue() == 0)
-                    instance.sendMessage("DeskChan:say", "Ура, всё хорошо поработало!")
-                else instance.sendMessage("DeskChan:say", "Ой, что-то не получилось. Код ошибки: " + process.exitValue())
+                if(process.exitValue() == 0)
+                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'DONE', 'message': process.text])
+                else
+                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'ERROR', 'message': 'Error code '+process.exitValue() + " / " + process.text])
                 instance.sendMessage("gui:show-notification", [name: 'Standart output', text: output])
                 instance.sendMessage("gui:show-notification", [name: 'Error output', text: error])
             }

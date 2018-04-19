@@ -7,6 +7,8 @@ import org.apache.commons.lang3.SystemUtils;
 import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
+// This file contains only initialization of plugin itself
+// Look for all GUI interface in App.java
 public class Main implements Plugin {
 	
 	private static Main instance;
