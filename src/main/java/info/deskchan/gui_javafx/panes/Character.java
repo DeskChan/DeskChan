@@ -1,6 +1,7 @@
 package info.deskchan.gui_javafx.panes;
 
 import info.deskchan.gui_javafx.*;
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.EventHandler;
@@ -9,6 +10,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Effect;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
@@ -154,6 +156,7 @@ public class Character extends MovablePane {
 	}
 
 	private void updateImage(boolean reloadImage) {
+
 		double oldWidth = imageView.getFitWidth();
 		double oldHeight = imageView.getFitHeight();
 	    if (reloadImage) {
@@ -179,7 +182,7 @@ public class Character extends MovablePane {
 			lighting.setSurfaceScale(0.0);
 			lighting.setLight(new Light.Distant(45, 45, skinColor));
 		}
-		imageView.setEffect(lighting);
+		imageView.applyEffect(lighting);
 
         Point2D oldPosition = getPosition();
         double deltaX = -(newWidth - oldWidth) / 2;
@@ -229,10 +232,10 @@ public class Character extends MovablePane {
      * Scales the image relatively. Unlike the usual resizeSprite(), this method
      * gets an old value of the scale factor and adds an increment to it.
      * Use a positive value to zoom in the image, or a negative one to zoom it out.
-     * @param scaleFactorIncrement a positive or negative float-point number
+     * @param scaleFactorIncrement a positive or negative float-point value in percentage
      */
 	public void resizeSkinRelatively(float scaleFactorIncrement) {
-		resizeSkin(scaleFactor + scaleFactorIncrement);
+		resizeSkin(scaleFactor * 100 + scaleFactorIncrement);
 	}
 
 	/**
@@ -256,25 +259,23 @@ public class Character extends MovablePane {
 	/**
 	 * Changes the value of the opacity of the image relatively.
 	 * Unlike the usual changeOpacity(), this method gets an old value of the scale factor and adds an increment to it.
-	 * @param opacityIncrement a positive or negative float-point number
+	 * @param opacityIncrement a positive or negative float-point value in percentage
 	 */
 	public void changeOpacityRelatively(float opacityIncrement) {
-		changeOpacity(skinOpacity + opacityIncrement);
+		changeOpacity(skinOpacity * 100 + opacityIncrement);
 	}
 
 	public void setColorFilter(Color color) {
 		if(!new Color(1,1,1,1).equals(color))
 			skinColor = color;
-		else skinColor=null;
+		else
+			skinColor = null;
 		updateImage(false);
 	}
 
 	public void setColorFilter(double red, double green, double blue, double opacity) {
+		System.out.println(red + " " + green + " " + blue + " " + opacity);
 		setColorFilter(new Color(red, green, blue, opacity));
-	}
-
-	void setColorFilter(double red, double green, double blue) {
-		setColorFilter(new Color(red, green, blue, 1.0));
 	}
 
 	void setIdleImageName(String name) {
@@ -528,12 +529,14 @@ public class Character extends MovablePane {
 
 		private ImageView mainImage = new ImageView();
 		private ImageView secondImage = new ImageView();
+		private Effect effect;
 		private Timeline timeline;
 
 		AnimatedImageView(){
 			getChildren().add(mainImage);
 			getChildren().add(secondImage);
 			secondImage.setOpacity(0);
+			timeline = new Timeline(new KeyFrame(Duration.millis(20), this));
 		}
 
 		public void setImage(Image image){
@@ -541,12 +544,11 @@ public class Character extends MovablePane {
 			swap();
 			mainImage.setImage(image);
 			mainImage.setOpacity(0);
+			mainImage.setEffect(effect);
 			secondImage.setOpacity(1);
-			if (timeline != null)
-				timeline.stop();
-			timeline = new Timeline(new KeyFrame(Duration.millis(20), this));
 			timeline.setCycleCount(10);
-			timeline.play();
+			if (timeline.getStatus() != Animation.Status.RUNNING)
+				timeline.play();
 		}
 
 		@Override
@@ -588,6 +590,12 @@ public class Character extends MovablePane {
 
 		public void setFitHeight(double height){
 			mainImage.setFitHeight(height);
+		}
+
+		public void applyEffect(Effect effect){
+			this.effect = effect;
+			mainImage.setEffect(null);
+			mainImage.setEffect(effect);
 		}
 
 	}

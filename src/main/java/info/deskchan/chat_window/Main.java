@@ -26,7 +26,7 @@ public class Main implements Plugin {
             this.sender = sender;
             date = new Date();
         }
-        public Map<String,Object> toMap(){
+        public Map<String,Object> getNameMap(){
             Map<String,Object> map = new HashMap<>();
             String color = null;
             String senderName = null;
@@ -48,11 +48,18 @@ public class Main implements Plugin {
                     dateString = "";
                 } break;
             }
-            map.put("text", dateString + (senderName!=null ? "["+senderName+"]: " : "") + text + "\n");
+            map.put("text", dateString + (senderName!=null ? "["+senderName+"]: " : ""));
             map.put("color", color);
+            map.put("id", "name");
             if(font != null) {
                 map.put("font", font);
             }
+            return map;
+        }
+        public Map<String,Object> getTextMap(){
+            Map<String,Object> map = new HashMap<>();
+            map.put("text", text + "\n");
+            map.put("id", "text");
             return map;
         }
     }
@@ -61,16 +68,18 @@ public class Main implements Plugin {
 
     private LinkedList<ChatPhrase> history = new LinkedList<>();;
     private int logLength = 1;
+    private String currentQuery = "";
 
     private List<Map> historyToChat(){
         List<Map> ret = new ArrayList<>();
         List<ChatPhrase> list = history.subList(Math.max(history.size() - logLength, 0), history.size());
         if(list.size() == 0){
-            ret.add(new ChatPhrase("История сообщений пуста", 2).toMap());
+            ret.add(new ChatPhrase("История сообщений пуста", 2).getNameMap());
             return ret;
         }
         for(ChatPhrase phrase : list){
-            ret.add(phrase.toMap());
+            ret.add(phrase.getNameMap());
+            ret.add(phrase.getTextMap());
         }
         return ret;
     }
@@ -115,18 +124,17 @@ public class Main implements Plugin {
             put("rule", "ALT+C");
         }});
 
-        /* Chat has been closed through GUI.
-        * Technical message
-        * Params: None
-        * Returns: None */
+        /* Chat has been closed through GUI. */
         pluginProxy.addMessageListener("chat:closed", (sender, tag, data) -> {
             chatIsOpened = false;
         });
 
-        /* Someone made request to clear all messages from chat. We're clearing it.
-        * Public message
-        * Params: None
-        * Returns: None */
+        /* Updated textfield input. */
+        pluginProxy.addMessageListener("chat:update-textfield", (sender, tag, data) -> {
+            currentQuery = data.toString();
+        });
+
+        /* Someone made request to clear all messages from chat. We're clearing it. */
         pluginProxy.addMessageListener("chat:clear", (sender, tag, data) -> {
             history.clear();
             setupChat();
@@ -174,7 +182,7 @@ public class Main implements Plugin {
                     put("action", "update");
                     LinkedList<HashMap<String, Object>> list = new LinkedList<>();
                     list.add(new HashMap<String, Object>() {{
-                        put("id", "textname");
+                        put("id", "textarea");
                         put("value", historyToChat());
                     }});
                     put("controls", list);
@@ -187,16 +195,21 @@ public class Main implements Plugin {
         * Params: value: String! - user speech text
         * Returns: None */
         pluginProxy.addMessageListener("chat:user-said", (sender, tag, dat) -> {
+            System.out.println("sent");
             String value;
             Map<String, Object> data;
-            if (!(dat instanceof Map)){
-                value = (String) dat;
-                data = new HashMap<>();
-                data.put("value", value);
-            } else {
+            if (dat instanceof Map){
                 data = (Map) dat;
                 value = (String) data.getOrDefault("value", "");
+            } else {
+                if (dat != null)
+                    value = (String) dat;
+                else
+                    value = currentQuery;
+                data = new HashMap<>();
+                data.put("value", value);
             }
+            currentQuery = "";
 
             history.add(new ChatPhrase(value, 1));
 
@@ -260,23 +273,34 @@ public class Main implements Plugin {
         pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
             LinkedList<HashMap<String, Object>> list = new LinkedList<>();
             list.add(new HashMap<String, Object>() {{
-                put("id", "options");
-                put("type", "Button");
-                put("value", pluginProxy.getString("options"));
-                put("dstPanel", pluginProxy.getId() + "-options");
-            }});
-            list.add(new HashMap<String, Object>() {{
-                put("id", "name");
-                put("type", "TextField");
-                put("width", 500d);
-                put("enterTag","chat:user-said");
-            }});
-            list.add(new HashMap<String, Object>() {{
-                put("id", "textname");
+                put("id", "textarea");
                 put("type", "CustomizableTextArea");
                 put("width", 500d);
                 put("height", 300d);
                 put("value", historyToChat());
+            }});
+            List input = new ArrayList();
+            input.add(new HashMap<String, Object>() {{
+                put("id", "input");
+                put("type", "TextField");
+                put("onChangeTag","chat:update-textfield");
+                put("enterTag","chat:user-said");
+            }});
+            input.add(new HashMap<String, Object>() {{
+                put("id", "enter");
+                put("type", "Button");
+                put("msgTag","chat:user-said");
+                put("value", pluginProxy.getString("send"));
+            }});
+            input.add(new HashMap<String, Object>() {{
+                put("id", "options");
+                put("type", "Button");
+                put("value", "⚙");
+                put("dstPanel", pluginProxy.getId() + "-options");
+            }});
+            list.add(new HashMap<String, Object>() {{
+                put("id", "input-line");
+                put("elements", input);
             }});
             put("controls", list);
             put("name", pluginProxy.getString("chat"));
@@ -324,11 +348,11 @@ public class Main implements Plugin {
                 put("value", pluginProxy.getString("options"));
             }});
             list.add(new HashMap<String, Object>() {{
-                put("id", "name");
+                put("id", "input");
                 put("value", "");
             }});
             list.add(new HashMap<String, Object>() {{
-                put("id", "textname");
+                put("id", "textarea");
                 put("value", historyToChat());
             }});
             put("controls", list);

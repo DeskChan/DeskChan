@@ -10,20 +10,24 @@ public class Main implements Plugin {
 
     private static PluginProxyInterface pluginProxy;
 
-    private WeatherServer server = new YahooServer();
+    private WeatherServer server;
 
     public static String getCity(){
         return pluginProxy.getProperties().getString("city");
     }
 
+    public static Main instance;
 
     @Override
     public boolean initialize(PluginProxyInterface pluginProxyIn) {
         pluginProxy = pluginProxyIn;
+        instance = this;
 
         PluginProperties properties = pluginProxy.getProperties();
         properties.load();
         properties.putIfHasNot("city", "Nowhere");
+
+        server = new YahooServer();
 
         pluginProxy.addMessageListener("weather:update-city",(sender, tag, data) -> {
             String city = ((Map) data).get("city").toString();
@@ -33,9 +37,13 @@ public class Main implements Plugin {
                     put("text",getString("info.no-city"));
                 }});
             } else properties.put("city", city);
-            server.drop();
-            updateOptionsTab();
-            saveOptions();
+            new Thread(){
+                public void run(){
+                    server.drop();
+                    checkLocation();
+                    saveOptions();
+                }
+            }.start();
         });
 
         pluginProxy.sendMessage("core:add-command", new HashMap(){{
@@ -103,17 +111,19 @@ public class Main implements Plugin {
             List<Map<String, Object>> quotes_list = new ArrayList<>();
             if (list != null) {
                 TimeForecast now = server.getNow();
-                for (Map<String, Object> entry : list) {
-                    Collection<String> types = (Collection) entry.get("weather");
-                    if(types == null) continue;
-                    if(now == null){
-                        quotes_list.add(entry);
-                        continue;
-                    }
-                    for(String type : types){
-                        if(!isWeatherMatch(type,server.getNow().weather,server.getNow().temp)){
+                if (now != null) {
+                    for (Map<String, Object> entry : list) {
+                        Collection<String> types = (Collection) entry.get("weather");
+                        if (types == null) continue;
+                        if (now == null) {
                             quotes_list.add(entry);
-                            break;
+                            continue;
+                        }
+                        for (String type : types) {
+                            if (!isWeatherMatch(type, server.getNow().weather, server.getNow().temp)) {
+                                quotes_list.add(entry);
+                                break;
+                            }
                         }
                     }
                 }
@@ -122,34 +132,38 @@ public class Main implements Plugin {
         });
 
         setupOptionsTab();
+        new Thread(){
+            public void run(){
+                checkLocation();
+                server.getNow();
+            }
+        }.start();
+        log("Initialization completed");
         return true;
     }
 
-    String checkLocationResult(){
+   void checkLocation(){
         String ret = server.checkLocation();
-        switch (ret){
-            case "1": return getString("info.lost-server");
-            case "2":
-            case "3": return getString("incorrect");
-            default : return ret;
-        }
+        updateOptionsTab(ret != null ? ret : getString("error"));
     }
+
     void setupOptionsTab() {
         pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
             put("name", getString("options"));
+            put("type", "submenu");
             put("id", "options");
             put("msgTag", "weather:update-city");
+            put("action", "set");
             List<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
             list.add(new HashMap<String, Object>() {{
                 put("id", "city");
                 put("type", "TextField");
                 put("label", getString("city"));
-                put("value", getCity());
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "check");
                 put("type", "Label");
-                put("value", checkLocationResult());
+                put("label", getString("error"));
             }});
             list.add(new HashMap<String, Object>() {{
                 put("type", "Label");
@@ -158,13 +172,16 @@ public class Main implements Plugin {
             put("controls", list);
         }});
     }
-    void updateOptionsTab() {
-        pluginProxy.sendMessage("gui:update-options-submenu", new HashMap<String, Object>() {{
+
+    void updateOptionsTab(String locationResult) {
+        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
+            put("id", "options");
             put("name", getString("options"));
+            put("action", "update");
             List<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
             list.add(new HashMap<String, Object>() {{
                 put("id", "check");
-                put("value", checkLocationResult());
+                put("value", locationResult);
             }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "city");
@@ -173,6 +190,7 @@ public class Main implements Plugin {
             put("controls", list);
         }});
     }
+
     void saveOptions(){
        pluginProxy.getProperties().save();
     }

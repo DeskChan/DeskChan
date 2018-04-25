@@ -20,9 +20,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.media.AudioClip;
 import javafx.scene.text.Font;
 import javafx.stage.*;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.apache.commons.io.FileUtils;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -31,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class App extends Application {
@@ -118,7 +121,7 @@ public class App extends Application {
 	 * @param name Title of window
 	 * @param text Text of window **/
 	public static void showNotification(String name, String text){
-		TemplateBox dialog = new TemplateBox(name);
+		TemplateBox dialog = new TemplateBox("error", name);
 		dialog.setContentText(text);
 		dialog.requestFocus();
 		dialog.show();
@@ -126,7 +129,7 @@ public class App extends Application {
 
 	/** Registering plugin's API. **/
 	private void initMessageListeners() {
-		PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
+		PluginProxyInterface pluginProxy = Main.getPluginProxy();
 
 		/* Registering single action that will be visible in click menu.
         * Public message
@@ -679,6 +682,37 @@ public class App extends Application {
 			}
 		});
 
+		/* Toggle recognition redirect to user balloon.
+        * Public message
+        * Params: check: Boolean! - redirect
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:toggle-redirect-recognition", (sender, tag, data) -> {
+			Main.getProperties().put("redirect-recognition", data);
+			pluginProxy.sendMessage("core:register-alternative",
+						new HashMap<String, Object>() {{
+							put("srcTag", "DeskChan:voice-recognition");
+							put("dstTag", "gui:raise-user-balloon");
+							put("priority", (Boolean) data ? 100 : 1);
+						}}
+			);
+		});
+		pluginProxy.sendMessage("core:register-alternative",
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:voice-recognition");
+					put("dstTag", "gui:raise-user-balloon");
+					put("priority",  Main.getProperties().getBoolean("redirect-recognition", false) ? 100 : 1);
+				}}
+		);
+
+		/* Open folder containing log file.  */
+		pluginProxy.addMessageListener("gui:open-log-file", (sender, tag, data) -> {
+			try {
+				Desktop.getDesktop().open(Main.getPluginProxy().getDataDirPath().getParent().toFile());
+			} catch (Exception e){
+				showThrowable(e);
+			}
+		});
+
 		/* Selecting directories dialog.
         * Public message
         * Params: Map
@@ -879,7 +913,7 @@ public class App extends Application {
 			Platform.runLater(() -> {
 				for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
 					if(locale.getValue().equals(newValue)){
-						TemplateBox dialog = new TemplateBox(Main.getString("default_messagebox_name"));
+						TemplateBox dialog = new TemplateBox("message-box", Main.getString("default_messagebox_name"));
 						dialog.setContentText(Main.getString("info.restart"));
 						dialog.requestFocus();
 						dialog.show();
@@ -1078,7 +1112,7 @@ public class App extends Application {
 		if (waitingAlert == null)
 			Main.getPluginProxy().setTimer(800, (sender, data) -> {
 				if (!needAlert || waitingAlert != null) return;
-				waitingAlert = new TemplateBox(Main.getString("default_messagebox_name"));
+				waitingAlert = new TemplateBox("waiting", Main.getString("default_messagebox_name"));
 				waitingAlert.getDialogPane().setContent(new Label(Main.getString("wait")));
 				waitingAlert.show();
 			});

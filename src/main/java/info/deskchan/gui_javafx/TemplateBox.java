@@ -32,9 +32,10 @@ class TemplateBox extends Dialog<Void> {
 	private StageStyle stageStyle = null;
 	Point2D dragDelta = new Point2D(0, 0);
 
-	public TemplateBox(String name) {
+	public TemplateBox(String id, String title) {
 		setDialogPane(new BoxPane());
-		setTitle(name);
+		setId(id);
+		setTitle(title);
 
 		applyStyle();
 
@@ -120,6 +121,7 @@ class TemplateBox extends Dialog<Void> {
 			Selector w = Selector.createSelector("Window"),
 					 n = Selector.createSelector("." + getDialogPane().getId());
 
+			System.out.println(getDialogPane() + " " + getDialogPane().getId() + " " + n);
 			boolean cw, cn;
 
 			for (Rule rule : css.getRules()) {
@@ -176,10 +178,13 @@ class TemplateBox extends Dialog<Void> {
 
 	//public DialogPane getDialogPane(){  return pane; }
 
-	public void setId(String id){ getDialogPane().getStyleClass().add(id); }
+	public void setId(String id){
+		getDialogPane().getStyleClass().add(id);
+		getDialogPane().setId(id);
+		System.out.println(getDialogPane() + " " + getDialogPane().getId());
+	}
 
 	public void requestFocus(){ getDialogPane().requestFocus(); }
-
 
 	class BoxPane extends DialogPane {
 		Region background = new Region();

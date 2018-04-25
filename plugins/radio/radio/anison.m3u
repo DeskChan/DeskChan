@@ -1,0 +1,8 @@
+#EXTM3U
+
+#EXTINF:-1, Anison.FM (320Kbit)
+http://pool.anison.fm:9000/AniSonFM(320)
+#EXTINF:-1, Anison.FM (256Kbit)
+http://pool.anison.fm:9000/AniSonFM(256)
+#EXTINF:-1, Anison.FM (128Kbit)
+http://pool.anison.fm:9000/AniSonFM(128)

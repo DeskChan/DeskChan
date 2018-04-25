@@ -5,25 +5,25 @@ import java.nio.charset.StandardCharsets
 
 class Database{
     DatabaseEntry addEventEntry(Calendar date, String name, String sound){
-        def entry=new DatabaseEntry(0,date,name,sound)
-        if(!checkCorrectTime(entry)) return null
+        def entry = new DatabaseEntry(DatabaseEntry.Type.EVENT, date, name, sound)
+        if(!isTimeInFuture(entry)) return null
         add(entry)
         save()
         notify(entry)
         return entry
     }
     DatabaseEntry addTimerEntry(int delay, String name, String sound){
-        Calendar c=Calendar.instance
+        Calendar c = Calendar.instance
         c.add(Calendar.SECOND, delay)
-        def entry=new DatabaseEntry(1,c,name,sound)
-        if(!checkCorrectTime(entry)) return null
+        def entry = new DatabaseEntry(DatabaseEntry.Type.TIMER, c, name, sound)
+        if(!isTimeInFuture(entry)) return null
         add(entry)
         save()
         notify(entry)
         return entry
     }
     void addWatchEntry(Calendar date, String name, String sound){
-        watcher=new DatabaseEntry(2,date,name,sound)
+        watcher = new DatabaseEntry(DatabaseEntry.Type.WATCH, date, name, sound)
     }
     void add(DatabaseEntry entry){
         for(int i=0;i<entries.size();i++)
@@ -36,13 +36,32 @@ class Database{
     static class DatabaseEntry{
         public static Object instance
         public static String defaultSound
-        int type
+        enum Type {
+            EVENT, TIMER, WATCH
+
+            static int toInt(Type val){
+                switch (val){
+                    case EVENT: return 0
+                    case TIMER: return 1
+                    case WATCH: return 2
+                }
+            }
+
+            static Type fromInt(int val){
+                switch (val){
+                    case 0: return EVENT
+                    case 1: return TIMER
+                    case 2: return WATCH
+                }
+            }
+        }
+        Type type
         long time
         String eventId
         String soundPath
         int timerId
         DatabaseEntry(JSONObject obj){
-            type = obj.getInt("type")
+            type = Type.fromInt(obj.getInt("type"))
             time = obj.getLong("stamp")
             eventId = obj.getString("id")
             if(obj.has("soundPath"))
@@ -50,7 +69,7 @@ class Database{
             else
                 soundPath = null
         }
-        DatabaseEntry(int type, Calendar date, String name, String sound){
+        DatabaseEntry(Type type, Calendar date, String name, String sound){
             this.type = type
             time = date.getTimeInMillis()
             eventId = name
@@ -63,10 +82,10 @@ class Database{
             }
         }
         JSONObject toJSON(){
-            JSONObject obj=new JSONObject()
-            obj.put("type",type)
-            obj.put("stamp",time)
-            obj.put("id",eventId)
+            JSONObject obj = new JSONObject()
+            obj.put("type", Type.toInt(type))
+            obj.put("stamp", time)
+            obj.put("id", eventId)
             if(soundPath!=null) obj.put("soundPath", soundPath)
             return obj
         }
@@ -74,8 +93,8 @@ class Database{
             return new Date(time).format('dd.MM.yyyy HH:mm')
         }
     }
-    static boolean checkCorrectTime(DatabaseEntry entry){
-        return entry.time-Calendar.instance.getTimeInMillis()>0
+    static boolean isTimeInFuture(DatabaseEntry entry){
+        return entry.time - Calendar.instance.getTimeInMillis() > 0
     }
     LinkedList entries
     DatabaseEntry watcher
@@ -108,7 +127,7 @@ class Database{
             content.each {
                 if (it != JSONObject.NULL) {
                     def entry = new DatabaseEntry(it)
-                    if (checkCorrectTime(entry)) {
+                    if (isTimeInFuture(entry)) {
                         add(entry)
                         notify(entry)
                     }
@@ -155,15 +174,14 @@ class Database{
 
     def notify(Database.DatabaseEntry entry){
         def delay = entry.time - Calendar.instance.getTimeInMillis()
-        String message
-        if(entry.type==0)
-            message="Ты планировал событие \""+entry.eventId+"\". Оно наступило!"
-        else if(entry.type==1)
-            message="Ты ставил таймер \""+entry.eventId+"\". Он закончился!"
-        else return
 
         entry.timerId = instance.setTimer(delay, { sender, data ->
-            instance.sendMessage('DeskChan:say',[ 'text': message, 'timeout': 20, 'priority': 10000, 'partible': false ])
+            instance.sendMessage('DeskChan:notify',
+                    [ 'message': instance.getString('notify.'+entry.type.toString().toLowerCase()).replace("#", entry.eventId),
+                      'speech-purpose': "ALARM",
+                      'priority': 10000
+                    ])
+            //instance.sendMessage('DeskChan:request-say',[ 'purpose': "ALARM", 'timeout': 20, 'priority': 10000, 'partible': false ])
             if(entry.soundPath!=null)
                 instance.sendMessage('gui:play-sound',[ 'file': entry.soundPath, /*'count': 10*/ ])
             entries -= entry

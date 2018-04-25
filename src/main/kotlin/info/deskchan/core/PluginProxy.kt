@@ -29,7 +29,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             removeExtension(name) == getId()
 
     fun initialize(): Boolean {
-        addMessageListener(id, this)
+        addMessageListener(id+"#", this)
         addMessageListener(id+":save-properties", MessageListener { sender, tag, data -> properties.save() })
         return plugin.initialize(this)
     }
@@ -180,6 +180,10 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     override fun log(text: String) {
         sendMessage("core-events:log", mapOf("message" to text))
+    }
+
+    override fun log(text: String, level: LoggerLevel) {
+        sendMessage("core-events:log", mapOf("message" to text,"level" to level))
     }
 
     override fun log(e: Throwable) {

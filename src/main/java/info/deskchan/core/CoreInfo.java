@@ -37,6 +37,13 @@ public class CoreInfo {
 		PluginManager.log("Operation system: " + SystemUtils.OS_NAME+"-"+SystemUtils.OS_VERSION+", "+SystemUtils.USER_LANGUAGE+", Java ver.: "+SystemUtils.JAVA_VERSION);
 		if (SystemUtils.IS_JAVA_9) PluginManager.log("WARNING: You are using Java 9. Make sure your DeskChan build compiled on Java 9 SDK.");
 	}
+
+	public static boolean is64Bit(){
+		if (System.getProperty("os.name").contains("Windows"))
+			return (System.getenv("ProgramFiles(x86)") != null);
+		else
+			return (System.getProperty("os.arch").contains("64"));
+	}
 	
 	static {
 		try {

@@ -217,7 +217,7 @@ interface PluginOptionsControlItem {
 				});
 			if (changeTag != null)
 				textField.textProperty().addListener((observable, oldValue, newValue) -> {
-					event(focusTag);
+					event(changeTag);
 				});
 		}
 
@@ -330,6 +330,9 @@ interface PluginOptionsControlItem {
 						if (map.containsKey("font")) {
 							Font font = LocalFont.fromString((String) map.get("font"));
 							t.setFont(font);
+						}
+						if (map.containsKey("id")) {
+							t.setId(map.get("id").toString());
 						}
 						if (map.containsKey("style")) {
 							Font font = t.getFont();
@@ -955,9 +958,9 @@ interface PluginOptionsControlItem {
 					setText(selectedFont.getValue());
 					if (msgTag != null)
 						App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, getValue()));
-					picker = new FontSelectorDialog(selectedFontOpt.get());
+					updatePicker(selectedFontOpt.get());
 				} else {
-					picker = new FontSelectorDialog(picker.getResult());
+					updatePicker(picker.getResult());
 				}
 				picker.setResizable(true);
 				picker.getDialogPane().setStyle(LocalFont.getDefaultFontCSS());
@@ -978,23 +981,28 @@ interface PluginOptionsControlItem {
 			try {
 				if (selectedFont.getValue() != null) {
 					Font font = LocalFont.fromString(selectedFont.getValue());
-					picker = new FontSelectorDialog(font);
+					updatePicker(font);
 					setText(selectedFont.getValue());
-					picker.initOwner(parent);
 					return;
 				}
-			} catch (Exception e){ }
+			} catch (Exception e){
+				Main.log(e);
+			}
 
-			picker = new FontSelectorDialog(LocalFont.defaultFont);
+			updatePicker(LocalFont.defaultFont);
 			setText(Main.getString("default"));
-			picker.initOwner(parent);
-			picker.setResizable(true);
-			picker.getDialogPane().setStyle(LocalFont.getDefaultFontCSS());
 		}
 
 		@Override
 		public ObservableValue getProperty(){
 			return selectedFont;
+		}
+
+		void updatePicker(Font font){
+			picker = new FontSelectorDialog(font);
+			picker.initOwner(parent);
+			picker.setResizable(true);
+			picker.getDialogPane().setStyle(LocalFont.getDefaultFontCSS());
 		}
 	}
 

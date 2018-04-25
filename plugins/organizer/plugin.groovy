@@ -13,6 +13,8 @@ format = new SimpleDateFormat ('dd.MM.yyyy')
 def properties = getProperties()
 properties.load()
 
+sendMessage("talk:add-plugin-phrases", getPluginDirPath().resolve('organizer.phrases'))
+
 
 /* -- Menu setup -- */
 
@@ -464,7 +466,7 @@ tomatoListener = new ResponseListener(){
 
 def tomatoHandle(){
     tomatoPause = !tomatoPause
-    tomatoTimer = 0
+    tomatoTimer = Calendar.instance.timeInMillis
     sendMessage("DeskChan:request-say", tomatoPause ? "RELAX" : "DO_WORK")
     sendMessage("gui:show-notification", [
         'name': getString('tomato'),
@@ -481,9 +483,9 @@ addMessageListener('organizer:toggle-tomato', { sender, tag, data ->
     def active
     if (tomatoActive){
         tomatoTimerId = setTimer(1000, -1, {s, d ->
-            tomatoTimer++
-            int tm = tomatoTimer / 60
-            int ts = tomatoTimer - tm
+            time = (Calendar.instance.timeInMillis - tomatoTimer)/1000
+            int tm = time / 60
+            int ts = time - tm * 60
             sendMessage( 'gui:set-panel',
                     [ 'name': getString('tomato'),
                       'id':   'tomato',

@@ -3,6 +3,11 @@ package info.deskchan.core;
 import java.nio.file.Path;
 import java.util.*;
 
+
+// This plugin contains
+//   - Alternatives infrastructure
+//   - Fallbacks for some major DeskChan functions
+//   - Commands interface initialization
 public class CorePlugin implements Plugin, MessageListener {
 	
 	protected PluginProxyInterface pluginProxy = null;
@@ -132,17 +137,23 @@ public class CorePlugin implements Plugin, MessageListener {
 			pluginProxy.sendMessage(sender, pluginDataDirPath.toString());
 		});
 
+		/* Catch logging from other plugins.
+		 * Public message
+		 * Params: level: LoggerLevel
+		 *         message: String!
+		 * Returns: None  */
+		pluginProxy.addMessageListener("core-events:log", (sender, tag, data) -> {
+			Map mapLog = (Map) data;
+			LoggerLevel level = (LoggerLevel) mapLog.getOrDefault("level",LoggerLevel.INFO);
+			PluginManager.log(sender, (String) mapLog.get("message"),level);
+		});
+
 		/* Catch exceptions from other plugins.
 		 * Public message
 		 * Params: class: String!
 		 *         message: String!
 		 *         stacktrace: List<String>
 		 * Returns: None  */
-		pluginProxy.addMessageListener("core-events:log", (sender, tag, data) -> {
-			Map error = (Map) data;
-			PluginManager.log(sender, (String) error.get("message"));
-		});
-
 		pluginProxy.addMessageListener("core-events:error", (sender, tag, data) -> {
 			Map error = (Map) data;
 			String message = (error.get("class") != null ? error.get("class") : "") +
@@ -150,8 +161,55 @@ public class CorePlugin implements Plugin, MessageListener {
 			PluginManager.log(sender, message , (List) error.get("stacktrace"));
 		});
 
+		/* Asks all plugins to save their properties on disk
+		 * Public message
+		 * Params: None
+		 * Returns: None  */
 		pluginProxy.addMessageListener("core:save-all-properties", (sender, tag, data) -> {
 			PluginManager.getInstance().saveProperties();
+		});
+
+		pluginProxy.sendMessage("core:register-alternatives", Arrays.asList(
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:voice-recognition");
+					put("dstTag", "DeskChan:user-said");
+					put("priority", 50);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:user-said");
+					put("dstTag", "core:inform-no-speech-function");
+					put("priority", 1);
+				}},
+				new HashMap<String, Object>() {{
+					put("srcTag", "DeskChan:notify");
+					put("dstTag", "core:notify");
+					put("priority", 1);
+				}}
+		));
+
+		pluginProxy.addMessageListener("core:inform-no-speech-function", (sender, tag, data) -> {
+			pluginProxy.sendMessage("DeskChan:say", pluginProxy.getString("no-conversation"));
+		});
+
+		pluginProxy.addMessageListener("core:notify", (sender, tag, data) -> {
+			Map ntf = (Map) data;
+			if (ntf.containsKey("message"))
+				pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
+					put("text", ntf.get("message"));
+				}});
+			if (ntf.containsKey("speech"))
+				pluginProxy.sendMessage("DeskChan:say", new HashMap(){{
+					put("text", ntf.get("speech"));
+					if (ntf.containsKey("priority"))
+						put("priority", ntf.get("priority"));
+				}});
+			else
+				pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
+					put("purpose", ntf.getOrDefault("speech-purpose", "NOTIFY"));
+					if (ntf.containsKey("priority"))
+						put("priority", ntf.get("priority"));
+				}});
+
 		});
 
 		CommandsProxy.initialize(pluginProxy);
@@ -177,6 +235,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			list = new LinkedList<>();
 			alternatives.put(srcTag, list);
 			pluginProxy.addMessageListener(srcTag, this);
+			pluginProxy.addMessageListener(srcTag+"#", this);
 		}
 
 		Iterator<AlternativeInfo> iterator = list.iterator();
@@ -217,6 +276,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		if (list.isEmpty()) {
 			alternatives.remove(srcTag);
 			pluginProxy.removeMessageListener(srcTag, this);
+			pluginProxy.removeMessageListener(srcTag+"#", this);
 			pluginProxy.log("No more alternatives for " + srcTag);
 		}
 	}

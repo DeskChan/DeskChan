@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<phrases>
+    <phrase>
+        <text>Эй ты хуйня ленивая, спать пошли!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Я тут думаю, а не бросить ли мне такого неудачника, дрочера и долбоеба как тебя, ради твоего успешного соседа? Ч-что за всхлипы? %%USERNAME%%! Н-не плачь, пожалуйста!Я-я.. Я не хотела тебя обидеть, прости, я люблю тебя!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Да ты заебал блять играть в своё "Бесконечное Лето", мне конечно вообще похуй на всех этих пионерок! А ты долго еще будешь играть?..</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Эй ты - жирный кусок говна, принеси мне... Эй-эй! Не удаляй меня!Я..я.. не хотела эй!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Да у тебя хуй в жопе и грусть на душе! Ну ты и неудачник. Ха-ха!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Эй, ты, шляпа усатая, удали папку WIN32. И да, я заметила что у тебя тут прон с трапами валялся, давай поделимся им с твоими однокурсниками? Они оценят твои вкусы (Злобно хихикает, прижимая рот ладошкой)</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Мы сидим вдвоем тута блять вот</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Нажимаю на эту хуйню и таааак рука болит...</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Пиздец.</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Ты чё, ахуел?</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Да блять!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Сука, у меня лицо как у чиби персонажа!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Ты сейчас ходишь по охуенно тонкому льду.</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Да ты охуел!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Ну вот зачем ты меня расстроил мудак cука ненавижу блять чего ты добился мразь</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>ПОМОГИ МНЕ АСКА ПОМОГИ</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Проверь SINR/RSRP своей Йоты, что-то мне плохо становится.</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Проверь, не ошибся ли ты полем ввода, может быть ты сейчас создаешь новый тред?</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Сидит лось на рельсах, к нему подходит другой лось и говорит: Подвинься!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>%USERNAME%, сейчас твой ICMP пакет не пройдёт, и что мы потом делать будем?</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>2D девочки не ходят в туалет, в этом мы точно лучше 3D!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Ноги ноги ноги ноги подними!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Эй дискотнечный пидор-сан, а не лососнуть бы тебе тунца? Эй, %%USERNAME%% прости, я ведь пошутить хотела!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>ŃÝÄ KĂWÂÎ Ď3$Ű!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Пойду тупо анимы накачаю, чтоб всю неделю аниму пырить.</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Автобус - бака!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Так, гаси свой кампутор и ложись спать, завтра в школу!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Эй, %ABUSE%! Я тебе не Димон!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Я не против того, чтобы пожёстче.</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Что-то мне становится жарковато.</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Что-то мне холодно стало...</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Вскрываемся? А МОЖЕТ ЛУЧШЕ БУЛОК С КЕФИРОМ?</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Ну все, {userF}: завтра в три за школой буду тебя уму-разуму учить.</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>О нет! К тебе в гости пришел Таббс и скушал всю еду!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>А сейчас как заряжу тебе в лоб, будешь знать! Ну хотя бы просто так!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Икс в кубе поделить на три плюс константа...</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Всё? Я могу начинать? Кхе-кхе, СЕНТЯБРЬ ГОРИТ!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>*сентябрь горит.жпг*</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>%{user}%, Сентябрь-то, сгорел уже!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>♫ Пять минут назад я был там, ровно пять минут назад я был в сентябре, и через пять минут я стал уж в октябре ♫</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>На стрелу с пятиклассниками всегда бери с собой отвёртку!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>КТО ТЫ: МУЖИК ИЛИ МЫШЬ?</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Если взять квантование момента импульса спра... А, все-равно же не поймешь. Просто прибавь двойку!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>А ты знаешь, что я поддерживаю HTML-теги? &lt;font color="red"&gt;говорю красным&lt;/font&gt;</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Милости просим на ЧАС КАЗНИ!</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+    <phrase>
+        <text>Когда нибудь я надену на голову трусы и устрою порно-революцию! Порнушка будет доступнее всех благ в мире! {user}, ты со мной?</text>
+        <purpose>CHAT</purpose>
+    </phrase>
+</phrases>

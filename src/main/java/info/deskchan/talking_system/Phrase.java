@@ -12,21 +12,24 @@ import java.util.*;
 
 public class Phrase {
 
-	private CharacterRange character;
+	protected CharacterRange character;
 
-	private String phraseText;
+	protected String phraseText;
 
-	private int timeout;
+	protected int timeout;
 
-	private TextOperations.TagsMap<String, Set<String>> tags;
+	protected TextOperations.TagsMap<String, Set<String>> tags;
 
-	// null = "CHAT"
-	private List<String> purposeType;
+	// Array of { block_name of String, start of Int, end of Int, params.. of String/Integer/Float }
+	protected Object[][] blocks;
 
-	private String spriteType;
+	// null means defaultPurpose
+	protected List<String> purposeType;
 
-	private static final String defaultPurpose = "CHAT";
-	private static final String defaultSprite = "AUTO";
+	protected String spriteType;
+
+	protected static final String defaultPurpose = "CHAT";
+	protected static final String defaultSprite = "AUTO";
 
 	public Phrase(String text) {
 		phraseText = text.replace("\n", "");
@@ -35,6 +38,7 @@ public class Phrase {
 		spriteType = defaultSprite;
 		timeout = 0;
 		tags = null;
+		setBlocks();
 	}
 
 	public void setPurposeType(String text){
@@ -56,7 +60,7 @@ public class Phrase {
 		spriteType = text.trim().replace("\n", "").toUpperCase();
 	}
 
-	private static final String[] notTags = {"text", "purpose", "sprite", "timeout", "range"};
+	protected static final String[] notTags = {"text", "purpose", "sprite", "timeout", "range"};
 
 	public static Phrase create(Node node) {
 		NodeList list = node.getChildNodes();
@@ -107,6 +111,7 @@ public class Phrase {
 		return phrase;
 	}
 
+
 	public void setTag(String tag,String text){
 		if(tags == null) tags = new TextOperations.TagsMap();
 		tags.put(tag, text);
@@ -125,7 +130,81 @@ public class Phrase {
 		return tags;
 	}
 
-	private void appendTo(Document doc, Node target, String name, String text) {
+
+	static class Block {
+		int start, end;
+		String text;
+		Block(String t, int s, int e){ text = t; start = s; end = e; }
+		List<Object> toList(){
+			List<Object> list = new ArrayList<>();
+			String[] parts = text.split(",");
+			list.add(parts[0]); list.add(new Integer(start)); list.add(new Integer(end));
+			for (int i=1; i<parts.length; i++) list.add(parts[i]);
+			return list;
+		}
+	}
+	protected void setBlocks(){
+		String input = phraseText;
+
+		ArrayList<Block> stringBlocks = new ArrayList<> ();
+
+		for (int i=0, s=0, state=1; i<input.length(); i++) {
+			if (state == 1 && input.charAt(i) == '{') {
+				state = 2;
+				s = i;
+			} else if (state == 2 && input.charAt(i) == '}') {
+				state = 1;
+				stringBlocks.add(new Block(input.substring(s+1, i), s, i+1));
+			}
+		}
+
+		ArrayList<List<Object>> tempBlocks = new ArrayList<> ();
+		for (int i=0; i<stringBlocks.size(); i++){
+			String block = stringBlocks.get(i).text;
+			if(block.trim().length() == 0) continue;
+
+			if (!block.contains("(")) {
+				tempBlocks.add(stringBlocks.get(i).toList());
+				continue;
+			}
+
+			for (int j=0; j<block.length(); j++) {
+				if (block.charAt(j) == '(') {
+					block = block.substring(0, j) + "," + block.substring(j+1);
+				} else if (block.charAt(j) == ')' || block.charAt(j) == '"') {
+					block = block.substring(0, j) + block.substring(j+1);
+					j--;
+				}
+			}
+
+			stringBlocks.get(i).text = block;
+			tempBlocks.add(stringBlocks.get(i).toList());
+		}
+
+		blocks = new Object[tempBlocks.size()][];
+		for (int i=0; i<tempBlocks.size(); i++){
+			List<Object> block = new ArrayList<>();
+			for (Object _item : tempBlocks.get(i)){
+				String item = _item.toString().trim();
+				try {
+					block.add(Integer.parseInt(item));
+				} catch (Exception e) {
+					//System.out.println(item + " " + e.getClass().getSimpleName() + " " + e.getMessage());
+					try {
+						block.add(Float.parseFloat(item));
+					} catch (Exception er) {
+						//System.out.println(item + " " + er.getClass().getSimpleName() + " " + er.getMessage());
+						block.add(item);
+					}
+				}
+			}
+
+			blocks[i] = block.toArray(new Object[block.size()]);
+		}
+	}
+
+
+	protected void appendTo(Document doc, Node target, String name, String text) {
 		Node n = doc.createElement(name);
 		n.setTextContent(text);
 		target.appendChild(n);
@@ -200,7 +279,7 @@ public class Phrase {
 
 		return true;
 	}
-	
+
 	private Date last_usage;
 	
 	public void updateLastUsage() {
@@ -219,7 +298,7 @@ public class Phrase {
 		return purposeType.contains(match);
 	}
 
-	private static Node findInNode(NodeList list, String name) {
+	protected static Node findInNode(NodeList list, String name) {
 		for (int i = 0; i < list.getLength(); i++)
 			if (list.item(i).getNodeName().equals(name))
 				return list.item(i);
@@ -234,8 +313,9 @@ public class Phrase {
 			map.put("timeout", timeout);
 
 		map.put("characterImage", spriteType);
-		map.put("purpose", purposeType != null ? purposeType : Arrays.asList(defaultPurpose));
+		map.put("purpose", getPurposes());
 		map.put("hash", this.hashCode());
+		map.put("blocks", blocks);
 
 		if(tags != null)
 			for(Map.Entry<String, Set<String>> tag : tags.entrySet()) {
@@ -259,7 +339,11 @@ public class Phrase {
 		return s.toString();
 	}
 
-	private String getPurposesAsString(){
+	public List<String> getPurposes(){
+		return purposeType != null ? purposeType : Arrays.asList(defaultPurpose);
+	}
+
+	public String getPurposesAsString(){
 		if (purposeType == null || purposeType.size() == 0)
 			return defaultPurpose;
 
@@ -268,5 +352,9 @@ public class Phrase {
 			sb.append(purpose + ", ");
 		sb.setLength(sb.length() - 2);
 		return sb.toString();
+	}
+
+	public String getPhraseText(){
+		return phraseText;
 	}
 }

@@ -21,7 +21,8 @@ class ImageSetSkin implements Skin {
 			{"shy", "sorry", "tired"},
 			{"scared", "shocked", "tired", "surprised"},
 			{"love", "bounty"},
-			{"waiting", "normal"}
+			{"waiting", "normal"},
+			{"mad", "grin", "rage", "scared"}
 	};
 	private final Path path;
 	private final String skinName;
@@ -31,7 +32,7 @@ class ImageSetSkin implements Skin {
 	
 	ImageSetSkin(Path path) {
 		this.path = path;
-		skinName = Skin.getSkinsPath().relativize(path).toString().replaceAll("[\\\\/]", ".");
+		skinName = Skin.getSkinsPath().relativize(path).toString();
 
 		propertiesPath = Main.getPluginProxy().getDataDirPath().resolve(
 				"skin_" + skinName + ".properties"

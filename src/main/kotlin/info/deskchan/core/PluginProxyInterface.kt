@@ -89,6 +89,12 @@ interface PluginProxyInterface : MessageListener {
 
     /** Log stack and text of error thrown to file and console. **/
     fun log(e: Throwable)
+    
+    /** Log text to file and console.
+     * @param text
+     * @param level
+     */
+    fun log(text: String,level: LoggerLevel)
 }
 
 

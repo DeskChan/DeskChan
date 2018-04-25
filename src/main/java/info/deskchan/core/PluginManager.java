@@ -15,6 +15,13 @@ public class PluginManager {
 	private static final PluginManager instance = new PluginManager();
 
 	private final Map<String, PluginProxy> plugins = new HashMap<>();
+
+	// This map contain keys of two types:
+	//  - some:tag  - just common messages
+	//  - some:tag# - special messages: answers, passing inside alternatives chains and so on
+	// This separation was added in order to prevent getting common and special messages duplicating each other
+	// when you're subscribing to any message
+	// To remove such separation, you need to change this files inside core: PluginManager, CorePlugin, PluginProxy
 	private final Map<String, Set<MessageListener>> messageListeners = new HashMap<>();
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Set<String> blacklistedPlugins = new HashSet<>();
@@ -27,7 +34,7 @@ public class PluginManager {
 	Set<MessageListener> getMessageListeners(String key){
 		int delimiterPas = key.indexOf('#');
 		if (delimiterPas >= 0)
-			key = key.substring(0, delimiterPas);
+			key = key.substring(0, delimiterPas + 1);
 
 		return messageListeners.get(key);
 	}
@@ -162,7 +169,7 @@ public class PluginManager {
 
 	/**  Register tag listener. All messages that sending to <b>tag</b> will be automatically sent to <b>listener.handle</b>.  **/
 	void registerMessageListener(String tag, MessageListener listener) {
-		Set<MessageListener> listeners = getMessageListeners(tag);
+		Set<MessageListener> listeners = messageListeners.get(tag);
 		if (listeners == null) {
 			listeners = new HashSet<>();
 			messageListeners.put(tag, listeners);
@@ -177,7 +184,7 @@ public class PluginManager {
 
 	/**  Unregister tag listener. **/
 	void unregisterMessageListener(String tag, MessageListener listener) {
-		Set<MessageListener> listeners = getMessageListeners(tag);
+		Set<MessageListener> listeners = messageListeners.get(tag);
 		if (listeners != null) {
 			listeners.remove(listener);
 			if (listeners.size() == 0) {
@@ -188,7 +195,7 @@ public class PluginManager {
 
 	/**  Get listeners count. **/
 	int getMessageListenersCount(String tag) {
-		Set<MessageListener> listeners = getMessageListeners(tag);
+		Set<MessageListener> listeners = messageListeners.get(tag);
 		if (listeners != null) {
 			return listeners.size();
 		}
@@ -353,7 +360,7 @@ public class PluginManager {
 		try {
 			return loadPluginByPath(path);
 		} catch (Throwable e) {
-			log(e);
+			log(e.getMessage());
 		}
 		return false;
 	}
@@ -397,7 +404,11 @@ public class PluginManager {
 			if (files.length > 1) {
 				log("Too many plugins with similar names (" + name + ")!");
 			}
-			return loadPluginByPath(files[0].toPath());
+			try {
+				return loadPluginByPath(files[0].toPath());
+			} catch (Exception e){
+				log(e.getMessage());
+			}
 		}
 
 		// 5. Otherwise, the plugin cannot be loaded by name.
@@ -551,7 +562,7 @@ public class PluginManager {
 			for(File file : files){
 				if(file.isFile()){
 					if(FilenameUtils.getBaseName(file.toString()).equals(name)){
-						return file.toPath();
+						return Paths.get(FilenameUtils.getFullPath(file.toString()));
 					}
 				} else if(file.isDirectory()){
 					if(file.getName().equals(name)){
@@ -643,12 +654,26 @@ public class PluginManager {
 
 	/* Logging */
 
-	/** Log stack and text of error thrown to file and console.
+	/** Log info to file and console.
 	 * You cannot call this method, use your plugin's proxy. **/
 
-	static void log(String id, String message) {
+	static void log(String id, String message){
+		log(id,message,LoggerLevel.INFO);
+	}
+
+	static void log(String id, String message,LoggerLevel level) {
 		String text = id + ": " + message;
-		System.err.println(text);
+
+		if (level.equals(LoggerLevel.ERROR)){
+			System.err.println(text);
+			writeStringToLogStream(text);
+		} else if (level.getValue() >= LoggerLevel.WARN.getValue() && level.getValue() <= LoggerLevel.TRACE.getValue()){
+			System.out.println(text);
+			writeStringToLogStream(text);
+		}
+	}
+
+	static void writeStringToLogStream(String text){
 		if (logStream != null) {
 			try {
 				logStream.write((text + "\n").getBytes("UTF-8"));
@@ -659,10 +684,11 @@ public class PluginManager {
 		}
 	}
 
+
 	static void log(String id, String message, List<Object> stacktrace) {
-		log(id, message);
+		log(id, message,LoggerLevel.ERROR);
 		for (Object line : stacktrace) {
-			log(id, "   at " + line.toString());
+			log(id, "   at " + line.toString(),LoggerLevel.ERROR);
 		}
 	}
 

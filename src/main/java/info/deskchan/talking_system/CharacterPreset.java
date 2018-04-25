@@ -64,6 +64,7 @@ public class CharacterPreset {
 	/** New preset with standard info. **/
 	public CharacterPreset() {
 		setDefault();
+		inform();
 	}
 
 	/** New preset from JSON. **/
@@ -74,6 +75,7 @@ public class CharacterPreset {
 			Main.log(e);
 			setDefault();
 		}
+		inform();
 	}
 
 	/** Set preset tags from its string representation. **/

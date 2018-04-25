@@ -1,92 +1,396 @@
-.root, .label {
+* {
+    dark: #236a98;
+    light: #2e99d6;
+    common: #2a7fb8;
+    very-dark:  #216089;
+}
+
+/* Все окна */
+.dialog-pane > * {
+    -fx-background-color: dark;
+    -fx-alignment: top-left;
+}
+
+/* Окно чата */
+
+/* Окно опций */
+.options-window {
+    pfx-stage-style: style-undecorated;
+    -fx-min-width: 70em;
+    -fx-min-height: 40em;
+
+}
+.options-window > * {
+    -fx-padding: 0;
+    -fx-background-color: very-dark;
+}
+
+
+/* * *
+ * Левая панель
+ * * */
+#options-menu {
+    -fx-background-color: common;
+    -fx-max-width: 18em;
+    -fx-translate-y: 2.1em;
+    -fx-translate-x: 0em;
+    -fx-max-height: 22em;
+
+}
+#options-menu .list-cell {
+    -fx-text-fill: white;
+    -fx-font-size: 1.4em;
+    -fx-background-color: light;
+    -fx-alignment: center;
+    -fx-font-weight: bold;
+    -fx-border-color: common;
+    -fx-border-width: 1em 0 0 0, 0, 0;
+
+}
+#options-menu .list-cell:hover {
+    -fx-background-color: dark;
+}
+#options-menu .list-cell:selected {
+    -fx-background-color: dark;
+}
+#options-menu .list-cell:empty {
+    -fx-opacity: 0;
+}
+#pagination, #controls {
+    -fx-border-color:
+        linear-gradient(to right, rgba(0, 0, 0, 0.2), transparent);
+    -fx-border-style: solid;
+    -fx-border-width: 0 0 0 10;
+}
+
+
+/* * *
+ * Левая-нижняя панель
+ * * */
+#info-pane {
+    -fx-background-color: light;
+    -fx-translate-x: 0em;
+    -fx-translate-y: 24em;
+    -fx-max-height: 3em;
+    -fx-max-width: 18em;
+    -fx-padding: 2em;
+    -fx-vgap: 0.7em;
+    -fx-orientation: horizontal;
+
+}
+#info-pane > FlowPane {
+    -fx-font-size: 1.4em;
+    -fx-hgap: 0.5em;
+    -fx-padding: 0;
+    -fx-pref-width: 14em;
+}
+#info-pane #build-name {
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 0;
+    -fx-border-color: white;
+}
+#about-git_branch,
+#about-build_datetime {
+    -fx-translate-y: -5em;
+    -fx-font-size: 1.1em;
+    -fx-padding: 0;
+}
+#about-git_commit_hash,
+#about-site {
+    visibility: hidden;
+}
+
+/* * *
+ * Верхняя панель
+ * * */
+#pagination {
+    -fx-translate-x: 18em;
+    -fx-background-color: dark;
+    -fx-padding: 0 5em 1em 0;
+    -fx-max-height: 0em;
+    -fx-translate-y: 2em;
+    -fx-alignment: center-right;
+    -fx-max-width: 55em;
+}
+#pagination .hyperlink {
+    -fx-font-size: 1.1em;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+#pagination .hyperlink:hover {
+    -fx-background-color: common;
+}
+
+
+/* * *
+ * Нижняя панель
+ * * */
+.button-bar {
+    -fx-border-color: common;
+    -fx-border-width: 0 0 0.5em 0;
+}
+
+
+/* * *
+ * Активная зона
+ * * */
+#controls {
+    -fx-translate-x: 18em;
+    -fx-translate-y: 5em;
+    -fx-max-height: 33em;
+    -fx-pref-width: 52em;
+    -fx-max-width: 52em;
+    -fx-background-color: dark;
+}
+#controls > BorderPane {
+    -fx-max-height: 31em;
+    -fx-pref-height: 31em;
+    -fx-pref-width: 50em;
+    -fx-max-width: 50em;
+    -fx-border-width: 0;
+    -fx-translate-x: 1em;
+}
+#controls .scroll-pane {
+    -fx-background-color: dark;
+}
+#controls-bottom-buttons {
+    -fx-pref-width: 60em;
+    -fx-background-color: transparent;
+    -fx-border-color: white;
+    -fx-border-width: 1 0 0 0;
+}
+/* Незаполненные заголовки таблицы*/
+#controls .filler {
+    -fx-background-color: very-dark;
+}
+
+
+/* * *
+ * Элементы структуры
+ * * */
+/*Список*/
+.list-view, .list-view .list-cell {
+    -fx-background-color: dark;
+}
+.list-view .list-cell {
+    -fx-border-color: #268;
+    -fx-border-width: 1 0 0 0;
+}
+.list-view .list-cell:hover,
+.list-view .list-cell:focused {
+    -fx-background-color: light;
+}
+
+/*Таблица*/
+.table-row-cell {
+    -fx-background-color: dark;
+}
+.column-header {
+    -fx-background-color: common;
+}
+.column-header:hover,
+.table-row-cell:hover,
+.table-row-cell:focused {
+    -fx-background-color: light;
+}
+
+/*Древовидная таблица*/
+.tree-table-row-cell {
+    -fx-background-color: dark;
+}
+.tree-table-row-cell:hover,
+.tree-table-row-cell:focused {
+    -fx-background-color: light;
+}
+
+/*Обычная панелька*/
+.grid-pane {
+    -fx-background-color: dark;
+    -fx-hgap: 3em;
+    -fx-vgap: 1.1em;
+    -fx-padding: 0 0 0 1em;
+    -fx-insets: 0 0 30em 0;
+}
+.grid-pane > Text {
+    -fx-background: transparent;
+    -fx-fill: white;
+}
+
+.color-palette {
+    -fx-background-color: common;
+}
+
+
+/* * *
+ * Управляющие элементы
+ * * */
+.root, .label, .text {
     -fx-font-family: "PT Sans";
+    -fx-text-fill: white;
+    -fx-fill: white;
+}
+
+
+.button {
+    -fx-text-fill: white;
+    -fx-border-width: 1px;
+    -fx-background-insets: 0 0 1 0;
+    -fx-border-color: rgb(10,30,40);
+    -fx-background-radius: 0px;
+    -fx-background-color: common;
+}
+.button:hover {
+    -fx-background-color: very-dark;
+}
+
+
+.scroll-bar {
+    -fx-background-color: dark;
+}
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button,
+.scroll-bar .thumb {
+    -fx-background-color: light;
+    -fx-padding: 5px;
+    -fx-background-radius: 2px;
+}
+.scroll-bar .thumb {
+    -fx-background-insets: 4 6 4 6;
+}
+.scroll-bar .increment-button:hover,
+.scroll-bar .decrement-button:hover,
+.scroll-bar .thumb:hover {
+    -fx-background-color: white;
+}
+.scroll-bar .increment-button .increment-arrow,
+.scroll-bar .decrement-button .decrement-arrow {
+    -fx-background-color: white;
+}
+.scroll-bar .increment-button:hover .increment-arrow,
+.scroll-bar .decrement-button:hover .decrement-arrow {
+    -fx-background-color: dark;
+}
+
+
+.check-box .box {
+    -fx-background-color: common;
+}
+.check-box:hover .box {
+    -fx-background-color: light;
+}
+.check-box .mark {
+    -fx-background-color: common;
+}
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+
+.combo-box-base {
+    -fx-background-color: common;
+}
+.combo-box-base:hover {
+    -fx-background-color: light;
+}
+
+
+.arrow {
+    -fx-background-color: white;
+}
+
+
+.hint {
+    -fx-background-color: common;
+    -fx-font-size: 1.2em;
+    -fx-padding: 0 0.5em 0 0.5em, 0, 0, 0;
+    -fx-text-fill: white;
+}
+.hint:hover {
+    -fx-background-color: light;
+}
+
+
+.spinner .increment-arrow-button,
+.spinner .decrement-arrow-button{
+    -fx-background-color: common;
+}
+.spinner .increment-arrow-button:hover,
+.spinner .decrement-arrow-button:hover{
+    -fx-background-color: light;
+}
+.spinner .increment-arrow,
+.spinner .decrement-arrow {
+    -fx-background-color: white;
 }
 
 .header {
     -fx-font-size: 20;
 }
 
-.menu-item:hover {
-     -fx-background-color: #45aac67f;
+
+.context-menu {
+    -fx-background-color: common;
 }
 
-.grid-pane {
-    -fx-hgap: 2px;
-    -fx-vgap: 2px;
-    -fx-padding: 5px;
+.context-menu .menu-item .label{
+    -fx-text-fill: white;
 }
 
-#options-menu {
-    -fx-background-color: transparent;
-    -fx-max-height: 30em;
-    -fx-max-width: 15em;
-    -fx-translate-x: 1em;
-    -fx-translate-y: 2em;
+.context-menu .menu-item:hover,
+.context-menu .menu-item:selected {
+    -fx-background-color: light;
 }
 
-#options-menu .list-cell:empty {
-    -fx-opacity: 0;
-}
 
-.options-window {
-	-fx-min-width: 70em;
-	-fx-min-height: 40em;
-}
-
-.dialog-pane > *{
-    -fx-alignment: top-left;
-}
-
-.grid-pane {
-    -fx-hgap: 1em;
-    -fx-vgap: 1em;
-    -fx-padding: 1em;
-    -fx-background-color: transparent;
-}
-
-#pagination  {
-	-fx-translate-x: 18em;
-}
-
-#controls {
-	-fx-translate-x: 18em;
-    -fx-translate-y: 2em;
-	-fx-max-height: 30em;
-	-fx-pref-width: 50em;
-	-fx-max-width: 50em;
-
-}
 .scroll-pane, .scroll-pane > .viewport {
     -fx-background-color: transparent;
 }
-#controls BorderPane {
-	-fx-max-height: 30em;
-	-fx-pref-width: 50em;
-	-fx-max-width: 50em;
-		-fx-border-color: #DDD;
+
+
+.chat_window-chat {
+    pfx-stage-style: style-transparent;
+    -fx-background-color: transparent;
+    -fx-min-height: 37em;
 }
-#controls, #controls BorderPane, #controls BorderPane .scroll-pane {
-    -fx-background-color: #FAFAFA;
+.chat_window-chat #background {
+    -fx-background-color: rgba(30,50,60, 0.9);
+}
+.chat_window-chat .content {
+    -fx-translate-y: 2em;
+    -fx-border-color: rgb(10,30,40);
+    -fx-border-width: 1 0 0 0;
+}
+.chat_window-chat .content, .chat_window-chat .grid-pane, .scroll-bar {
+    -fx-background-color: transparent;
+}
+.chat_window-chat #textarea .viewport, .chat_window-chat #textarea TextFlow {
+    -fx-background-color: transparent;
+    -fx-font-size:1.20em;
+}
+.chat_window-chat #textarea #text{
+    -fx-fill: white;
+}
+.chat_window-chat #input {
+    -fx-pref-width: 370px;
+    -fx-background-color: rgb(25,45,55);
+    -fx-text-fill: #AAA;
+    -fx-border-color: rgb(10,30,40);
+    -fx-border-width: 1px;
+}
+.chat_window-chat #input-line {
+    -fx-spacing:1em;
+}
+.chat_window-chat #input-line > * {
+    -fx-pref-height: 2.3em;
+}
+.chat_window-chat #options {
+    -fx-background-color: #104060;
 }
 
 
-#info-pane {
-    -fx-max-height: 3em;
-    -fx-max-width: 15em;
-    -fx-padding: 10;
-	-fx-translate-x: 0.5em;
-	-fx-translate-y: 22em;
-	-fx-vgap: 1em;
-	-fx-orientation: horizontal;
+.font-selector-dialog {
+    -fx-background-color: light;
 }
-#info-pane > FlowPane {
-    -fx-pref-width: 15em;
-    -fx-hgap: 1em;
-}
-#info-pane #about-git_commit_hash .hint > .text{
-    -fx-fill: #0096c9;
-}
-#info-pane #about-git_commit_hash .hint > .text:hover{
-    -fx-fill: blue;
-    -fx-underline: true;
+.font-selector-dialog .content {
+    -fx-background-color: light;
 }
