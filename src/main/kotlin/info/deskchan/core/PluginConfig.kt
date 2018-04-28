@@ -35,8 +35,27 @@ class PluginConfig {
     /** Append fields from map. **/
     fun append(map: Map<String, Any?>){
         map.forEach { t, u ->
-            if(u != null && u != "")
-                data[t.toLowerCase()] = u
+            if(u != null && u != "") {
+                val u = when (u) {
+                    is JSONArray ->  u.toList()
+                    is JSONObject -> u.toMap()
+                    else -> u
+                }
+                val t = t.toLowerCase()
+                if (t.length > 3 && t[t.length-3] == '_'){
+                    // reformat data like
+                    // { "tag_en": 1, "tag_ru": 2 }
+                    // to
+                    // { "tag": { "en": 1, "ru": 2 } }
+                    val t1 = t.substring(0, t.length-3)
+                    val t2 = t.substring(t.length-2)
+                    if (!data.containsKey(t1))
+                        data[t1] = mutableMapOf<String, String>()
+                    (data[t1] as MutableMap<String, Any>)[t2] = u
+                } else {
+                    data[t.toLowerCase()] = u
+                }
+            }
         }
     }
 
@@ -67,15 +86,7 @@ class PluginConfig {
             PluginManager.log(e)
             return
         }
-        json.toMap().forEach { t, u ->
-            if(u != null && u != ""){
-                data[t.toLowerCase()] = when (u) {
-                    is JSONArray ->  u.toList()
-                    is JSONObject -> u.toMap()
-                    else -> u
-                }
-            }
-        }
+        append(json.toMap())
     }
 
     private val dependencyNames = listOf("deps" , "dep" , "dependencies" , "dependency")
@@ -119,12 +130,16 @@ class PluginConfig {
     /** Get plugin type. **/
     fun getType() : String = PluginProxy.getString(data["type"]?.toString() ?: "unknown")
 
+    /** Get plugin type. **/
+    fun getName() : String = getLocalized("name") ?: prettifyId()
+
     /** Get field. **/
     fun get(key:String) : Any? = data[key]
 
     /** Get formatted short description of plugin. **/
     fun getShortDescription() : String {
         val sb = StringBuilder()
+        sb.appendln("ID" + ": " + data["id"])
         sb.appendln(PluginProxy.getString("plugin-type") + ": " + getType())
         if ("version" in data) {
             sb.appendln(PluginProxy.getString("version") + ": " + get("version"))
@@ -153,9 +168,9 @@ class PluginConfig {
     fun getDescription(): String? = getLocalized("description")
 
     fun getLocalized(tag:String): String? = if (tag in data) {
-        val descriptionMap = data[tag] as? Map<String, String>?
-        if (descriptionMap != null) {
-            getLocalString(descriptionMap)
+        if (data[tag] is Map<*,*>) {
+            val descriptionMap = data[tag] as? Map<String, String>?
+            descriptionMap?.get(Locale.getDefault().toLanguageTag())
         } else {
             data[tag].toString()
         }
@@ -182,21 +197,15 @@ class PluginConfig {
         else -> null
     }
 
-    private fun getLocalString(strings: Map<String, String>): String? {
-        val fullLang = Locale.getDefault().toLanguageTag().replace('-', '_')
-        val baseLang = fullLang.substring(0..1)
-        linkedSetOf(fullLang, baseLang, "en").forEach {
-            if (it in strings) {
-                return strings[it]
-            }
-        }
-        return null
-    }
-
     /** Print all fields to console. **/
     fun print() = println(data)
 
     fun clone() = PluginConfig(data)
+
+    private fun prettifyId():String {
+        val id:String = data["id"].toString().replace('_', ' ')
+        return id[0].toUpperCase() + id.substring(1)
+    }
 
     companion object{
         /** Default config representing internal java plugin. **/

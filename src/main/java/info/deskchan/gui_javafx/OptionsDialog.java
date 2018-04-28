@@ -2,7 +2,9 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core.CommandsProxy;
 import info.deskchan.core.CoreInfo;
+import info.deskchan.core.PluginConfig;
 import info.deskchan.core.PluginManager;
+import info.deskchan.core_utils.Browser;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -10,6 +12,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -17,6 +20,7 @@ import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -36,7 +40,7 @@ class OptionsDialog extends TemplateBox {
 	private ListView<String> tabListView = new ListView<>();
 
 	/** List of rows representing registered plugins in the core, 'Plugins' tab. **/
-	private ListView<PluginListItem> pluginsList = new ListView<>();
+	private PluginList pluginsList = new PluginList();
 
 	/** Table of alternatives registered in the core, 'Alternatives' tab. **/
 	private TreeTableView<AlternativeTreeItem> alternativesTable = new TreeTableView<>();
@@ -59,12 +63,7 @@ class OptionsDialog extends TemplateBox {
 		Main.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				if (instance == null) return;
-				for (PluginListItem item : instance.pluginsList.getItems()) {
-					if (item.id.equals(data)) {
-						return;
-					}
-				}
-				instance.pluginsList.getItems().add(new PluginListItem(data.toString(), false));
+				instance.pluginsList.add(new PluginListItem(data.toString(), false));
 			});
 		});
 
@@ -72,10 +71,7 @@ class OptionsDialog extends TemplateBox {
 		Main.getPluginProxy().addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				if (instance == null) return;
-				//for (PluginListItem item : instance.pluginsList.getItems())
-				//	System.out.println(item.id.equals(data) + " " + item.blacklisted);
-
-				instance.pluginsList.getItems().removeIf(item -> item.id.equals(data) && !item.blacklisted);
+				instance.pluginsList.remove(data.toString());
 			});
 		});
 	}
@@ -129,26 +125,24 @@ class OptionsDialog extends TemplateBox {
 		// Pagination
 		FlowPane historyLinks = new FlowPane();
 		historyLinks.setId("pagination");
-		prevLink = new Hyperlink(Main.getString("back"));
-		prevLink.setId("back");
-		nextLink = new Hyperlink(Main.getString("forward"));
-		nextLink.setId("forward");
-		prevLink.setOnAction((event) -> {
+		prevLink = newHyperlink(Main.getString("back"), (event) -> {
 			if (panelIndex > 0){
 				panelIndex--;
 				setPanel(panelsHistory.get(panelIndex));
 			}
 			updateLinks();
 		});
+		prevLink.setId("back");
 		prevLink.setDisable(true);
 
-		nextLink.setOnAction((event) -> {
+		nextLink = newHyperlink(Main.getString("forward"), (event) -> {
 			if (panelIndex < panelsHistory.size() - 1){
 				panelIndex++;
 				setPanel(panelsHistory.get(panelIndex));
 			}
 			updateLinks();
 		});
+		nextLink.setId("forward");
 		nextLink.setDisable(true);
 
 		historyLinks.getChildren().addAll(prevLink, nextLink);
@@ -229,17 +223,18 @@ class OptionsDialog extends TemplateBox {
 			put("type",  "ComboBox");
 			put("hint",   Main.getString("help.layer_mode"));
 			put("label",  Main.getString("character.layer_mode"));
-			List<Object> values = FXCollections.observableList(new ArrayList<>());
-			values.addAll(OverlayStage.getStages());
 			int sel = -1;
 			OverlayStage.LayerMode mode = OverlayStage.getCurrentStage();
-			for(Object value : values){
+			List<String> values = new ArrayList<>(), valuesNames = new ArrayList<>();
+			for(Object value : OverlayStage.getStages()){
 				sel++;
-				if(value.equals(mode)) break;
+				values.add(value.toString());
+				valuesNames.add(Main.getString("layer_mode." + value.toString()));
+				if(value.equals(mode)) put("value",  sel);
 			}
 			put("msgTag","gui:change-layer-mode");
 			put("values", values);
-			put("value",  sel);
+			put("values", valuesNames);
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "enable_context_menu");
@@ -353,36 +348,36 @@ class OptionsDialog extends TemplateBox {
 			put("type",  "ComboBox");
 			put("hint",   Main.getString("help.balloon_position"));
 			put("label",  Main.getString("balloon_position_mode"));
-			List<Object> values =
-					FXCollections.observableList( Arrays.asList((Object[]) CharacterBalloon.PositionMode.values()) );
 			int sel = -1;
 			String current = Main.getProperties().getString("balloon_position_mode", CharacterBalloon.PositionMode.ABSOLUTE.toString());
-			for(Object value : values){
+			List<String> values = new ArrayList<>(), valuesNames = new ArrayList<>();
+			for(Object value : CharacterBalloon.PositionMode.values()){
 				sel++;
-				if(value.toString().equals(current))
-					break;
+				values.add(value.toString());
+				valuesNames.add(Main.getString("balloon." + value.toString()));
+				if(value.toString().equals(current)) put("value",  sel);
 			}
 			put("msgTag","gui:change-balloon-position-mode");
 			put("values", values);
-			put("value",  sel);
+			put("valuesNames", valuesNames);
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon_direction_mode");
 			put("type",  "ComboBox");
 			put("hint",   Main.getString("help.balloon_direction"));
 			put("label",  Main.getString("balloon_direction_mode"));
-			List<Object> values =
-					FXCollections.observableList( Arrays.asList((Object[]) CharacterBalloon.DirectionMode.values()) );
 			int sel = -1;
 			String current = Main.getProperties().getString("balloon_direction_mode", CharacterBalloon.DirectionMode.STANDARD_DIRECTION.toString());
-			for(Object value : values){
+			List<String> values = new ArrayList<>(), valuesNames = new ArrayList<>();
+			for(Object value : CharacterBalloon.DirectionMode.values()){
 				sel++;
-				if(value.toString().equals(current))
-					break;
+				values.add(value.toString());
+				valuesNames.add(Main.getString("balloon." + value.toString()));
+				if(value.toString().equals(current)) put("value",  sel);
 			}
 			put("msgTag","gui:change-balloon-direction-mode");
 			put("values", values);
-			put("value",  sel);
+			put("valuesNames", valuesNames);
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "balloon-opacity");
@@ -826,37 +821,19 @@ class OptionsDialog extends TemplateBox {
 
 		/// plugins
 		BorderPane pluginsTab = new BorderPane();
-		pluginsTab.setCenter(pluginsList);
+		pluginsTab.setCenter(pluginsList.wrap());
+		pluginsList.setId("plugins-list");
 
 		//pluginsList.minWidthProperty().bind(pluginsTab.prefWidthProperty());
 
-		// Setting row style
-		pluginsList.setCellFactory(new Callback<ListView<PluginListItem>, ListCell<PluginListItem>>(){
-			@Override
-			public ListCell<PluginListItem> call(ListView<PluginListItem> obj) {
-				return new ListCell<PluginListItem>(){
-					@Override
-					protected void updateItem(PluginListItem t, boolean bln) {
-						super.updateItem(t, bln);
-						//setStyle("-fx-cell-size: " + LocalFont.defaultFont.getSize()*2.5);
-						if (t != null) {
-							setGraphic(t.hbox);
-							setTooltip(t.tooltip);
-						} else {
-							setTooltip(null);
-						}
-					}
-				};
-			}
-		});
 
 		for (String id : PluginManager.getInstance().getPlugins()) {
-			pluginsList.getItems().add(new PluginListItem(id, false));
+			pluginsList.add(new PluginListItem(id, false));
 		}
 
 		// Blacklisted plugins that not registered in program
 		for (String id : PluginManager.getInstance().getBlacklistedPlugins()) {
-			pluginsList.getItems().add(new PluginListItem(id, true));
+			pluginsList.add(new PluginListItem(id, true));
 		}
 
 		// Load button
@@ -993,6 +970,39 @@ class OptionsDialog extends TemplateBox {
 
 	// -- Technical classes --
 
+	private static class PluginList extends VBox {
+
+		private List<PluginListItem> items = new ArrayList<>();
+
+		void add(PluginListItem item){
+			for (PluginListItem i : items)
+				if (i.id.equals(item.id)) return;
+
+			items.add(item);
+			getChildren().add(item.getNode());
+		}
+
+		void remove(String id){
+			for (PluginListItem i : items)
+				if (i.id.equals(id)){
+					if(!i.blacklisted) {
+						items.remove(i);
+						getChildren().remove(i.getNode());
+					}
+					return;
+				}
+		}
+
+		List<PluginListItem> getItems(){ return items; }
+
+		ScrollPane wrap(){
+			ScrollPane pane = new ScrollPane();
+			pane.setContent(this);
+			pane.setFitToWidth(true);
+			return pane;
+		}
+	}
+
 	/** Class representing row in 'Plugins' tab. **/
 	private static class PluginListItem {
 
@@ -1002,7 +1012,10 @@ class OptionsDialog extends TemplateBox {
 		};
 
 		String id;
+		String name;
+		String link;
 		boolean blacklisted;
+		VBox vbox = new VBox();
 		HBox hbox = new HBox();
 		HBox menuBox = new HBox();
 		Button blacklistPluginButton;
@@ -1018,7 +1031,18 @@ class OptionsDialog extends TemplateBox {
 			setInfo();
 		}
 
+		Node getNode(){ return vbox; }
+
 		void setInfo(){
+
+			PluginConfig config = PluginManager.getInstance().getPluginConfig(id);
+			if (config != null) {
+				name = PluginManager.getInstance().getPluginConfig(id).getName();
+				link = (String) PluginManager.getInstance().getPluginConfig(id).get("link");
+			} else {
+				name = id;
+			}
+
 			// Adding char in circle to plugin name if we know its type
 			label = new Label(toString());
 			label.setAlignment(Pos.CENTER_LEFT);
@@ -1027,8 +1051,16 @@ class OptionsDialog extends TemplateBox {
 			hbox.getChildren().clear();
 			hbox.getChildren().addAll(label, pane, menuBox);
 
-			label.setId("pluginName");
-			menuBox.setId("pluginMenuBox");
+			vbox = new VBox();
+			vbox.setAlignment(Pos.CENTER_LEFT);
+			vbox.getChildren().add(hbox);
+
+			label.getStyleClass().add("plugin-name");
+			hbox.getStyleClass().add("plugin-line");
+			menuBox.getStyleClass().add("plugin-menu-box");
+			vbox.getStyleClass().add("plugin-cell");
+			if (blacklisted)
+				vbox.getStyleClass().add("blacklisted");
 
 			// Adding tooltip with plugin information
 			try {
@@ -1043,7 +1075,17 @@ class OptionsDialog extends TemplateBox {
 					Button infoPluginButton = new Button("?");
 					infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
 					infoPluginButton.setOnAction(event -> {
-						App.showNotification(Main.getString("info"),description);
+						if (link != null) {
+							VBox box = new VBox(new Text(description), newHyperlink(Main.getString("documentation"), e -> {
+									try {
+										Browser.browse(link);
+									} catch (Exception ex){
+										Main.log(ex);
+									}
+							}));
+							App.showNotification(Main.getString("info"), box);
+						} else
+							App.showNotification(Main.getString("info"), description);
 					});
 					hbox.getChildren().add(infoPluginButton);
 				}
@@ -1084,19 +1126,22 @@ class OptionsDialog extends TemplateBox {
 			HBox.setHgrow(pane, Priority.ALWAYS);
 
 			updateOptionsSubMenu();
+
+			Tooltip.install(hbox, tooltip);
 		}
 
 		/** Update all submenus content. **/
 		void updateOptionsSubMenu(){
 			List<ControlsPanel> list = ControlsPanel.getPanels(id, ControlsPanel.PanelType.SUBMENU);
-			menuBox.getChildren().clear();
+			vbox.getChildren().clear();
+			vbox.getChildren().add(hbox);
 			if(list == null) return;
 			for(ControlsPanel container : list){
 				Button button = new Button(container.name);
 				button.setOnAction((event) -> {
 					container.show();
 				});
-				menuBox.getChildren().add(button);
+				vbox.getChildren().add(button);
 			}
 		}
 
@@ -1106,10 +1151,12 @@ class OptionsDialog extends TemplateBox {
 			if (blacklisted) {
 				PluginManager.getInstance().addPluginToBlacklist(id);
 				blacklistPluginButton.setText(locked);
+				vbox.getStyleClass().add("blacklisted");
 			} else {
 				PluginManager.getInstance().removePluginFromBlacklist(id);
 				PluginManager.getInstance().tryLoadPluginByName(id);
 				blacklistPluginButton.setText(unlocked);
+				vbox.getStyleClass().remove("blacklisted");
 				setInfo();
 			}
 			label.setText(toString());
@@ -1118,7 +1165,7 @@ class OptionsDialog extends TemplateBox {
 
 		@Override
 		public String toString() {
-			return getPluginTypeLetter() + id + (blacklisted ? (" ["+Main.getString("blacklisted")+"]") : "");
+			return getPluginTypeLetter() + name + (blacklisted ? (" ["+Main.getString("blacklisted")+"]") : "");
 		}
 
 		/** Alert about removing important plugin. **/
@@ -1285,5 +1332,11 @@ class OptionsDialog extends TemplateBox {
 		FlowPane pane = new FlowPane(items);
 		pane.setId(id);
 		return pane;
+	}
+
+	private static Hyperlink newHyperlink(String text, EventHandler value){
+		Hyperlink link = new Hyperlink(text);
+		link.setOnAction(value);
+		return link;
 	}
 }

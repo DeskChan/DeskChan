@@ -8,7 +8,30 @@ import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
 // This file contains only initialization of plugin itself
-// Look for all GUI interface in App.java
+// Help:
+
+// App.java                      - All message listeners and alternatives initialization
+// HackJavaFX.java               - Hacking JavaFX not to show icon of application in OS TaskBar
+// KeyboardEventNotificator.java - Keyboard handling and initialization of DeskChan keyboard events module
+// LocalFont.java                - Stores default font of DeskChan interface and cast functions Font<->String
+// OverlayStage.java             - Initialization of Stage overlaying OS interface
+// TemplateBox.java              - Standard Dialog wrapping with custom icon and CSS auto applying
+// TrayMenu.java                 - Tray menu (and right-click-menu) implementation
+
+// PluginOptionsControlItem.java - Wrapping of GUI elements to support markup
+// ControlsPanel.java            - Standard panel with options elements
+// ControlsWindow.java           - Window with controls panel as content
+// OptionsDialog.java            - Initialization of Options dialog
+// FilesManagerDialog.java       - Dialog that contains list of files with adding/removing functionality
+
+// Skin.java                     - Interface for skin
+// SkinLoader.java               - Interface for skin loader
+// ImageSetSkin.java             - Skin containing set of images with autoreplacing when set contains not enough emotions
+// DaytimeDependentSkin.java     - Skin that adds filter with shading/lightning at certain time of day
+// SingleImageSkin.java          - Skin containing single image
+
+// MouseEventNotificator.java    - Native mouse handling and notifications of mouse events
+
 public class Main implements Plugin {
 	
 	private static Main instance;

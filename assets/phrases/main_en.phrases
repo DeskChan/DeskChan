@@ -61,6 +61,10 @@
         <purpose>WRONG_DATA</purpose>
     </phrase>
     <phrase>
+        <text>You've got a notification</text>
+        <purpose>NOTIFY</purpose>
+    </phrase>
+    <phrase>
         <text>I'll do nothing.</text>
         <purpose>REFUSE</purpose>
     </phrase>

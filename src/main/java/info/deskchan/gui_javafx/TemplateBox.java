@@ -196,7 +196,6 @@ class TemplateBox extends Dialog<Void> {
 		@Override
 		protected void layoutChildren(){
 			background.toBack();
-			background.resizeRelocate(0, 0, getWidth(), getHeight());
 			if (!onFront)
 			for (Object node : getChildren().toArray())
 				if (node instanceof ButtonBar) {
@@ -205,6 +204,7 @@ class TemplateBox extends Dialog<Void> {
 					break;
 				}
 			super.layoutChildren();
+			background.resizeRelocate(0, 0, getWidth(), getHeight());
 		}
 	}
 

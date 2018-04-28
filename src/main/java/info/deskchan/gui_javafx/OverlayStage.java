@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.gui_javafx.panes.Balloon;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
@@ -167,6 +168,11 @@ public class OverlayStage extends Stage {
 		initStyle(StageStyle.TRANSPARENT);
 		scene.setFill(Color.TRANSPARENT);
 		setScene(scene);
+
+		// All nodes position automatically changed when window position change
+		// So nodes will save their absolute position on screen
+		xProperty().addListener(onPositionChange);
+		yProperty().addListener(onPositionChange);
 	}
 
 	public static Rectangle2D getDesktopSize() {
@@ -221,6 +227,14 @@ public class OverlayStage extends Stage {
 			Main.log("Sorry, top stage is not available on your system. Maybe it's because you didn't update Java.");
 		}
 	}
+
+	protected javafx.beans.value.ChangeListener<Number> onPositionChange = new javafx.beans.value.ChangeListener<Number>() {
+		@Override
+		public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
+			for (Node node : root.getChildren())
+				relocate(node, node.getLayoutX() - scene.getX(), node.getLayoutY() - scene.getY());
+		}
+	};
 }
 class NormalStage extends OverlayStage{
 	EventHandler<WindowEvent> handler = new EventHandler<WindowEvent>() {

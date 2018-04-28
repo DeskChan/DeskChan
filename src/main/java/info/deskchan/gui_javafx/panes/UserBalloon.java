@@ -114,8 +114,6 @@ public class UserBalloon extends Balloon {
 
         instance.content.setText(text);
         instance.show();
-        instance.requestFocus();
-        instance.toFront();
     }
 
     void close() {
@@ -124,9 +122,7 @@ public class UserBalloon extends Balloon {
         instance = null;
     }
 
-    void show() {
-        dialog.show();
-    }
+    void show() { dialog.show(); }
 
     void hide() {
         dialog.close();
@@ -156,6 +152,8 @@ public class UserBalloon extends Balloon {
 
         void show() {
             dialog.show();
+            dialog.requestFocus();
+            dialog.toFront();
         }
 
         void close() {
