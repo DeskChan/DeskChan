@@ -14,6 +14,7 @@ public class Main implements Plugin {
 	@Override
 	public boolean initialize(PluginProxyInterface proxy) {
 		pluginProxy = proxy;
+
 		pluginProxy.addMessageListener("core-utils:notify-after-delay-default-impl",
 				(sender, tag, data) -> {
 					Map m = (Map) data;
@@ -46,7 +47,8 @@ public class Main implements Plugin {
 						DelayNotifier task = new DelayNotifier(sender);
 						timer.schedule(task, delay);
 					}
-				});
+		});
+
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
 			synchronized (timerTasks) {
 				Iterator<DelayNotifier> iterator = timerTasks.iterator();
@@ -59,14 +61,33 @@ public class Main implements Plugin {
 				}
 			}
 		});
+
 		pluginProxy.addMessageListener("core:distribute-resources", (sender, tag, data) -> {
 			ResourceDistributor.distribute((String) data);
 		});
+
 		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
 			put("srcTag", "core-utils:notify-after-delay");
 			put("dstTag", "core-utils:notify-after-delay-default-impl");
 			put("priority", 1);
 		}});
+
+		pluginProxy.addMessageListener("core:open-link", (sender, tag, data) -> {
+			if (data == null) return;
+
+			String value;
+			if (data instanceof Map)
+				value = (String) ((Map) data).get("value");
+			else
+				value = data.toString();
+
+			try {
+				Browser.browse(value);
+			} catch (Exception e){
+				pluginProxy.log(e);
+			}
+		});
+
 		UserSpeechRequest.initialize(pluginProxy);
 
 		pluginProxy.getProperties().load();
@@ -75,7 +96,8 @@ public class Main implements Plugin {
 
 		return true;
 	}
-	
+
+
 	@Override
 	public void unload() {
 		timer.purge();

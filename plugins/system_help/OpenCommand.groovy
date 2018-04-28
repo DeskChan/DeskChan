@@ -6,15 +6,19 @@ import info.deskchan.speech_command_system.PhraseComparison
 class OpenCommand{
     static String filename
     static class LinkEntry{
-        public enum Types { FILE, PATH, WEBLINK, SCRIPT, COMMAND }
+
+        enum Types { FILE, PATH, WEBLINK, SCRIPT, COMMAND }
+
         def keywords
         String value
         Types type
+
         LinkEntry(String value, Types type, keywords){
             this.value = value
             this.type = type
             this.keywords = keywords
         }
+
         LinkEntry(JSONObject obj){
             value = obj.getString("value")
             keywords = obj.getJSONArray("keywords").toList()
@@ -24,11 +28,7 @@ class OpenCommand{
                 type = Types.COMMAND
             }
         }
-        String wrap(String val){
-            if(val[0] !='"') val = '"'+val
-            if(val[-1]!='"') val = val+'"'
-            return val
-        }
+
         JSONObject toJSON(){
             JSONObject obj=new JSONObject()
             obj.put("type", type)
@@ -40,43 +40,17 @@ class OpenCommand{
             obj.put("keywords", kw)
             return obj
         }
-        void open(){
-            switch(data.system){
-                case PluginData.OS.WINDOWS:
-                    switch(type){
-                        case Types.COMMAND:
-                            value.execute()
-                            break
-                        default:
-                            ('cmd /c start "" ' + wrap(value)).execute()
-                            break
-                    }
-                    break
-                case PluginData.OS.UNIX:
-                    switch(type){
-                        case Types.COMMAND:
-                            value.execute()
-                            break
-                        default:
-                            ('xdg-open ' + wrap(value)).execute()
-                            break
-                    }
-                    break
-                case PluginData.OS.MACOS:
-                    switch(type){
-                        case Types.COMMAND:
-                            value.execute()
-                            break
-                        default:
-                            ('open ' + wrap(value)).execute()
-                            break
-                    }
-                    break
-            }
 
+        void open(){
+            if (type == Types.COMMAND)
+                value.execute()
+            else
+                data.instance.sendMessage("core:open-link", value)
         }
     }
+
     static ArrayList<LinkEntry> entries = new ArrayList<>()
+
     static void load() {
         def file = new File(filename)
         def text = ''
@@ -99,6 +73,7 @@ class OpenCommand{
             createDefault()
         }
     }
+
     static void save() {
         def file = new File(filename)
 
@@ -112,6 +87,7 @@ class OpenCommand{
         writer.write(ar.toString(2))
         writer.close()
     }
+
     static boolean open(List text){
         float result = 0.6
         LinkEntry link = null
@@ -210,7 +186,7 @@ class OpenCommand{
         })
 
         instance.addMessageListener(pluginName+':run-with-multiple-report', { sender, tag, dat ->
-            if(dat==null) return
+            if(dat == null) return
             String line = ((Map)dat).get("msgData").toString()
             instance.sendMessage("DeskChan:say","Запущено, ожидаем")
             Process process = line.execute()
@@ -230,6 +206,7 @@ class OpenCommand{
                 instance.sendMessage("gui:show-notification", [name: 'Error output', text: error])
             }
         })
+
         instance.addMessageListener("recognition:get-words", {sender, tag, d ->
             HashSet<String> set = new HashSet<>()
             for (LinkEntry s : entries) for (String w : s.keywords) set.add(w)
