@@ -43,7 +43,7 @@ public class MovablePane extends Pane {
 		return (System.currentTimeMillis()-lastClick)>500;
 	}
 
-	private static Rectangle2D snapRect(Rectangle2D bounds, Rectangle2D screenBounds) {
+	private static Rectangle2D anchorToEdges(Rectangle2D bounds, Rectangle2D screenBounds) {
 		double x1 = bounds.getMinX(), y1 = bounds.getMinY();
 		double x2 = bounds.getMaxX(), y2 = bounds.getMaxY();
 		if (Math.abs(x1 - screenBounds.getMinX()) < SNAP_DISTANCE) {
@@ -69,9 +69,11 @@ public class MovablePane extends Pane {
 		Bounds bounds = getLayoutBounds();
 		Rectangle2D rect = new Rectangle2D(topLeft.getX(), topLeft.getY(),
 				bounds.getWidth(), bounds.getHeight());
+
+		// Anchoring to screen edges if pane is too close to edge
 		for (Screen screen : Screen.getScreens()) {
-			rect = snapRect(rect, screen.getBounds());
-			rect = snapRect(rect, screen.getVisualBounds());
+			rect = anchorToEdges(rect, screen.getBounds());
+			rect = anchorToEdges(rect, screen.getVisualBounds());
 		}
 		relocate(rect.getMinX(), rect.getMinY());
 	}
@@ -169,9 +171,13 @@ public class MovablePane extends Pane {
 						double y = Double.parseDouble(coords[1]);
 						Rectangle2D desktop = OverlayStage.getDesktopSize();
 						if(desktop.getWidth() == 0 || desktop.getHeight() == 0) return;
+
+						// fix if character position is outside the screen
 						if (x + getHeight() > desktop.getMaxX() || x < -getHeight())
 							x = desktop.getMaxX() - getHeight();
-						if (y + getWidth() > desktop.getMaxY() || y < -getWidth()) y = desktop.getMaxY() - getWidth();
+						if (y + getWidth() > desktop.getMaxY() || y < -getWidth())
+							y = desktop.getMaxY() - getWidth();
+
 						setPosition(new Point2D(x, y));
 						return;
 					}

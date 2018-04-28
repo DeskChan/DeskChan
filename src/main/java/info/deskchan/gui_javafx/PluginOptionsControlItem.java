@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core_utils.Browser;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
@@ -21,12 +22,9 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import org.apache.commons.lang3.SystemUtils;
 import org.controlsfx.dialog.FontSelectorDialog;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -54,61 +52,161 @@ interface PluginOptionsControlItem {
 		PluginOptionsControlItem item = null;
 		switch (type) {
 			case "Label":
+
+				// font: String
+				// align: String -> javafx.geometry.Pos
+
 				item = new LabelItem();
 				break;
+
 			case "TextField":
+
+				// hideText: boolean
+				// enterTag: String -> MessageListener
+				// onFocusLostTag: String -> MessageListener
+				// onChangeTag: String -> MessageListener
+
 				item = new TextFieldItem();
 				break;
+
 			case "Spinner":
 			case "IntSpinner":
+
+				// min: int
+				// max: int
+				// step: int
+				// msgTag: String -> MessageListener
+
 				item = new IntSpinnerItem();
 				break;
+
 			case "FloatSpinner":
+
+				// min: int
+				// max: int
+				// step: int
+				// msgTag: String -> MessageListener
+
 				item = new FloatSpinnerItem();
 				break;
+
 			case "Slider":
+
+				// min: int
+				// max: int
+				// step: int
+				// msgTag: String -> MessageListener
+
 				item = new SliderItem();
 				break;
+
 			case "CheckBox":
+
+				// msgTag: String -> MessageListener
+
 				item = new CheckBoxItem();
 				break;
+
 			case "ComboBox":
+
+				// values: List<String>
+				// valuesNames: List<String>
+				// msgTag: String -> MessageListener
+
 				item = new ComboBoxItem();
 				break;
+
 			case "ListBox":
+
+				// values: List<String>
+				// msgTag: String -> MessageListener
+
 				item = new ListBoxItem();
 				break;
+
 			case "Button":
+
+				// msgTag: String -> MessageListener
+				// msgData: Any
+				// dstPanel: String
+
 				item = new ButtonItem();
 				break;
+
 			case "FileField":
+
+				// msgTag: String -> MessageListener
+				// initialDirectory: String -> File
+				// filters: List of
+				//    extensions: List<String>
+				//    description: String
+
 				item = new FileFieldItem(parent);
 				break;
+
 			case "DirectoryField":
+
+				// msgTag: String -> MessageListener
+				// initialDirectory: String -> File
+
 				item = new DirectoryFieldItem(parent);
 				break;
+
 			case "DatePicker":
+
+				// msgTag: String -> MessageListener
+				// format: String -> DateTimeFormatter
+
 				item = new DatePickerItem();
 				break;
+
 			case "FilesManager":
+
 				item = new FilesManagerItem(parent);
 				break;
+
 			case "TextArea":
+
+				// rowCount: int
+
 				item = new TextAreaItem();
 				break;
+
 			case "CustomizableTextArea":
+
+				// value: List of
+				//   text: String
+				//   color: String -> javafx.scene.paint.Paint
+				//   font: String -> Font
+				//   id: String
+				//   style: String -> Font
+
 				item = new CustomizableTextAreaItem();
 				break;
+
 			case "ColorPicker":
+
+				// msgTag: String -> MessageListener
+
 				item = new ColorPickerItem();
 				break;
+
 			case "FontPicker":
+
+				// msgTag: String -> MessageListener
+
 				item = new FontPickerItem(parent);
 				break;
+
 			case "Separator":
+
 				item = new SeparatorItem();
 				break;
+
 			case "Hyperlink":
+
+				// msgTag: String -> MessageListener
+
 				item = new HyperlinkItem();
 				break;
 		}
@@ -284,7 +382,7 @@ interface PluginOptionsControlItem {
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			scrollPane = new ScrollPane();
-			area = new TextFlow(new Text("Пустой текст"));
+			area = new TextFlow(new Text(Main.getString("empty-text")));
 			area.setPadding(new Insets(0, 5, 0, 5));
 			scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 			scrollPane.setContent(area);
@@ -561,19 +659,23 @@ interface PluginOptionsControlItem {
 	class ComboBoxItem implements PluginOptionsControlItem {
 
 		private final ComboBox<Object> comboBox = new ComboBox<>();
+		private List<Object> values;
+		private SimpleStringProperty property = new SimpleStringProperty();
 
 		@Override
 		public void init(Map<String, Object> options, Object value) {
-			List<Object> items = (List) options.get("values");
-			comboBox.setItems(FXCollections.observableList(items));
+			values = (List) options.get("values");
+			List<Object> valuesNames = (List) options.get("valuesNames");
+			comboBox.setItems(FXCollections.observableList(valuesNames != null ? valuesNames : values));
 			setValue(value);
 
-			String msgTag=(String)options.get("msgTag");
-			if(msgTag!=null){
+			String msgTag = (String)options.get("msgTag");
+			if(msgTag != null){
 				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
+					property.setValue(getValue().toString());
 					App.showWaitingAlert(() ->
 						Main.getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
-							put("value", newValue.toString());
+							put("value", getValue());
 						}})
 					);
 				});
@@ -587,7 +689,7 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public Object getValue() {
-			return comboBox.getSelectionModel().getSelectedIndex();
+			return values.get(comboBox.getSelectionModel().getSelectedIndex());
 		}
 
 		@Override
@@ -597,7 +699,7 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public ObservableValue getProperty(){
-			return comboBox.valueProperty();
+			return property;
 		}
 	}
 
@@ -711,11 +813,6 @@ interface PluginOptionsControlItem {
 		public void init(Map<String, Object> options, Object value) {
 			setText(Main.getString("choose"));
 			files = new ArrayList<>();
-			try {
-				files = (List<String>) options.get("filesList");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 			setValue(value);
 			setOnAction(event -> callAction());
 		}
@@ -852,6 +949,13 @@ interface PluginOptionsControlItem {
 				formatter = DateTimeFormatter.ofPattern(format);
 			}
 			setValue(value);
+
+			String msgTag = (String) options.get("msgTag");
+			if (msgTag != null) {
+				picker.setOnAction(event -> {
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, getValue()));
+				});
+			}
 		}
 
 		@Override
@@ -1021,27 +1125,8 @@ interface PluginOptionsControlItem {
 				if (msgTag != null)
 					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, null));
 				if (link != null){
-					String[] command;
-					if (SystemUtils.IS_OS_WINDOWS)
-						command = new String[]{ "cmd", "/c", "start " + link };
-					else if (SystemUtils.IS_OS_LINUX)
-						command = new String[]{ "xdg-open", link };
-					else if (SystemUtils.IS_OS_MAC)
-						command = new String[]{ "open", link };
-					else return;
-					ProcessBuilder builder = new ProcessBuilder( command );
-					builder.redirectErrorStream(true);
 					try {
-						Process p = builder.start();
-						BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-						String line;
-						while (true) {
-							line = r.readLine();
-							if (line == null) {
-								break;
-							}
-							System.out.println(line);
-						}
+						Browser.browse(link);
 					} catch (Exception e){
 						Main.log(e);
 					}

@@ -11,12 +11,14 @@ import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.media.AudioClip;
 import javafx.scene.text.Font;
 import javafx.stage.*;
@@ -121,10 +123,24 @@ public class App extends Application {
 	 * @param name Title of window
 	 * @param text Text of window **/
 	public static void showNotification(String name, String text){
-		TemplateBox dialog = new TemplateBox("error", name);
+		TemplateBox dialog = new TemplateBox("notification", name);
 		dialog.setContentText(text);
-		dialog.requestFocus();
+		dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
 		dialog.show();
+		dialog.getDialogPane().requestFocus();
+		dialog.getDialogPane().toFront();
+	}
+
+	/** Show default notification.
+	 * @param name Title of window
+	 * @param content Content inside window **/
+	public static void showNotification(String name, Node content){
+		TemplateBox dialog = new TemplateBox("notification", name);
+		dialog.setGraphic(content);
+		dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+		dialog.show();
+		dialog.getDialogPane().requestFocus();
+		dialog.getDialogPane().toFront();
 	}
 
 	/** Registering plugin's API. **/

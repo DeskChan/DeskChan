@@ -346,6 +346,24 @@
     -fx-background-color: transparent;
 }
 
+#plugins-list .plugin-cell {
+    -fx-padding: 0 0 0.5em 0;
+}
+
+#plugins-list .plugin-cell .plugin-line {
+    -fx-padding: 0.3em 0.3em 0.6em 0.3em;
+    -fx-background-color: common;
+    -fx-background-insets: 0 0 0.3em 0;
+    -fx-background-radius: 5px;
+}
+
+#plugins-list .plugin-cell .plugin-line:hover {
+    -fx-background-color: very-dark;
+}
+
+#plugins-list .plugin-cell.blacklisted .plugin-line{
+    -fx-background-color: #444;
+}
 
 .chat_window-chat {
     pfx-stage-style: style-transparent;

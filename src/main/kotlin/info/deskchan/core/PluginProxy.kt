@@ -10,7 +10,6 @@ import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.*
 import java.util.Locale
-import kotlin.collections.HashMap
 
 
 class PluginProxy (private val id:String, private val plugin: Plugin, private val config: PluginConfig)
@@ -31,6 +30,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
     fun initialize(): Boolean {
         addMessageListener(id+"#", this)
         addMessageListener(id+":save-properties", MessageListener { sender, tag, data -> properties.save() })
+        config.append("id", id)
         return plugin.initialize(this)
     }
 
