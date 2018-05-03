@@ -1,6 +1,5 @@
 package info.deskchan.gui_javafx;
 
-import info.deskchan.core.CoreInfo;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.gui_javafx.panes.Balloon;
@@ -123,24 +122,26 @@ public class App extends Application {
 	 * @param name Title of window
 	 * @param text Text of window **/
 	public static void showNotification(String name, String text){
-		TemplateBox dialog = new TemplateBox("notification", name);
-		dialog.setContentText(text);
-		dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-		dialog.show();
-		dialog.getDialogPane().requestFocus();
-		dialog.getDialogPane().toFront();
+		Platform.runLater(() -> {
+			TemplateBox dialog = new TemplateBox("notification", name);
+			dialog.setContentText(text);
+			dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+			dialog.show();
+			dialog.requestFocus();
+		});
 	}
 
 	/** Show default notification.
 	 * @param name Title of window
 	 * @param content Content inside window **/
 	public static void showNotification(String name, Node content){
-		TemplateBox dialog = new TemplateBox("notification", name);
-		dialog.setGraphic(content);
-		dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-		dialog.show();
-		dialog.getDialogPane().requestFocus();
-		dialog.getDialogPane().toFront();
+		Platform.runLater(() -> {
+			TemplateBox dialog = new TemplateBox("notification", name);
+			dialog.setGraphic(content);
+			dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+			dialog.show();
+			dialog.requestFocus();
+		});
 	}
 
 	/** Registering plugin's API. **/
@@ -915,30 +916,13 @@ public class App extends Application {
 			});
 		});
 
-		/* Change language
-        * Public message
-        * Params: String! - language key
-        * Returns: None */
-		pluginProxy.addMessageListener("gui:set-language", (sender, tag, data) -> {
-			final String newValue;
-			if (data instanceof Map)
-				newValue = ((Map) data).get("value").toString();
-			else
-				newValue = data.toString();
-
+		/* Adding notification to reload program at language changing */
+		pluginProxy.addMessageListener("core:set-language", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-					if(locale.getValue().equals(newValue)){
-						TemplateBox dialog = new TemplateBox("message-box", Main.getString("default_messagebox_name"));
-						dialog.setContentText(Main.getString("info.restart"));
-						dialog.requestFocus();
-						dialog.show();
-						Locale.setDefault(new Locale(locale.getKey()));
-						Main.getProperties().put("locale", locale.getKey());
-						return;
-					}
-				}
-				Main.log(new Exception("Unknown language key: " + newValue));
+				TemplateBox dialog = new TemplateBox("message-box", Main.getString("default_messagebox_name"));
+				dialog.setContentText(Main.getString("info.restart"));
+				dialog.show();
+				dialog.requestFocus();
 			});
 		});
 

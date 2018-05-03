@@ -423,7 +423,7 @@ class OptionsDialog extends TemplateBox {
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "language");
 			put("type",  "ComboBox");
-			put("msgTag","gui:set-language");
+			put("msgTag","core:set-language");
 			put("label",  Main.getString("language"));
 			List<Object> values = FXCollections.observableList(new ArrayList<>());
 			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
@@ -957,7 +957,7 @@ class OptionsDialog extends TemplateBox {
 				}
 				Stage stage = (Stage) optionsDialog.getDialogPane().getScene().getWindow();
 				stage.setIconified(false);
-				optionsDialog.getDialogPane().getScene().getWindow().requestFocus();
+				optionsDialog.requestFocus();
 
 				if (panelToOpen != null){
 					optionsDialog.setPanel(panelToOpen);

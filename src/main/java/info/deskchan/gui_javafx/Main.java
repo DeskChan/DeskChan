@@ -1,10 +1,12 @@
 package info.deskchan.gui_javafx;
 
-import info.deskchan.core.*;
+import info.deskchan.core.Plugin;
+import info.deskchan.core.PluginManager;
+import info.deskchan.core.PluginProperties;
+import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
 import org.apache.commons.lang3.SystemUtils;
 
-import java.util.Locale;
 import java.util.concurrent.Semaphore;
 
 // This file contains only initialization of plugin itself
@@ -44,15 +46,6 @@ public class Main implements Plugin {
 		instance = this;
 
 		getProperties().load();
-
-		if(getProperties().containsKey("locale")) {
-			Locale.setDefault(new Locale(getProperties().getString("locale")));
-			try {
-				PluginProxy.Companion.updateResourceBundle();
-			} catch (Exception e){
-				log(e);
-			}
-		}
 
 		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/strings");
 
@@ -95,7 +88,7 @@ public class Main implements Plugin {
 	}
 
 	public void quit() {
-		pluginProxy.sendMessage("core:quit", PluginManager.isDebugBuild() ? 0 : 2000);
+		pluginProxy.sendMessage("core:quit", null);
 	}
 
 	public static void log(String text) {

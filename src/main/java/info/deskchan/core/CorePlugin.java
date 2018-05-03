@@ -17,19 +17,57 @@ public class CorePlugin implements Plugin, MessageListener {
 	public boolean initialize(PluginProxyInterface pluginProxy) {
 		this.pluginProxy = pluginProxy;
 
+		pluginProxy.getProperties().load();
+		pluginProxy.getProperties().putIfHasNot("quitDelay", 2000);
+		pluginProxy.getProperties().putIfHasNot("locale", Locale.getDefault().getLanguage());
+
+		Locale.setDefault(new Locale(pluginProxy.getProperties().getString("locale")));
+		try {
+			PluginProxy.Companion.updateResourceBundle();
+		} catch (Exception e){
+			pluginProxy.log(e);
+		}
+
+		/* Change language
+        * Public message
+        * Params: String! - language key
+        * Returns: None */
+		pluginProxy.addMessageListener("core:set-language", (sender, tag, data) -> {
+			final String newValue;
+			if (data instanceof Map)
+				newValue = ((Map) data).get("value").toString();
+			else
+				newValue = data.toString();
+
+			System.out.println(CoreInfo.locales.entrySet());
+			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
+				System.out.println(locale + " " + newValue + " " + locale.getKey().equals(newValue) + " " + locale.getValue().equals(newValue) );
+				if(locale.getKey().equals(newValue) || locale.getValue().equals(newValue)){
+					Locale.setDefault(new Locale(locale.getKey()));
+					pluginProxy.getProperties().put("locale", locale.getKey());
+					return;
+				}
+			}
+			pluginProxy.log(new Exception("Unknown language key: " + newValue));
+		});
+
+
 		/* Quit program.
 		* Public message
         * Params: delay: Long? - delay in ms program will quit after, default - 0
         * Returns: None */
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			int delay = 0;
+			int delay = pluginProxy.getProperties().getInteger("quitDelay", 2000);
 			if (data != null) {
 				if (data instanceof Map) {
-					delay = (int) ((Map<String, Object>) data).getOrDefault("delay", 0);
+					delay = (int) ((Map<String, Object>) data).getOrDefault("delay", delay);
 				} else if (data instanceof Number) {
 					delay = ((Number) data).intValue();
 				}
+			} else {
+				delay = PluginManager.isDebugBuild() ? 0 : delay;
 			}
+
 			Map<String, Object> m = new HashMap<>();
 			m.put("delay", delay);
 			pluginProxy.log("Plugin " + sender + " requested application quit in " + delay / 1000 + " seconds.");
@@ -323,7 +361,12 @@ public class CorePlugin implements Plugin, MessageListener {
 			PluginManager.getInstance().sendMessage(sender, info.tag, data);
 		} catch (NoSuchElementException e) { }
 	}
-	
+
+	@Override
+	public void unload(){
+		pluginProxy.getProperties().save();
+	}
+
 	static class AlternativeInfo {
 		String tag;
 		String plugin;

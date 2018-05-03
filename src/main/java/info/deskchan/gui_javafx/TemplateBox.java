@@ -184,7 +184,11 @@ class TemplateBox extends Dialog<Void> {
 		System.out.println(getDialogPane() + " " + getDialogPane().getId());
 	}
 
-	public void requestFocus(){ getDialogPane().requestFocus(); }
+	public void requestFocus(){
+		Stage win = (Stage) getDialogPane().getScene().getWindow();
+		win.toFront();
+		win.requestFocus();
+	}
 
 	class BoxPane extends DialogPane {
 		Region background = new Region();
