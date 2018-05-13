@@ -8,10 +8,12 @@ import info.deskchan.core_utils.Browser;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -47,6 +49,8 @@ class OptionsDialog extends TemplateBox {
 
 	private Pane controlsPane = new Pane();
 
+	private static CommandsPane commandsTable;
+
 	private LinkedList<ControlsPanel> panelsHistory = new LinkedList<>();
 	private int panelIndex = 0;
 	private Hyperlink prevLink, nextLink;
@@ -64,6 +68,7 @@ class OptionsDialog extends TemplateBox {
 			Platform.runLater(() -> {
 				if (instance == null) return;
 				instance.pluginsList.add(new PluginListItem(data.toString(), false));
+				EditCommandDialog.reloadInfo();
 			});
 		});
 
@@ -72,6 +77,7 @@ class OptionsDialog extends TemplateBox {
 			Platform.runLater(() -> {
 				if (instance == null) return;
 				instance.pluginsList.remove(data.toString());
+				EditCommandDialog.reloadInfo();
 			});
 		});
 	}
@@ -516,274 +522,121 @@ class OptionsDialog extends TemplateBox {
 
 	}
 
+	enum CommandsTableType { ACCORDION, TABLE }
 	/** Creating 'Commands' tab. **/
-	private static void initCommandsTab1(){
-		TableView<CommandItem> commandsTable = new TableView<>();
+	private static void initCommandsTab(CommandsTableType type){
+		if (type == CommandsTableType.ACCORDION)
+			commandsTable = new CommandsAccordion();
+		else
+			commandsTable = new CommandsTable();
 
 		BorderPane commandTab = new BorderPane();
-		commandTab.setCenter(commandsTable);
+		commandTab.setId("commandTab");
+		commandTab.setCenter((Node) commandsTable);
 
-		commandsTable.setEditable(true);
-		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
-		//commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
-
-		// Events column
-		TableColumn eventCol = new TableColumn(Main.getString("events"));
-		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
-		List events = CommandsProxy.getEventsList();
-		Collections.sort(events);
-		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(events)));
-		eventCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setEvent(event.getNewValue());
-		});
-		eventCol.setMinWidth(120);
-
-		// Commands column
-		TableColumn commandCol = new TableColumn(Main.getString("commands"));
-		commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
-		List commands = CommandsProxy.getCommandsList();
-		Collections.sort(commands);
-		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(commands)));
-		commandCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setCommand(event.getNewValue());
-		});
-		commandCol.setMinWidth(120);
-
-		// Rules column
-		TableColumn ruleCol = new TableColumn(Main.getString("rules"));
-		ruleCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("rule"));
-		ruleCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
-		ruleCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setRule(event.getNewValue());
-		});
-		ruleCol.setMinWidth(120);
-
-		// Parameters column
-		TableColumn msgCol = new TableColumn(Main.getString("parameters"));
-		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
-		msgCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
-		msgCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setMsgData(event.getNewValue());
-		});
-		msgCol.setMinWidth(120);
-
-		final TreeItem<CommandItem> root = new TreeItem<>();
-
-		// Filling list of commands
-		ObservableList<CommandItem> list = FXCollections.observableArrayList();
-		for(Map<String,Object> entry : CommandsProxy.getLinksList()){
-			list.add(new CommandItem(entry));
-		}
-
-		commandsTable.setItems(list);
-
-		// Setting columns
-		commandsTable.getColumns().addAll(eventCol, ruleCol, commandCol, msgCol);
+		// 'Saved' label
+		Text savedText = new Text();
+		savedText.setId("saved-label");
 
 		// 'Delete' button
 		Button deleteButton = new Button(Main.getString("delete"));
+		deleteButton.setId("delete");
 		deleteButton.setOnAction(event -> {
-			if(commandsTable.getSelectionModel().getSelectedIndex()>=0)
-				commandsTable.getItems().remove(commandsTable.getSelectionModel().getSelectedIndex());
+			if (commandsTable.getSelected() != null) {
+				commandsTable.delete(commandsTable.getSelected());
+				savedText.setText(Main.getString("not-saved"));
+			}
+		});
+
+		// 'Edit' button
+		Button editButton = new Button(Main.getString("edit"));
+		editButton.setId("edit");
+		editButton.setOnAction(event -> {
+			System.out.println(commandsTable.getSelected());
+			if (commandsTable.getSelected() != null) {
+				EditCommandDialog dialog = new EditCommandDialog(commandsTable.getSelected());
+				savedText.setText(Main.getString("not-saved"));
+			}
 		});
 
 		// 'Reset' button
 		Button resetButton = new Button(Main.getString("reset"));
+		resetButton.setId("reset");
 		resetButton.setOnAction(event -> {
 			CommandsProxy.reset();
-			ObservableList<CommandItem> l = FXCollections.observableArrayList();
-			for(Map<String,Object> entry : CommandsProxy.getLinksList()){
-				l.add(new CommandItem(entry));
-			}
-			commandsTable.setItems(l);
+			commandsTable.reset();
+			savedText.setText("");
 		});
 
 		// 'Save' button
 		Button saveButton = new Button(Main.getString("save"));
+		saveButton.setId("save");
 		saveButton.setOnAction(event -> {
-			ArrayList<Map<String,Object>> push = new ArrayList<>();
-			for(CommandItem item : commandsTable.getItems()){
-				push.add(item.toMap());
-			}
-			CommandsProxy.setLinks(push);
+			CommandsProxy.setLinks(commandsTable.getLinks());
 			CommandsProxy.save();
+			savedText.setText("");
 		});
 
 		// 'Load' button
 		Button loadButton = new Button(Main.getString("load"));
+		loadButton.setId("load");
 		loadButton.setOnAction(event -> {
 			CommandsProxy.load();
-			ObservableList<CommandItem> l=FXCollections.observableArrayList();
-			for(Map<String,Object> entry : CommandsProxy.getLinksList()){
-				l.add(new CommandItem(entry));
-			}
-			commandsTable.setItems(l);
-		});
-
-		// 'Add' button
-		Button addButton=new Button(Main.getString("add"));
-		addButton.setOnAction(event -> {
-			CommandItem item=new CommandItem(CommandsProxy.getEventsList().get(0),CommandsProxy.getCommandsList().get(0),"","");
-			commandsTable.getItems().add(item);
-		});
-
-		// Adding buttons to form
-		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
-		commandTab.setBottom(buttons);
-		buttons.setId("controls-bottom-buttons");
-
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
-	}
-
-	/** Creating 'Commands' tab. **/
-	private void initCommandsTab2(){
-		TreeTableView<CommandItem> commandsTable = new TreeTableView<>();
-		commandsTable.setShowRoot(false);
-
-		BorderPane commandTab = new BorderPane();
-		commandTab.setCenter(commandsTable);
-
-		commandsTable.setEditable(true);
-		commandsTable.setPlaceholder(new Label(Main.getString("commands.empty")));
-		//commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
-
-		// Events column
-		TreeTableColumn eventCol = new TreeTableColumn(Main.getString("events"));
-		eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
-		List events = CommandsProxy.getEventsList();
-		Collections.sort(events);
-		eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(events)));
-		eventCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setEvent(event.getNewValue());
-		});
-		eventCol.setMinWidth(120);
-
-		// Commands column
-		TreeTableColumn commandCol = new TreeTableColumn(Main.getString("commands"));
-		commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
-		List commands = CommandsProxy.getCommandsList();
-		Collections.sort(commands);
-		commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
-				FXCollections.observableArrayList(commands)));
-		commandCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setCommand(event.getNewValue());
-		});
-		commandCol.setMinWidth(120);
-
-		// Rules column
-		TreeTableColumn ruleCol = new TreeTableColumn(Main.getString("rules"));
-		ruleCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("rule"));
-		ruleCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
-		ruleCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setRule(event.getNewValue());
-		});
-		ruleCol.setMinWidth(120);
-
-		// Parameters column
-		TreeTableColumn msgCol = new TreeTableColumn(Main.getString("parameters"));
-		msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
-		msgCol.setCellFactory(TooltippedTableCell.<CommandItem> forTableColumn());
-		msgCol.setOnEditCommit(ev -> {
-			TableColumn.CellEditEvent<CommandItem, String> event=(TableColumn.CellEditEvent<CommandItem, String>) ev;
-			CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
-			item.setMsgData(event.getNewValue());
-		});
-		msgCol.setMinWidth(120);
-
-		final TreeItem<CommandItem> root = new TreeItem<>();
-		fillTreeTable(root);
-
-		// Setting columns
-		commandsTable.getColumns().addAll(eventCol, ruleCol, commandCol, msgCol);
-
-		// 'Delete' button
-		Button deleteButton = new Button(Main.getString("delete"));
-		deleteButton.setOnAction(event -> {
-			TreeItem item = commandsTable.getSelectionModel().getSelectedItem();
-			if (item == null) return;
-			item.getParent().getChildren().remove(item);
-		});
-
-		// 'Reset' button
-		Button resetButton = new Button(Main.getString("reset"));
-		resetButton.setOnAction(event -> {
-			CommandsProxy.reset();
-			fillTreeTable(root);
-		});
-
-		// 'Save' button
-		Button saveButton = new Button(Main.getString("save"));
-		saveButton.setOnAction(e -> {
-			ArrayList<Map<String, Object>> push = new ArrayList<>();
-			for (TreeItem<CommandItem> event : root.getChildren())
-				for (TreeItem<CommandItem> command : event.getChildren())
-					for (TreeItem<CommandItem> item : event.getChildren())
-						push.add(item.getValue().toMap());
-
-			CommandsProxy.setLinks(push);
-			CommandsProxy.save();
-		});
-
-		// 'Load' button
-		Button loadButton = new Button(Main.getString("load"));
-		loadButton.setOnAction(event -> {
-			CommandsProxy.load();
-			fillTreeTable(root);
+			commandsTable.reset();
+			savedText.setText("");
 		});
 
 		// 'Add' button
 		Button addButton = new Button(Main.getString("add"));
+		addButton.setId("add");
 		addButton.setOnAction(event -> {
-			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("add"), "add", ControlsPanel.PanelType.WINDOW, commandTab).show();
+			EditCommandDialog dialog = new EditCommandDialog(null);
+			savedText.setText(Main.getString("not-saved"));
+		});
+
+		// Toggle view
+		Button toggleView = new Button();
+		if (type == CommandsTableType.ACCORDION)
+			toggleView.setText("▦");
+		else
+			toggleView.setText("▤");
+		toggleView.setOnAction(actionEvent -> {
+			CommandsTableType oldType, newType;
+			try {
+				oldType = CommandsTableType.valueOf(Main.getProperties().getString("commands-type", "ACCORDION").toUpperCase());
+			} catch (Exception e) {
+				oldType = CommandsTableType.ACCORDION;
+			}
+
+			if (oldType == CommandsTableType.ACCORDION)
+				newType = CommandsTableType.TABLE;
+			else
+				newType = CommandsTableType.ACCORDION;
+			Main.getProperties().put("commands-type", newType.toString());
+			initCommandsTab(newType);
+		});
+
+		Button help = new Button("?");
+		help.setOnAction(actionEvent -> {
+			String helpLink = "https://github.com/DeskChan/DeskChan/wiki/%D0%A1%D0%BE%D0%B1%D1%8B%D1%82%D0%B8%D1%8F-%D0%B8-%D0%BA%D0%BE%D0%BC%D0%B0%D0%BD%D0%B4%D1%8B";
+			try {
+				Browser.browse(helpLink);
+			} catch (Exception e){
+				Main.log(new Exception("Cannot open help link: "+ helpLink, e));
+			}
 		});
 
 		// Adding buttons to form
-		HBox buttons = new HBox(addButton, deleteButton, loadButton, saveButton, resetButton);
-		buttons.setId("controls-bottom-buttons");
+		HBox buttons = new HBox(addButton, editButton, deleteButton, loadButton, saveButton, resetButton);
+		Region space = new Region();
+		HBox.setHgrow(space, Priority.ALWAYS);
+		buttons.getChildren().addAll(space, getFlowPane("toggle-view", savedText, toggleView, help));
 		commandTab.setBottom(buttons);
+		buttons.setId("controls-bottom-buttons");
 
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
 	}
 
-	private void fillTreeTable(TreeItem<CommandItem> root){
-		for(Map<String,Object> entry : CommandsProxy.getLinksList()){
-			CommandItem item = new CommandItem(entry);
-			loop:
-			for (TreeItem<CommandItem> event : root.getChildren())
-				if (event.getValue().event.equals(item.event))
-					for (TreeItem<CommandItem> command : event.getChildren())
-						if (command.getValue().command.equals(item.command)){
-							command.getChildren().add(new TreeItem<>(item));
-							item = null;
-							break loop;
-						}
-			if (item != null){
-				TreeItem<CommandItem> treeItem = new TreeItem<>(item);
-				TreeItem<CommandItem> commandItem = new TreeItem<>();
-				commandItem.getChildren().add(treeItem);
-				TreeItem<CommandItem> eventItem = new TreeItem<>(item);
-				eventItem.getChildren().add(commandItem);
-				root.getChildren().add(eventItem);
-			}
-		}
-	}
 
 	private void initTabs() {
 		GridPane gridPane = new GridPane();
@@ -797,7 +650,13 @@ class OptionsDialog extends TemplateBox {
 
 
 		/// commands
-		initCommandsTab1();
+		CommandsTableType oldType;
+		try {
+			oldType = CommandsTableType.valueOf(Main.getProperties().getString("commands-type", "ACCORDION").toUpperCase());
+		} catch (Exception e) {
+			oldType = CommandsTableType.ACCORDION;
+		}
+		initCommandsTab(oldType);
 
 
 		/// update alternatives tabls
@@ -1275,49 +1134,474 @@ class OptionsDialog extends TemplateBox {
 		}
 	}
 
-	/** Tooltipped cell for 'Commands' tab. **/
-	static class TooltippedTableCell<S, T> extends TextFieldTableCell<S, T> {
-		public static <S> Callback<TableColumn<S, String>, TableCell<S, String>> forTableColumn() {
-			return forTableColumn(new DefaultStringConverter());
+	interface CommandsPane {
+		void delete(CommandItem item);
+		void reset();
+		void add(CommandItem item);
+		List getLinks();
+		CommandItem getSelected();
+	}
+
+	static class CommandsTable extends TableView implements CommandsPane {
+
+		CommandsTable() {
+			setEditable(true);
+			setPlaceholder(new Label(Main.getString("commands.empty")));
+			//commandsTable.prefHeightProperty().bind(commandTab.heightProperty());
+
+			// Events column
+			TableColumn eventCol = new TableColumn(Main.getString("events"));
+			eventCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("event"));
+			List events = CommandsProxy.getEventsList();
+			Collections.sort(events);
+			eventCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
+					FXCollections.observableArrayList(events)));
+			eventCol.setOnEditCommit(ev -> {
+				TableColumn.CellEditEvent<CommandItem, String> event = (TableColumn.CellEditEvent<CommandItem, String>) ev;
+				CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+				item.setEvent(event.getNewValue());
+			});
+			eventCol.setMinWidth(120);
+
+			// Commands column
+			TableColumn commandCol = new TableColumn(Main.getString("commands"));
+			commandCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("command"));
+			List commands = CommandsProxy.getCommandsList();
+			Collections.sort(commands);
+			commandCol.setCellFactory(ComboBoxTableCell.forTableColumn(new DefaultStringConverter(),
+					FXCollections.observableArrayList(commands)));
+			commandCol.setOnEditCommit(ev -> {
+				TableColumn.CellEditEvent<CommandItem, String> event = (TableColumn.CellEditEvent<CommandItem, String>) ev;
+				CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+				item.setCommand(event.getNewValue());
+			});
+			commandCol.setMinWidth(120);
+
+			// Rules column
+			TableColumn ruleCol = new TableColumn(Main.getString("rules"));
+			ruleCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("rule"));
+			ruleCol.setCellFactory(TooltippedTableCell.<CommandItem>forTableColumn());
+			ruleCol.setOnEditCommit(ev -> {
+				TableColumn.CellEditEvent<CommandItem, String> event = (TableColumn.CellEditEvent<CommandItem, String>) ev;
+				CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+				item.setRule(event.getNewValue());
+			});
+			ruleCol.setMinWidth(120);
+
+			// Parameters column
+			TableColumn msgCol = new TableColumn(Main.getString("parameters"));
+			msgCol.setCellValueFactory(new PropertyValueFactory<CommandItem, String>("msgData"));
+			msgCol.setCellFactory(TooltippedTableCell.<CommandItem>forTableColumn());
+			msgCol.setOnEditCommit(ev -> {
+				TableColumn.CellEditEvent<CommandItem, String> event = (TableColumn.CellEditEvent<CommandItem, String>) ev;
+				CommandItem item = event.getTableView().getItems().get(event.getTablePosition().getRow());
+				item.setMsgData(event.getNewValue());
+			});
+			msgCol.setMinWidth(120);
+
+			reset();
+
+			// Setting columns
+			getColumns().addAll(eventCol, ruleCol, commandCol, msgCol);
 		}
-		public static <S, T> Callback<TableColumn<S, T>, TableCell<S, T>> forTableColumn(final StringConverter<T> converter) {
-			return list -> new TooltippedTableCell<>(converter);
+
+		public void reset(){
+
+			// Filling list of commands
+			ObservableList<CommandItem> list = FXCollections.observableArrayList();
+			for(Map<String,Object> entry : CommandsProxy.getLinksList()){
+				list.add(new CommandItem(entry));
+			}
+
+			setItems(list);
 		}
-		private static <T> String getItemText(Cell<T> cell, StringConverter<T> converter) {
-			return converter == null ? cell.getItem() == null ? "" : cell.getItem()
-					.toString() : converter.toString(cell.getItem());
+
+		public void add(CommandItem item){
+			getItems().add(item);
 		}
-		private void updateItem(final Cell<T> cell, final StringConverter<T> converter) {
-			if (cell.isEmpty()) {
-				cell.setText(null);
-				cell.setTooltip(null);
-			} else {
-				String itemText = getItemText(cell, converter);
-				cell.setText(itemText);
-				if (itemText.length() == 0) return;
-				//Add text as tooltip so that user can read text without editing it.
-				Tooltip tooltip = new Tooltip(getItemText(cell, converter));
-				tooltip.setWrapText(true);
-				tooltip.setMaxWidth(1000);
-				tooltip.setMinWidth(300);
-				tooltip.prefWidthProperty().bind(cell.widthProperty());
-				cell.setTooltip(tooltip);
+
+		public CommandItem getSelected(){
+			if(getSelectionModel().getSelectedIndex() >= 0)
+				return (CommandItem) getSelectionModel().getSelectedItem();
+			return null;
+		}
+
+		public void delete(CommandItem item){
+			getItems().remove(item);
+		}
+
+		public List getLinks(){
+			ArrayList<Map<String,Object>> push = new ArrayList<>();
+			for(CommandItem item : (ObservableList<CommandItem>) getItems()){
+				push.add(item.toMap());
+			}
+
+			return push;
+		}
+
+		/** Tooltipped cell for 'Commands' tab. **/
+		static class TooltippedTableCell<S, T> extends TextFieldTableCell<S, T> {
+			public static <S> Callback<TableColumn<S, String>, TableCell<S, String>> forTableColumn() {
+				return forTableColumn(new DefaultStringConverter());
+			}
+			public static <S, T> Callback<TableColumn<S, T>, TableCell<S, T>> forTableColumn(final StringConverter<T> converter) {
+				return list -> new TooltippedTableCell<>(converter);
+			}
+			private static <T> String getItemText(Cell<T> cell, StringConverter<T> converter) {
+				return converter == null ? cell.getItem() == null ? "" : cell.getItem()
+						.toString() : converter.toString(cell.getItem());
+			}
+			private void updateItem(final Cell<T> cell, final StringConverter<T> converter) {
+				if (cell.isEmpty()) {
+					cell.setText(null);
+					cell.setTooltip(null);
+				} else {
+					String itemText = getItemText(cell, converter);
+					cell.setText(itemText);
+					if (itemText.length() == 0) return;
+					//Add text as tooltip so that user can read text without editing it.
+					Tooltip tooltip = new Tooltip(getItemText(cell, converter));
+					tooltip.setWrapText(true);
+					tooltip.setMaxWidth(1000);
+					tooltip.setMinWidth(300);
+					tooltip.prefWidthProperty().bind(cell.widthProperty());
+					cell.setTooltip(tooltip);
+				}
+			}
+			private ObjectProperty<StringConverter<T>> converter = new SimpleObjectProperty<>(this, "converter");
+			public TooltippedTableCell() {
+				this(null);
+			}
+			public TooltippedTableCell(StringConverter<T> converter) {
+				this.getStyleClass().add("tooltipped-table-cell");
+				setConverter(converter);
+			}
+			@Override
+			public void updateItem(T item, boolean empty) {
+				super.updateItem(item, empty);
+				updateItem(this, getConverter());
 			}
 		}
-		private ObjectProperty<StringConverter<T>> converter = new SimpleObjectProperty<>(this, "converter");
-		public TooltippedTableCell() {
-			this(null);
+
+	}
+
+	static class CommandsAccordion extends Accordion implements CommandsPane {
+
+		Property<CommandBox> selected = new SimpleObjectProperty<>(null);
+		Map <String, CommandTitledPane> commands;
+		CommandsAccordion(){
+			reset();
 		}
-		public TooltippedTableCell(StringConverter<T> converter) {
-			this.getStyleClass().add("tooltipped-table-cell");
-			setConverter(converter);
+
+		static class CommandTitledPane extends TitledPane {
+			CommandTitledPane(String title, ListView content, Property<CommandBox> property){
+				super(title, content);
+				expandedProperty().addListener((observableValue, aBoolean, t1) -> {
+					property.setValue(null);
+				});
+				content.getSelectionModel().selectedItemProperty().addListener((observableValue, old, commandBox) -> {
+					property.setValue((CommandBox) commandBox);
+				});
+				content.setPlaceholder(new Text(Main.getString("empty")));
+				setTooltip(new Tooltip(EditCommandDialog.events.getOrDefault(title, Main.getString("no-info"))));
+			}
+			ListView<CommandBox> getList(){
+				return (ListView<CommandBox>) getContent();
+			}
 		}
-		@Override
-		public void updateItem(T item, boolean empty) {
-			super.updateItem(item, empty);
-			updateItem(this, getConverter());
+
+		public CommandBox toCell(CommandItem item){
+			CommandBox box = new CommandBox(item);
+			box.getStyleClass().add("command-link");
+
+			Text c = new Text(item.command);
+			c.getStyleClass().add("command");
+			Text ruleField = new Text(item.rule);
+			ruleField.getStyleClass().add("rule");
+
+			Region hgap = new Region();
+			box.setHgrow(hgap, Priority.ALWAYS);
+
+			box.getChildren().addAll(c, hgap, ruleField);
+
+			return box;
+		}
+
+		public void reset(){
+
+			getPanes().clear();
+
+			selected.setValue(null);
+			commands = new HashMap<>();
+
+			for(Map<String,Object> entry : CommandsProxy.getLinksList()){
+				CommandItem item = new CommandItem(entry);
+				add(item);
+			}
+
+			for (String event : CommandsProxy.getEventsList()){
+				if (commands.containsKey(event)) continue;
+
+				CommandTitledPane pane = new CommandTitledPane(event, new ListView<>(), selected);
+				commands.put(event, pane);
+			}
+
+			getPanes().addAll(commands.values());
+		}
+
+		public void add(CommandItem item){
+			ListView<CommandBox> list;
+			if (!commands.containsKey(item.event)) {
+				list = new ListView<>();
+				CommandTitledPane pane = new CommandTitledPane(item.event, list, selected);
+				commands.put(item.event, pane);
+			} else {
+				list = commands.get(item.event).getList();
+			}
+			list.getItems().add(toCell(item));
+		}
+
+		public CommandItem getSelected(){
+			return selected.getValue() != null ? selected.getValue().item : null;
+		}
+
+		public void delete(CommandItem item){
+			ListView<CommandBox> list = commands.get(item.event).getList();
+			list.getItems().removeIf(commandBox -> commandBox.item == item);
+			if (selected.getValue().item == item)
+				selected.setValue(null);
+		}
+
+
+		public List getLinks(){
+			ArrayList<Map<String,Object>> push = new ArrayList<>();
+			for (CommandTitledPane pane : commands.values()) {
+				for (CommandBox item : pane.getList().getItems()) {
+					push.add(item.item.toMap());
+				}
+			}
+
+			return push;
+		}
+
+		static class CommandBox extends HBox {
+			CommandItem item;
+			CommandBox(CommandItem item){ this.item = item; }
 		}
 	}
+
+	static class EditCommandDialog extends TemplateBox {
+
+		private static EditCommandDialog instance;
+		private ComboBox<String> event = new ComboBox<>();
+		private Label eventInfo = new Label();
+
+		private ComboBox<String> command = new ComboBox<>();
+		private Label commandInfo = new Label();
+
+		private TextField rule = new TextField();
+		private Label ruleInfo = new Label();
+
+		private GridPane msgGrid = new GridPane();
+		private Map<String, TextField> msgElements = new HashMap<>();
+
+		static { reloadInfo(); }
+
+		EditCommandDialog(CommandItem item){
+			super("edit-command", Main.getString("edit-command"));
+			if (instance != null && instance != this)
+				instance.close();
+
+			instance = this;
+
+			VBox content = new VBox();
+			content.getChildren().addAll(
+					event, eventInfo, new Separator(),
+					command, commandInfo, new Separator(),
+					ruleInfo, rule
+			);
+			getDialogPane().setContent(content);
+
+			event.setCellFactory(stringListView ->
+				new ListCell<String>() {
+					@Override protected void updateItem(String item, boolean empty) {
+						super.updateItem(item, empty);
+						setGraphic(new Label(item));
+						if (!events.containsKey(item) && !commands.containsKey(item)){
+							getGraphic().getStyleClass().add("non-exist");
+						}
+					}
+				}
+			);
+			eventInfo.setWrapText(true);
+			commandInfo.setWrapText(true);
+			ruleInfo.setWrapText(true);
+
+			for (String eventName : eventsKeys)
+				event.getItems().add(eventName);
+			for (String commandName : commandsKeys)
+				command.getItems().add(commandName);
+
+			event.getSelectionModel().selectedItemProperty().addListener((obs, old, text) -> {
+				eventInfo.setText(events.getOrDefault(text, Main.getString("no-info")));
+				if (!rules.containsKey(text)) {
+					rule.setDisable(true);
+					ruleInfo.setText(Main.getString("no-rule-required"));
+				} else {
+					rule.setDisable(false);
+					ruleInfo.setText(rules.get(text));
+				}
+			});
+
+			command.getSelectionModel().selectedItemProperty().addListener((obs, old, text) -> {
+				commandInfo.setText(commands.getOrDefault(text, Main.getString("no-info")));
+				Object m = msgs.get(text);
+				content.getChildren().remove(msgGrid);
+
+				msgElements = new HashMap<>();
+
+				if (m != null){
+					msgGrid = new GridPane();
+					if (m instanceof Map){
+						int index = 0;
+						Map itemData = item != null && item.msgData instanceof Map ? (Map) item.msgData : null;
+						String itemDataString = item != null && item.msgData != null ? item.msgData.toString() : null;
+						for (Map.Entry<String, Object> entry : ((Map<String, Object>) m).entrySet()){
+							msgGrid.add(new Text(entry.getKey()), 0, index);
+							String str = itemData != null ? itemData.get(entry.getValue()).toString() : (index == 0 && itemDataString != null ? itemDataString : "");
+							TextField t = new TextField(str);
+							msgGrid.add(t, 1, index);
+							msgElements.put(entry.getKey(), t);
+						}
+					} else {
+						msgGrid.add(new Text(Main.getString("message")), 0, 0);
+						TextField t = new TextField(item != null && item.msgData != null ? item.msgData.toString() : "");
+						msgGrid.add(t, 1, 0);
+						msgElements.put("value", t);
+					}
+					content.getChildren().add(msgGrid);
+				} else {
+					msgGrid.add(new Text(Main.getString("message")), 0, 0);
+					TextField t = new TextField(item != null && item.msgData != null ? item.msgData.toString() : "");
+					t.setDisable(true);
+					msgGrid.add(t, 1, 0);
+					msgElements.put("value", t);
+				}
+
+			});
+
+			getDialogPane().getButtonTypes().clear();
+			ButtonType cancel = new ButtonType(Main.getString("cancel"), ButtonBar.ButtonData.CANCEL_CLOSE),
+					   save   = new ButtonType(Main.getString("save"));
+			getDialogPane().getButtonTypes().add(cancel);
+			getDialogPane().getButtonTypes().add(save);
+			getDialogPane().lookupButton(save).addEventHandler(ActionEvent.ACTION, actionEvent -> {
+				if (openedItem != null)
+					commandsTable.delete(openedItem);
+
+				commandsTable.add(getResultItem());
+				instance = null;
+			});
+			addOnCloseRequest(dialogEvent -> {
+				hide();
+				instance = null;
+			});
+
+			open(item);
+		}
+
+		static Map<String, String> events;
+		static List<String> eventsKeys;
+		static Map<String, String> commands;
+		static List<String> commandsKeys;
+		static Map<String, String> rules;
+		static Map<String, Object> msgs;
+
+		static void reloadInfo(){
+			events = new HashMap<>();
+			commands = new HashMap<>();
+			rules = new HashMap<>();
+			msgs = new HashMap<>();
+			eventsKeys = new LinkedList<>(events.keySet());
+			commandsKeys = new LinkedList<>(commands.keySet());
+
+			for (String event : CommandsProxy.getEventsList()){
+				Map<String, Object> eventInfo = CommandsProxy.getEventInfo(event);
+				eventsKeys.add(event);
+				if (eventInfo.get("info") != null) {
+					events.put(event, eventInfo.get("info").toString());
+				}
+				if (eventInfo.get("ruleInfo") != null)
+					rules.put(event, eventInfo.get("ruleInfo").toString());
+			}
+			for (String command : CommandsProxy.getCommandsList()){
+				Map<String, Object> commandInfo = CommandsProxy.getCommandInfo(command);
+				commandsKeys.add(command);
+				if (commandInfo.get("info") != null) {
+					commands.put(command, commandInfo.get("info").toString());
+				}
+				if (commandInfo.get("msgInfo") != null){
+					msgs.put(command, commandInfo.get("msgInfo"));
+
+				}
+			}
+
+			Collections.sort(eventsKeys);
+			Collections.sort(commandsKeys);
+			System.out.println(eventsKeys);
+			System.out.println(commandsKeys);
+			System.out.println(CommandsProxy.getCommandsList());
+
+			if (instance != null)
+				instance.open(instance.openedItem);
+		}
+
+		private CommandItem openedItem;
+		void open(CommandItem item){
+
+			if (item != null){
+				if (!events.containsKey(item.event)) {
+					event.getItems().add(0, item.event);
+				}
+
+				if (!commands.containsKey(item.command)) {
+					command.getItems().add(0, item.command);
+				}
+
+				rule.setText(item.rule);
+
+				event.getSelectionModel().select(item.event);
+				command.getSelectionModel().select(item.command);
+			} else {
+				event.getSelectionModel().select(0);
+				command.getSelectionModel().select(0);
+			}
+
+			openedItem = item;
+			show();
+			requestFocus();
+		}
+
+		CommandItem getResultItem(){
+			CommandItem result = new CommandItem(
+					event.getSelectionModel().getSelectedItem(),
+				  command.getSelectionModel().getSelectedItem()
+			);
+			result.rule = rule.getText();
+
+			Map<String, String> m = new HashMap<>();
+			for (Map.Entry<String, TextField> entry : msgElements.entrySet()){
+				m.put(entry.getKey(), entry.getValue().getText());
+			}
+			Object msgData = m;
+			if (msgElements.size() == 1 && msgElements.get("value") != null)
+				msgData = msgElements.get("value").getText();
+			result.msgData = msgData;
+
+			return result;
+		}
+	}
+
 
 	private static Map stringToMap(String text) throws Exception{
 		text = text.trim();

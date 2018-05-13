@@ -22,6 +22,10 @@ class Module {
 
         try {
             instance = new GroovyClassLoader().parseClass(path).newInstance()
+        } catch (Exception e){
+            throw e
+        }
+        try {
             instance.initialize(new Bridge())
         } catch (Exception e){ }
         proxy.sendMessage("core:register-alternative",

@@ -38,7 +38,6 @@
 
 }
 #options-menu .list-cell {
-    -fx-text-fill: white;
     -fx-font-size: 1.4em;
     -fx-background-color: light;
     -fx-alignment: center;
@@ -171,6 +170,7 @@
 /*Список*/
 .list-view, .list-view .list-cell {
     -fx-background-color: dark;
+    -fx-text-fill: white;
 }
 .list-view .list-cell {
     -fx-border-color: #268;
@@ -365,6 +365,25 @@
     -fx-background-color: #444;
 }
 
+#commandTab #saved-label, #commandTab .command-link Text, #commandTab .placeholder Text{
+    -fx-fill: white;
+}
+#commandTab #toggle-view {
+    -fx-alignment: center-right;
+    -fx-hgap: 1em;
+    -fx-max-width: 20em;
+}
+#commandTab .titled-pane .title {
+    -fx-background-color: common;
+    -fx-border-color: dark;
+    -fx-border-width: 1 0 0 0;
+}
+#commandTab .titled-pane .title:hover {
+    -fx-background-color: light;
+    -fx-border-color: dark;
+    -fx-border-width: 1 0 0 0;
+}
+
 .chat_window-chat {
     pfx-stage-style: style-transparent;
     -fx-background-color: transparent;
@@ -411,4 +430,26 @@
 }
 .font-selector-dialog .content {
     -fx-background-color: light;
+}
+
+.edit-command > .content {
+    -fx-spacing: 1em;
+}
+
+.edit-command > .content, .edit-command > .content > *{
+    -fx-max-width: 25em;
+}
+
+.edit-command .content > Label {
+    -fx-background-color: light;
+    -fx-padding: 0.5em;
+    -fx-min-height: 5em;
+    -fx-alignment: top-left;
+}
+
+.edit-command .list-cell Text{
+    -fx-fill: white;
+}
+.edit-command .list-cell Text.non-exist{
+    -fx-fill: #F55;
 }

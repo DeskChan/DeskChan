@@ -23,6 +23,8 @@ public class Main implements Plugin {
         // Adding event information to core
         pluginProxy.sendMessage("core:add-event", new HashMap(){{
             put("tag", "speech:get");
+            put("info", pluginProxy.getString("speech-get-info"));
+            put("ruleInfo", pluginProxy.getString("speech-get-rule-info"));
         }});
         pluginProxy.sendMessage("core:add-command", new HashMap(){{
             put("tag", "speech:commands-list");

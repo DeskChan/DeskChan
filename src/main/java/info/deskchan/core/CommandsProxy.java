@@ -228,9 +228,19 @@ public class CommandsProxy{
         return new ArrayList<>(commands.map.keySet());
     }
 
+    /** Get information about command. **/
+    public static Map<String, Object> getCommandInfo(String command){
+        return commands.get(command) != null ? new HashMap<>(commands.get(command)) : null;
+    }
+
     /** Get list of all event names. **/
     public static ArrayList<String> getEventsList(){
         return new ArrayList<>(events.map.keySet());
+    }
+
+    /** Get information about event. **/
+    public static Map<String, Object> getEventInfo(String command){
+        return events.get(command) != null ? new HashMap<>(events.get(command)) : null;
     }
 
     /** Get list of all links. **/
@@ -239,7 +249,7 @@ public class CommandsProxy{
     }
 
     /** Fill links list from map. **/
-    public static void setLinks(ArrayList<Map<String, Object>> newData){
+    public static void setLinks(List<Map<String, Object>> newData){
         commandLinks.clear();
 
         for(Map<String,Object> data : newData)
@@ -332,9 +342,18 @@ public class CommandsProxy{
         proxy.addMessageListener("core-events:loading-complete", (sender, tag, data) -> {
             Map owner = new HashMap<>();
             owner.put("owner", "core");
-            events.put("core-events:loading-complete", owner);
-            events.put("core-events:plugin-load", owner);
-            events.put("core-events:plugin-unload", owner);
+            addEvent("core", new HashMap<String, Object>(){{
+                put("tag", "core-events:loading-complete");
+                put("info", proxy.getString("loading-complete-info"));
+            }});
+            addEvent("core", new HashMap<String, Object>(){{
+                put("tag", "core-events:plugin-load");
+                put("info", proxy.getString("plugin-load-info"));
+            }});
+            addEvent("core", new HashMap<String, Object>(){{
+                put("tag", "core-events:plugin-unload");
+                put("info", proxy.getString("plugin-unload-info"));
+            }});
             commands.put("DeskChan:say", owner);
             load();
             PluginManager.log("Loading completed");

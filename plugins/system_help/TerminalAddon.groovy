@@ -21,7 +21,7 @@ class TerminalAddon{
                 text = (String) d.getOrDefault("value", "")
             else text = d.toString()
 
-            if (text.length() < startLen || text.substring(0, startLen) != startSymbols){
+            if (text == null || text.length() < startLen || text.substring(0, startLen) != startSymbols){
                 instance.sendMessage("DeskChan:user-said#" + command, d)
                 return
             }
