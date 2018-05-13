@@ -1,0 +1,12 @@
+{
+  "deps": ["groovy_support"],
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "name": {
+    "ru": "Распознаватель речи wit.ai",
+    "en": "Wit.AI Speech recognizer"
+  },
+  "short-description": {
+    "ru": "Данный распознаватель речи по команде прослушивает микрофон по умолчанию, записывает речь и отправляет в интернет-сервис wit.ai. По умолчанию назначено на F5.",
+    "en": "This speech recognizer starts listening microphone when asked and sends audio to wit.ai internet-service. By default activates on F5."
+  }
+}
