@@ -1,4 +1,17 @@
 {
   "deps": ["groovy_support", "speech_command_system"],
-  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)"
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "name": {
+    "ru": "Взаимодействие с ОС",
+    "en": "OS Interaction"
+  },
+  "short-description": {
+    "ru": "Плагин содержит в себе различные модули, взаимодействующие с системой.",
+    "en": "Plugin contains various modules for OS interaction."
+  },
+  "description": {
+    "en": "Plugin contains the following modules:\nBoot commands for sending turn off/reboot/sleep signals\nCommand 'Search in internet'\nCommands for opening files and links\nRedirection of user input to console (use './' symbols at start of input)\nPing command",
+    "ru": "Плагин содержит следующие компоненты:\nКоманды для отправки сигнала выключения/перезагрузки/сна\nКоманда 'Поиск в интернете'\nКоманды для открытия файлов и ссылок\nПеренаправления пользовательского ввода в консоль (используйте './' в начале ввода)\nКоманда для проверки наличия сети"
+  },
+  "link": "https://forum.deskchan.info/topic/48/system_help"
 }
