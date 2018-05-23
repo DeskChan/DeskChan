@@ -8,33 +8,31 @@ import java.util.LinkedList;
 public class UserSpeechRequest {
     private static LinkedList<UserSpeechRequest> requests = new LinkedList<>();
 
-    private static HashMap<String,Object> priorityChanger = new HashMap<String,Object>(){{
-        put("srcTag", "DeskChan:user-said");
-        put("dstTag", "core-utils:answer-speech-request");
-        put("priority", 1000);
-    }};
-
     public static void initialize(PluginProxyInterface ppi){
+
+        ppi.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
+            put("srcTag", "DeskChan:user-said");
+            put("dstTag", "core-utils:answer-speech-request");
+            put("priority", 2000);
+        }});
+
         ppi.addMessageListener("DeskChan:request-user-speech", (sender, tag, dat) -> {
-            ppi.setTimer(200, (s, d) -> {
-                requests.addLast(new UserSpeechRequest(sender));
-                ppi.sendMessage("core:register-alternative", priorityChanger);
-            });
+            requests.addLast(new UserSpeechRequest(sender));
         });
 
         ppi.addMessageListener("core-utils:answer-speech-request", (sender, tag, dat) -> {
-           if(requests.size() == 0) return;
+           if(requests.size() == 0) {
+               ppi.sendMessage("DeskChan:user-said#core-utils:answer-speech-request", dat);
+               return;
+           }
 
            UserSpeechRequest toSend = requests.getFirst();
            requests.removeFirst();
 
            ppi.sendMessage(toSend.sender, dat);
-           if(requests.size() == 0){
-               ppi.sendMessage("core:unregister-alternative", priorityChanger);
-           }
         });
     }
 
-    String sender;
+    private String sender;
     private UserSpeechRequest(String sender){  this.sender = sender;  }
 }

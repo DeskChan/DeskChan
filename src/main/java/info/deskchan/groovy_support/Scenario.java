@@ -2,17 +2,17 @@ package info.deskchan.groovy_support;
 
 import groovy.lang.Closure;
 import groovy.lang.Script;
-import info.deskchan.speech_command_system.RegularRule;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 public abstract class Scenario extends Script{
 
-    private String answer;
-    private final Object lock = new Object();
+    private Answer answer;
+
+    private final Locker lock = new Locker();
 
     protected void sendMessage(String tag) {
         ScenarioPlugin.pluginProxy.sendMessage(tag, null);
@@ -51,36 +51,24 @@ public abstract class Scenario extends Script{
 
     protected synchronized String receive(){
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech", null, (sender, data) -> {
-            answer = ((Map) data).get("value").toString();
-            synchronized (lock) {
-                lock.notify();
-            }
+            if (data instanceof Map)
+                answer = new Answer((Map) data);
+            else
+                answer = new Answer(data.toString());
+
+            lock.unlock();
         });
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (Exception e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        return answer;
+        lock.lock();
+        return answer.text;
     }
 
     protected synchronized void sleep(long delay){
         Map data = new HashMap();
         data.put("value", delay);
         ScenarioPlugin.pluginProxy.sendMessage("core-utils:notify-after-delay", data, (sender, d) -> {
-            synchronized (lock) {
-                lock.notify();
-            }
+            lock.unlock();
         });
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (Exception e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        lock.lock();
     }
 
     private boolean whenCycle;
@@ -91,7 +79,8 @@ public abstract class Scenario extends Script{
             cl.setDelegate(caseCollector);
             cl.call();
             Function result = caseCollector.execute(obj);
-            result.apply(obj);
+            if (result != null)
+                result.apply(obj);
             if(!whenCycle) return;
             obj = receive();
         }
@@ -101,45 +90,151 @@ public abstract class Scenario extends Script{
         whenCycle = true;
     }
 
-    static class CaseCollector{
+    class CaseCollector{
 
         private Map<Object, Function> matches = new HashMap<>();
+        private LinkedList<Object> queue = new LinkedList<>();
 
-        void is(String obj, Function action) {
-            try {
-                matches.put(RegularRule.create(obj), action);
-            } catch (Exception e){
-                ScenarioPlugin.pluginProxy.log(e);
-                matches.put(false, action);
-            }
+        class RegularRule { String rule; RegularRule(String rule){ this.rule = rule.toUpperCase(); } }
+
+        private void clearQueue(Function action){
+            for (Object obj : queue)
+                matches.put(obj, action);
+            queue.clear();
         }
 
-        void is(Number obj, Function action) {
+        void is(String obj) {
+            queue.add(obj);
+        }
+        void is(String[] obj) {
+            for (String o : obj)
+                queue.add(o);
+        }
+        void is(String obj, Function action) {
             matches.put(obj, action);
+            clearQueue(action);
+        }
+        void is(String[] obj, Function action) {
+            for (String o : obj)
+                matches.put(obj, action);
+            clearQueue(action);
+        }
+
+        void match(String obj) {
+            queue.add(new RegularRule(obj));
+        }
+        void match(String[] obj) {
+            for (String o : obj)
+                queue.add(new RegularRule(o));
+        }
+        void match(String[] obj, Function action) {
+            for (String o : obj)
+                matches.put(new RegularRule(o), action);
+            clearQueue(action);
+        }
+        void match(String obj, Function action) {
+            matches.put(new RegularRule(obj), action);
+            clearQueue(action);
         }
 
         void otherwise(Function action) {
             matches.put(false, action);
+            clearQueue(action);
         }
 
         Function execute(Object key) {
-            Function action = matches.get(false);
+            final AtomicReference<Function> action = new AtomicReference<>(matches.get(false));
 
-            if(!(key instanceof String)) return action;
+            System.out.println(answer.purpose);
+            if(!(key instanceof String) && !(key instanceof Answer)) return action.get();
 
-            RegularRule.MatchResult maxResult = null;
+            Answer current;
+            if (key.toString().equals(answer.toString()))
+                current = answer;
+            else
+                current = new Answer(key.toString());
+
+            List<String> rules = new LinkedList<>();
+
             for(Map.Entry<Object, Function> entry : matches.entrySet()){
+                if(entry.getKey() instanceof String && current.purpose.contains(entry.getKey())){
+                    return entry.getValue();
+                }
                 if(entry.getKey() instanceof RegularRule){
-                    RegularRule.MatchResult result = ((RegularRule) entry.getKey()).parse((String) key);
-                    if(result.better(maxResult)){
-                        maxResult = result;
-                        action = entry.getValue();
-                    }
+                    rules.add(((RegularRule) entry.getKey()).rule);
                 }
             }
-            return action;
+
+
+            ScenarioPlugin.pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>(){{
+                put("speech", current.text);
+                put("rules", rules);
+            }}, (sender, data) -> {
+                Integer i = ((Number) data).intValue();
+
+                if (i >= 0){
+                    for(Map.Entry<Object, Function> entry : matches.entrySet()){
+                        if(entry.getKey() instanceof RegularRule && ((RegularRule) entry.getKey()).rule.equals(rules.get(i))){
+                            action.set(entry.getValue());
+                            break;
+                        }
+                    }
+                }
+
+                lock.unlock();
+            });
+            lock.lock();
+
+            return action.get();
         }
 
     }
+
     protected void quit(){ Thread.currentThread().interrupt(); }
+
+    private static class Answer{
+
+        String text;
+        List<String> purpose = null;
+
+        Answer(String text){ this.text = text; }
+        Answer(Map data){
+            this.text = data.get("value").toString();
+            Object p = data.get("purpose");
+            if (p == null) return;
+            if (p instanceof Collection){
+                purpose = new LinkedList<>((Collection) p);
+            } else {
+                purpose = new LinkedList<>();
+                purpose.add(p.toString());
+            }
+        }
+
+        public String toString(){ return text; }
+    }
+
+    private static class Locker {
+
+        boolean notified = false;
+
+        public void lock(){
+            if (!notified) {
+                synchronized (this) {
+                    try {
+                        this.wait();
+                    } catch (Exception e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+            notified = false;
+        }
+
+        public void unlock(){
+            notified = true;
+            synchronized (this) {
+                this.notify();
+            }
+        }
+    }
 }
