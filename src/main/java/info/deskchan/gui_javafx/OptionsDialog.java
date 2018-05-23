@@ -179,6 +179,7 @@ class OptionsDialog extends TemplateBox {
 	/** Creating 'Appearance' tab. **/
 	private static void initMainTab(){
 		List<Map<String, Object>> list = new LinkedList<>();
+
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "character_options");
 			put("type",  "Button");
@@ -218,10 +219,11 @@ class OptionsDialog extends TemplateBox {
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "interface-skin");
-			put("type",  "FileField");
+			put("type",  "AssetsManager");
+			put("folder","styles");
 			put("label",  Main.getString("interface.path-skin"));
 			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
-			put("msgTag","gui:set-interface-style");
+			put("onChange","gui:set-interface-style");
 			put("value",  Main.getProperties().getString("interface.path-skin"));
 		}});
 		list.add(new HashMap<String, Object>() {{
@@ -240,7 +242,7 @@ class OptionsDialog extends TemplateBox {
 			}
 			put("msgTag","gui:change-layer-mode");
 			put("values", values);
-			put("values", valuesNames);
+			put("valuesNames", valuesNames);
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "enable_context_menu");
@@ -269,10 +271,11 @@ class OptionsDialog extends TemplateBox {
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "skin");
-			put("type",  "Button");
+			put("type",  "AssetsManager");
+			put("folder","skins");
 			put("label",  Main.getString("skin"));
 			put("hint",   Main.getString("help.skin"));
-			put("msgTag","gui:open-skin-dialog");
+			put("onChange","gui:change-skin");
 			put("value",  App.getInstance().getCharacter().getSkin().toString());
 		}});
 		list.add(new HashMap<String, Object>() {{
@@ -310,18 +313,18 @@ class OptionsDialog extends TemplateBox {
 		List<Map<String, Object>> list = new LinkedList<>();
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "skin-character");
-			put("type",  "FileField");
+			put("type",  "AssetsManager");
+			put("folder","balloons");
 			put("label",  Main.getString("balloon.path-character"));
-			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
-			put("msgTag","gui:set-character-balloon-path");
+			put("onChange","gui:set-character-balloon-path");
 			put("value",  Main.getProperties().getString("balloon.path-character"));
 		}});
 		list.add(new HashMap<String, Object>() {{
 			put("id",    "skin-user");
-			put("type",  "FileField");
+			put("type",  "AssetsManager");
+			put("folder","balloons");
 			put("label",  Main.getString("balloon.path-user"));
-			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
-			put("msgTag","gui:set-user-balloon-path");
+			put("onChange","gui:set-user-balloon-path");
 			put("value",  Main.getProperties().getString("balloon.path-user"));
 		}});
 		list.add(new HashMap<String, Object>() {{
@@ -724,23 +727,6 @@ class OptionsDialog extends TemplateBox {
 
 		setPanel(tabs.get(0));
 		panelsHistory.add(tabs.get(0));
-	}
-
-	/** Open skin manager and wait for closing. **/
-	public void openSkinManager() {
-		SkinManagerDialog dialog = new SkinManagerDialog(getDialogPane().getScene().getWindow());
-		dialog.showAndWait();
-
-		// Update skin name in menu
-		Main.getProperties().put("skin.name", App.getInstance().getCharacter().getSkin().getName());
-		List<Map<String, Object>> list = new ArrayList<>();
-		list.add(new HashMap<String, Object>() {{
-			put("id",    "skin");
-			put("value",  App.getInstance().getCharacter().getSkin().toString());
-		}});
-
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).update();
-
 	}
 
 	static void registerTab(ControlsPanel panel) {
@@ -1426,12 +1412,32 @@ class OptionsDialog extends TemplateBox {
 				new ListCell<String>() {
 					@Override protected void updateItem(String item, boolean empty) {
 						super.updateItem(item, empty);
-						setGraphic(new Label(item));
-						if (!events.containsKey(item) && !commands.containsKey(item)){
-							getGraphic().getStyleClass().add("non-exist");
+						setText(item);
+						if (!eventsKeys.contains(item) && !commands.containsKey(item)){
+							Label l = new Label("X");
+							l.setId("non-exist");
+							setGraphic(l);
+						} else {
+							setGraphic(null);
 						}
 					}
 				}
+			);
+
+			command.setCellFactory(stringListView ->
+					new ListCell<String>() {
+						@Override protected void updateItem(String item, boolean empty) {
+							super.updateItem(item, empty);
+							setText(item);
+							if (!eventsKeys.contains(item) && !commandsKeys.contains(item)){
+								Label l = new Label("X");
+								l.setId("non-exist");
+								setGraphic(l);
+							} else {
+								setGraphic(null);
+							}
+						}
+					}
 			);
 			eventInfo.setWrapText(true);
 			commandInfo.setWrapText(true);
@@ -1576,6 +1582,7 @@ class OptionsDialog extends TemplateBox {
 				event.getSelectionModel().select(0);
 				command.getSelectionModel().select(0);
 			}
+
 
 			openedItem = item;
 			show();

@@ -601,16 +601,6 @@ public class App extends Application {
 			});
 		});
 
-		/* Open skin dialog.
-        * Public message
-        * Params: None
-        * Returns: None */
-		pluginProxy.addMessageListener("gui:open-skin-dialog", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				OptionsDialog.getInstance().openSkinManager();
-			});
-		});
-
 		/* Open file choosing dialog.
         * Public message
         * Params: Map
@@ -1051,7 +1041,7 @@ public class App extends Application {
 		String stylefile = Main.getProperties().getString("interface.path-skin");
 
 		if (stylefile == null || !new File(stylefile).exists())
-			stylefile = Main.getPluginProxy().getAssetsDirPath().resolve("style.css").toString();
+			stylefile = Main.getPluginProxy().getAssetsDirPath().resolve("styles").resolve("main_blue.css").toString();
 
 		try {
 			return new File(stylefile).toURI().toURL().toString();

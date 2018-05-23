@@ -110,7 +110,8 @@ class DaytimeDependentSkin implements Skin {
 
     @Override
     public String toString() {
-        return skin.toString() + " [" + getCurrentDaytime().toString().toUpperCase() + "]";
+        return skin.toString();
+        //return skin.toString() + " [" + getCurrentDaytime().toString().toUpperCase() + "]";
     }
 
     enum Daytime {

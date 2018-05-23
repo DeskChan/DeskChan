@@ -37,7 +37,7 @@ public class Balloon extends MovablePane {
         BalloonDrawer drawer;
         String path = Main.getPluginProxy().getProperties().getString(pathKey);
         if (path == null || !new File(path).exists()){
-            path = Main.getPluginProxy().getAssetsDirPath().resolve("bubble.svg").toString();
+            path = Main.getPluginProxy().getAssetsDirPath().resolve("balloons").resolve("bubble.svg").toString();
             if (!new File(path).exists()){
                 return new SVGBalloonDrawer(null);
             }

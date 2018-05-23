@@ -4,6 +4,7 @@ import info.deskchan.gui_javafx.App;
 import info.deskchan.gui_javafx.LocalFont;
 import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.OverlayStage;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -90,7 +91,7 @@ public class UserBalloon extends Balloon {
         Main.getPluginProxy().sendMessage("DeskChan:user-said", new HashMap<String, Object>(){{
             put("value", content.getText());
         }});
-        close();
+        Platform.runLater(this::close);
     }
 
     @Override

@@ -157,9 +157,10 @@ class ImageSetSkin implements Skin {
 	
 	@Override
 	public String toString() {
-		String name = Skin.getSkinsPath().relativize(path).toString();
+		/*String name = Skin.getSkinsPath().relativize(path).toString();
 		name=name.replace(".pack","");
-		return name.substring(0, name.length() - 10) + " [IMAGE SET]";
+		return name.substring(0, name.length() - 10) + " [IMAGE SET]";*/
+		return path.toFile().getAbsolutePath();
 	}
 	
 	static class Loader implements SkinLoader {

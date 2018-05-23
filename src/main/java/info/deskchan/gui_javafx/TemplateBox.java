@@ -32,6 +32,10 @@ class TemplateBox extends Dialog<Void> {
 	private StageStyle stageStyle = null;
 	Point2D dragDelta = new Point2D(0, 0);
 
+	public TemplateBox(String id) {
+		this(id, Main.getString(id));
+	}
+
 	public TemplateBox(String id, String title) {
 		setDialogPane(new BoxPane());
 		setId(id);
@@ -106,7 +110,7 @@ class TemplateBox extends Dialog<Void> {
 			setStyling(stylesheet);
 			getDialogPane().getScene().getStylesheets().add(stylesheet);
 		} catch (Exception e){
-			Main.log(new Exception("Error parsing style file: " + e.getMessage(), e));
+			//Main.log(new Exception("Error parsing style file: " + e.getMessage(), e));
 		}
 	}
 
@@ -121,7 +125,6 @@ class TemplateBox extends Dialog<Void> {
 			Selector w = Selector.createSelector("Window"),
 					 n = Selector.createSelector("." + getDialogPane().getId());
 
-			System.out.println(getDialogPane() + " " + getDialogPane().getId() + " " + n);
 			boolean cw, cn;
 
 			for (Rule rule : css.getRules()) {
@@ -170,8 +173,6 @@ class TemplateBox extends Dialog<Void> {
 			for (TemplateBox dialog : openedDialogs) {
 				dialog.getDialogPane().setStyle(style);
 				dialog.applyStyle();
-				dialog.hide();
-				dialog.show();
 			}
 		});
 	}
@@ -181,7 +182,6 @@ class TemplateBox extends Dialog<Void> {
 	public void setId(String id){
 		getDialogPane().getStyleClass().add(id);
 		getDialogPane().setId(id);
-		System.out.println(getDialogPane() + " " + getDialogPane().getId());
 	}
 
 	public void requestFocus(){

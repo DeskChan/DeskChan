@@ -165,6 +165,11 @@ interface PluginOptionsControlItem {
 				item = new FilesManagerItem(parent);
 				break;
 
+			case "AssetsManager":
+
+				item = new AssetsManagerItem(parent);
+				break;
+
 			case "TextArea":
 
 				// rowCount: int
@@ -321,10 +326,10 @@ interface PluginOptionsControlItem {
 
 		protected void event(String tag){
 			currentText.setValue(getValue());
-			if (tag != null)
-			App.showWaitingAlert(() ->
-				Main.getPluginProxy().sendMessage(tag, getValue())
-			);
+			if (tag != null) {
+				String text = textField.getText();
+				Main.getPluginProxy().sendMessage(tag, text);
+			}
 		}
 
 		@Override
@@ -673,11 +678,11 @@ interface PluginOptionsControlItem {
 			if(msgTag != null){
 				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
 					property.setValue(getValue().toString());
-					App.showWaitingAlert(() ->
-						Main.getPluginProxy().sendMessage(msgTag, new HashMap<String,Object>(){{
+					App.showWaitingAlert(() -> {
+						Main.getPluginProxy().sendMessage(msgTag, new HashMap<String, Object>() {{
 							put("value", getValue());
-						}})
-					);
+						}});
+					});
 				});
 			}
 		}
@@ -802,8 +807,10 @@ interface PluginOptionsControlItem {
 	}
 
 	class FilesManagerItem extends Button implements PluginOptionsControlItem {
-		private List<String> files;
-		private Window parent;
+		protected List<String> files;
+		protected Window parent;
+		protected boolean multiple = false;
+		protected String onChange;
 
 		public FilesManagerItem(Window window){
 			parent = window;
@@ -811,26 +818,48 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void init(Map<String, Object> options, Object value) {
+
+			Object s = options.getOrDefault("multiple", false);
+			if (s instanceof Boolean)
+				multiple = (Boolean) s;
+			else
+				multiple = Boolean.parseBoolean(s.toString());
+
+			System.out.println(multiple + " " + options);
 			setText(Main.getString("choose"));
 			files = new ArrayList<>();
 			setValue(value);
 			setOnAction(event -> callAction());
+
+			onChange = (String) options.get("onChange");
 		}
 
-		private void callAction(){
-			FilesManagerDialog dialog = new FilesManagerDialog(parent,files);
+		protected void callAction(){
+			FilesManagerDialog dialog = new FilesManagerDialog(parent, files);
+			dialog.setMultipleSelection(multiple);
+			if (onChange != null){
+				dialog.setListener(newItems -> {
+				    setValue(newItems);
+					Main.getPluginProxy().sendMessage(onChange, getValue());
+				});
+			}
 			dialog.requestFocus();
 			dialog.showAndWait();
-			files = dialog.getFilesList();
+			setValue(dialog.getSelectedFiles());
 		}
 
 		@Override
 		public void setValue(Object value) {
-			if (value != null && value instanceof List) files = (List<String>) value;
+		    if (value == null) files = null;
+		    else if (value instanceof List) files = (List<String>) value;
+		    else files = Arrays.asList(value.toString());
 		}
 
 		@Override
 		public Object getValue() {
+		    if (!multiple && files != null)
+                return (files.size() > 0 ? files.get(0) : null);
+
 			return files;
 		}
 
@@ -839,6 +868,40 @@ interface PluginOptionsControlItem {
 			return this;
 		}
 
+	}
+
+	class AssetsManagerItem extends FilesManagerItem {
+
+		public AssetsManagerItem(Window window){
+			super(window);
+		}
+
+		private String folder;
+		private List<String> extensions;
+
+		@Override
+		public void init(Map<String, Object> options, Object value) {
+			super.init(options, value);
+			folder = (String) options.get("folder");
+			extensions = (List<String>) options.get("acceptedExtensions");
+		}
+
+		@Override
+		protected void callAction(){
+			AssetsManagerDialog dialog = new AssetsManagerDialog(parent, folder);
+			dialog.setMultipleSelection(multiple);
+			dialog.setSelected(files);
+			dialog.setAcceptedExtensions(extensions);
+			if (onChange != null){
+                dialog.setListener(newItems -> {
+                    setValue(newItems);
+                    Main.getPluginProxy().sendMessage(onChange, getValue());
+                });
+			}
+			dialog.requestFocus();
+			dialog.showDialog();
+			setValue(dialog.getSelectedFiles());
+		}
 	}
 
 	abstract class FileSystemChooserItem extends BorderPane implements PluginOptionsControlItem {

@@ -176,9 +176,12 @@
     -fx-border-color: #268;
     -fx-border-width: 1 0 0 0;
 }
-.list-view .list-cell:hover,
-.list-view .list-cell:focused {
+
+.list-view .list-cell:selected {
     -fx-background-color: light;
+}
+.list-view .list-cell:hover {
+    -fx-background-color: common;
 }
 
 /*Таблица*/
@@ -229,7 +232,6 @@
     -fx-text-fill: white;
     -fx-fill: white;
 }
-
 
 .button {
     -fx-text-fill: white;
@@ -447,9 +449,8 @@
     -fx-alignment: top-left;
 }
 
-.edit-command .list-cell Text{
-    -fx-fill: white;
-}
-.edit-command .list-cell Text.non-exist{
+.edit-command .list-cell #non-exist .text{
+    -fx-text-fill: #F55;
     -fx-fill: #F55;
+    -fx-font-weight: bold;
 }

@@ -91,9 +91,10 @@ class SingleImageSkin implements Skin {
 	
 	@Override
 	public String toString() {
-		String name = Skin.getSkinsPath().relativize(path).toString();
+		/*String name = Skin.getSkinsPath().relativize(path).toString();
 		name=name.replace(".pack","");
-		return name.substring(0, name.length() - 4) + " [SINGLE IMAGE]";
+		return name.substring(0, name.length() - 4) + " [SINGLE IMAGE]";*/
+		return path.toFile().getAbsolutePath();
 	}
 	
 	static class Loader implements SkinLoader {
