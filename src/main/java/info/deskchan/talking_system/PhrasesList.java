@@ -24,7 +24,7 @@ import java.util.*;
 
 class PhrasesPack {
 
-	public enum PackType { USER, PLUGIN }
+	public enum PackType { USER, PLUGIN, DATABASE }
 
 	protected PackType packType;
 	protected Path packFile;
@@ -44,8 +44,10 @@ class PhrasesPack {
 		else if (packFile.startsWith(Main.getPhrasesDirPath().normalize()))
 			packName = packFile.getFileName().toString();
 
-		if (packName.contains("."))
+		if (packName.contains(".")) {
+			if (!packName.endsWith(".database")) this.packType = PackType.DATABASE;
 			packName = packName.substring(0, packName.lastIndexOf("."));
+		}
 
 		loaded = false;
 	}
@@ -199,12 +201,14 @@ public class PhrasesList {
 		matchingPhrases = new ArrayList<>();
 		ArrayList<Map<String,Object>> checkList = new ArrayList<>();
 
-		for (PhrasesPack pack : packs)
+		for (PhrasesPack pack : packs) {
+			if (pack.packType == PhrasesPack.PackType.DATABASE) continue;
 			for (Phrase phrase : pack.phrases)
 				if (phrase.matchToCharacter(current)) {
 					matchingPhrases.add(phrase);
 					checkList.add(phrase.toMap());
 				}
+		}
 
 		Main.getPluginProxy().sendMessage("talk:remove-quote", checkList, (sender, data) -> {
 			List<Map<String, Object>> phrasesList = (ArrayList) data;
@@ -231,10 +235,11 @@ public class PhrasesList {
 		return list;
 	}
 
-	public List<String> toList(PhrasesPack.PackType packType){
+	public List<String> toList(PhrasesPack.PackType... packTypes){
 		List<String> list = new LinkedList<>();
+		List<PhrasesPack.PackType> types = Arrays.asList(packTypes);
 		for (PhrasesPack pack : packs) {
-			if (packType == null || pack.packType == packType)
+			if (types.contains(pack.packType))
 				list.add(pack.getFile());
 		}
 
@@ -398,9 +403,17 @@ public class PhrasesList {
 	}
 
 	public static boolean saveTo(String URL, String filename) {
+		return saveToImpl(URL, filename+".phrases");
+	}
+
+	public static boolean saveDatabaseTo(String URL, String filename) {
+		return saveToImpl(URL, filename+".database");
+	}
+
+	private static boolean saveToImpl(String URL, String filename) {
 		try {
 			JSONObject json;
-			try{
+			try {
 				URL DATA_URL = new URL(URL);
 				InputStream stream = DATA_URL.openStream();
 				json = new JSONObject(IOUtils.toString(stream, "UTF-8"));
@@ -410,30 +423,34 @@ public class PhrasesList {
 				return false;
 			}
 
-			JSONArray array = json.getJSONArray("values"), phrase;
 			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 			Node mainNode = doc.createElement("phrases");
 
-			for (int i = 0; i < array.length(); i++) {
-				try {
-					phrase = array.getJSONArray(i);
-					if (phrase.length() == 0) break;
+			try {
+				JSONArray array = json.getJSONArray("values"), phrase;
+				for (int i = 0; i < array.length(); i++) {
+					try {
+						phrase = array.getJSONArray(i);
+						if (phrase.length() == 0) break;
 
-					Phrase next = Phrase.fromJSONArray(phrase);
-					mainNode.appendChild(next.toXMLNode(doc));
-				} catch (Exception u) {
-					Main.log(u);
-					break;
+						Phrase next = Phrase.fromJSONArray(phrase);
+						mainNode.appendChild(next.toXMLNode(doc));
+					} catch (Exception u) {
+						Main.log(u);
+						break;
+					}
 				}
+				doc.appendChild(mainNode);
+			} catch (Exception e){
+				//Main.log(e);
 			}
-			doc.appendChild(mainNode);
 			Path address = Main.getPhrasesDirPath();
-			System.out.println(address + " " + address.toFile().exists());
+
 			if (!address.toFile().exists())
 				if (!address.toFile().mkdir())
 					throw new Exception("Can't create folder at assets/phrases");
 
-			address = address.resolve(filename + ".phrases");
+			address = address.resolve(filename);
 
 			try {
 				Transformer tr = TransformerFactory.newInstance().newTransformer();

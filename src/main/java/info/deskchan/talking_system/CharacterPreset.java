@@ -158,7 +158,7 @@ public class CharacterPreset {
 			preset_tags.put(key, tags.getAsString(key));
 		json.put("tags", preset_tags);
 
-		json.put("phrases", phrases.toList(PhrasesPack.PackType.USER));
+		json.put("phrases", phrases.toList(PhrasesPack.PackType.USER, PhrasesPack.PackType.DATABASE));
 		JSONObject preset = new JSONObject();
 		preset.put("preset", json);
 		return preset;
@@ -171,7 +171,7 @@ public class CharacterPreset {
 		for(int i = 0; i < CharacterFeatures.getFeatureCount(); i++)
 			map.put(CharacterFeatures.getFeatureName(i), character.getValue(i));
 
-		map.put("phrases", phrases.toList(PhrasesPack.PackType.USER));
+		map.put("phrases", phrases.toList(PhrasesPack.PackType.USER, PhrasesPack.PackType.DATABASE));
 		map.put("tags", tags);
 		map.put("emotion", emotionState.getCurrentEmotionName());
 		return map;

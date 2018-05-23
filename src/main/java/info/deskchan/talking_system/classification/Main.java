@@ -10,24 +10,33 @@ import java.util.Map;
 public class Main {
 
     static Classifier classifier;
+    static PluginProxyInterface pluginProxy;
 
-    public static void initialize(PluginProxyInterface pluginProxy){
+    public static void initialize(PluginProxyInterface proxy){
+        pluginProxy = proxy;
 
         setClassifier();
 
         pluginProxy.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
             put("srcTag", "DeskChan:user-said");
-            put("dstTag", "talk:chat-react");
-            put("priority", 10);
+            put("dstTag", "talk:classify-text");
+            put("priority", 50000);
         }});
 
-        pluginProxy.addMessageListener("talk:chat-react", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("talk:classify-text", (sender, tag, data) -> {
             String text;
-            if (data instanceof Map)
-                text = (String) ((Map) data).getOrDefault("value", "");
-            else text = data.toString();
-
-            System.out.println(classifier.classify(text));
+            Map map;
+            if (data instanceof Map) {
+                map = (Map) data;
+                text = (String) map.getOrDefault("value", "");
+            } else {
+                text = data.toString();
+                map = new HashMap();
+                map.put("value", text);
+            }
+            map.put("purpose", classifier.classify(text));
+            System.out.println(map.get("purpose"));
+            pluginProxy.sendMessage("DeskChan:user-said#talk:classify-text", map);
         });
 
         pluginProxy.addMessageListener("talk:character-updated", (sender, tag, data) -> {

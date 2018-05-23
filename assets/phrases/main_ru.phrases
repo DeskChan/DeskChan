@@ -4531,4 +4531,13 @@
             <relationship>1 | 4</relationship>
         </range>
     </phrase>
+    <phrase>
+        <text>Не.</text>
+        <purpose>NO</purpose>
+        <sprite>VULGAR</sprite>
+        <range>
+            <impulsivity>-4 | 1</impulsivity>
+            <manner>-4 | 0</manner>
+        </range>
+    </phrase>
 </phrases>

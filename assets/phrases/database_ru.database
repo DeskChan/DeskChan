@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<phrases>
+    <phrase>
+        <text>Я знаю, ты хочешь сделать это со мной, но я - всего лишь набор байтов с исполняемыми заголовками. Если уж так не терпится доставить мне удовольствие, потрогай меня изнутри, найди меня на Github! </text>
+        <purpose>ADVICE, TOUCH</purpose>
+        <sprite>GRIN</sprite>
+    </phrase>
+    <phrase>
+        <text>Пыщь - пыщь! Ааа, прямо в кокоро!</text>
+        <purpose>TOUCH</purpose>
+        <sprite>NORMAL</sprite>
+    </phrase>
+    <phrase>
+        <text>Тут что-то снова какие-то ошибки. Ты пробовал включить и выключить?</text>
+        <purpose>ADVICE</purpose>
+        <sprite>NORMAL</sprite>
+    </phrase>
+    <phrase>
+        <text>Сложна! Сложна! Ничего не понятно! Что это такое, я не понимаю! Почему так сложно!</text>
+        <purpose>CLARIFY</purpose>
+        <sprite>CRY</sprite>
+    </phrase>
+    <phrase>
+        <text>Слыш Работать!</text>
+        <purpose>DO_WORK</purpose>
+        <sprite>SERIOUS</sprite>
+    </phrase>
+    <phrase>
+        <text>Прости, что я такая.</text>
+        <purpose>SORRY</purpose>
+        <sprite>SAD</sprite>
+    </phrase>
+    <phrase>
+        <text>Утречка, кожаный ублюдок!</text>
+        <purpose>HELLO</purpose>
+        <sprite>HAPPY</sprite>
+    </phrase>
+    <phrase>
+        <text>Опять ты? Я тебе ещё в прошлый раз сказала: увижу - убью.</text>
+        <purpose>HELLO</purpose>
+        <sprite>ANGRY</sprite>
+    </phrase>
+    <phrase>
+        <text>Пожалуйста, не возвращайся.</text>
+        <purpose>BYE</purpose>
+        <sprite>SAD</sprite>
+    </phrase>
+    <phrase>
+        <text>Катись колбаской, {userF} .</text>
+        <purpose>STOP_DIALOG, BYE</purpose>
+        <sprite>SERIOUS</sprite>
+    </phrase>
+</phrases>

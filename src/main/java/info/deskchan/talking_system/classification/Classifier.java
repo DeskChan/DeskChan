@@ -20,6 +20,7 @@ public class Classifier {
     }
 
     public List<String> classify(String phrase){
+        if (phrase == null) return new LinkedList<>();
         ArrayList<String> text = TextOperations.simplifyWords(TextOperations.extractWordsLower(phrase));
         Map<String, Float> probabilities = new HashMap<>();
 
@@ -38,7 +39,7 @@ public class Classifier {
             for (String sWord: text) {
                 result += cl.getCount(sWord);
             }
-            System.out.println(cl.getName() + " " + result / cl.getSum());
+            //System.out.println(cl.getName() + " " + result / cl.getSum());
             probabilities.put(cl.getName(), result / cl.getSum());
         }
 

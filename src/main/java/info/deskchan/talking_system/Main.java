@@ -17,7 +17,7 @@ public class Main implements Plugin {
 	private static Main instance;
 
 	/** Major phrases pack. **/
-	private final static HashMap<String, String> MAIN_PHRASES_URL = new HashMap<String, String>(){{
+	private final static Map<String, String> MAIN_PHRASES_URL = new HashMap<String, String>(){{
 		put("ru", "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/phrases_ru!A3:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI");
 		put("en", "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/phrases_en!A3:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI");
 	}};
@@ -25,6 +25,12 @@ public class Main implements Plugin {
 	/** Not official pack from developers. **/
 	private final static String DEVELOPERS_PHRASES_URL =
 			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+
+	/** Not official pack from developers. **/
+	private final static Map<String, String> MAIN_DATABASE_URL = new HashMap<String, String>(){{
+		put("ru", "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/database_ru!A3:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI");
+		put("en", "https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/database_en!A3:L10000?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI");
+	}};
 
 	/** Current character preset. **/
 	private CharacterPreset currentCharacter;
@@ -54,6 +60,7 @@ public class Main implements Plugin {
 				public void run() {
 					if(PhrasesList.saveTo(MAIN_PHRASES_URL.get(Locale.getDefault().toString()), "main_"+Locale.getDefault())) {
 						PhrasesList.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+						PhrasesList.saveDatabaseTo(MAIN_DATABASE_URL.get(Locale.getDefault().toString()), "database_"+Locale.getDefault());
 						currentCharacter.phrases.reload();
 						currentCharacter.inform();
 					}
@@ -62,7 +69,7 @@ public class Main implements Plugin {
 			syncThread.start();
 		}
 
-		//info.deskchan.talking_system.classification.Main.initialize(pluginProxy);
+		info.deskchan.talking_system.classification.Main.initialize(pluginProxy);
 
 		/* Building DeskChan:request-say chain. */
 		pluginProxy.sendMessage("core:register-alternatives", new ArrayList<Map>(){{
@@ -399,9 +406,14 @@ public class Main implements Plugin {
 			}});
 			list.add(new HashMap<String, Object>() {{
 				put("id", "phrases");
-				put("type", "FilesManager");
+				put("type", "AssetsManager");
+				put("multiple", true);
+				put("folder", "phrases");
+				put("acceptedExtensions", new ArrayList<String>(){{
+					add(".phrases"); add(".database");
+				}});
 				put("label", getString("quotes_list"));
-				put("value", currentCharacter.phrases.toList(PhrasesPack.PackType.USER));
+				put("value", currentCharacter.phrases.toList(PhrasesPack.PackType.DATABASE, PhrasesPack.PackType.USER));
 				put("hint",getString("help.quotes_pack"));
 			}});
 			list.add(new HashMap<String, Object>() {{
