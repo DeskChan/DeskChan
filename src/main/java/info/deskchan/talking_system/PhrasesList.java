@@ -45,7 +45,7 @@ class PhrasesPack {
 			packName = packFile.getFileName().toString();
 
 		if (packName.contains(".")) {
-			if (!packName.endsWith(".database")) this.packType = PackType.DATABASE;
+			if (packName.endsWith(".database")) this.packType = PackType.DATABASE;
 			packName = packName.substring(0, packName.lastIndexOf("."));
 		}
 
@@ -67,6 +67,12 @@ class PhrasesPack {
 			Document doc = builder.parse(inputStream);
 			inputStream.close();
 			Node mainNode = doc.getChildNodes().item(0);
+			for (int i = 0; i < mainNode.getChildNodes().getLength(); i++) {
+				if (mainNode.getChildNodes().item(i).getNodeName().equals(Locale.getDefault().toLanguageTag())){
+					mainNode = mainNode.getChildNodes().item(i);
+					break;
+				}
+			}
 			NodeList list = mainNode.getChildNodes();
 			for (int i = 0; i < list.getLength(); i++) {
 				if (!list.item(i).getNodeName().equals("phrase")) continue;
@@ -77,7 +83,7 @@ class PhrasesPack {
 				}
 			}
 		} catch (Exception e) {
-			Main.log("Error while parsing phrases file " + packName + ": " + e.getMessage());
+			Main.log(e);
 			loaded = false;
 			return;
 		}
@@ -403,46 +409,63 @@ public class PhrasesList {
 	}
 
 	public static boolean saveTo(String URL, String filename) {
-		return saveToImpl(URL, filename+".phrases");
+		return saveToImpl(new HashMap(){{ put(Locale.getDefault(), URL); }}, filename+".phrases");
 	}
 
 	public static boolean saveDatabaseTo(String URL, String filename) {
-		return saveToImpl(URL, filename+".database");
+		return saveToImpl(new HashMap(){{ put(Locale.getDefault(), URL); }}, filename+".database");
 	}
 
-	private static boolean saveToImpl(String URL, String filename) {
+	public static boolean saveTo(Map<String, String> URLs, String filename) {
+		return saveToImpl(URLs, filename+".phrases");
+	}
+
+	public static boolean saveDatabaseTo(Map<String, String> URLs, String filename) {
+		return saveToImpl(URLs, filename+".database");
+	}
+
+
+	private static boolean saveToImpl(Map<String, String> URLs, String filename) {
 		try {
-			JSONObject json;
-			try {
-				URL DATA_URL = new URL(URL);
-				InputStream stream = DATA_URL.openStream();
-				json = new JSONObject(IOUtils.toString(stream, "UTF-8"));
-				stream.close();
-			} catch (Exception u) {
-				Main.log("Cannot download phrases at "+URL+", no connection.");
-				return false;
+			JSONObject json = new JSONObject();
+			for (Map.Entry<String, String> URL : URLs.entrySet()) {
+				try {
+					URL DATA_URL = new URL(URL.getValue());
+					InputStream stream = DATA_URL.openStream();
+					json.put(URL.getKey(), new JSONObject(IOUtils.toString(stream, "UTF-8")));
+					stream.close();
+				} catch (Exception u) {
+					Main.log("Cannot download phrases at " + URL + ", no connection.");
+					return false;
+				}
 			}
 
 			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 			Node mainNode = doc.createElement("phrases");
 
 			try {
-				JSONArray array = json.getJSONArray("values"), phrase;
-				for (int i = 0; i < array.length(); i++) {
-					try {
-						phrase = array.getJSONArray(i);
-						if (phrase.length() == 0) break;
+				for (Object name : json.names()) {
+					Node nn = doc.createElement((String) name);
+					JSONObject obj = json.getJSONObject((String) name);
+					if (!obj.has("values")) continue;
+					JSONArray array = obj.getJSONArray("values"), phrase;
+					for (int i = 0; i < array.length(); i++) {
+						try {
+							phrase = array.getJSONArray(i);
+							if (phrase.length() == 0) break;
 
-						Phrase next = Phrase.fromJSONArray(phrase);
-						mainNode.appendChild(next.toXMLNode(doc));
-					} catch (Exception u) {
-						Main.log(u);
-						break;
+							Phrase next = Phrase.fromJSONArray(phrase);
+							nn.appendChild(next.toXMLNode(doc));
+						} catch (Exception u) {
+							Main.log(u);
+							break;
+						}
 					}
+					mainNode.appendChild(nn);
 				}
 				doc.appendChild(mainNode);
 			} catch (Exception e){
-				//Main.log(e);
+				Main.log(e);
 			}
 			Path address = Main.getPhrasesDirPath();
 

@@ -23,8 +23,8 @@ public class Main implements Plugin {
 	}};
 
 	/** Not official pack from developers. **/
-	private final static String DEVELOPERS_PHRASES_URL =
-			"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
+	//private final static String DEVELOPERS_PHRASES_URL =
+	//		"https://sheets.googleapis.com/v4/spreadsheets/17qf7fRewpocQ_TT4FoKWQ3p7gU7gj4nFLbs2mJtBe_k/values/%D0%9D%D0%B5%D0%B2%D0%BE%D1%88%D0%B5%D0%B4%D1%88%D0%B5%D0%B5!A3:A800?key=AIzaSyDExsxzBLRZgPt1mBKtPCcSDyGgsjM3_uI";
 
 	/** Not official pack from developers. **/
 	private final static Map<String, String> MAIN_DATABASE_URL = new HashMap<String, String>(){{
@@ -58,9 +58,9 @@ public class Main implements Plugin {
 		if(getProperties().getBoolean("quotesAutoSync", true)) {
 			Thread syncThread = new Thread() {
 				public void run() {
-					if(PhrasesList.saveTo(MAIN_PHRASES_URL.get(Locale.getDefault().toString()), "main_"+Locale.getDefault())) {
-						PhrasesList.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
-						PhrasesList.saveDatabaseTo(MAIN_DATABASE_URL.get(Locale.getDefault().toString()), "database_"+Locale.getDefault());
+					if(PhrasesList.saveTo(MAIN_PHRASES_URL, "main")) {
+						//PhrasesList.saveTo(DEVELOPERS_PHRASES_URL, "developers_base");
+						PhrasesList.saveDatabaseTo(MAIN_DATABASE_URL, "database");
 						currentCharacter.phrases.reload();
 						currentCharacter.inform();
 					}
