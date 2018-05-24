@@ -21,14 +21,16 @@ public class TrayMenu {
     private static volatile ContextMenu contextMenu = new ContextMenu();
     
     public static void initialize(){
-        SystemTray systemTray = SystemTray.get();
-        if (SystemTray.get() == null) {
-            Main.log("Failed to load SystemTray, type dorkbox");
-        } else {
-            systemTray.setTooltip(App.NAME);
-            systemTray.setImage(App.ICON_URL);
-            systemTray.setStatus(App.NAME);
-            trayRef = systemTray;
+        if (Main.getProperties().getBoolean("use-tray", true)) {
+            SystemTray systemTray = SystemTray.get();
+            if (SystemTray.get() == null) {
+                Main.log("Failed to load SystemTray, type dorkbox");
+            } else {
+                systemTray.setTooltip(App.NAME);
+                systemTray.setImage(App.ICON_URL);
+                systemTray.setStatus(App.NAME);
+                trayRef = systemTray;
+            }
         }
         contextMenu.setId("context-menu");
     }
@@ -56,8 +58,6 @@ public class TrayMenu {
     private static MenuItemAction optionsMenuItemAction = new MenuItemAction() {
         @Override
         protected void run() {
-            long start = System.currentTimeMillis();
-            Main.log("clicked to open");
             Platform.runLater( () -> {
                 OptionsDialog.open();
             });  }
@@ -79,26 +79,28 @@ public class TrayMenu {
         else Platform.runLater(TrayMenu::updateImpl);
     }
     private synchronized static void updateImpl(){
-        dorkbox.systemTray.Menu menu = trayRef.getMenu();
+        if (trayRef != null) {
+            dorkbox.systemTray.Menu menu = trayRef.getMenu();
 
-        menu.clear();
-        trayRef.setStatus(App.NAME);
+            menu.clear();
+            trayRef.setStatus(App.NAME);
 
-        menu.add(new MenuItem(Main.getString("options"),optionsMenuItemAction));
-        menu.add(new MenuItem(Main.getString("send-top"),frontMenuItemAction));
+            menu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
+            menu.add(new MenuItem(Main.getString("send-top"), frontMenuItemAction));
 
-        menu.add(new Separator());
-        try {
-            for (PluginMenuItem it : menuItems) {
-                menu.add(it.getDorkBoxItem());
+            menu.add(new Separator());
+            try {
+                for (PluginMenuItem it : menuItems) {
+                    menu.add(it.getDorkBoxItem());
+                }
+            } catch (ConcurrentModificationException e) {
+                Main.log("Concurrent modification by tray. Write us if it cause you lags.");
+                return;
             }
-        } catch (ConcurrentModificationException e){
-            Main.log("Concurrent modification by tray. Write us if it cause you lags.");
-            return;
-        }
-        menu.add(new Separator());
+            menu.add(new Separator());
 
-        menu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
+            menu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
+        }
 
         ObservableList<javafx.scene.control.MenuItem> contextMenuItems = contextMenu.getItems();
         contextMenuItems.clear();

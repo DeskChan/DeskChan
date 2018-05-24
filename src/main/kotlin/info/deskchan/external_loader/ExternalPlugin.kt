@@ -24,7 +24,14 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       this.pluginProxy = pluginProxy
       //println("type: "+pluginProxy.getConfigField("type"))
       val processBuilder = when(pluginProxy.getConfigField("type")){
-         "Python" -> java.lang.ProcessBuilder("python", pluginFile.absolutePath)
+         "Python" -> {
+            if (pluginFile.absolutePath.endsWith(".py2"))
+               java.lang.ProcessBuilder("python2", pluginFile.absolutePath)
+            else if (pluginFile.absolutePath.endsWith(".py3"))
+               java.lang.ProcessBuilder("python3", pluginFile.absolutePath)
+            else
+               java.lang.ProcessBuilder("python", pluginFile.absolutePath)
+         }
          else -> null
       }
       if (processBuilder == null) return false

@@ -48,6 +48,7 @@ public class Main implements Plugin {
 		getProperties().load();
 
 		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/strings");
+		pluginProxy.getProperties().putIfHasNot("use-tray", true);
 
 		new Thread(() -> {
 			App.run(PluginManager.getInstance().getArgs());
