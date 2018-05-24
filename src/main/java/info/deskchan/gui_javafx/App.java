@@ -378,6 +378,28 @@ public class App extends Application {
 			});
 		});
 
+		/* Get character visibility.
+		 * Public message
+		 * Params: None
+		 * Returns: Boolean */
+		pluginProxy.addMessageListener("gui:is-character-visible", (sender, tag, data) -> {
+			pluginProxy.sendMessage(sender, character.isVisible() && OverlayStage.getInstance().isCharacterVisible());
+		});
+
+		/* Set character position.
+		 * Public message
+		 * Params: Map
+		 *          top: Int
+		 *          left: Int
+		 *          bottom: Int
+		 *          right: Int
+		 *          verticalPercent: Float
+		 *          horizontalPercent: Float
+		 * Returns: None */
+		pluginProxy.addMessageListener("gui:set-character-position", (sender, tag, data) -> {
+			character.relocate((Map<String, Number>) data);
+		});
+
 		/* Toggle context menu at right click
         * Public message
         * Params: check: Boolean! - turn menu on/off

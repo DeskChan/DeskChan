@@ -235,6 +235,10 @@ public class OverlayStage extends Stage {
 				relocate(node, node.getLayoutX() - scene.getX(), node.getLayoutY() - scene.getY());
 		}
 	};
+
+	public boolean isCharacterVisible(){
+		return true;
+	}
 }
 class NormalStage extends OverlayStage{
 	EventHandler<WindowEvent> handler = new EventHandler<WindowEvent>() {
@@ -317,6 +321,9 @@ class OnlyBalloonStage extends TopStage{
 	}
 	@Override
 	void showCharacter(){ }
+	public boolean isCharacterVisible(){
+		return false;
+	}
 }
 
 class FrontNormalStage extends NormalStage{
@@ -336,6 +343,9 @@ class HideStage extends OverlayStage{
 	}
 	@Override
 	public void showStage(){ }
+	public boolean isCharacterVisible(){
+		return false;
+	}
 }
 
 class ShowIfMessageStage extends TopStage{
@@ -367,6 +377,9 @@ class ShowIfMessageStage extends TopStage{
 		show();
 		if(CharacterBalloon.getInstance()==null)
 			hide();
+	}
+	public boolean isCharacterVisible(){
+		return isShowing();
 	}
 }
 class SeparatedStage extends OverlayStage{

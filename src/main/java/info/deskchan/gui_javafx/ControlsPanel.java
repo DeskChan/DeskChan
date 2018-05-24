@@ -171,7 +171,7 @@ public class ControlsPanel {
 				}
 				break;
 				default: {
-					OptionsDialog.showPanel(currentPanel);
+					Platform.runLater(() -> OptionsDialog.showPanel(currentPanel));
 				}
 				break;
 			}

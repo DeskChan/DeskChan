@@ -11,6 +11,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 
+import java.util.Map;
+
 public class MovablePane extends Pane {
 	
 	private static final int SNAP_DISTANCE = 10;
@@ -60,8 +62,8 @@ public class MovablePane extends Pane {
 		}
 		return new Rectangle2D(x1, y1, bounds.getWidth(), bounds.getHeight());
 	}
-	
-	void setPosition(Point2D topLeft) {
+
+	public void setPosition(Point2D topLeft) {
 		if (topLeft == null) {
 			setDefaultPosition();
 			return;
@@ -78,7 +80,7 @@ public class MovablePane extends Pane {
 		relocate(rect.getMinX(), rect.getMinY());
 	}
 
-	Point2D getPosition() {
+	public Point2D getPosition() {
 		Bounds bounds = getLayoutBounds();
 		try {
 			Bounds local = localToScreen(bounds);
@@ -88,8 +90,25 @@ public class MovablePane extends Pane {
 		return position;
 	}
 
+	public void relocate(Map<String, Number> data){
+		Point2D pos = getPosition();
+		Rectangle2D screen = OverlayStage.getDesktopSize();
+		for (Map.Entry<String, Number> entry : ((Map<String, Number>) data).entrySet()){
+			switch (entry.getKey()){
+				case "top": pos = new Point2D(pos.getX(), entry.getValue().intValue()); break;
+				case "left": pos = new Point2D(entry.getValue().intValue(), pos.getY()); break;
+				case "right": pos = new Point2D(screen.getMaxX() - getWidth() - entry.getValue().intValue(), pos.getY()); break;
+				case "bottom": pos = new Point2D(pos.getX(), screen.getMaxY() - getHeight() - entry.getValue().intValue()); break;
+				case "verticalPercent": pos = new Point2D(pos.getX(), (screen.getMaxY() - getHeight()) * entry.getValue().floatValue() / 100); break;
+				case "horizontalPercent": pos = new Point2D((screen.getMaxX() - getWidth()) * entry.getValue().floatValue() / 100, pos.getY()); break;
+			}
+		}
+		setPosition(pos);
+		storePositionToStorage();
+	}
+
 	public void relocate(double x, double y) {
-		if(OverlayStage.getInstance()!=null)
+		if(OverlayStage.getInstance() != null)
 			OverlayStage.getInstance().relocate(this, x, y);
 		else super.relocate(x,y);
 	}
@@ -187,7 +206,7 @@ public class MovablePane extends Pane {
 		setDefaultPosition();
 	}
 
-	protected void storePositionToStorage() {
+	public void storePositionToStorage() {
 		final String key = getCurrentPositionStorageKey();
 		if (key != null) {
 			Point2D pos = getPosition();

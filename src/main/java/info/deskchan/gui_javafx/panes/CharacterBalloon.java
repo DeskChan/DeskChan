@@ -150,7 +150,7 @@ public class CharacterBalloon extends Balloon {
 	}
 
 	@Override
-	protected void storePositionToStorage() {
+	public void storePositionToStorage() {
 		if (positionMode == CharacterBalloon.PositionMode.RELATIVE || positionMode == CharacterBalloon.PositionMode.RELATIVE_FOR_EACH) {
 			assert character != null;
 			character.getSkin().overridePreferredBalloonPosition(
