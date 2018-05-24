@@ -78,6 +78,14 @@
             <purpose>NOTIFY</purpose>
         </phrase>
         <phrase>
+            <text>Нет подключения к интернету.</text>
+            <purpose>NO_NETWORK</purpose>
+        </phrase>
+        <phrase>
+            <text>Мы подключены к интернету.</text>
+            <purpose>NETWORK_OK</purpose>
+        </phrase>
+        <phrase>
             <text>Отдохни, {user}.</text>
             <purpose>RELAX</purpose>
         </phrase>
@@ -4606,6 +4614,14 @@
         <phrase>
             <text>You've got a notification</text>
             <purpose>NOTIFY</purpose>
+        </phrase>
+        <phrase>
+            <text>No connection to network.</text>
+            <purpose>NO_NETWORK</purpose>
+        </phrase>
+        <phrase>
+            <text>We have connection to network.</text>
+            <purpose>NETWORK_OK</purpose>
         </phrase>
         <phrase>
             <text>I'll do nothing.</text>

@@ -195,7 +195,6 @@ public class Main implements Plugin {
         * Params: value: String! - user speech text
         * Returns: None */
         pluginProxy.addMessageListener("chat:user-said", (sender, tag, dat) -> {
-            System.out.println("sent");
             String value;
             Map<String, Object> data;
             if (dat instanceof Map){

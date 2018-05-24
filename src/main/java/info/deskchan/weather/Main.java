@@ -61,6 +61,12 @@ public class Main implements Plugin {
             say.put("priority", 2000);
             say.put("skippable", false);
 
+            TimeForecast forecast = server.getNow();
+            if (forecast == null){
+                say.put("purpose", "NO_NETWORK");
+                pluginProxy.sendMessage("DeskChan:request-say", say);
+                return;
+            }
             Object value = ((Map) data).get("date");
             if (value == null ||
                (value instanceof String && ((String) value).length()==0) ||
@@ -103,7 +109,7 @@ public class Main implements Plugin {
                     }
                 }
             }
-            pluginProxy.sendMessage("DeskChan:say",say);
+            pluginProxy.sendMessage("DeskChan:say", say);
         });
 
         pluginProxy.addMessageListener("talk:reject-quote",(sender, tag, data) -> {

@@ -10,6 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -26,7 +27,7 @@ public class UserBalloon extends Balloon {
 
     public static UserBalloon getInstance(){ return instance; }
 
-    protected final TextField content;
+    protected final TextInputControl content;
 
     protected static BalloonDrawer drawer;
 
@@ -40,6 +41,7 @@ public class UserBalloon extends Balloon {
         super();
         instance = this;
 
+        //TextArea label = new TextArea("");
         TextField label = new TextField("");
         label.setFont(defaultFont);
         if (defaultFont != null) {
@@ -88,9 +90,12 @@ public class UserBalloon extends Balloon {
     }
 
     protected void sendPhrase(){
-        Main.getPluginProxy().sendMessage("DeskChan:user-said", new HashMap<String, Object>(){{
-            put("value", content.getText());
-        }});
+        final String text = content.getText();
+        new Thread(() -> {
+            Main.getPluginProxy().sendMessage("DeskChan:user-said", new HashMap<String, Object>() {{
+                put("value", text);
+            }});
+        }).start();
         Platform.runLater(this::close);
     }
 
@@ -110,11 +115,13 @@ public class UserBalloon extends Balloon {
     }
 
     public static void show(String text){
-        if (instance == null)
-            new UserBalloon();
+        Platform.runLater(() -> {
+            if (instance == null)
+                new UserBalloon();
 
-        instance.content.setText(text);
-        instance.show();
+            instance.content.setText(text);
+            instance.show();
+        });
     }
 
     void close() {

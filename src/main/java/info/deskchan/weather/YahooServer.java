@@ -52,7 +52,7 @@ public class YahooServer implements WeatherServer{
             json = json.getJSONObject("location");
             return json.getString("city") + ", " + json.getString("country");
         } catch (Exception e){
-            Main.log(new Exception(Main.getString("info.lost-server"), e));
+            Main.log(Main.getString("info.lost-server"));
             state = ConnectionState.ERROR;
             return null;
         }
@@ -89,7 +89,7 @@ public class YahooServer implements WeatherServer{
             json = getQuery();
             state = ConnectionState.NO;
         } catch (Exception e){
-            Main.log(new Exception("Error while retrieving data from server", e));
+            Main.log("Error while retrieving data from server");
             state = ConnectionState.ERROR;
             return;
         }

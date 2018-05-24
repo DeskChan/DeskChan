@@ -825,7 +825,6 @@ interface PluginOptionsControlItem {
 			else
 				multiple = Boolean.parseBoolean(s.toString());
 
-			System.out.println(multiple + " " + options);
 			setText(Main.getString("choose"));
 			files = new ArrayList<>();
 			setValue(value);

@@ -556,7 +556,6 @@ class OptionsDialog extends TemplateBox {
 		Button editButton = new Button(Main.getString("edit"));
 		editButton.setId("edit");
 		editButton.setOnAction(event -> {
-			System.out.println(commandsTable.getSelected());
 			if (commandsTable.getSelected() != null) {
 				EditCommandDialog dialog = new EditCommandDialog(commandsTable.getSelected());
 				savedText.setText(Main.getString("not-saved"));

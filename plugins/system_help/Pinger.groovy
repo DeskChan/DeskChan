@@ -3,7 +3,6 @@ class Pinger{
     static void initialize(pluginName, data) {
         def instance = data.instance
 
-        instance.sendMessage("talk:add-plugin-phrases", instance.getPluginDirPath().resolve('system.phrases'))
         instance.sendMessage("core:add-command", [tag: pluginName + ':ping'])
 
         instance.addMessageListener(pluginName + ':ping', { sender, tag, d ->
