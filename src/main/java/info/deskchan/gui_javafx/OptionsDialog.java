@@ -16,6 +16,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
@@ -1398,6 +1399,7 @@ class OptionsDialog extends TemplateBox {
 			if (instance != null && instance != this)
 				instance.close();
 
+			setResizable(true);
 			instance = this;
 
 			VBox content = new VBox();
@@ -1406,7 +1408,9 @@ class OptionsDialog extends TemplateBox {
 					command, commandInfo, new Separator(),
 					ruleInfo, rule
 			);
-			getDialogPane().setContent(content);
+			content.setId("content");
+			getDialogPane().setContent(new Group(content));
+
 
 			event.setCellFactory(stringListView ->
 				new ListCell<String>() {
@@ -1478,6 +1482,7 @@ class OptionsDialog extends TemplateBox {
 							TextField t = new TextField(str);
 							msgGrid.add(t, 1, index);
 							msgElements.put(entry.getKey(), t);
+							index++;
 						}
 					} else {
 						msgGrid.add(new Text(Main.getString("message")), 0, 0);
@@ -1493,7 +1498,9 @@ class OptionsDialog extends TemplateBox {
 					msgGrid.add(t, 1, 0);
 					msgElements.put("value", t);
 				}
-
+				content.applyCss();
+				content.layout();
+				setHeight(content.getBoundsInParent().getHeight() + 100 * App.getInterfaceScale());
 			});
 
 			getDialogPane().getButtonTypes().clear();
@@ -1554,9 +1561,6 @@ class OptionsDialog extends TemplateBox {
 
 			Collections.sort(eventsKeys);
 			Collections.sort(commandsKeys);
-			System.out.println(eventsKeys);
-			System.out.println(commandsKeys);
-			System.out.println(CommandsProxy.getCommandsList());
 
 			if (instance != null)
 				instance.open(instance.openedItem);

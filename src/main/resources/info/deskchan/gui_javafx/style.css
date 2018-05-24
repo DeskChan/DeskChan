@@ -434,15 +434,25 @@
     -fx-background-color: light;
 }
 
-.edit-command > .content {
+.edit-command #content {
     -fx-spacing: 1em;
 }
+.edit-command GridPane {
+    -fx-vgap: 0.5em;
+    -fx-hgap: 0.5em;
+}
+.edit-command GridPane Text {
+    -fx-fill: white;
+}
 
-.edit-command > .content, .edit-command > .content > *{
+.edit-command #content {
+    -fx-padding: 1em;
+}
+.edit-command .content, .edit-command #content > *{
     -fx-max-width: 25em;
 }
 
-.edit-command .content > Label {
+.edit-command #content > Label {
     -fx-background-color: light;
     -fx-padding: 0.5em;
     -fx-min-height: 5em;

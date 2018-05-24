@@ -224,7 +224,8 @@ sendMessage('core:add-command', [
                 sound: getString('sound'),
                 date: getString('date') + " (dd.MM.yyyy)",
                 hour: getString('hour'),
-                minute: getString('minute')
+                minute: getString('minute'),
+                datetime: getString('datetime'),
         ]
 ])
 sendMessage('core:set-event-link', [
@@ -258,7 +259,19 @@ addMessageListener('organizer:add-event', { sender, tag, data ->
 /* -- Timers -- */
 
 
-sendMessage('core:add-command', [ tag: 'organizer:add-timer' ])
+sendMessage('core:add-command', [
+        tag: 'organizer:add-timer',
+        info: getString('add-timer-info'),
+        msgInfo: [
+                name: getString('name'),
+                soundEnabled: getString('enable-sound'),
+                sound: getString('sound'),
+                delay: getString('delay'),
+                hour: getString('hour'),
+                minute: getString('minute'),
+                second: getString('second')
+        ]
+])
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
         commandName: 'organizer:add-timer',
@@ -286,7 +299,10 @@ addMessageListener('organizer:add-timer', { sender, tag, data ->
 /* -- Stopwatch -- */
 
 
-sendMessage('core:add-command', [ tag: 'organizer:open-stopwatch' ])
+sendMessage('core:add-command', [
+    tag: 'organizer:open-stopwatch',
+    info: getString('open-stopwatch-info')
+])
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
         commandName: 'organizer:open-stopwatch',
