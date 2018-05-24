@@ -1,4 +1,15 @@
 {
   "deps": ["groovy_support"],
-  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)"
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "short-description": {
+    "ru": "Органайзер предоставляет различные средства контроля времени: таймер, будильник, секундомер,...",
+    "en": "Organizer contains different tools for time control: timers, alarm clock, watch,..."
+  },
+  "description": {
+    "ru": "Органайзер содержит следующие компоненты:\n - Будильник\n - Таймер\n - Секундомер\n - Таймер-помидор\n - События по расписанию\n\nВсе ваши настройки сохраняются и работают даже после перезапуска.",
+    "en": "Organizer contains such tools:\n - Alarm Clock\n - Timer\n - Watch\n - Tomato-timer\n - Time events\n\nAll your settings will be stored and will work even after reboot."
+  },
+  "name_ru": "Органайзер",
+  "name_en": "Organizer",
+  "link": "https://forum.deskchan.info/topic/36/organizer"
 }

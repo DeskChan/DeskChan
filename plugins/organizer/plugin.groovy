@@ -15,6 +15,7 @@ properties.load()
 
 sendMessage("talk:add-plugin-phrases", getPluginDirPath().resolve('organizer.phrases'))
 
+EventsInit.initialize(this)
 
 /* -- Menu setup -- */
 
@@ -27,8 +28,8 @@ sendMessage( 'gui:set-panel',
           'controls': [
              [
                  'type': 'Button',
-                 'dstPanel': 'organizer-shedule',
-                 'value': getString('shedule')
+                 'dstPanel': 'organizer-alarm-clock',
+                 'value': getString('alarm-clock')
              ],[
                   'type': 'Button',
                   'dstPanel': 'organizer-timer',
@@ -49,16 +50,16 @@ sendMessage( 'gui:set-panel',
 void setupEventsMenu(){
     dt = new Date()
     sendMessage( 'gui:set-panel',
-        [ 'name': getString('shedule'),
+        [ 'name': getString('alarm-clock'),
           'type': 'window',
-          'id':   'shedule',
+          'id':   'alarm-clock',
           'action': 'set',
           'msgTag': 'organizer:add-event',
           'controls': [
             [
                 'type': 'ListBox',
                 'id': 'events',
-                'label': getString('sheduled'),
+                'label': getString('alarm-clock'),
                 'values': database.getListOfEntries(),
                 'msgTag': 'organizer:selected-changed'
             ],[
@@ -179,8 +180,8 @@ Database.DatabaseEntry.defaultSound = defaultSoundFolder.resolve("communication-
 
 addMessageListener('organizer:check-sound', { sender, tag, data ->
     sendMessage( 'gui:set-panel',
-            [ 'name': getString('shedule'),
-              'id':   'shedule',
+            [ 'name': getString('alarm-clock'),
+              'id':   'alarm-clock',
               'action': 'update',
               'controls': [[
                                    'id': 'sound',
@@ -214,7 +215,18 @@ addMessageListener('organizer:delete-selected', { sender, tag, data ->
 /* -- Events -- */
 
 
-sendMessage('core:add-command', [ tag: 'organizer:add-event' ])
+sendMessage('core:add-command', [
+        tag: 'organizer:add-event',
+        info: getString('add-event-info'),
+        msgInfo: [
+                name: getString('name'),
+                soundEnabled: getString('enable-sound'),
+                sound: getString('sound'),
+                date: getString('date') + " (dd.MM.yyyy)",
+                hour: getString('hour'),
+                minute: getString('minute')
+        ]
+])
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
         commandName: 'organizer:add-event',
