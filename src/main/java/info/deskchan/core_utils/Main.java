@@ -15,6 +15,8 @@ public class Main implements Plugin {
 	public boolean initialize(PluginProxyInterface proxy) {
 		pluginProxy = proxy;
 
+		pluginProxy.setConfigField("name", pluginProxy.getString("core-utils-plugin-name"));
+
 		pluginProxy.addMessageListener("core-utils:notify-after-delay-default-impl",
 				(sender, tag, data) -> {
 					Map m = (Map) data;

@@ -162,10 +162,19 @@ interface PluginOptionsControlItem {
 
 			case "FilesManager":
 
+				// multiple: Boolean
+				// onChange: String -> MessageListener
+
 				item = new FilesManagerItem(parent);
 				break;
 
 			case "AssetsManager":
+
+				// multiple: Boolean
+				// folder: String
+				// acceptedExtensions: List<String>
+				// moreURL: String -> URL
+				// onChange: String -> MessageListener
 
 				item = new AssetsManagerItem(parent);
 				break;
@@ -876,6 +885,7 @@ interface PluginOptionsControlItem {
 		}
 
 		private String folder;
+		private String url;
 		private List<String> extensions;
 
 		@Override
@@ -883,6 +893,7 @@ interface PluginOptionsControlItem {
 			super.init(options, value);
 			folder = (String) options.get("folder");
 			extensions = (List<String>) options.get("acceptedExtensions");
+			url = (String) options.get("moreURL");
 		}
 
 		@Override
@@ -891,6 +902,7 @@ interface PluginOptionsControlItem {
 			dialog.setMultipleSelection(multiple);
 			dialog.setSelected(files);
 			dialog.setAcceptedExtensions(extensions);
+			dialog.setURL(url);
 			if (onChange != null){
                 dialog.setListener(newItems -> {
                     setValue(newItems);
@@ -1175,15 +1187,20 @@ interface PluginOptionsControlItem {
 	class HyperlinkItem extends Hyperlink implements PluginOptionsControlItem {
 
 		String link;
+		String msgTag;
 
 		@Override
 		public void init(Map<String, Object> options, Object value) {
-			String msgTag = (String) options.get("msgTag");
-			link = (String) options.get("value");
+			if (options != null)
+				msgTag = (String) options.get("msgTag");
+
+			link = (String) value;
 			if (link != null) link = wrap(link);
-			setValue(Main.getString("open"));
+			setValue(link);
+			setText(Main.getString("open"));
 
 			setOnAction(event -> {
+				System.out.println("here");
 				if (msgTag != null)
 					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, null));
 				if (link != null){

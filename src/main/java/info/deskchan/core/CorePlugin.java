@@ -20,8 +20,10 @@ public class CorePlugin implements Plugin, MessageListener {
 		pluginProxy.getProperties().load();
 		pluginProxy.getProperties().putIfHasNot("quitDelay", 2000);
 		pluginProxy.getProperties().putIfHasNot("locale", Locale.getDefault().getLanguage());
+        pluginProxy.setResourceBundle("info/deskchan/strings");
 
 		Locale.setDefault(new Locale(pluginProxy.getProperties().getString("locale")));
+        pluginProxy.setConfigField("name", pluginProxy.getString("core-plugin-name"));
 		try {
 			PluginProxy.Companion.updateResourceBundle();
 		} catch (Exception e){

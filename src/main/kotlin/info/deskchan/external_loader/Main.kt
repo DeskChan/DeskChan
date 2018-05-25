@@ -15,7 +15,7 @@ class Main : Plugin, PluginLoader {
 
     override fun initialize(pluginProxy: PluginProxyInterface): Boolean {
         this.pluginProxy = pluginProxy
-
+        pluginProxy.setConfigField("name", pluginProxy.getString("external-loader-plugin-name"))
         val bit = if (CoreInfo.is64Bit()) "64" else "32"
         val sys: String
         if (SystemUtils.IS_OS_WINDOWS)

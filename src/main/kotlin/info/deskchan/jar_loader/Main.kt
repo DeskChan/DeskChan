@@ -18,6 +18,7 @@ class Main : Plugin, PluginLoader {
 
     override fun initialize(pluginProxy: PluginProxyInterface): Boolean {
         this.pluginProxy = pluginProxy
+        pluginProxy.setConfigField("name", pluginProxy.getString("jar-loader-plugin-name"))
         PluginManager.getInstance().registerPluginLoader(this, "jar")
         return true
     }

@@ -19,6 +19,7 @@ class ScenarioPlugin : Plugin {
     override fun initialize(pluginProxyInterface: PluginProxyInterface): Boolean {
         pluginProxy = pluginProxyInterface
         pluginProxy.setResourceBundle("info/deskchan/groovy_support/strings")
+        pluginProxy.setConfigField("name", pluginProxy.getString("scenario-plugin-name"))
         pluginProxy.addMessageListener("groovy:run-scenario", MessageListener { sender, tag, dat ->
             var path: String? = null
             if (dat is String)

@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Window;
 
 import java.io.File;
@@ -30,15 +31,19 @@ class AssetsManagerDialog extends FilesManagerDialog {
 	private List<String> acceptableExtensions;
 	private List<FileItem> selected;
 	private String type;
+	private BorderPane pane;
 
 
 	AssetsManagerDialog(Window parent, String assetsType) {
 		super(parent, new ArrayList<>());
 
+		pane = new BorderPane();
+		pane.setCenter(filesList);
+		getDialogPane().setContent(pane);
+
 		type = assetsType;
 
 		folder = Main.getPluginProxy().getAssetsDirPath().resolve(assetsType);
-		System.out.println(folder);
 		filesFolderStrLength = folder.toAbsolutePath().toString().length() + 1;
 
 		ObservableList<String> newFiles = FXCollections.observableArrayList();
@@ -52,7 +57,6 @@ class AssetsManagerDialog extends FilesManagerDialog {
 	@Override
 	public List<String> getSelectedFiles(){
 		List<String> list = new LinkedList<>();
-		System.out.println(filesList.getItems() + " " + filesList.getSelectionModel().getSelectedItems());
 		for(String file : filesList.getSelectionModel().getSelectedItems())
 			if (file != null)
 				list.add(folder.resolve(file).toAbsolutePath().toString());
@@ -68,6 +72,18 @@ class AssetsManagerDialog extends FilesManagerDialog {
 		if (files == null) return;
 		for (String a : files)
 			selected.add(new FileItem(a));
+	}
+
+	void setURL(String url){
+		if (url == null)
+			pane.setBottom(null);
+		else {
+			PluginOptionsControlItem.HyperlinkItem link = new PluginOptionsControlItem.HyperlinkItem();
+			link.init(null, url);
+			link.setText(Main.getString("more")+"...");
+			pane.setBottom(link.getNode());
+		}
+
 	}
 
 	public void showDialog(){

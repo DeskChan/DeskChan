@@ -48,7 +48,8 @@ public class Main implements Plugin {
 		pluginProxy.getProperties().load();
 		pluginProxy.setResourceBundle("info/deskchan/talking_system/strings");
 		pluginProxy.setConfigField("short-description", getString("plugin.short-description"));
-		pluginProxy.setConfigField("description", getString("plugin.description"));
+		//pluginProxy.setConfigField("description", getString("plugin.description"));
+		pluginProxy.setConfigField("name", pluginProxy.getString("plugin-name"));
 
 		// initializing main components
 		currentCharacter = new CharacterPreset(new JSONObject(getProperties().getString("characterPreset", "{}")));

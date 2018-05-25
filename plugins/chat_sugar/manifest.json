@@ -1,0 +1,13 @@
+{
+  "deps": ["groovy_support"],
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "short-description": {
+    "ru": "Plugin contains small toy features for chat: random number, choosing, time and date, ...",
+    "en": "Плагин содержит различные мелкие чат-игрушки и вспомогательные функции: случайное число, выбор из вариантов, узнать дату или время, ..."
+  },
+  "name": {
+    "ru": "Чат-игрушки",
+    "en": "Chat Toys"
+  },
+  "link": "https://forum.deskchan.info/topic/47/chat_sugar"
+}

@@ -222,6 +222,7 @@ class OptionsDialog extends TemplateBox {
 			put("id",    "interface-skin");
 			put("type",  "AssetsManager");
 			put("folder","styles");
+			put("moreURL", "https://forum.deskchan.info/category/9/themes");
 			put("label",  Main.getString("interface.path-skin"));
 			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
 			put("onChange","gui:set-interface-style");
@@ -274,6 +275,7 @@ class OptionsDialog extends TemplateBox {
 			put("id",    "skin");
 			put("type",  "AssetsManager");
 			put("folder","skins");
+			put("moreURL", "https://forum.deskchan.info/category/5/skins");
 			put("label",  Main.getString("skin"));
 			put("hint",   Main.getString("help.skin"));
 			put("onChange","gui:change-skin");
@@ -316,6 +318,7 @@ class OptionsDialog extends TemplateBox {
 			put("id",    "skin-character");
 			put("type",  "AssetsManager");
 			put("folder","balloons");
+			put("moreURL", "https://forum.deskchan.info/category/8/balloons");
 			put("label",  Main.getString("balloon.path-character"));
 			put("onChange","gui:set-character-balloon-path");
 			put("value",  Main.getProperties().getString("balloon.path-character"));
@@ -324,6 +327,7 @@ class OptionsDialog extends TemplateBox {
 			put("id",    "skin-user");
 			put("type",  "AssetsManager");
 			put("folder","balloons");
+			put("moreURL", "https://forum.deskchan.info/category/8/balloons");
 			put("label",  Main.getString("balloon.path-user"));
 			put("onChange","gui:set-user-balloon-path");
 			put("value",  Main.getProperties().getString("balloon.path-user"));
@@ -716,7 +720,15 @@ class OptionsDialog extends TemplateBox {
 				}
 			}
 		});
-		hbox.getChildren().add(button);
+
+		PluginOptionsControlItem.HyperlinkItem link = new PluginOptionsControlItem.HyperlinkItem();
+		link.init(null, "https://forum.deskchan.info/category/6/plugins");
+		link.setText(Main.getString("more")+"...");
+
+		hbox.getChildren().addAll(button, link);
+
+
+
 		pluginsTab.setBottom(hbox);
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), "plugins", ControlsPanel.PanelType.TAB, pluginsTab).set();
 

@@ -1,4 +1,13 @@
 {
   "deps": ["groovy_support"],
-  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)"
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "short-description": {
+    "ru": "Plugin helps add color filter on character sprite at specific time of day",
+    "en": "Плагин помогает выставлять различные фильтры для спрайта персонажа в зависимости от времени суток"
+  },
+  "name": {
+    "ru": "Цветовой фильтр от времени суток",
+    "en": "Daytime color filter"
+  },
+  "link": "https://forum.deskchan.info/topic/35/daytime-filter"
 }

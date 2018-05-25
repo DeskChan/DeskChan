@@ -88,6 +88,7 @@ public class Main implements Plugin {
     public boolean initialize(PluginProxyInterface newPluginProxy) {
         pluginProxy = newPluginProxy;
         log("setup chat window started");
+        pluginProxy.setConfigField("name", pluginProxy.getString("plugin-name"));
 
         // setting default properties
         properties = pluginProxy.getProperties();

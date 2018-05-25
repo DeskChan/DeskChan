@@ -17,6 +17,7 @@ class Main : Plugin, PluginLoader {
             pluginProxy.log(e)
         }
         pluginProxy.setResourceBundle("info/deskchan/groovy_support/strings")
+        pluginProxy.setConfigField("name", pluginProxy.getString("loader-plugin-name"))
 
         return true
     }
