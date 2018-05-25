@@ -297,6 +297,12 @@ public class Main implements Plugin {
                 put("value", "⚙");
                 put("dstPanel", pluginProxy.getId() + "-options");
             }});
+            input.add(new HashMap<String, Object>() {{
+                put("id", "help");
+                put("type", "Button");
+                put("value", "?");
+                put("msgTag", "DeskChan:commands-list");
+            }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "input-line");
                 put("elements", input);

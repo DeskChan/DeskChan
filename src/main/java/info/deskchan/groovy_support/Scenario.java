@@ -11,6 +11,7 @@ import java.util.function.Function;
 public abstract class Scenario extends Script{
 
     private Answer answer;
+    private static final List<String> defaultHelp = Arrays.asList(ScenarioPlugin.pluginProxy.getString("write-anything"));
 
     private final Locker lock = new Locker();
 
@@ -50,7 +51,13 @@ public abstract class Scenario extends Script{
     }
 
     protected synchronized String receive(){
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech", null, (sender, data) -> {
+        return receive(null);
+    }
+    protected synchronized String receive(List<String> helpInfo){
+
+        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech",
+                helpInfo != null ? helpInfo : defaultHelp,
+        (sender, data) -> {
             if (data instanceof Map)
                 answer = new Answer((Map) data);
             else
@@ -73,16 +80,29 @@ public abstract class Scenario extends Script{
 
     private boolean whenCycle;
     void when(Object obj, Closure cl) {
+        CaseCollector caseCollector = new CaseCollector();
+        cl.setDelegate(caseCollector);
+        cl.call();
+
+        Function result = caseCollector.execute(obj);
+        if (result != null)
+            result.apply(obj);
+    }
+    void whenInput(Closure cl) {
+        CaseCollector caseCollector = new CaseCollector();
+        cl.setDelegate(caseCollector);
+        cl.call();
+        List<String> helpInfo = caseCollector.getHelpInfo();
+        Object obj;
         while(true){
+            obj = receive(helpInfo);
             whenCycle = false;
-            CaseCollector caseCollector = new CaseCollector();
-            cl.setDelegate(caseCollector);
+
             cl.call();
             Function result = caseCollector.execute(obj);
             if (result != null)
                 result.apply(obj);
-            if(!whenCycle) return;
-            obj = receive();
+            if(!whenCycle) break;
         }
     }
 
@@ -95,7 +115,7 @@ public abstract class Scenario extends Script{
         private Map<Object, Function> matches = new HashMap<>();
         private LinkedList<Object> queue = new LinkedList<>();
 
-        class RegularRule { String rule; RegularRule(String rule){ this.rule = rule.toUpperCase(); } }
+        class RegularRule { String rule; RegularRule(String rule){ this.rule = rule; } }
 
         private void clearQueue(Function action){
             for (Object obj : queue)
@@ -145,8 +165,7 @@ public abstract class Scenario extends Script{
         Function execute(Object key) {
             final AtomicReference<Function> action = new AtomicReference<>(matches.get(false));
 
-            System.out.println(answer.purpose);
-            if(!(key instanceof String) && !(key instanceof Answer)) return action.get();
+            if(!(key instanceof String) && !(key instanceof Answer) || matches.size() == 0) return action.get();
 
             Answer current;
             if (key.toString().equals(answer.toString()))
@@ -164,7 +183,6 @@ public abstract class Scenario extends Script{
                     rules.add(((RegularRule) entry.getKey()).rule);
                 }
             }
-
 
             ScenarioPlugin.pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>(){{
                 put("speech", current.text);
@@ -186,6 +204,25 @@ public abstract class Scenario extends Script{
             lock.lock();
 
             return action.get();
+        }
+
+        List<String> getHelpInfo(){
+            if (matches.size() == 1 && matches.keySet().iterator().next().equals(false)){
+                return null;
+            }
+            boolean isOtherwise = false;
+            List<String> help = new ArrayList<>();
+            for (Object an : matches.keySet()){
+                if (an instanceof RegularRule)
+                    help.add(((RegularRule) an).rule);
+                else if (an.equals(false))
+                    isOtherwise = true;
+                else if (an instanceof String)
+                    help.add("~" + ScenarioPlugin.pluginProxy.getString(an.toString()));
+            }
+            if (isOtherwise)
+                help.add(ScenarioPlugin.pluginProxy.getString("other"));
+            return help;
         }
 
     }

@@ -16,6 +16,7 @@ class Main : Plugin, PluginLoader {
         } catch (e: Throwable) {
             pluginProxy.log(e)
         }
+        pluginProxy.setResourceBundle("info/deskchan/groovy_support/strings")
 
         return true
     }

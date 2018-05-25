@@ -339,13 +339,12 @@ public class CommandsProxy{
         proxy.addMessageListener("core-events:plugin-load", (sender, tag, data) ->
                 callByTag("core-events:plugin-load") );
 
+        addEvent("core", new HashMap<String, Object>(){{
+            put("tag", "core-events:loading-complete");
+            put("info", proxy.getString("loading-complete-info"));
+        }});
+
         proxy.addMessageListener("core-events:loading-complete", (sender, tag, data) -> {
-            Map owner = new HashMap<>();
-            owner.put("owner", "core");
-            addEvent("core", new HashMap<String, Object>(){{
-                put("tag", "core-events:loading-complete");
-                put("info", proxy.getString("loading-complete-info"));
-            }});
             addEvent("core", new HashMap<String, Object>(){{
                 put("tag", "core-events:plugin-load");
                 put("info", proxy.getString("plugin-load-info"));
@@ -354,7 +353,6 @@ public class CommandsProxy{
                 put("tag", "core-events:plugin-unload");
                 put("info", proxy.getString("plugin-unload-info"));
             }});
-            commands.put("DeskChan:say", owner);
             load();
             PluginManager.log("Loading completed");
             callByTag("core-events:loading-complete");

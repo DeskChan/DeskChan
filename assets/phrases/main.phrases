@@ -91,7 +91,7 @@
         </phrase>
         <phrase>
             <text>Я не знаю, что тебе сказать.</text>
-            <purpose>NO_PHRASE</purpose>
+            <purpose>NO_INFO</purpose>
         </phrase>
         <phrase>
             <text>Дяяяя.</text>
@@ -4641,7 +4641,7 @@
         </phrase>
         <phrase>
             <text>I don't know what should I say.</text>
-            <purpose>NO_PHRASE</purpose>
+            <purpose>NO_INFO</purpose>
         </phrase>
         <phrase>
             <text>Yaaaay.</text>

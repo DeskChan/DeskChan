@@ -1,12 +1,13 @@
 import java.nio.charset.StandardCharsets
 
-sendMessage("core:add-command", [ tag: 'radio:play' ])
+sendMessage("core:add-command", [
+        tag: 'radio:play',
+        info: getString('command-info'),
+        msgInfo: getString('command-msg-info')
+])
 
 addMessageListener('radio:play', { sender, tag, data ->
-    if (data instanceof Map)
-        playRadio(data.get('msgData'))
-    else
-        playRadio(data)
+    playRadio( data instanceof Map ? data.get('msgData') : data.toString())
 })
 
 def dir = getPluginDirPath().resolve("radio").toFile()
@@ -35,15 +36,27 @@ addMessageListener("recognition:get-words", {sender, tag, d ->
 
 def clarify(){
     sendMessage('DeskChan:request-say', 'CLARIFY')
-    sendMessage('DeskChan:request-user-speech', null, { s, d ->
+    sendMessage('DeskChan:request-user-speech', printVariants(), { s, d ->
         playRadio(d.get('value').toString())
     })
 }
 
+def printVariants() {
+    // печать вариантов вынесена в отдельную функцию
+    variants = []
+    radioMap.each { k ->
+        variants += k.name
+    }
+    //variants += 'ну и всё на этом.'
+    return variants
+    //sendMessage('DeskChan:say', 'Вот те радиостанции, что я знаю: ' + variants)
+}
+
 def playRadio(Object text){
     if (text == null || text.toString().length() == 0){
+        printVariants()
         clarify()
-        return
+        return // не работает или я что-то не понял
     }
     path = null
     list = new ArrayList<String>()
@@ -59,20 +72,15 @@ def playRadio(Object text){
         }
         if (text.contains("://")){
             saveRadio("temp.m3u", text)
-            sendMessage("system:open-link", file.toString())
-            sendMessage('DeskChan:say', 'А как оно называется?')
-            sendMessage('DeskChan:request-user-speech', null, { s2, d2 ->
+            sendMessage("core:open-link", file.toString())
+            sendMessage('DeskChan:say', getString('set-name-phrase'))
+            sendMessage('DeskChan:request-user-speech', getString('write-radio-name'), { s2, d2 ->
                 saveRadio(d2.get('value'), text)
             })
             return
         }
-        variants = ''
-        radioMap.each { k ->
-            variants += k.name + ', '
-        }
-        variants += 'ну и всё на этом.'
         sendMessage('DeskChan:request-say', 'WRONG_DATA')
-        sendMessage('DeskChan:say', 'Вот те радиостанции, что я знаю: ' + variants)
+        printVariants()
     })
 }
 
@@ -92,6 +100,6 @@ sendMessage("core:set-event-link",
         [
                 eventName: 'speech:get',
                 commandName: 'radio:play',
-                rule: 'радио {msgData:Text}'
+                rule: getString('rule')
         ]
 )

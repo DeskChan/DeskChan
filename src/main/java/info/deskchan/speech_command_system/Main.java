@@ -26,19 +26,16 @@ public class Main implements Plugin {
             put("info", pluginProxy.getString("speech-get-info"));
             put("ruleInfo", pluginProxy.getString("speech-get-rule-info"));
         }});
-        pluginProxy.sendMessage("core:add-command", new HashMap(){{
-            put("tag", "speech:commands-list");
-        }});
-        pluginProxy.sendMessage("core:set-event-link", new HashMap<String, String>(){{
-            put("eventName", "speech:get");
-            put("commandName", "speech:commands-list");
-            put("rule", "(список команд)|(что умеешь)");
-        }});
 
         // Registering as alternative
         pluginProxy.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
             put("srcTag", "DeskChan:user-said");
             put("dstTag", "speech:get");
+            put("priority", 100);
+        }});
+        pluginProxy.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
+            put("srcTag", "DeskChan:commands-list");
+            put("dstTag", "speech:commands-list");
             put("priority", 100);
         }});
 

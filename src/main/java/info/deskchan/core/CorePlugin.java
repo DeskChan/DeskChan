@@ -166,6 +166,26 @@ public class CorePlugin implements Plugin, MessageListener {
 			}
 		});
 
+		pluginProxy.sendMessage("core:add-command", new HashMap<String, Object>(){{
+			put("tag", "DeskChan:say");
+			put("info", pluginProxy.getString("plugin-unload-info"));
+			put("msgInfo", new HashMap<String, String>(){{
+				put("text", pluginProxy.getString("text"));
+				put("characterImage", pluginProxy.getString("sprite"));
+				put("priority", pluginProxy.getString("priority"));
+			}});
+		}});
+
+		pluginProxy.sendMessage("core:add-command", new HashMap(){{
+			put("tag", "DeskChan:commands-list");
+			put("info", pluginProxy.getString("commands-list-info"));
+		}});
+		pluginProxy.sendMessage("core:set-event-link", new HashMap<String, String>(){{
+			put("eventName", "speech:get");
+			put("commandName", "speech:commands-list");
+			put("rule", pluginProxy.getString("commands-list-rule"));
+		}});
+
 		/* Get plugin data directory.
 		 * Public message
 		 * Params: None

@@ -1,4 +1,11 @@
 {
   "deps": ["groovy_support"],
-  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)"
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "short-description": {
+    "ru": "Plugin can launch radio files through default audioplayer, standard extensions are .pls, .m3u. Files're stored in plugin directory.",
+    "en": "Плагин может открывать файлы с радио через стандартный аудиоплеер, стандартные расширения файлов: .pls, .m3u. Файлы хранятся в папке плагина."
+  },
+  "name_ru": "Радио плеер",
+  "name_en": "Radio player",
+  "link": "https://forum.deskchan.info/topic/52/radio"
 }
