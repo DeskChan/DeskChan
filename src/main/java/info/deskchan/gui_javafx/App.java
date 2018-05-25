@@ -453,13 +453,6 @@ public class App extends Application {
 			});
 		});
 
-
-		pluginProxy.addMessageListener("gui:set-panel", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				new ControlsPanel(sender, (Map) data);
-			});
-		});
-
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
 			Platform.runLater(() -> {
@@ -475,6 +468,33 @@ public class App extends Application {
 				} else {
 					new ControlsPanel(sender, data.toString(), data.toString()).show();
 				}
+			});
+		});
+
+		/* Set panel state.
+		 * Public message
+		 * Params: Map
+		 *           id: String - system id of panel (will be transformed to "sender-id")
+		 *           name: String? - title of panel
+		 *           type: ControlsPanel.PanelType.toString()? - type of panel, default: tab
+		 *           action: String? - set, show, hide, update, delete
+		 *           controls: List<Map<String, Object>>
+		 *           onSave: String? - if present, adds button 'Save' at the bottom of panel, onSave will be message tag to send panel data
+		 *           onClose: String? - if present, onClose will be message tag to send panel data when closed
+		 * Returns: None */
+		pluginProxy.addMessageListener("gui:set-panel", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				new ControlsPanel(sender, (Map) data);
+			});
+		});
+
+		/* Show panel.
+		 * Technical message (use gui:set-panel instead, it presents only as command)
+		 * Params: String - id of panel
+		 * Returns: None */
+		pluginProxy.addMessageListener("gui:show-panel", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				ControlsPanel.open(data instanceof Map ? ((Map) data).get("msgData").toString() : data.toString());
 			});
 		});
 
@@ -983,35 +1003,56 @@ public class App extends Application {
 
 		pluginProxy.sendMessage("core:add-command", new HashMap(){{
 			put("tag", "gui:show-character");
+			put("info", Main.getString("show-character-info"));
 		}});
 		pluginProxy.sendMessage("core:set-event-link", new HashMap(){{
 			put("eventName", "speech:get");
 			put("commandName", "gui:show-character");
-			put("rule", "появись");
+			put("rule", Main.getString("show-rule"));
 		}});
 		pluginProxy.sendMessage("core:add-command", new HashMap(){{
 			put("tag", "gui:hide-character");
+			put("info", Main.getString("hide-character-info"));
 		}});
 		pluginProxy.sendMessage("core:set-event-link", new HashMap(){{
 			put("eventName", "speech:get");
 			put("commandName", "gui:hide-character");
-			put("rule", "спрячься");
+			put("rule", Main.getString("hide-rule"));
 		}});
 		pluginProxy.sendMessage("core:add-command", new HashMap(){{
 			put("tag", "gui:show-options-dialog");
+			put("info", Main.getString("show-options-dialog-info"));
 		}});
 		pluginProxy.sendMessage("core:set-event-link", new HashMap(){{
 			put("eventName", "speech:get");
 			put("commandName", "gui:show-options-dialog");
-			put("rule", "открой опции");
+			put("rule", Main.getString("show-options-rule"));
 		}});
 		pluginProxy.sendMessage("core:add-command", new HashMap(){{
 			put("tag", "gui:raise-user-balloon");
+			put("info", Main.getString("raise-user-balloon-info"));
 		}});
 		pluginProxy.sendMessage("core:set-event-link", new HashMap<String, Object>(){{
 			put("eventName", "gui:keyboard-handle");
 			put("commandName", "gui:raise-user-balloon");
 			put("rule", "ALT+Q");
+		}});
+		pluginProxy.sendMessage("core:add-command", new HashMap(){{
+			put("tag", "gui:show-panel");
+			put("info", Main.getString("show-panel-info"));
+			put("msgInfo", Main.getString("panel-id-info"));
+		}});
+		pluginProxy.sendMessage("core:add-command", new HashMap(){{
+			put("tag", "gui:set-character-position");
+			put("info", Main.getString("set-character-position-info"));
+			put("msgInfo", new HashMap<String, String>(){{
+				put("top", Main.getString("position.top"));
+				put("bottom", Main.getString("position.bottom"));
+				put("left", Main.getString("position.left"));
+				put("right", Main.getString("position.right"));
+				put("horizontalPercent", Main.getString("position.horizontalPercent"));
+				put("verticalPercent", Main.getString("position.verticalPercent"));
+			}});
 		}});
 	}
 

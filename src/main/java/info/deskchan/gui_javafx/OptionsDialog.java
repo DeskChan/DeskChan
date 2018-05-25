@@ -1477,9 +1477,10 @@ class OptionsDialog extends TemplateBox {
 						String itemDataString = item != null && item.msgData != null ? item.msgData.toString() : null;
 						for (Map.Entry<String, Object> entry : ((Map<String, Object>) m).entrySet()){
 							msgGrid.add(new Text(entry.getKey()), 0, index);
-							String str = itemData != null ? itemData.get(entry.getValue()).toString() : (index == 0 && itemDataString != null ? itemDataString : "");
+							String str = itemData != null ? itemData.get(entry.getKey()).toString() : (index == 0 && itemDataString != null ? itemDataString : "");
 							TextField t = new TextField(str);
 							msgGrid.add(t, 1, index);
+							msgGrid.add(new ControlsPanel.Hint(entry.getValue().toString()), 2, index);
 							msgElements.put(entry.getKey(), t);
 							index++;
 						}
@@ -1487,6 +1488,7 @@ class OptionsDialog extends TemplateBox {
 						msgGrid.add(new Text(Main.getString("message")), 0, 0);
 						TextField t = new TextField(item != null && item.msgData != null ? item.msgData.toString() : "");
 						msgGrid.add(t, 1, 0);
+						msgGrid.add(new ControlsPanel.Hint(m.toString()), 2, 0);
 						msgElements.put("value", t);
 					}
 					content.getChildren().add(msgGrid);

@@ -3,12 +3,11 @@ package info.deskchan.gui_javafx;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Window;
 
@@ -21,6 +20,20 @@ import java.util.Map;
 public class ControlsPanel {
 
 	private static Map<String, ControlsPanel> registeredPanels = new HashMap<>();
+	private static ListView<String> registeredPanelsListView = new ListView<>();
+
+	static {
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("panels-id"), "panels-id", PanelType.SUBMENU, new Pane(registeredPanelsListView)).set();
+		registeredPanelsListView.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent click) {
+                if (click.getClickCount() == 2) {
+                    String item = registeredPanelsListView.getSelectionModel().getSelectedItem();
+                    item = item.substring(1+item.lastIndexOf('('), item.length()-1);
+                    open(item);
+                }
+            }
+        });
+	}
 
 	final String name;
 	final String id;
@@ -122,12 +135,13 @@ public class ControlsPanel {
 
 	}
 
-	public String getFullName(){
+	String getFullName(){
 		return owner + "-" + (id != null ? id : name);
 	}
 
 	public void set(){
 		ControlsPanel oldPanel = registeredPanels.put(getFullName(), this);
+		registeredPanelsListView.getItems().add(name + " (" + getFullName() + ")");
 		if (oldPanel != null){
 			if (type == null) type = oldPanel.type;
 			if (oldPanel.parentWindow != null && oldPanel.parentWindow.getDialogPane() != null && oldPanel.parentWindow.getDialogPane().getScene() != null) {
@@ -215,7 +229,9 @@ public class ControlsPanel {
 				OptionsDialog.unregisterSubmenu(this);
 			} break;
 		}
-		registeredPanels.remove(getFullName());
+		final String n = getFullName();
+		registeredPanels.remove(n);
+		registeredPanelsListView.getItems().removeIf(s -> s.contains(n));
 	}
 
 	private String getSaveTag(){
