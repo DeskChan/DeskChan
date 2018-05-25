@@ -35,20 +35,25 @@ class ScenarioPlugin : Plugin {
                 runScenario()
             }
         })
-        pluginProxy.sendMessage("gui:setup-options-submenu", object : HashMap<String, Any>() {
-            init {
-                put("name", pluginProxy.getString("scenario"))
-                put("msgTag", "scenario:menu")
-                val list = LinkedList<HashMap<String, Any>>()
-                list.add(object : HashMap<String, Any>() {
-                    init {
-                        put("id", "path")
-                        put("type", "FileField")
-                        put("label", pluginProxy.getString("file"))
-                    }
-                })
-                put("controls", list)
-            }
+        pluginProxy.sendMessage("gui:set-panel", HashMap<String, Any>().apply {
+            put("id", "scenario")
+            put("name", pluginProxy.getString("scenario"))
+            put("type", "submenu")
+            put("action", "set")
+            put("onSave", "scenario:menu")
+            val list = LinkedList<HashMap<String, Any>>()
+            list.add(HashMap<String, Any>().apply {
+                put("id", "path")
+                put("type", "FileField")
+                put("label", pluginProxy.getString("file"))
+            })
+            list.add(HashMap<String, Any>().apply {
+                put("id", "stop")
+                put("type", "Button")
+                put("value", pluginProxy.getString("stop"))
+                put("msgTag", "scenario:stop")
+            })
+            put("controls", list)
         })
         pluginProxy.addMessageListener("scenario:menu", MessageListener{ sender, tag, dat ->
             val map = dat as Map<*, *>
@@ -56,24 +61,36 @@ class ScenarioPlugin : Plugin {
             currentScenario = createScenario(map["path"] as String)
             runScenario()
         })
+        pluginProxy.addMessageListener("scenario:stop", MessageListener { sender, tag, dat ->
+            stopScenario()
+        })
 
         return true
     }
 
     fun runScenario() {
+        stopScenario()
         if (currentScenario != null) {
             if (scenarioThread != null)
                 scenarioThread!!.interrupt()
 
             scenarioThread = object : Thread() {
                 override fun run() {
-                    currentScenario!!.run()
+                    try {
+                        currentScenario!!.run()
+                    } catch (e: RuntimeException){ }
                     scenarioThread = null
                 }
             }
             scenarioThread!!.start()
         } else
-            pluginProxy.sendMessage("DeskChan:request-say", "TECHPROBLEM")
+            pluginProxy.sendMessage("DeskChan:request-say", "ERROR")
+    }
+
+    fun stopScenario(){
+        try {
+            currentScenario?.quit()
+        } catch (e: Exception){ }
     }
 
     companion object {

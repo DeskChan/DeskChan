@@ -12,6 +12,7 @@ public abstract class Scenario extends Script{
 
     private Answer answer;
     private static final List<String> defaultHelp = Arrays.asList(ScenarioPlugin.pluginProxy.getString("write-anything"));
+    private Thread currentThread = Thread.currentThread();
 
     private final Locker lock = new Locker();
 
@@ -58,6 +59,10 @@ public abstract class Scenario extends Script{
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech",
                 helpInfo != null ? helpInfo : defaultHelp,
         (sender, data) -> {
+            if (!currentThread.isAlive()) {
+                ScenarioPlugin.pluginProxy.sendMessage("DeskChan:user-said", data);
+                return;
+            }
             if (data instanceof Map)
                 answer = new Answer((Map) data);
             else
@@ -227,7 +232,10 @@ public abstract class Scenario extends Script{
 
     }
 
-    protected void quit(){ Thread.currentThread().interrupt(); }
+    protected void quit(){
+        currentThread.interrupt();
+        throw new RuntimeException();
+    }
 
     private static class Answer{
 
@@ -250,18 +258,18 @@ public abstract class Scenario extends Script{
         public String toString(){ return text; }
     }
 
-    private static class Locker {
+    private class Locker {
 
         boolean notified = false;
 
         public void lock(){
             if (!notified) {
-                synchronized (this) {
-                    try {
+                try {
+                    synchronized (this) {
                         this.wait();
-                    } catch (Exception e) {
-                        Thread.currentThread().interrupt();
                     }
+                } catch (Exception e) {
+                    quit();
                 }
             }
             notified = false;

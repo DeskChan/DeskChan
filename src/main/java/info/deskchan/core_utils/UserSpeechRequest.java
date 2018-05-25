@@ -26,6 +26,11 @@ public class UserSpeechRequest {
             requests.addLast(new UserSpeechRequest(sender, (List<String>) data));
         });
 
+        ppi.addMessageListener("DeskChan:discard-user-speech", (sender, tag, data) -> {
+            ppi.sendMessage("DeskChan:user-said#core-utils:answer-speech-request", data);
+        });
+
+
         ppi.addMessageListener("core-utils:answer-speech-request", (sender, tag, dat) -> {
            if(requests.size() == 0) {
                ppi.sendMessage("DeskChan:user-said#core-utils:answer-speech-request", dat);
