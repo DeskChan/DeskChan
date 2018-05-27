@@ -1,5 +1,3 @@
-@Grapes([
-   @Grab('net.objecthunter:exp4j:0.4.8')])
 import net.objecthunter.exp4j.ExpressionBuilder
 
 def tag(tag) { "${getId()}:$tag".toString() }
