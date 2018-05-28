@@ -12,7 +12,7 @@ public abstract class Scenario extends Script{
 
     private Answer answer;
     private static final List<String> defaultHelp = Arrays.asList(ScenarioPlugin.pluginProxy.getString("write-anything"));
-    private Thread currentThread = Thread.currentThread();
+    private boolean interrupted = false;
 
     private final Locker lock = new Locker();
 
@@ -55,12 +55,11 @@ public abstract class Scenario extends Script{
         return receive(null);
     }
     protected synchronized String receive(List<String> helpInfo){
-
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech",
                 helpInfo != null ? helpInfo : defaultHelp,
         (sender, data) -> {
-            if (!currentThread.isAlive()) {
-                ScenarioPlugin.pluginProxy.sendMessage("DeskChan:user-said", data);
+            if (interrupted) {
+                ScenarioPlugin.pluginProxy.sendMessage("DeskChan:discard-user-speech", data);
                 return;
             }
             if (data instanceof Map)
@@ -233,7 +232,7 @@ public abstract class Scenario extends Script{
     }
 
     protected void quit(){
-        currentThread.interrupt();
+        interrupted = true;
         throw new RuntimeException();
     }
 

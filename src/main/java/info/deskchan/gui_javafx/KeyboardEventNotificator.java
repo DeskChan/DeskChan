@@ -1,6 +1,7 @@
 package info.deskchan.gui_javafx;
 
 import info.deskchan.core.PluginProxyInterface;
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
@@ -17,6 +18,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class KeyboardEventNotificator implements NativeKeyListener {
 
@@ -200,7 +202,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
     }
 
     /** Currently pressed keys as raw code. **/
-    private static Set<KeyPair> currentPressed = new HashSet<>();
+    private static final ConcurrentLinkedDeque<KeyPair> currentPressed = new ConcurrentLinkedDeque<>();
 
     /** {@link #currentPressed} was changed recently. **/
     private static boolean setChanged = false;
@@ -210,23 +212,30 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
     /** Key pressed event (called every tick you press the button, not once). **/
     public void nativeKeyPressed(NativeKeyEvent e) {
-        if(currentPressed.add(new KeyPair(e)) && commands != null && commands.length > 0) {
-            setChanged = true;
-            handler.start();
-            if (listenerId >= 0){
-                updateKeysInSubMenu();
+        synchronized (this) {
+
+            if (currentPressed.add(new KeyPair(e)) && commands != null && commands.length > 0) {
+                setChanged = true;
+                handler.start();
+                if (listenerId >= 0) {
+                    updateKeysInSubMenu();
+                }
             }
         }
     }
 
     /** Key released event. **/
     public void nativeKeyReleased(NativeKeyEvent e) {
-        currentPressed.remove(new KeyPair(e));
-        setChanged = true;
-        if(currentPressed.size() == 0)
-            handler.stop();
-        if (listenerId >= 0){
-            updateKeysInSubMenu();
+        synchronized (this) {
+
+                currentPressed.remove(new KeyPair(e));
+                setChanged = true;
+                if (currentPressed.size() == 0)
+                    handler.stop();
+                if (listenerId >= 0) {
+                    updateKeysInSubMenu();
+                }
+
         }
     }
 
@@ -283,12 +292,12 @@ public class KeyboardEventNotificator implements NativeKeyListener {
         void start(){
             if(timeline == null)
                 handle(null);
-            else
+            else if (timeline.getStatus() != Animation.Status.RUNNING)
                 timeline.play();
         }
 
         void stop(){
-            if(timeline != null)
+            if(timeline != null && timeline.getStatus() == Animation.Status.RUNNING)
                 timeline.stop();
         }
 
@@ -298,13 +307,19 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             if (!setChanged) return;
             setChanged = false;
 
-            int size = currentPressed.size();
+            Set<KeyPair> pressed;
+            synchronized (currentPressed) {
+                pressed = new HashSet<>(currentPressed);
+            }
+
+            int size = pressed.size();
             for(KeyboardCommand command : commands){
                 if(command.keyCodes.length < size) continue;
 
                 boolean contains = true;
                 for(Object keyCode : command.keyCodes) {
-                    Iterator<KeyPair> it = currentPressed.iterator();
+
+                    Iterator<KeyPair> it = pressed.iterator();
                     while (it.hasNext()){
                         KeyPair key = it.next();
                         if (key.equals(keyCode)) {
@@ -380,12 +395,16 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             return duplicates.contains(pair.keyCode);
         }
 
-        public static String getKeyNames(Set<KeyPair> keyCodes){
+        public static String getKeyNames(Collection<KeyPair> keyCodes){
             String result = "";
             if(keyCodes.size() == 0) return result;
 
-            for(KeyPair keyCode : keyCodes)
-                result += keyNames.get(keyCode.toString()) + " + ";
+            Iterator<KeyPair> it = keyCodes.iterator();
+            while(it.hasNext()){
+                KeyPair pair = it.next();
+                result += keyNames.get(pair.toString()) + " + ";
+            }
+
             return result.substring(0, result.length()-3);
         }
 

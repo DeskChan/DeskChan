@@ -58,6 +58,9 @@ class ScenarioPlugin : Plugin {
         pluginProxy.addMessageListener("scenario:menu", MessageListener{ sender, tag, dat ->
             val map = dat as Map<*, *>
 
+            if (currentScenario != null)
+                stopScenario()
+
             currentScenario = createScenario(map["path"] as String)
             runScenario()
         })
@@ -69,7 +72,6 @@ class ScenarioPlugin : Plugin {
     }
 
     fun runScenario() {
-        stopScenario()
         if (currentScenario != null) {
             if (scenarioThread != null)
                 scenarioThread!!.interrupt()
@@ -89,7 +91,9 @@ class ScenarioPlugin : Plugin {
 
     fun stopScenario(){
         try {
+            scenarioThread?.interrupt()
             currentScenario?.quit()
+            currentScenario = null
         } catch (e: Exception){ }
     }
 
