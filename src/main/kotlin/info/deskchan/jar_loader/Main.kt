@@ -58,18 +58,24 @@ class Main : Plugin, PluginLoader {
         var cls: Class<*>
         try {
             cls = Class.forName(className, true, loader)
-        } catch (e: Exception) {
+        } catch (e: Error) {
             try {
                 cls = Class.forName(className, false, loader)
-            } catch (e2: Exception) {
+            } catch (e2: Error) {
                 log("Unable to load plugin \"$id\"! Couldn't find class \"$className\".")
                 return
             }
         }
 
-        val plugin = cls.newInstance() as? Plugin
-        if (plugin == null) {
-            log("The class \"$id\" is not an instance of Plugin!")
+        val plugin:Plugin?
+        try {
+            plugin = cls.newInstance() as? Plugin
+            if (plugin == null) {
+                log("The class \"$id\" is not an instance of Plugin!")
+                return
+            }
+        } catch (e: Error){
+            log(e)
             return
         }
 

@@ -116,16 +116,19 @@ public class PluginManager {
 			new Debug.TimeTest(){
 				@Override
 				void run(){
-					PluginProxy entity = PluginProxy.Companion.create(plugin, id, config);
-					if (entity != null) {
-						plugins.put(id, entity);
-						if (config != null) {
-							LoaderManager.INSTANCE.registerExtensions(config.getExtensions());
+					try {
+						PluginProxy entity = PluginProxy.Companion.create(plugin, id, config);
+						if (entity != null) {
+							plugins.put(id, entity);
+							if (config != null) {
+								LoaderManager.INSTANCE.registerExtensions(config.getExtensions());
+							}
+							log("Registered plugin: " + id);
+							sendMessage("core", "core-events:plugin-load", id);
 						}
-						log("Registered plugin: " + id);
-						sendMessage("core", "core-events:plugin-load", id);
-					} else {
+					} catch (Exception e) {
 						log("Plugin not registered: " + id);
+						log(e);
 					}
 				}
 			};
