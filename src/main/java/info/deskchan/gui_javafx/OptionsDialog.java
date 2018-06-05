@@ -904,9 +904,12 @@ class OptionsDialog extends TemplateBox {
 			label = new Label(toString());
 			label.setAlignment(Pos.CENTER_LEFT);
 
+			Label pluginLetter = new Label(getPluginTypeLetter());
+			pluginLetter.getStyleClass().add("plugin-type-letter");
+
 			// Filling row content
 			hbox.getChildren().clear();
-			hbox.getChildren().addAll(label, pane, menuBox);
+			hbox.getChildren().addAll(pluginLetter, label, pane, menuBox);
 
 			vbox = new VBox();
 			vbox.setAlignment(Pos.CENTER_LEFT);
@@ -1022,7 +1025,7 @@ class OptionsDialog extends TemplateBox {
 
 		@Override
 		public String toString() {
-			return getPluginTypeLetter() + name + (blacklisted ? (" ["+Main.getString("blacklisted")+"]") : "");
+			return name + (blacklisted ? (" ["+Main.getString("blacklisted")+"]") : "");
 		}
 
 		/** Alert about removing important plugin. **/

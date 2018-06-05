@@ -4,234 +4,73 @@ import dorkbox.systemTray.MenuItem;
 import dorkbox.systemTray.Separator;
 import dorkbox.systemTray.SystemTray;
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.SeparatorMenuItem;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ConcurrentModificationException;
 
-public class TrayMenu {
+public class TrayMenu extends Menu{
 
-    private static volatile SystemTray trayRef = null;
-    private static volatile ArrayList<PluginMenuItem> menuItems = new ArrayList<>();
-    private static volatile ContextMenu contextMenu = new ContextMenu();
+    private volatile SystemTray trayRef = null;
     
-    public static void initialize(){
-        if (Main.getProperties().getBoolean("use-tray", true)) {
-            SystemTray systemTray = SystemTray.get();
-            if (SystemTray.get() == null) {
-                Main.log("Failed to load SystemTray, type dorkbox");
-            } else {
-                systemTray.setTooltip(App.NAME);
-                systemTray.setImage(App.ICON_URL);
-                systemTray.setStatus(App.NAME);
-                trayRef = systemTray;
-            }
+    public TrayMenu(){
+        super();
+        SystemTray systemTray = SystemTray.get();
+        if (SystemTray.get() == null) {
+            Main.log("Failed to load SystemTray, type dorkbox");
+        } else {
+            systemTray.setTooltip(App.NAME);
+            systemTray.setImage(App.ICON_URL);
+            systemTray.setStatus(App.NAME);
+            trayRef = systemTray;
         }
-        contextMenu.setId("context-menu");
-    }
-    public static void add(String sender, String name, String msgTag, Object msgData){
-        menuItems.add(new PluginAction(sender, name, msgTag, msgData));
-        update();
-    }
-    public static void add(String sender, String name, List<Map<String,Object>> actions){
-        menuItems.add(new PluginMenu(sender, name, actions));
-        update();
-    }
-    public static void remove(String sender){
-        Iterator<PluginMenuItem> it = menuItems.iterator();
-        while(it.hasNext()){
-            PluginMenuItem item = it.next();
-            if(item.sender.equals(sender))
-                it.remove();
-        }
-        update();
-    }
-    
-    public static ContextMenu getContextMenu(){
-        return contextMenu;
-    }
-    private static MenuItemAction optionsMenuItemAction = new MenuItemAction() {
-        @Override
-        protected void run() {
-            Platform.runLater( () -> {
-                OptionsDialog.open();
-            });  }
-    };
-    private static MenuItemAction frontMenuItemAction = new MenuItemAction() {
-        @Override
-        protected void run() {  Platform.runLater(OverlayStage.getInstance()::toFront);   }
-    };
-    private static MenuItemAction quitMenuItemAction = new MenuItemAction() {
-        @Override
-        protected void run() {  Platform.runLater(Main.getInstance()::quit);              }
-    };
-    public synchronized static void update(){
-        if(trayRef == null) return;
-
-        if(trayRef.getMenu() instanceof dorkbox.systemTray.ui.swing._SwingTray ||
-           trayRef.getMenu() instanceof dorkbox.systemTray.ui.awt._AwtTray)
-            SwingUtilities.invokeLater(TrayMenu::updateImpl);
-        else Platform.runLater(TrayMenu::updateImpl);
-    }
-    private synchronized static void updateImpl(){
-        if (trayRef != null) {
-            dorkbox.systemTray.Menu menu = trayRef.getMenu();
-
-            menu.clear();
-            trayRef.setStatus(App.NAME);
-
-            menu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
-            menu.add(new MenuItem(Main.getString("send-top"), frontMenuItemAction));
-
-            menu.add(new Separator());
-            try {
-                for (PluginMenuItem it : menuItems) {
-                    menu.add(it.getDorkBoxItem());
-                }
-            } catch (ConcurrentModificationException e) {
-                Main.log("Concurrent modification by tray. Write us if it cause you lags.");
-                return;
-            }
-            menu.add(new Separator());
-
-            menu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
-        }
-
-        ObservableList<javafx.scene.control.MenuItem> contextMenuItems = contextMenu.getItems();
-        contextMenuItems.clear();
-
-        javafx.scene.control.MenuItem item = new javafx.scene.control.MenuItem(Main.getString("options"));
-        item.setOnAction(optionsMenuItemAction);
-        contextMenuItems.add(item);
-
-        item = new javafx.scene.control.MenuItem(Main.getString("send-top"));
-        item.setOnAction(frontMenuItemAction);
-        contextMenuItems.add(item);
-
-        contextMenuItems.add(new SeparatorMenuItem());
-        for(PluginMenuItem it : menuItems){
-            contextMenuItems.add(it.getJavaFXItem());
-        }
-        contextMenuItems.add(new SeparatorMenuItem());
-
-        item = new javafx.scene.control.MenuItem(Main.getString("quit"));
-        item.setOnAction(quitMenuItemAction);
-        contextMenuItems.add(item);
-    }
-}
-abstract class MenuItemAction implements ActionListener, EventHandler<ActionEvent> {
-    @Override
-    public void actionPerformed(java.awt.event.ActionEvent actionEvent) {
-        run();
     }
 
     @Override
-    public void handle(javafx.event.ActionEvent event) {
-        run();
+    public synchronized void update(){
+        if(trayRef != null && (trayRef.getMenu() instanceof dorkbox.systemTray.ui.swing._SwingTray ||
+           trayRef.getMenu() instanceof dorkbox.systemTray.ui.awt._AwtTray))
+            SwingUtilities.invokeLater(this::updateImpl);
+        else Platform.runLater(this::updateImpl);
     }
 
-    protected abstract void run();
-}
-class PluginMenuItem{
-    final String sender;
-    final String name;
-    public PluginMenuItem(String name){
-        this.sender=null;
-        this.name=name;
-    }
-    public PluginMenuItem(String sender, String name){
-        this.sender=sender;
-        this.name=name;
-    }
-    javafx.scene.control.MenuItem fxItem = null;
-
-    dorkbox.systemTray.Entry getDorkBoxItem(){
-        return null;
-    }
-    javafx.scene.control.MenuItem getJavaFXItem(){
-        return fxItem;
-    }
-}
-class PluginAction extends PluginMenuItem {
-    final String msgTag;
-    final Object msgData;
-    final MenuItemAction action;
-
-    PluginAction(String sender, String name, String msgTag, Object msgData) {
-        super(sender,name);
-        this.msgTag = msgTag;
-        this.msgData = msgData;
-        action = new MenuItemAction() {
-            @Override
-            protected void run() {
-                Main.getInstance().getPluginProxy().sendMessage(msgTag, msgData);
-            }
-        };
-
-        fxItem = new javafx.scene.control.MenuItem(name);
-        fxItem.setOnAction(action);
-    }
     @Override
-    dorkbox.systemTray.Entry getDorkBoxItem() {
-        return new MenuItem(name, action);
-    }
-}
-class PluginSeparator extends PluginMenuItem {
-    PluginSeparator() {
-        super(null);
-        fxItem = new SeparatorMenuItem();
-    }
-    @Override
-    dorkbox.systemTray.Entry getDorkBoxItem() {
-        return new dorkbox.systemTray.Separator();
-    }
-}
-class PluginLabel extends PluginMenuItem {
-    PluginLabel(String name) {
-        super(name);
-        fxItem = new javafx.scene.control.MenuItem(name);
-    }
-    @Override
-    dorkbox.systemTray.Entry getDorkBoxItem() {
-        return new dorkbox.systemTray.MenuItem(name);
-    }
-}
-class PluginMenu extends PluginMenuItem {
-    ArrayList<PluginMenuItem> actions = new ArrayList<>();
-    PluginMenu(String sender, String name, List<Map<String,Object>> list) {
-        super(sender, name);
-        javafx.scene.control.Menu fm = new javafx.scene.control.Menu(name);
+    protected synchronized void updateImpl(){
+
+        dorkbox.systemTray.Menu menu = trayRef.getMenu();
+
+        menu.clear();
+        trayRef.setStatus(App.NAME);
+
+        menu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
+        menu.add(new MenuItem(Main.getString("send-top"), frontMenuItemAction));
+
+        menu.add(new Separator());
         try {
-            for(Map<String,Object> action : list){
-                PluginMenuItem item = null;
-                if(action.containsKey("name")){
-                    if(action.containsKey("msgTag")){
-                        actions.add(item = new PluginAction(sender, (String) action.get("name"), (String) action.get("msgTag"), action.get("msgData")));
-                    } else {
-                        actions.add(item = new PluginLabel(name));
-                    }
-                } else {
-                    actions.add(item = new PluginSeparator());
-                }
-                fm.getItems().add(item.getJavaFXItem());
+            for (PluginMenuItem it : menuItems) {
+                menu.add(toDorkBoxItem(it));
             }
-        } catch(Exception e){
-            Main.log("Cannot create actions menu, wrong data recieved by "+sender);
+        } catch (ConcurrentModificationException e) {
+            Main.log("Concurrent modification by tray. Write us if it cause you lags.");
             return;
         }
-        fxItem = fm;
+        menu.add(new Separator());
+        menu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
+
+        super.updateImpl();
     }
-    @Override
-    dorkbox.systemTray.Entry getDorkBoxItem() {
-        dorkbox.systemTray.Menu dm = new dorkbox.systemTray.Menu(name);
-        for(PluginMenuItem action : actions){
-            dm.add(action.getDorkBoxItem());
+
+    protected dorkbox.systemTray.Entry toDorkBoxItem(PluginMenuItem item){
+
+        if (item instanceof PluginAction) return new MenuItem(item.name, ((PluginAction) item).action);
+        if (item instanceof PluginSeparator) return new dorkbox.systemTray.Separator();
+        if (item instanceof PluginLabel) return new dorkbox.systemTray.MenuItem(item.name);
+        if (item instanceof PluginMenu){
+            dorkbox.systemTray.Menu dm = new dorkbox.systemTray.Menu(item.name);
+            for(PluginMenuItem action : ((PluginMenu) item).actions){
+                dm.add(toDorkBoxItem(action));
+            }
+            return dm;
         }
-        return dm;
+        return null;
     }
 }

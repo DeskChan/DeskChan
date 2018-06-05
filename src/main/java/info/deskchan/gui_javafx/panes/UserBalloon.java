@@ -13,8 +13,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -39,9 +39,9 @@ public class UserBalloon extends Balloon {
 
     public UserBalloon() {
         super();
+        setId("user-balloon");
         instance = this;
 
-        //TextArea label = new TextArea("");
         TextField label = new TextField("");
         label.setFont(defaultFont);
         if (defaultFont != null) {
@@ -50,19 +50,18 @@ public class UserBalloon extends Balloon {
             label.setFont(LocalFont.defaultFont);
         }
 
-        BorderPane pane = new BorderPane();
-        pane.setCenter(label);
-        pane.setMaxHeight(100);
+        Button infoButton = new Button(Main.getString("?"));
+
+        HBox textLine = new HBox(label, infoButton);
         content = label;
 
         Button sendButton = new Button(Main.getString("send"));
         Button closeButton = new Button(Main.getString("close"));
+
         HBox buttons = new HBox(sendButton, closeButton);
         buttons.setAlignment(Pos.CENTER);
-        buttons.setSpacing(10);
-        pane.setBottom(buttons);
 
-        bubblePane = drawer.createBalloon(pane);
+        bubblePane = drawer.createBalloon(new VBox(textLine, buttons));
         getChildren().add(bubblePane);
 
         label.setPrefWidth(bubblePane.getContentWidth());
@@ -80,6 +79,10 @@ public class UserBalloon extends Balloon {
 
         closeButton.setOnAction(event -> {
             close();
+        });
+
+        infoButton.setOnAction(event -> {
+            Main.getPluginProxy().sendMessage("DeskChan:commands-list", null);
         });
 
         setOnMousePressed(event -> {

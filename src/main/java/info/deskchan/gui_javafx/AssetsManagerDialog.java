@@ -118,7 +118,7 @@ class AssetsManagerDialog extends FilesManagerDialog {
 					continue;
 				}
 				String name = skinPath.toString();
-				if (acceptableExtensions == null || acceptableExtensions.size() == 0){
+				if (!name.endsWith(".config") && (acceptableExtensions == null || acceptableExtensions.size() == 0)){
 					list.add(name);
 					continue;
 				}

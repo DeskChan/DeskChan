@@ -38,7 +38,7 @@ public class LocalFont {
         else
             defaultFont = fromString(font);
         Main.getProperties().put("interface.font", toString(defaultFont));
-        TrayMenu.getContextMenu().setStyle(getDefaultFontCSS());
+        Menu.getInstance().getContextMenu().setStyle(getDefaultFontCSS());
         TemplateBox.updateStyle();
     }
 

@@ -464,3 +464,12 @@
     -fx-fill: #F55;
     -fx-font-weight: bold;
 }
+
+#user-balloon VBox {
+    -fx-spacing: 1em;
+    -fx-alignment: center;
+}
+
+#user-balloon HBox {
+    -fx-spacing: 1em;
+}

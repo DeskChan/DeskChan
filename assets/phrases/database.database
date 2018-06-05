@@ -2,16 +2,6 @@
 <phrases>
     <ru>
         <phrase>
-            <text>Я знаю, ты хочешь сделать это со мной, но я - всего лишь набор байтов с исполняемыми заголовками. Если уж так не терпится доставить мне удовольствие, потрогай меня изнутри, найди меня на Github! </text>
-            <purpose>ADVICE, TOUCH</purpose>
-            <sprite>GRIN</sprite>
-        </phrase>
-        <phrase>
-            <text>Пыщь - пыщь! Ааа, прямо в кокоро!</text>
-            <purpose>TOUCH</purpose>
-            <sprite>NORMAL</sprite>
-        </phrase>
-        <phrase>
             <text>Тут что-то снова какие-то ошибки. Ты пробовал включить и выключить?</text>
             <purpose>ADVICE</purpose>
             <sprite>NORMAL</sprite>

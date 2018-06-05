@@ -81,7 +81,8 @@ mainClassName = 'info.deskchan.core.MainKt'
 ext.standardJarPlugins = [
 	'speech_command_system',
 	'chat_window',
-	'weather'
+	'weather',
+		'notification_manager'
 ]
 
 def gitCommitCount = '[UNOFFICIAL]'
@@ -236,6 +237,9 @@ task copyProxyLib(type: Copy, dependsOn: assembleProxyInterface, group: 'desk-ch
 
 	from (libsDir){
 		include 'ProxyInterface*'
+	}
+	from ('misc/proxies'){
+		include '*'
 	}
 	into "$launch4jDir/libs/"
 }

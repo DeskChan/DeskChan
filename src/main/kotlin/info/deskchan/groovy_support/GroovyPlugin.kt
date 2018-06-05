@@ -9,8 +9,15 @@ abstract class GroovyPlugin : Script(), Plugin {
 
     private var pluginProxy: PluginProxyInterface? = null
     private val cleanupHandlers = ArrayList<Runnable>()
+
     var pluginDirPath: Path? = null
         get() = pluginProxy!!.pluginDirPath
+    var assetsDirPath: Path? = null
+        get() = pluginProxy!!.assetsDirPath
+    var rootDirPath: Path? = null
+        get() = pluginProxy!!.rootDirPath
+    val dataDirPath: Path
+        get() = pluginProxy!!.dataDirPath
 
     val id: String
         get() = pluginProxy!!.getId()
@@ -18,8 +25,6 @@ abstract class GroovyPlugin : Script(), Plugin {
     val properties: PluginProperties
         get() = pluginProxy!!.getProperties()
 
-    val dataDirPath: Path
-        get() = pluginProxy!!.dataDirPath
 
     override fun initialize(pluginProxy: PluginProxyInterface): Boolean {
         this.pluginProxy = pluginProxy

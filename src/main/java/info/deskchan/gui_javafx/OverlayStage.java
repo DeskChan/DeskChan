@@ -13,6 +13,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -136,6 +137,12 @@ public class OverlayStage extends Stage {
 			}
 			instance = nextInstance;
 			instance.getScene().getStylesheets().add(App.getStylesheet());
+			instance.focusedProperty().addListener((observable, oldValue, newValue) -> {
+				if (!newValue){
+					ContextMenu contextMenu = Menu.getInstance().getContextMenu();
+					contextMenu.hide();
+				}
+			});
 			nextInstance.showStage();
 			nextInstance.showCharacter();
 		} catch (Exception e){
@@ -236,6 +243,11 @@ public class OverlayStage extends Stage {
 		}
 	};
 
+	public static void sendToFront(){
+		instance.toFront();
+		instance.requestFocus();
+	}
+
 	public boolean isCharacterVisible(){
 		return true;
 	}
@@ -306,8 +318,9 @@ class TopStage extends NormalStage{
 		try {
 			HackJavaFX.setCreateTransparentPopup(stage);
 			HackJavaFX.setWindowFocusable(stage, false);
-			stage.toFront();
-			stage.setAlwaysOnTop();
+			toFront();
+			requestFocus();
+			setAlwaysOnTop();
 		} catch (Exception e){
 			Main.log("Cannot handle top stage change");
 		}
@@ -333,6 +346,7 @@ class FrontNormalStage extends NormalStage{
 	public void showBalloon(Balloon balloon){
 		super.showBalloon(balloon);
 		toFront();
+		requestFocus();
 	}
 }
 

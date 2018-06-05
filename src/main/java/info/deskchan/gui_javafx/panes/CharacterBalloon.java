@@ -55,6 +55,7 @@ public class CharacterBalloon extends Balloon {
 	CharacterBalloon(Character character, String text) {
 		super();
 		instance = this;
+		setId("character-balloon");
 
 		positionMode = CharacterBalloon.PositionMode.valueOf(
 				Main.getProperties().getString("balloon_position_mode", positionMode.toString())

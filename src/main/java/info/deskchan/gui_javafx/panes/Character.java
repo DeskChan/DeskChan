@@ -72,7 +72,7 @@ public class Character extends MovablePane {
 		});
 		addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
 			boolean enabled = Main.getProperties().getBoolean("character.enable_context_menu", true);
-			ContextMenu contextMenu = TrayMenu.getContextMenu();
+			ContextMenu contextMenu = Menu.getInstance().getContextMenu();
 			// We need to hide menu manually in both cases to avoid showing the menu with incorrect width.
 			contextMenu.hide();
 			if (enabled && event.getButton() == MouseButton.SECONDARY && event.isStillSincePress()) {
@@ -546,9 +546,11 @@ public class Character extends MovablePane {
 			mainImage.setOpacity(0);
 			mainImage.setEffect(effect);
 			secondImage.setOpacity(1);
+			if (timeline.getStatus() == Animation.Status.RUNNING){
+				timeline.stop();
+			}
 			timeline.setCycleCount(10);
-			if (timeline.getStatus() != Animation.Status.RUNNING)
-				timeline.play();
+			timeline.play();
 		}
 
 		@Override

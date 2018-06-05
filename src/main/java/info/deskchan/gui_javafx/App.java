@@ -64,9 +64,6 @@ public class App extends Application {
 		// Hacking javafx Application class to hide app from programs panel
 		HackJavaFX.process();
 		Main.log("hacked JavaFX, " + getTime(start));
-		// Loading fonts from 'assets/fonts' folder
-		loadFonts();
-		Main.log("fonts loaded, " + getTime(start));
 		// Loading balloon asset
 		CharacterBalloon.updateDrawer();
 		UserBalloon.updateDrawer();
@@ -76,8 +73,15 @@ public class App extends Application {
 		// Forbid auto closing program if there is no program windows
 		Platform.setImplicitExit(false);
 		// Tray and right click menus initialization
-		TrayMenu.initialize();
+		if (Main.getProperties().getBoolean("use-tray", true)){
+			new TrayMenu();
+		} else {
+			new Menu();
+		}
 		Main.log("tray initialized, " + getTime(start));
+		// Loading fonts from 'assets/fonts' folder
+		loadFonts();
+		Main.log("fonts loaded, " + getTime(start));
 		// Transparent window initialization
 		OverlayStage.initialize();
 		Main.log("overlay initialized, " + getTime(start));
@@ -162,7 +166,7 @@ public class App extends Application {
 					Main.log("Not enough data to setup simple action, received by "+sender);
 					return;
 				}
-				TrayMenu.add(sender, (String) m.getOrDefault("name", sender), (String) m.get("msgTag"), m.get("msgData"));
+				Menu.getInstance().add(sender, (String) m.getOrDefault("name", sender), (String) m.get("msgTag"), m.get("msgData"));
 			});
 		});
 
@@ -189,7 +193,7 @@ public class App extends Application {
 					return;
 				}
 				
-				TrayMenu.add(sender, name, actionList);
+				Menu.getInstance().add(sender, name, actionList);
 			});
 		});
 
@@ -936,7 +940,7 @@ public class App extends Application {
 				for (ControlsPanel panel : ControlsPanel.getPanels(pluginId))
 					panel.delete();
 
-				TrayMenu.remove(pluginId);
+				Menu.getInstance().remove(pluginId);
 				Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
 				while (iterator.hasNext()) {
 					DelayNotifier delayNotifier = iterator.next();

@@ -37,7 +37,7 @@ class Module {
 
 modules = new ArrayList<Module>()
 
-File dir = getPluginDirPath().resolve("modules").toFile()
+File dir = getAssetsDirPath().resolve("reactions").toFile()
 dir.listFiles().each {
     try {
         modules.add(new Module(it, this))

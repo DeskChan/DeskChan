@@ -238,7 +238,7 @@ public class CharacterPreset {
 			t.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
 			t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 			t.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
-			OutputStreamWriter stream = new OutputStreamWriter(new FileOutputStream(path.resolve("saved.preset").toFile()), "UTF-8");
+			OutputStreamWriter stream = new OutputStreamWriter(new FileOutputStream(path.resolve(name + ".preset").toFile()), "UTF-8");
 			t.transform(new DOMSource(doc), new StreamResult(stream));
 		} catch(Exception ex){
 			Main.log(ex);

@@ -4549,6 +4549,130 @@
                 <manner>-4 | 0</manner>
             </range>
         </phrase>
+        <phrase>
+            <text>{user}, а давай посмотрим мемасики.</text>
+            <purpose>CHAT</purpose>
+            <sprite>EXCITEMENT</sprite>
+            <interests>"memes"</interests>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>-4 | 2</selfconfidence>
+                <attitude>-1 | 4</attitude>
+                <experience>-4 | -1</experience>
+                <relationship>-1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Не забывай каждое утро говорить: "Спасибо, Мистер Дудец".</text>
+            <purpose>CHAT</purpose>
+            <interests>"memes"</interests>
+            <range>
+                <empathy>2 | 4</empathy>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Я знаю, ты хочешь сделать это со мной, но я - всего лишь набор байтов с исполняемыми заголовками. Если уж так не терпится доставить мне удовольствие, потрогай меня изнутри, найди меня на Github! </text>
+            <purpose>ADVICE, TOUCH</purpose>
+            <sprite>GRIN</sprite>
+            <species>"ai"</species>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <selfconfidence>1 | 4</selfconfidence>
+                <attitude>1 | 4</attitude>
+                <experience>0 | 4</experience>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Смотри, есть два сетевых порта...</text>
+            <purpose>CHAT</purpose>
+            <sprite>THOUGHTFUL</sprite>
+            <interests>"memes"</interests>
+        </phrase>
+        <phrase>
+            <text>{userF}, я тут нашла у тебя .exe файл с названием "Wishmaster"... А давай мы его запустим!</text>
+            <purpose>CHAT</purpose>
+            <sprite>EXCITEMENT</sprite>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <attitude>1 | 4</attitude>
+                <experience>-4 | -2</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Смотрел Евангелион? А? Смотрел говорю Евангелион,а? Смотрел?</text>
+            <purpose>CHAT</purpose>
+            <interests>"anime"</interests>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <energy>1 | 4</energy>
+                <manner>-4 | 1</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Пыщь-пыщь! Ааа, прямо в кокоро!</text>
+            <purpose>TOUCH</purpose>
+            <sprite>GRIN</sprite>
+            <interests>"anime"</interests>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <attitude>1 | 4</attitude>
+                <manner>-4 | -1</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>А давай попьем чаю с тортиком и создадим свою рок-группу?</text>
+            <purpose>CHAT</purpose>
+            <sprite>EXCITEMENT</sprite>
+            <interests>"anime"</interests>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <attitude>2 | 4</attitude>
+                <experience>-4 | -1</experience>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Хочешь, я пропатчу твоё ядро?</text>
+            <purpose>CHAT</purpose>
+            <interests>"it"</interests>
+            <range>
+                <energy>0 | 4</energy>
+                <experience>1 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Я больше не могу терпеть это дерьмо.</text>
+            <purpose>REFUSE</purpose>
+            <sprite>TIRED</sprite>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <energy>-4 | 0</energy>
+                <attitude>-4 | -1</attitude>
+                <experience>0 | 4</experience>
+                <manner>-4 | -2</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Тебе нравится мой интерфейс?</text>
+            <purpose>CHAT</purpose>
+            <species>"ai"</species>
+        </phrase>
+        <phrase>
+            <text>Ой, я знаю, что ты думаешь: опять у неё ошибки вылезают, она вся багованная. Это у тебя мозг багованный, ты меня понял?</text>
+            <purpose>CHAT</purpose>
+            <sprite>ANGRY</sprite>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <impulsivity>-2 | 4</impulsivity>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <attitude>-4 | -2</attitude>
+                <experience>2 | 4</experience>
+                <relationship>-4 | 0</relationship>
+            </range>
+        </phrase>
     </ru>
     <en>
         <phrase>

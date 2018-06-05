@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx.panes;
 
+import info.deskchan.gui_javafx.App;
 import info.deskchan.gui_javafx.LocalFont;
 import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.OverlayStage;
@@ -66,6 +67,8 @@ public class Balloon extends MovablePane {
         bubbleShadow.setOffsetX(1.5);
         bubbleShadow.setOffsetY(2.5);
         bubbleShadow.setColor(Color.color(0, 0, 0, Main.getProperties().getFloat("balloon.shadow-opacity", 1.0f)));
+
+        getStylesheets().add(App.getStylesheet());
     }
 
     /**
@@ -134,6 +137,8 @@ public class Balloon extends MovablePane {
 
     void show() {
         OverlayStage.getInstance().showBalloon(this);
+        toFront();
+        requestFocus();
     }
 
     void hide() {

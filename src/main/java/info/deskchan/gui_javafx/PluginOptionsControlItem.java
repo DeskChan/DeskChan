@@ -678,8 +678,8 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public void init(Map<String, Object> options, Object value) {
-			values = (List) options.get("values");
-			List<Object> valuesNames = (List) options.get("valuesNames");
+			values = new ArrayList((Collection) options.get("values"));
+			List<Object> valuesNames = options.get("valuesNames") != null ? new ArrayList((Collection) options.get("valuesNames")) : null;
 			comboBox.setItems(FXCollections.observableList(valuesNames != null ? valuesNames : values));
 			setValue(value);
 
