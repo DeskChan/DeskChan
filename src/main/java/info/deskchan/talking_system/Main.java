@@ -297,10 +297,19 @@ public class Main implements Plugin {
 			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("purpose: BYE, priority: 10000"));
 		});
 
+		/* Adding request to say command */
+		pluginProxy.sendMessage("core:add-command", new HashMap<String, Object>() {{
+			put("tag", "DeskChan:request-say");
+			put("info", getString("request-say-info"));
+			put("msgInfo", getString("request-say-data-info"));
+		}});
+
 		/* Adding "Say something" button to menu. */
-		pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
-			put("name", getString("say_phrase"));
-			put("msgTag", "DeskChan:request-say");
+		pluginProxy.sendMessage("core:set-event-link", new HashMap<String, Object>() {{
+			put("eventName", "gui:menu-action");
+			put("commandName", "DeskChan:request-say");
+			put("rule", getString("say_phrase"));
+			put("msgData", "CHAT");
 		}});
 
 		/* Saving last conversation timestamp every time user writes us something. */

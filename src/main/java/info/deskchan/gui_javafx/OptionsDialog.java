@@ -930,12 +930,12 @@ class OptionsDialog extends TemplateBox {
 			}
 
 			try {
-				final String description = PluginManager.getInstance().getPluginConfig(id).getDescription();
-				if(description != null) {
+				final String description = config.getDescription();
+				if(description != null || link != null) {
 					Button infoPluginButton = new Button("?");
 					infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
-					infoPluginButton.setOnAction(event -> {
-						if (link != null) {
+					if (description != null && link != null){
+						infoPluginButton.setOnAction(event -> {
 							VBox box = new VBox(new Text(description), newHyperlink(Main.getString("documentation"), e -> {
 									try {
 										Browser.browse(link);
@@ -944,10 +944,23 @@ class OptionsDialog extends TemplateBox {
 									}
 							}));
 							App.showNotification(Main.getString("info"), box);
-						} else
+						});
+					} else if (link != null){
+						infoPluginButton.setOnAction(event -> {
+							try {
+								Browser.browse(link);
+							} catch (Exception ex){
+								Main.log(ex);
+							}
+						});
+					} else {
+						infoPluginButton.setOnAction(event -> {
 							App.showNotification(Main.getString("info"), description);
-					});
+						});
+					}
 					hbox.getChildren().add(infoPluginButton);
+				} else if (config.get("link") != null){
+
 				}
 			} catch (Exception e){ }
 

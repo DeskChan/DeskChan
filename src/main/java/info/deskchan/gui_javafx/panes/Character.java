@@ -131,6 +131,7 @@ public class Character extends MovablePane {
 			}
 		}
 		this.skin = skin;
+		Main.getProperties().put("skin.name", skin);
 
 		setImageName(imageName);
 	}

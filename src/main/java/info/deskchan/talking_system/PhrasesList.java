@@ -190,7 +190,7 @@ public class PhrasesList {
 
 	private CharacterController current;
 	private LimitArrayList<Phrase> lastUsed = new LimitArrayList<>();
-	private ArrayList<PhrasesPack> packs = new ArrayList<>();
+	private volatile ArrayList<PhrasesPack> packs = new ArrayList<>();
 	private ArrayList<Phrase> matchingPhrases = new ArrayList<>();
 
 	PhrasesList(CharacterController character){

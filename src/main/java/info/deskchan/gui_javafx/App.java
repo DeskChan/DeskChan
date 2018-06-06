@@ -74,8 +74,10 @@ public class App extends Application {
 		Platform.setImplicitExit(false);
 		// Tray and right click menus initialization
 		if (Main.getProperties().getBoolean("use-tray", true)){
+		    Main.log("initializing menu with tray");
 			new TrayMenu();
 		} else {
+            Main.log("initializing menu without tray");
 			new Menu();
 		}
 		Main.log("tray initialized, " + getTime(start));

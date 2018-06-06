@@ -36,7 +36,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             return;
         }
 
-        PluginProxyInterface pluginProxy = Main.getInstance().getPluginProxy();
+        PluginProxyInterface pluginProxy = Main.getPluginProxy();
 
         // registering event
         pluginProxy.sendMessage("core:add-event", new HashMap(){{
@@ -202,7 +202,13 @@ public class KeyboardEventNotificator implements NativeKeyListener {
     }
 
     /** Currently pressed keys as raw code. **/
-    private static final ConcurrentLinkedDeque<KeyPair> currentPressed = new ConcurrentLinkedDeque<>();
+    private static class ConcurrentSet<E> extends ConcurrentLinkedDeque<E>{
+        public boolean add(E o){
+            if (contains(o)) return false;
+            return super.add(o);
+        }
+    }
+    private static volatile ConcurrentSet<KeyPair> currentPressed = new ConcurrentSet<>();
 
     /** {@link #currentPressed} was changed recently. **/
     private static boolean setChanged = false;
@@ -212,6 +218,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
     /** Key pressed event (called every tick you press the button, not once). **/
     public void nativeKeyPressed(NativeKeyEvent e) {
+        //System.out.print("pressed " + currentPressed);
         synchronized (this) {
 
             if (currentPressed.add(new KeyPair(e)) && commands != null && commands.length > 0) {
@@ -222,6 +229,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
                 }
             }
         }
+        //System.out.println("exited");
     }
 
     /** Key released event. **/

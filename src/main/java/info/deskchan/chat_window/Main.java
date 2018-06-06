@@ -84,6 +84,8 @@ public class Main implements Plugin {
         return ret;
     }
 
+    private List<String> resend = new ArrayList<>();
+
     @Override
     public boolean initialize(PluginProxyInterface newPluginProxy) {
         pluginProxy = newPluginProxy;
@@ -213,18 +215,38 @@ public class Main implements Plugin {
 
             history.add(new ChatPhrase(value, 1));
 
-            if(properties.getBoolean("fixer", true)){
-                // if user missed layout, we're trying to fix it and resend user speech again
-                String translate = FixLayout.fixRussianEnglish(value);
-                if (!translate.equals(value)) {
-                    history.add(new ChatPhrase(pluginProxy.getString("wrong-layout") + " " + translate, 2));
-                    Map<String, Object> cl = new HashMap<>(data);
-                    cl.put("value", translate);
-                    pluginProxy.sendMessage("DeskChan:user-said", cl);
-                }
-            }
             pluginProxy.sendMessage("DeskChan:user-said",data);
             setupChat();
+        });
+
+        pluginProxy.sendMessage("core:register-alternative",
+                new HashMap<String, Object>() {{
+                    put("srcTag", "DeskChan:user-said");
+                    put("dstTag", "chat:change-layout-and-resend");
+                    put("priority", 5);
+                }}
+        );
+
+        // if user missed layout, we're trying to fix it and resend user speech again
+        pluginProxy.addMessageListener("chat:change-layout-and-resend", (sender, tag, dat) -> {
+            Map data = (Map) dat;
+            if(properties.getBoolean("fixer", true)){
+                String query = (String) data.get("value");
+                if (resend.contains(query)){
+                    resend.remove(query);
+                } else {
+                    resend.add(query);
+                    String translate = FixLayout.fixRussianEnglish(query);
+                    if (!translate.equals(query)) {
+                        history.add(new ChatPhrase(pluginProxy.getString("wrong-layout") + " " + translate, 2));
+                        Map<String, Object> cl = new HashMap<>(data);
+                        cl.put("value", translate);
+                        pluginProxy.sendMessage("DeskChan:user-said", cl);
+                    }
+                    return;
+                }
+            }
+            pluginProxy.sendMessage("DeskChan:say#chat:change-layout-and-resend", dat);
         });
 
         /* Saving options changed in options window.
@@ -265,9 +287,10 @@ public class Main implements Plugin {
         });
 
         /* Registering "Open chat" button in menu. */
-        pluginProxy.sendMessage("DeskChan:register-simple-action", new HashMap<String, Object>() {{
-            put("name", pluginProxy.getString("chat.open"));
-            put("msgTag", "chat:open");
+        pluginProxy.sendMessage("core:set-event-link", new HashMap<String, Object>() {{
+            put("eventName", "gui:menu-action");
+            put("commandName", "chat:open");
+            put("rule", pluginProxy.getString("chat.open"));
         }});
 
         pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{

@@ -8,10 +8,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.SeparatorMenuItem;
 
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Menu {
 
@@ -23,6 +20,38 @@ public class Menu {
         instance = this;
 
         contextMenu.setId("context-menu");
+
+        Main.getPluginProxy().sendMessage("core:add-event", new HashMap<String, Object>(){{
+            put("tag", "gui:menu-action");
+            put("info", Main.getString("menu-action-info"));
+            put("ruleInfo", Main.getString("menu-action-rule-info"));
+        }});
+
+        Main.getPluginProxy().addMessageListener("core:update-links:gui:menu-action", (sender, tag, data) -> {
+            updateCommandsList((List) data);
+        });
+    }
+
+    void updateCommandsList(List<Map<String, Object>> commandsInfo){
+        try {
+            // we parsing rules there. if some word haven't been parsed, we alert this
+            Iterator<PluginMenuItem> it = menuItems.iterator();
+            while(it.hasNext()){
+                PluginMenuItem item = it.next();
+                if(item instanceof PluginAction && ((PluginAction) item).isCommand)
+                    it.remove();
+            }
+
+            for (int i = 0; i < commandsInfo.size(); i++) {
+                PluginAction item = new PluginAction(commandsInfo.get(i));
+                item.isCommand = true;
+                menuItems.add(item);
+            }
+
+            update();
+        } catch (Exception e){
+            Main.log("Error while registering menu actions");
+        }
     }
 
     public static Menu getInstance(){ return instance; }
@@ -39,7 +68,7 @@ public class Menu {
         Iterator<PluginMenuItem> it = menuItems.iterator();
         while(it.hasNext()){
             PluginMenuItem item = it.next();
-            if(item.sender.equals(sender))
+            if(item.sender != null && item.sender.equals(sender))
                 it.remove();
         }
         update();
@@ -105,15 +134,14 @@ abstract class MenuItemAction implements ActionListener, EventHandler<ActionEven
 }
 class PluginMenuItem{
     final String sender;
-    final String name;
-    public PluginMenuItem(String name){
-        this.sender=null;
-        this.name=name;
-    }
+    String name;
+
+    public PluginMenuItem(String name){ this(null, name); }
     public PluginMenuItem(String sender, String name){
-        this.sender=sender;
-        this.name=name;
+        this.sender = sender;
+        this.name = name;
     }
+
     javafx.scene.control.MenuItem fxItem = null;
 
     javafx.scene.control.MenuItem getJavaFXItem(){
@@ -124,20 +152,27 @@ class PluginAction extends PluginMenuItem {
     final String msgTag;
     final Object msgData;
     final MenuItemAction action;
+    boolean isCommand = false;
 
     PluginAction(String sender, String name, String msgTag, Object msgData) {
-        super(sender,name);
+        super(sender, name);
+        if (this.name == null)
+            this.name = msgTag;
         this.msgTag = msgTag;
         this.msgData = msgData;
         action = new MenuItemAction() {
             @Override
             protected void run() {
-                Main.getInstance().getPluginProxy().sendMessage(msgTag, msgData);
+                Main.getPluginProxy().sendMessage(msgTag, msgData);
             }
         };
 
         fxItem = new javafx.scene.control.MenuItem(name);
         fxItem.setOnAction(action);
+    }
+
+    public PluginAction(Map<String, Object> data){
+        this(null, (String) data.get("rule"), (String) data.get("tag"), data.get("msgData"));
     }
 }
 class PluginSeparator extends PluginMenuItem {

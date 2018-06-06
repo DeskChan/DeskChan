@@ -3,7 +3,7 @@
     light: #ec741a;
     common: #424242;
     very-dark: #1f1f1f;
-}
+}ю
 
 /* Все окна */
 .dialog-pane > * {
@@ -154,8 +154,9 @@
 }
 #controls-bottom-buttons {
     -fx-pref-width: 60em;
-    -fx-background-color: transparent;
-    -fx-border-color: white;
+    -fx-padding: 0.3em;
+    -fx-background-color: dark;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, -4);
     -fx-border-width: 1 0 0 0;
 }
 /* Незаполненные заголовки таблицы*/
@@ -237,8 +238,9 @@
     -fx-text-fill: white;
     -fx-border-width: 1px;
     -fx-background-insets: 0 0 1 0;
-    -fx-border-color: rgb(10,30,40);
-    -fx-background-radius: 0px;
+    -fx-border-color: rgba(0,0,0,0.3);
+    -fx-background-radius: 1px;
+    -fx-border-radius: 1px;
     -fx-background-color: common;
 }
 .button:hover {
@@ -349,23 +351,41 @@
 }
 
 #plugins-list .plugin-cell {
-    -fx-padding: 0 0 0.5em 0;
+    -fx-padding: 0.5em;
+    -fx-background-insets: 0.5em;
+    -fx-spacing: 0.5em;
+    -fx-background-color: very-dark;
+}
+
+#plugins-list .plugin-cell > Button {
+    -fx-border-insets: 0 0.3em 0.3em 0.3em;
+    -fx-background-insets: 0 0.3em 0.3em 0.3em;
 }
 
 #plugins-list .plugin-cell .plugin-line {
     -fx-padding: 0.3em 0.3em 0.6em 0.3em;
-    -fx-background-color: common;
-    -fx-background-insets: 0 0 0.3em 0;
-    -fx-background-radius: 5px;
+    -fx-background-color: very-dark, common;
+    -fx-background-insets: 0 0 0 0, 0 0 0 2.9em;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 2, 3, 0, 0);
+    -fx-alignment: center;
+}
+
+#plugins-list .plugin-cell .plugin-type-letter {
+    -fx-pref-width: 3.2em;
+    -fx-padding: 0 0.7em 0 0.2em;
+    -fx-alignment: center;
+    -fx-font-weight: bold;
+    -fx-font-size: 1.5em;
 }
 
 #plugins-list .plugin-cell .plugin-line:hover {
-    -fx-background-color: very-dark;
+    -fx-background-color: black, very-dark;
 }
 
 #plugins-list .plugin-cell.blacklisted .plugin-line{
     -fx-background-color: #444;
 }
+
 
 #commandTab #saved-label, #commandTab .command-link Text, #commandTab .placeholder Text{
     -fx-fill: white;
@@ -384,6 +404,9 @@
     -fx-background-color: light;
     -fx-border-color: dark;
     -fx-border-width: 1 0 0 0;
+}
+#commandTab .scroll-bar{
+    -fx-background-color: dark;
 }
 
 .chat_window-chat {

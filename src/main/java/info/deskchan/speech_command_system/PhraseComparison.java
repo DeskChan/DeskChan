@@ -3,18 +3,32 @@ package info.deskchan.speech_command_system;
 import info.deskchan.core_utils.LimitHashMap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PhraseComparison {
 
-    private final static String[][] replaceable=new String[][]{
-        {"о","а"} , {"е","и"} , {"д","т"} , {"г","к"} , {"ж","ш"} , {"ы","и"} , {"з","с"} , {"б","п"} , {"в","ф"} , {"ь",""} , {"ъ",""} , {"тс","ц"} , {"тщ","ч"} , {"я", "а"} , {"ю", "у"}
-    };
+    private final static Map<String, String> replaceableToLatin = new HashMap<String, String>(){{
+        String a = "а a б b в v г g д d е e ё yo ж zh з z и i й y к k л l м m н n о o п p р r с s т t у u ф f х h ц ts ч ch ш sh щ sh ъ _ ы i ь _ э e ю yu я ya";
+
+        String[] ar = a.split(" ");
+        for(int i = 0; i < ar.length; i += 2)
+            put(ar[i], ar[i+1].equals("_") ? "" : ar[i+1]);
+    }};
+
+    private final static Map<String, String> replaceableSymplifying = new HashMap<String, String>(){{
+        String a = "yo a ts c yu u ya a d t j sh g k q k v f w f y i shch sh ee i oo u ae a ea a ai a tion shn z s ts c zh sh e i o a";
+
+        String[] ar = a.split(" ");
+        for(int i = 0; i < ar.length; i += 2)
+            put(ar[i], ar[i+1].equals("_") ? "" : ar[i+1]);
+    }};
 
     public final static float ACCURACY = 0.65f;
 
-    private final static String suffixes1 = "аеюиэйуъыояью", suffixes2 = "гмтсш";
+    private final static String suffixes1 = "аеюиэйуъыояьюs", suffixes2 = "гмтсшg";
     private static LimitHashMap<String, String> suffixCache = new LimitHashMap<>(500);
 
     public static String removeSuffix(String word){
@@ -37,16 +51,21 @@ public class PhraseComparison {
 
         repl = word;
         StringBuilder sb = new StringBuilder(word);
+
+        int pos;
+        for(Map.Entry<String, String> replace : replaceableSymplifying.entrySet()){
+            pos = 0;
+            while((pos = sb.indexOf(replace.getKey(), pos)) >= 0) {
+                sb.replace(pos, pos + replace.getKey().length(), replace.getValue());
+                pos += replace.getValue().length();
+            }
+        }
+
         for(int i=1; i<sb.length(); i++)
             if(sb.charAt(i) == sb.charAt(i-1)){
                 sb.deleteCharAt(i);
                 i--;
             }
-        int pos;
-        for(String[] replace : replaceable){
-            while((pos = sb.indexOf(replace[0])) >= 0)
-                sb.replace(pos, pos+replace[0].length(), replace[1]);
-        }
 
         repl = sb.toString();
         suffixCache.put(word, repl);
@@ -56,11 +75,23 @@ public class PhraseComparison {
     private static class WordPair{
         String one, two;
         WordPair(String o, String t) {
-            one = new String(o); two = new String(t);
+            one = toLatin(o); two = toLatin(t);
         }
         @Override
         public boolean equals(Object other){
             return other instanceof WordPair && one.equals(((WordPair) other).one) && two.equals(((WordPair) other).two);
+        }
+        private String toLatin(String word){
+            int pos;
+            StringBuilder sb = new StringBuilder(word);
+            for(Map.Entry<String, String> replace : replaceableToLatin.entrySet()){
+                pos = 0;
+                while((pos = sb.indexOf(replace.getKey(), pos)) >= 0) {
+                    sb.replace(pos, pos + replace.getKey().length(), replace.getValue());
+                    pos += replace.getValue().length();
+                }
+            }
+            return sb.toString();
         }
         WordPair getSimplified(){
             return new WordPair(simplify(one), simplify(two));

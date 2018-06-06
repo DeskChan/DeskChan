@@ -90,6 +90,10 @@ public class CharacterBalloon extends Balloon {
 
 		setOnMousePressed(event -> {
 			lastClick = System.currentTimeMillis();
+			if (event.isSecondaryButtonDown()){
+				UserBalloon.show(null);
+				return;
+			}
 			if ((positionMode != PositionMode.AUTO) && event.getButton().equals(MouseButton.PRIMARY)) {
 				startDrag(event);
 			}

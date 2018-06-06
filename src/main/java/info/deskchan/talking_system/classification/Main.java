@@ -35,7 +35,7 @@ public class Main {
                 map.put("value", text);
             }
             map.put("purpose", classifier.classify(text));
-            System.out.println(map.get("purpose"));
+            //System.out.println(map.get("purpose"));
             pluginProxy.sendMessage("DeskChan:user-said#talk:classify-text", map);
         });
 
