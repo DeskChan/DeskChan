@@ -116,6 +116,7 @@ public class YahooServer implements WeatherServer{
             lastUpdate = new Date();
 
         } catch (Exception e){
+            state = ConnectionState.ERROR;
             Main.log(new Exception("Error while parsing data from server", e));
         }
     }

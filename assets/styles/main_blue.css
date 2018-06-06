@@ -15,6 +15,7 @@
 
 /* Окно опций */
 .options-window {
+    pfx-stage-style: style-undecorated;
     -fx-min-width: 70em;
     -fx-min-height: 40em;
 

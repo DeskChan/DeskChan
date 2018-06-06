@@ -27,6 +27,10 @@ public class Main implements Plugin {
         properties.load();
         properties.putIfHasNot("city", "Nowhere");
 
+        pluginProxy.setConfigField("name", getString("plugin.name"));
+        pluginProxy.setConfigField("short-description", getString("plugin.short-description"));
+        pluginProxy.setConfigField("link", "https://forum.deskchan.info/topic/51/weather");
+
         server = new YahooServer();
 
         pluginProxy.addMessageListener("weather:update-city",(sender, tag, data) -> {
@@ -167,11 +171,6 @@ public class Main implements Plugin {
                 put("label", getString("city"));
             }});
             list.add(new HashMap<String, Object>() {{
-                put("id", "check");
-                put("type", "Label");
-                put("label", getString("error"));
-            }});
-            list.add(new HashMap<String, Object>() {{
                 put("type", "Label");
                 put("value", getString("info.check"));
             }});
@@ -186,12 +185,8 @@ public class Main implements Plugin {
             put("action", "update");
             List<HashMap<String, Object>> list = new LinkedList<HashMap<String, Object>>();
             list.add(new HashMap<String, Object>() {{
-                put("id", "check");
-                put("value", locationResult);
-            }});
-            list.add(new HashMap<String, Object>() {{
                 put("id", "city");
-                put("value", getCity());
+                put("value", locationResult);
             }});
             put("controls", list);
         }});
