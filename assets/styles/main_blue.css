@@ -159,6 +159,10 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, -4);
     -fx-border-width: 1 0 0 0;
 }
+#controls-bottom-buttons > .button {
+    -fx-min-width: 6em;
+    -fx-font-size: 0.9em;
+}
 /* Незаполненные заголовки таблицы*/
 #controls .filler {
     -fx-background-color: very-dark;

@@ -23,7 +23,6 @@ import javafx.scene.text.Font;
 import javafx.stage.*;
 import javafx.stage.Window;
 import javafx.util.Duration;
-import org.apache.commons.io.FileUtils;
 
 import java.awt.*;
 import java.io.File;
@@ -714,24 +713,53 @@ public class App extends Application {
         * Public message
         * Params: Map
         *           skin: String? - skin name
+        *           character-pos: String? - character position, format like "top:50"
+		*	        character-size: String? - character size
+        *           user-balloon: String? - user balloon file
+        *           character-balloon: String? - character balloon file
+        *           character-balloon-size: String? - size, 0..1
+        *           interface: String? - interface style file
+        *           overlay-type: String? - overlay stage type
         * Returns: None */
 		pluginProxy.addMessageListener("gui:supply-resource", (sender, tag, data) -> {
 			try {
-				Map<String, Object> map = (Map<String, Object>) data;
+				Map<String, String> map = (Map<String, String>) data;
 				if (map.containsKey("skin")) {
-					String type=(String)map.get("skin");
-					if(!type.startsWith(Skin.getSkinsPath().toString())){
-						Path resFile = Paths.get(type);
-						Path newPath = Skin.getSkinsPath().resolve(resFile.getFileName());
-						try {
-							FileUtils.copyDirectory(resFile.toFile(), newPath.toFile());
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-						type = newPath.toString();
-					}
-					character.setSkin(Skin.load(type));
-				}
+					String path = map.get("skin");
+					character.setSkin(Skin.load(path));
+
+				} else if (map.containsKey("character-pos")){
+				    String[] pos = map.get("character-pos").split(":");
+				    character.relocate(pos[0].trim(), Integer.parseInt(pos[1].trim()));
+
+                } else if (map.containsKey("character-size")){
+                    String size = map.get("character-size");
+                    character.resizeSkin(Float.parseFloat(size));
+
+                } else if (map.containsKey("user-balloon")){
+                    String path = map.get("user-balloon");
+                    Main.getProperties().put("balloon.path-user", path);
+                    UserBalloon.updateDrawer();
+
+                } else if (map.containsKey("character-balloon-size")){
+                    String size = map.get("character-balloon-size");
+                    CharacterBalloon.setScaleFactor(Float.parseFloat(size));
+
+                } else if (map.containsKey("character-balloon")){
+                    String path = map.get("character-balloon");
+                    Main.getProperties().put("balloon.path-character", path);
+                    CharacterBalloon.updateDrawer();
+
+                } else if (map.containsKey("interface")){
+                    String path = map.get("interface");
+                    Main.getProperties().put("interface.path-skin", path);
+                    TemplateBox.updateStyle();
+
+                } else if (map.containsKey("overlay-type")){
+				    String type = map.get("overlay-type");
+				    OverlayStage.updateStage(type);
+
+                }
 			} catch(Exception e){
 				Main.log(e);
 			}

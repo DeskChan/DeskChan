@@ -246,6 +246,8 @@ public class Main implements Plugin {
         * Params: Map
         *           preset: String? - preset file
         *           phrases: String? - phrases file
+        *           phrases #default - only "main" pack
+        *           phrases #clear - clear pack selection
         * Returns: None */
 		pluginProxy.addMessageListener("talk:supply-resource",
 				(sender, tag, data) -> {
@@ -258,6 +260,8 @@ public class Main implements Plugin {
 						if (type != null && type.length() > 0) {
 							if (type.equals("#default")) {
 								currentCharacter.phrases = PhrasesList.getDefault(currentCharacter.character);
+							} else if (type.equals("#clear")){
+								currentCharacter.phrases.clear();
 							} else {
 								if(!type.startsWith(getPhrasesDirPath().toString())){
 									Path resFile = Paths.get(type);

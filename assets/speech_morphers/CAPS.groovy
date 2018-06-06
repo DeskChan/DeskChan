@@ -15,10 +15,10 @@ class CAPS {
         return phrase
     }
 
-    String getName(Locale locale){
+    String getName(String locale){
         switch (locale){
-            case new Locale("ru"): return "Капс"
-            case new Locale("en"): return "Caps"
+            case "ru": return "Капс"
+            default:   return "Caps"
         }
     }
 }

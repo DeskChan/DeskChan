@@ -373,6 +373,7 @@ public class CorePlugin implements Plugin, MessageListener {
 		Iterator<AlternativeInfo> iterator = list.iterator();
 		if (senderTag != null){
 			do {
+				if (!iterator.hasNext()) return;
 				AlternativeInfo nextInfo = iterator.next();
 				if (nextInfo.tag.equals(senderTag)) break;
 			} while (true);

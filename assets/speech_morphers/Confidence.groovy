@@ -83,10 +83,10 @@ class Confidence {
         return finalText.trim()
     }
 
-    String getName(Locale locale){
+    String getName(String locale){
         switch (locale){
-            case new Locale("ru"): return "Смена уверенности"
-            case new Locale("en"): return "Selfconfidence changing"
+            case "ru": return "Смена уверенности"
+            default:   return "Selfconfidence changing"
         }
     }
 }

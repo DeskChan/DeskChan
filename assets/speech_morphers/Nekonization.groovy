@@ -24,10 +24,10 @@ class Nekonization {
         return phrase
     }
 
-    String getName(Locale locale){
+    String getName(String locale){
         switch (locale){
-            case new Locale("ru"): return "Няканье"
-            case new Locale("en"): return "Nyans"
+            case "ru": return "Няканье"
+            default:   return "Nyans"
         }
     }
 }

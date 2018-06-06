@@ -313,7 +313,7 @@ public class PhrasesList {
     	return list;
 	}
 
-	public void reload(){
+	public synchronized void reload(){
 		for(PhrasesPack pack : packs){
 			pack.load();
 		}

@@ -8,7 +8,7 @@ class Bridge {
 properties = getProperties()
 
 class Module {
-    String name
+    private String name
     def instance
     static int priority = 5000
     def proxy
@@ -16,18 +16,23 @@ class Module {
 
     Module(path, proxy) throws Exception {
         this.proxy = proxy
-        name = path.getName()
+
+        def name = path.getName()
         if (name.indexOf('.') >= 0)
             name = name.substring(0, name.lastIndexOf('.'))
 
         try {
             instance = new GroovyClassLoader().parseClass(path).newInstance()
-        } catch (Exception e){
+        } catch (Exception e) {
             throw e
         }
         try {
             instance.initialize(new Bridge())
-        } catch (Exception e){ }
+        } catch (MissingMethodException e ) {
+        } catch(Exception e){
+            proxy.log(e)
+        }
+        this.name = name
         proxy.sendMessage("core:register-alternative",
                 ["srcTag": "DeskChan:request-say", "dstTag": proxy.getId()+":"+name, "priority": priority--])
 
@@ -54,7 +59,7 @@ class Module {
         }
     }
 
-    String getName(Locale locale){ return instance.getName(locale) }
+    String getLocalizedName(){ return instance.getName(Locale.getDefault().getLanguage()) }
 
 
 }
@@ -70,12 +75,15 @@ dir.listFiles().each {
 }
 
 pluginValues = [ OFF: 0, BY_PRESET: 1, ALWAYS: 2 ]
+valuesNames = [ getString("dont-use"), getString('use-by-preset'), getString('use') ]
 void setupMenu(){
     def controls = []
-    for (Module module : modules)
+    for (Module module : modules) {
         controls.add([
-             type: 'ComboBox', id: module.name, label: module.getName(), value: getProperties().getInteger(module.name, 1), values: pluginValues.keySet()
+                type  : 'ComboBox', id: module.name, label: module.getLocalizedName(), value: getProperties().getInteger(module.name, 1),
+                values: pluginValues.keySet(), valuesNames: valuesNames
         ])
+    }
     sendMessage('gui:set-panel', [
             name: getString("options"),
             id: "options",
@@ -103,6 +111,7 @@ properties.load()
 setupMenu()
 
 addMessageListener(getId() + ":save-options", {sender, tag, data ->
+    println(data)
     for (def entry : data.entrySet()) {
         properties.put(entry.key, pluginValues[entry.value])
     }
@@ -110,8 +119,13 @@ addMessageListener(getId() + ":save-options", {sender, tag, data ->
 })
 
 addMessageListener(getId() + ":supply-resource", {sender, tag, data ->
-    for (def entry : data.entrySet())
-        properties.put(entry.key, entry.value)
+    for (def entry : data.entrySet()) {
+        def en = entry.value.toString().toUpperCase()
+        if (pluginValues.keySet().contains(en))
+            properties.put(entry.key, pluginValues.get(en))
+        else
+            properties.put(entry.key, entry.value)
+    }
 })
 
 log("loading speech_morpher completed")

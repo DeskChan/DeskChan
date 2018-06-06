@@ -92,10 +92,10 @@ class Culturing{
         return phrase
     }
 
-    String getName(Locale locale){
+    String getName(String locale){
         switch (locale){
-            case new Locale("ru"): return "Плохие манеры"
-            case new Locale("en"): return "Bad manners"
+            case "ru": return "Плохие манеры"
+            default:   return "Bad manners"
         }
     }
 }

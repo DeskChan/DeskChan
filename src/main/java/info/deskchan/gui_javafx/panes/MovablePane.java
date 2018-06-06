@@ -93,18 +93,29 @@ public class MovablePane extends Pane {
 	public void relocate(Map<String, Number> data){
 		Point2D pos = getPosition();
 		Rectangle2D screen = OverlayStage.getDesktopSize();
-		for (Map.Entry<String, Number> entry : ((Map<String, Number>) data).entrySet()){
-			switch (entry.getKey()){
-				case "top": pos = new Point2D(pos.getX(), entry.getValue().intValue()); break;
-				case "left": pos = new Point2D(entry.getValue().intValue(), pos.getY()); break;
-				case "right": pos = new Point2D(screen.getMaxX() - getWidth() - entry.getValue().intValue(), pos.getY()); break;
-				case "bottom": pos = new Point2D(pos.getX(), screen.getMaxY() - getHeight() - entry.getValue().intValue()); break;
-				case "verticalPercent": pos = new Point2D(pos.getX(), (screen.getMaxY() - getHeight()) * entry.getValue().floatValue() / 100); break;
-				case "horizontalPercent": pos = new Point2D((screen.getMaxX() - getWidth()) * entry.getValue().floatValue() / 100, pos.getY()); break;
-			}
+		for (Map.Entry<String, Number> entry : data.entrySet()){
+			pos = relocateByKey(pos, screen, entry.getKey(), entry.getValue().intValue());
 		}
 		setPosition(pos);
 		storePositionToStorage();
+	}
+
+	public void relocate(String key, int value){
+		Point2D pos = relocateByKey(getPosition(), OverlayStage.getDesktopSize(), key, value);
+		setPosition(pos);
+		storePositionToStorage();
+	}
+
+	private Point2D relocateByKey(Point2D pos, Rectangle2D screen, String key, int value){
+		switch (key){
+			case "top": return new Point2D(pos.getX(), value);
+			case "left": return new Point2D(value, pos.getY());
+			case "right": return new Point2D(screen.getMaxX() - getWidth() - value, pos.getY());
+			case "bottom": return new Point2D(pos.getX(), screen.getMaxY() - getHeight() - value);
+			case "verticalPercent": return new Point2D(pos.getX(), (screen.getMaxY() - getHeight()) * value / 100);
+			case "horizontalPercent": return new Point2D((screen.getMaxX() - getWidth()) * value / 100, pos.getY());
+		}
+		return pos;
 	}
 
 	public void relocate(double x, double y) {

@@ -4,6 +4,7 @@ import info.deskchan.core.PluginProxyInterface;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
@@ -214,13 +215,12 @@ public class KeyboardEventNotificator implements NativeKeyListener {
     private static boolean setChanged = false;
 
     /** Instead of immediate comparison of keys pressed with commands we do this by timer to lower CPU load. **/
-    private static KeyboardTimerHandler handler = new KeyboardTimerHandler();
+    private static volatile KeyboardTimerHandler handler = new KeyboardTimerHandler();
 
     /** Key pressed event (called every tick you press the button, not once). **/
     public void nativeKeyPressed(NativeKeyEvent e) {
         //System.out.print("pressed " + currentPressed);
         synchronized (this) {
-
             if (currentPressed.add(new KeyPair(e)) && commands != null && commands.length > 0) {
                 setChanged = true;
                 handler.start();
@@ -235,15 +235,13 @@ public class KeyboardEventNotificator implements NativeKeyListener {
     /** Key released event. **/
     public void nativeKeyReleased(NativeKeyEvent e) {
         synchronized (this) {
-
-                currentPressed.remove(new KeyPair(e));
-                setChanged = true;
-                if (currentPressed.size() == 0)
-                    handler.stop();
-                if (listenerId >= 0) {
-                    updateKeysInSubMenu();
-                }
-
+            currentPressed.remove(new KeyPair(e));
+            setChanged = true;
+            if (currentPressed.size() == 0)
+                handler.stop();
+            if (listenerId >= 0) {
+                updateKeysInSubMenu();
+            }
         }
     }
 
@@ -287,26 +285,34 @@ public class KeyboardEventNotificator implements NativeKeyListener {
             updateDefaultDelay();
         }
 
-        void updateDefaultDelay(){
-            int frame = getDefaultDelay();
-            if(frame == 0)
-                timeline = null;
-            else {
-                timeline = new Timeline(new KeyFrame(Duration.millis(frame), this));
-                timeline.setCycleCount(Timeline.INDEFINITE);
-            }
+        synchronized void updateDefaultDelay(){
+            Platform.runLater(() -> {
+                int frame = getDefaultDelay();
+                if(frame == 0)
+                    timeline = null;
+                else {
+                    timeline = new Timeline(new KeyFrame(Duration.millis(frame), this));
+                    timeline.setCycleCount(Timeline.INDEFINITE);
+                }
+            });
         }
 
-        void start(){
-            if(timeline == null)
-                handle(null);
-            else if (timeline.getStatus() != Animation.Status.RUNNING)
-                timeline.play();
+        synchronized void start(){
+            Platform.runLater(() -> {
+                if (timeline == null)
+                    handle(null);
+                else if (timeline.getStatus() != Animation.Status.RUNNING) {
+                    timeline.play();
+                    timeline.setCycleCount(Timeline.INDEFINITE);
+                }
+            });
         }
 
-        void stop(){
-            if(timeline != null && timeline.getStatus() == Animation.Status.RUNNING)
-                timeline.stop();
+        synchronized void stop(){
+            Platform.runLater(() -> {
+                if (timeline != null)
+                    timeline.pause();
+            });
         }
 
         // Current keys pressed and commands comparison

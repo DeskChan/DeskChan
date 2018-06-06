@@ -13,7 +13,6 @@ path = getDataDirPath().resolve("voice.wav")
 microphone = new ImprovedMicrophone(16000, 16, true)
 listening = false
 addMessageListener("recognition:start-listening", { sender, tag, data ->
-    println("hello there")
     if (listening) return
 
     sendMessage("DeskChan:request-say", "START_DIALOG")
@@ -71,5 +70,8 @@ void handleTimer(sender, data){
 
     def json = new JSONObject(response)
 
-    sendMessage("DeskChan:voice-recognition", [value: json.getString("_text")])
+    if (json.contains("_text"))
+        sendMessage("DeskChan:voice-recognition", [value: json.getString("_text")])
+    else
+        sendMessage("DeskChan:request-say", "WRONG_DATA")
 }

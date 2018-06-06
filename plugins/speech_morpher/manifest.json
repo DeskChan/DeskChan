@@ -1,0 +1,17 @@
+{
+  "deps": ["groovy_support"],
+  "Author": "DeskChan Project <support@deskchan.info> (http://deskchan.info)",
+  "name": {
+    "ru": "Трансформация речи",
+    "en": "Speech morphing"
+  },
+  "short-description": {
+    "en": "Plugin adds support of character speech morphers. Morphers are located in assets directory.",
+    "ru": "Плагин добавляет поддержку трансформаций речи персонажа. Трансформаторы хранятся в папке Assets."
+  },
+  "description": {
+    "en": "Speech morpher is a subplugin that can morph speech of character. Morphers can be activated for always, only if character matches or can be deactivated in plugin options. You can create your own morphers, template can be found in plugin directory.",
+    "ru": "Трансформатор речи - это подмодуль, который трансформирует речь персонажа. Трансформатор может быть активен всегда, с учётом характера или полностью отключен, переключить его состояние можно в опциях. Вы можете создавать собственные модули, шаблон лежит в папке плагина."
+  },
+  "link": "https://forum.deskchan.info/topic/80/speech_morpher"
+}
