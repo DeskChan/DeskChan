@@ -119,6 +119,7 @@ public class TextOperations {
                     for (Object item : (Collection) entry.getValue()){
                         set.add(item.toString());
                     }
+                    put(entry.getKey(), set);
                 } else {
                     put(entry.getKey(), entry.getValue().toString());
                 }

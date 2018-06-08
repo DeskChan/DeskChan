@@ -124,6 +124,28 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 		setValue(index, 2, val);
 	}
 
+	public void moveValue(String featureName, float val) {
+		if (featureName == null) return;
+
+		int index = getFeatureIndex(featureName);
+		moveValue(index, val);
+	}
+
+	public void moveValue(int index, float val) {
+		System.out.println(getFeatureName(index) + " " + val + " " + value[index]);
+		if (val > 0){
+			float nv = value[index][2] + val * value[index][4];
+			System.out.println(nv);
+			value[index][2] = Math.min(nv, value[index][3]);
+		} else {
+			float nv = value[index][2] + val * value[index][0];
+			System.out.println(nv);
+			value[index][2] = Math.max(nv, value[index][1]);
+		}
+		System.out.println(value[index][2]);
+	}
+
+
 	public int getValue(String featureName) {
 		if (featureName == null) return 0;
 

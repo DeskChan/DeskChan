@@ -79,8 +79,12 @@ public class CharacterPreset {
 	}
 
 	/** Set preset tags from its string representation. **/
-	public void setTags(String text){
-		tags = new TextOperations.TagsMap(text);
+	public void setTags(Object text){
+		if (text instanceof String)
+			tags = new TextOperations.TagsMap((String) text);
+		else if (text instanceof Map)
+			tags = new TextOperations.TagsMap((Map) text);
+		else throw new ClassCastException("Cannot cast "+text.getClass().getSimpleName() + " to TagsMap");
 	}
 
 	/** Set preset from JSON. **/

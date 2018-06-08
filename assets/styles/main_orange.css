@@ -387,7 +387,8 @@
 }
 
 
-#commandTab #saved-label, #commandTab .command-link Text, #commandTab .placeholder Text{
+#commandTab #saved-label, #commandTab .command-link Text,
+#commandTab .placeholder Text, .notification Text, .font-selector-dialog Text {
     -fx-fill: white;
 }
 #commandTab #toggle-view {
@@ -441,7 +442,7 @@
 .chat_window-chat #input {
     -fx-pref-width: 25em;
     -fx-background-color: light;
-    -fx-text-fill: #AAA;
+    -fx-text-fill: white;
     -fx-border-color: rgb(10,30,40);
     -fx-border-width: 1px;
 }

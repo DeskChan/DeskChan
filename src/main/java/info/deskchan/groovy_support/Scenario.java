@@ -32,34 +32,65 @@ public abstract class Scenario extends Script{
         return ScenarioPlugin.pluginProxy.getDataDirPath();
     }
 
-    protected void log(String text) {
-        ScenarioPlugin.pluginProxy.log(text);
+    protected void log(Object text) {
+        ScenarioPlugin.pluginProxy.log(text.toString());
     }
 
     protected void log(Throwable e) {
         ScenarioPlugin.pluginProxy.log(e);
     }
 
+    protected void alert(String text) {
+        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
+            put("text", text);
+        }});
+    }
+    protected void alert(String name, String text) {
+        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
+            put("name", name);
+            put("text", text);
+            put("priority", messagePriority);
+        }});
+    }
+
     protected void say(String text){
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:say", text);
+        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:say", new HashMap(){{
+            put("text", text);
+            put("characterImage", currentSprite);
+            put("priority", messagePriority);
+            put("skippable", false);
+        }}, (sender, data) -> {
+            lock.unlock();
+        });
+        lock.lock();
     }
     protected void requestPhrase(String text){
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-say", text);
     }
 
+    private String currentSprite = "normal";
     protected void sprite(String text){
+        currentSprite = text;
         ScenarioPlugin.pluginProxy.sendMessage("gui:set-image", text);
+    }
+
+    private int messagePriority = 2000;
+    protected int setMessagePriority(int val){
+        log("changed");
+        return (messagePriority = val);
     }
 
     protected synchronized String receive(){
         return receive(null);
     }
-    protected synchronized String receive(List<String> helpInfo){
+    protected synchronized String receive(Object helpInfo){
+        System.out.println(helpInfo);
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech",
                 helpInfo != null ? helpInfo : defaultHelp,
         (sender, data) -> {
             if (interrupted) {
                 ScenarioPlugin.pluginProxy.sendMessage("DeskChan:discard-user-speech", data);
+                lock.unlock();
                 return;
             }
             if (data instanceof Map)
@@ -69,6 +100,7 @@ public abstract class Scenario extends Script{
 
             lock.unlock();
         });
+
         lock.lock();
         return answer.text;
     }
@@ -96,17 +128,18 @@ public abstract class Scenario extends Script{
         CaseCollector caseCollector = new CaseCollector();
         cl.setDelegate(caseCollector);
         cl.call();
+
         List<String> helpInfo = caseCollector.getHelpInfo();
         Object obj;
         while(true){
             obj = receive(helpInfo);
             whenCycle = false;
 
-            cl.call();
-            Function result = caseCollector.execute(obj);
+            Function result = caseCollector.executeByInput(obj);
             if (result != null)
                 result.apply(obj);
             if(!whenCycle) break;
+            cl.call();
         }
     }
 
@@ -114,7 +147,7 @@ public abstract class Scenario extends Script{
         whenCycle = true;
     }
 
-    class CaseCollector{
+    private class CaseCollector{
 
         private Map<Object, Function> matches = new HashMap<>();
         private LinkedList<Object> queue = new LinkedList<>();
@@ -127,21 +160,38 @@ public abstract class Scenario extends Script{
             queue.clear();
         }
 
-        void is(String obj) {
+        void equal(Object obj) {
             queue.add(obj);
         }
-        void is(String[] obj) {
-            for (String o : obj)
+        void equal(Boolean obj) {
+            if (obj) queue.add(obj);
+        }
+        void equal(Object[] obj) {
+            for (Object o : obj)
                 queue.add(o);
         }
-        void is(String obj, Function action) {
+        void equal(AbstractCollection<Object> obj) {
+            queue.addAll(obj);
+        }
+        void equal(Object obj, Function action) {
             matches.put(obj, action);
             clearQueue(action);
         }
-        void is(String[] obj, Function action) {
-            for (String o : obj)
-                matches.put(obj, action);
+        void equal(Object[] obj, Function action) {
+            for (Object o : obj)
+                matches.put(o, action);
             clearQueue(action);
+        }
+        void equal(AbstractCollection<Object> obj, Function action) {
+            for (Object o : obj)
+                matches.put(o, action);
+            clearQueue(action);
+        }
+        void equal(Boolean value, Function action){
+            if (value){
+                matches.put(true, action);
+                clearQueue(action);
+            }
         }
 
         void match(String obj) {
@@ -167,9 +217,52 @@ public abstract class Scenario extends Script{
         }
 
         Function execute(Object key) {
+
+            final AtomicReference<Function> action = new AtomicReference<>();
+            action.set(matches.get(matches.containsKey(true)));
+
+            if(matches.size() == 0 || action.get() != null) return action.get();
+
+            List<String> rules = new LinkedList<>();
+
+            for(Map.Entry<Object, Function> entry : matches.entrySet()){
+                if(key.equals(entry.getKey())){
+                    return entry.getValue();
+                }
+                if(entry.getKey() instanceof RegularRule){
+                    rules.add(((RegularRule) entry.getKey()).rule);
+                }
+            }
+
+            if ((key instanceof String || key instanceof Answer) && rules.size() > 0) {
+                ScenarioPlugin.pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>() {{
+                    put("speech", key instanceof Answer ? ((Answer) key).text : key.toString());
+                    put("rules", rules);
+                }}, (sender, data) -> {
+                    Integer i = ((Number) data).intValue();
+
+                    if (i >= 0) {
+                        for (Map.Entry<Object, Function> entry : matches.entrySet()) {
+                            if (entry.getKey() instanceof RegularRule && ((RegularRule) entry.getKey()).rule.equals(rules.get(i))) {
+                                action.set(entry.getValue());
+                                break;
+                            }
+                        }
+                    }
+
+                    lock.unlock();
+                });
+                lock.lock();
+            }
+
+            return action.get();
+        }
+
+        Function executeByInput(Object key) {
+
             final AtomicReference<Function> action = new AtomicReference<>(matches.get(false));
 
-            if(!(key instanceof String) && !(key instanceof Answer) || matches.size() == 0) return action.get();
+            if(matches.size() == 0) return action.get();
 
             Answer current;
             if (key.toString().equals(answer.toString()))
@@ -178,34 +271,43 @@ public abstract class Scenario extends Script{
                 current = new Answer(key.toString());
 
             List<String> rules = new LinkedList<>();
+            int maxVariantPriority = -1, vp;
+            Function maxVariant = null;
 
             for(Map.Entry<Object, Function> entry : matches.entrySet()){
-                if(entry.getKey() instanceof String && current.purpose.contains(entry.getKey())){
-                    return entry.getValue();
+                if(entry.getKey() instanceof String && (vp = current.purpose.indexOf(entry.getKey())) >= 0){
+                    if (maxVariantPriority < 0 || maxVariantPriority > vp){
+                        maxVariantPriority = vp;
+                        maxVariant = entry.getValue();
+                    }
                 }
                 if(entry.getKey() instanceof RegularRule){
                     rules.add(((RegularRule) entry.getKey()).rule);
                 }
             }
 
-            ScenarioPlugin.pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>(){{
-                put("speech", current.text);
-                put("rules", rules);
-            }}, (sender, data) -> {
-                Integer i = ((Number) data).intValue();
+            if (maxVariant != null) return maxVariant;
 
-                if (i >= 0){
-                    for(Map.Entry<Object, Function> entry : matches.entrySet()){
-                        if(entry.getKey() instanceof RegularRule && ((RegularRule) entry.getKey()).rule.equals(rules.get(i))){
-                            action.set(entry.getValue());
-                            break;
+            if (rules.size() > 0) {
+                ScenarioPlugin.pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>() {{
+                    put("speech", current.text);
+                    put("rules", rules);
+                }}, (sender, data) -> {
+                    Integer i = ((Number) data).intValue();
+
+                    if (i >= 0) {
+                        for (Map.Entry<Object, Function> entry : matches.entrySet()) {
+                            if (entry.getKey() instanceof RegularRule && ((RegularRule) entry.getKey()).rule.equals(rules.get(i))) {
+                                action.set(entry.getValue());
+                                break;
+                            }
                         }
                     }
-                }
 
-                lock.unlock();
-            });
-            lock.lock();
+                    lock.unlock();
+                });
+                lock.lock();
+            }
 
             return action.get();
         }
@@ -233,7 +335,7 @@ public abstract class Scenario extends Script{
 
     protected void quit(){
         interrupted = true;
-        throw new RuntimeException();
+        throw new ScenarioPlugin.Companion.InterruptedScenarioException();
     }
 
     private static class Answer{
@@ -243,7 +345,7 @@ public abstract class Scenario extends Script{
 
         Answer(String text){ this.text = text; }
         Answer(Map data){
-            this.text = data.get("value").toString();
+            this.text = data.get("value") != null ? data.get("value").toString() : "";
             Object p = data.get("purpose");
             if (p == null) return;
             if (p instanceof Collection){
@@ -267,7 +369,10 @@ public abstract class Scenario extends Script{
                     synchronized (this) {
                         this.wait();
                     }
-                } catch (Exception e) {
+                } catch (InterruptedException e) {
+                    quit();
+                } catch (Throwable e) {
+                    log(e);
                     quit();
                 }
             }
@@ -280,5 +385,98 @@ public abstract class Scenario extends Script{
                 this.notify();
             }
         }
+    }
+
+    /** Working with character preset. **/
+
+    public boolean instantCharacterInfluence = false;
+    protected class Preset {
+        private Map<String, Object> presetMap;
+        Preset() {
+            update();
+        }
+        Preset(Map<String, Object> map){
+            presetMap = map;
+        }
+
+        public void update(){
+            ScenarioPlugin.pluginProxy.sendMessage("talk:get-preset", true, (sender, data) ->  {
+                presetMap = (Map) data;
+                lock.unlock();
+            });
+            lock.lock();
+        }
+
+        public void save(){
+            ScenarioPlugin.pluginProxy.sendMessage("talk:save-options", presetMap);
+        }
+
+        public Object getField(String key){  return presetMap.get("key");  }
+        public void setField(String key, Object value){
+            presetMap.put(key, value);
+            if (instantCharacterInfluence) save();
+        }
+
+        public String getName(){  return (String) presetMap.get("name");  }
+        public void setName(String newName){
+            setField("name", newName);
+            if (instantCharacterInfluence) save();
+        }
+
+        public Map getTags(){  return (Map) presetMap.get("tags");  }
+
+        public Map getCharacter(){  return (Map) presetMap.get("character");  }
+        public float getCharacterField(String key){  return ((Number) presetMap.get(key)).floatValue();      }
+        public float setCharacterField(String key, float val){
+            save();
+            ScenarioPlugin.pluginProxy.sendMessage("talk:make-character-influence", new HashMap(){{
+                put("feature", key);
+                put("value", val - getCharacterField(key));
+            }});
+            update();
+            return getCharacterField(key);
+        }
+
+        public float getManner(){  return getCharacterField("manner");  }
+        public float getEnergy(){  return getCharacterField("energy");  }
+        public float getEmpathy(){  return getCharacterField("empathy");  }
+        public float getAttitude(){  return getCharacterField("attitude");  }
+        public float getExperience(){  return getCharacterField("experience");  }
+        public float getImpulsivity(){  return getCharacterField("impulsivity");  }
+        public float getRelationship(){  return getCharacterField("relationship");  }
+
+        public float setManner(float val){  return setCharacterField("manner", val);  }
+        public float setEnergy(float val){  return setCharacterField("energy", val);  }
+        public float setEmpathy(float val){  return setCharacterField("empathy", val);  }
+        public float setAttitude(float val){  return setCharacterField("attitude", val);  }
+        public float setExperience(float val){  return setCharacterField("experience", val);  }
+        public float setImpulsivity(float val){  return setCharacterField("impulsivity", val);  }
+        public float setRelationship(float val){  return setCharacterField("relationship", val);  }
+        public float setSelfconfidence(float val){  return setCharacterField("selfconfidence", val);  }
+
+        public float getSelfconfidence(){  return getCharacterField("selfconfidence");   }
+
+
+        public void raiseEmotion(String key, String val){
+            ScenarioPlugin.pluginProxy.sendMessage("talk:make-emotion-influence", new HashMap(){{
+                put("emotion", key);
+                put("value", val);
+            }});
+            update();
+        }
+
+        public String toString(){ return presetMap.toString(); }
+
+    }
+    private Preset currentPreset = null;
+
+    public Preset getPreset(){
+        if (currentPreset == null) currentPreset = new Preset();
+        return currentPreset;
+    }
+    public Preset setPreset(Map newPreset){
+        currentPreset = new Preset(newPreset);
+        if (instantCharacterInfluence) currentPreset.save();
+        return currentPreset;
     }
 }

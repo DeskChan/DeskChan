@@ -44,7 +44,8 @@ class ScenarioPlugin : Plugin {
             val list = LinkedList<HashMap<String, Any>>()
             list.add(HashMap<String, Any>().apply {
                 put("id", "path")
-                put("type", "FileField")
+                put("type", "AssetsManager")
+                put("folder","scenarios")
                 put("label", pluginProxy.getString("file"))
             })
             list.add(HashMap<String, Any>().apply {
@@ -61,8 +62,10 @@ class ScenarioPlugin : Plugin {
             if (currentScenario != null)
                 stopScenario()
 
-            currentScenario = createScenario(map["path"] as String)
-            runScenario()
+            if (map["path"] != null) {
+                currentScenario = createScenario(map["path"] as String)
+                runScenario()
+            }
         })
         pluginProxy.addMessageListener("scenario:stop", MessageListener { sender, tag, dat ->
             stopScenario()
@@ -80,7 +83,10 @@ class ScenarioPlugin : Plugin {
                 override fun run() {
                     try {
                         currentScenario!!.run()
-                    } catch (e: RuntimeException){ }
+                    } catch (e: InterruptedScenarioException){
+                    } catch (e: Throwable){
+                        pluginProxy.log(e)
+                    }
                     scenarioThread = null
                 }
             }
@@ -134,9 +140,10 @@ class ScenarioPlugin : Plugin {
 
             (0 until scriptLines.size).forEach {
                 val line = scriptLines[it].trim { it <= ' ' }
+                if (line.length == 0) return@forEach
                 when (line[0]) {
                     '<' -> scriptLines[it] = line.substring(1).trim { it <= ' ' } + " = receive()"
-                    '>' -> scriptLines[it] = "say('" + line.substring(1).trim { it <= ' ' } + "')"
+                    '>' -> scriptLines[it] = "say(\"" + line.replace("\"","\\\"").substring(1).trim { it <= ' ' } + "\")"
                     '$' -> {
                         val matches = ArrayList<String>()
                         val m = Pattern.compile("([\"'])(?:(?=(\\\\?))\\2.)*?\\1|[^\\s]+").matcher(line.substring(1))
@@ -170,5 +177,7 @@ class ScenarioPlugin : Plugin {
             val script = groovyShell.parse(scriptText.toString())
             return script as Scenario
         }
+
+        class InterruptedScenarioException:RuntimeException()
     }
 }

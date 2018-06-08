@@ -16,6 +16,12 @@ public interface CharacterController {
     /** Set feature state by index. **/
     void setValue(String featureName, float values);
 
+    /** Move feature state by index. **/
+    void moveValue(int index, float values);
+    
+    /** Move feature state by name. **/
+    void moveValue(String featureName, float values);
+
     /** Get sum of controllers. **/
     CharacterController add(CharacterController other);
 

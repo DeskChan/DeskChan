@@ -23,7 +23,7 @@ public class UserSpeechRequest {
         }});
 
         ppi.addMessageListener("DeskChan:request-user-speech", (sender, tag, data) -> {
-            requests.addLast(new UserSpeechRequest(sender, (List<String>) data));
+            requests.addLast(new UserSpeechRequest(sender, data));
         });
 
         ppi.addMessageListener("DeskChan:discard-user-speech", (sender, tag, data) -> {
@@ -53,10 +53,18 @@ public class UserSpeechRequest {
                 ppi.sendMessage("DeskChan:request-say", "NO_PHRASE");
                 return;
             }
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb;
 
-            for (String command : toSend.commandsList)
-                sb.append(command+"\n");
+            if (toSend.commandsList == null){
+                sb = new StringBuilder();
+            }
+            else if (toSend.commandsList instanceof List) {
+                sb = new StringBuilder();
+                for (String command : (List<String>) toSend.commandsList)
+                    sb.append(command + "\n");
+            } else {
+                sb = new StringBuilder(toSend.commandsList.toString());
+            }
 
             ppi.setTimer(200, (s, d) -> {
                 ppi.sendMessage("DeskChan:show-technical", sb.toString());
@@ -65,8 +73,8 @@ public class UserSpeechRequest {
     }
 
     private String sender;
-    private List<String> commandsList;
-    private UserSpeechRequest(String sender, List<String> data){
+    private Object commandsList;
+    private UserSpeechRequest(String sender, Object data){
         this.sender = sender;
         commandsList = data;
     }

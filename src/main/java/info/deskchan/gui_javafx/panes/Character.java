@@ -293,13 +293,17 @@ public class Character extends MovablePane {
 		if (data != null) {
 			messageInfo = new MessageInfo(sender, data);
 			if ((messageInfo.priority < 0) && (messageQueue.size() > 0)) {
+			    messageInfo.notifySender();
 				return;
 			}
 			messageQueue.add(messageInfo);
 			Iterator<MessageInfo> i = messageQueue.iterator();
 			while (i.hasNext()) {
 				MessageInfo s = i.next();
-				if(s != messageInfo && s.skippable && s.priority <= messageInfo.priority) i.remove();
+				if(s != messageInfo && s.skippable && s.priority <= messageInfo.priority){
+				    s.notifySender();
+				    i.remove();
+                }
 			}
 			if (messageQueue.peek() != messageInfo) {
 				return;
@@ -314,19 +318,22 @@ public class Character extends MovablePane {
 			balloon = null;
 		}
 		messageInfo = messageQueue.peek();
-		if (messageInfo == null || messageInfo.counter >= messageInfo.text.length) {
-			setImageName(idleImageName);
-		} else {
-			if(messageInfo.characterImage != null)
-				setImageName(messageInfo.characterImage);
-
-			if (messageInfo.notifyTo != null)
-				Main.getPluginProxy().sendMessage(messageInfo.notifyTo, null);
-			balloon = new CharacterBalloon(this, messageInfo.text[messageInfo.counter]);
-            messageInfo.counter++;
-			balloon.setTimeout(messageInfo.timeout);
-			balloon.show();
+		if (messageInfo == null){
+            setImageName(idleImageName);
+            return;
+        } else if (messageInfo.counter >= messageInfo.text.length) {
+			messageQueue.poll();
+            messageInfo = messageQueue.peek();
 		}
+
+		if(messageInfo.characterImage != null)
+		    setImageName(messageInfo.characterImage);
+
+		messageInfo.notifySender();
+		balloon = new CharacterBalloon(this, messageInfo.text[messageInfo.counter]);
+		messageInfo.counter++;
+		balloon.setTimeout(messageInfo.timeout);
+		balloon.show();
 	}
 
 	public float getScaleFactor() {
@@ -377,7 +384,7 @@ public class Character extends MovablePane {
 		private final boolean skippable;
 		private int counter = 0;
 		private final int globalId;
-		private final String notifyTo;
+		private String notifyTo;
 
 		private static int max_length = 100;
 		private static int seq = 0;
@@ -538,6 +545,13 @@ public class Character extends MovablePane {
 			END_OF_SENTENCE,
 			PRE_SENTENCE
 		}
+
+		public void notifySender(){
+            if (notifyTo != null) {
+                Main.getPluginProxy().sendMessage(notifyTo, null);
+                notifyTo = null;
+            }
+        }
 	}
 
 	class AnimatedImageView extends Parent implements EventHandler<javafx.event.ActionEvent> {

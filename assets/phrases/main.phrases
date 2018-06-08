@@ -900,7 +900,7 @@
         </phrase>
         <phrase>
             <text>{user}, как твоя работа поживает?</text>
-            <purpose>GO_WORK</purpose>
+            <purpose>DO_WORK</purpose>
         </phrase>
         <phrase>
             <text>{user}, ты можешь сделать из меня тульпу, и я смогу быть с тобой рядом всегда-всегда!</text>
@@ -2060,7 +2060,7 @@
         </phrase>
         <phrase>
             <text>Ты ведь не ленишься, {user}? Занимаешься? Давай, я верю, что ты делаешь что-то важное.</text>
-            <purpose>GO_WORK</purpose>
+            <purpose>DO_WORK</purpose>
             <sprite>SMILE</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -2367,7 +2367,7 @@
         </phrase>
         <phrase>
             <text>Ты ведь планировал на день что-то, {user}? Когда планируешь приступать?</text>
-            <purpose>GO_WORK</purpose>
+            <purpose>DO_WORK</purpose>
             <range>
                 <empathy>1 | 4</empathy>
                 <impulsivity>-4 | 2</impulsivity>
@@ -3211,9 +3211,20 @@
             </range>
         </phrase>
         <phrase>
+            <text>Да, я согласен, {user}.</text>
+            <purpose>YES</purpose>
+            <sprite>NORMAL</sprite>
+            <gender>"boy"</gender>
+            <range>
+                <empathy>-2 | 4</empathy>
+                <attitude>-2 | 1</attitude>
+            </range>
+        </phrase>
+        <phrase>
             <text>Да, я согласна, {user}.</text>
             <purpose>YES</purpose>
             <sprite>NORMAL</sprite>
+            <gender>"girl"</gender>
             <range>
                 <empathy>-2 | 4</empathy>
                 <attitude>-2 | 1</attitude>
@@ -3646,11 +3657,11 @@
         </phrase>
         <phrase>
             <text>Неплохо бы начать работать, {user}.</text>
-            <purpose>GO_WORK</purpose>
+            <purpose>DO_WORK</purpose>
         </phrase>
         <phrase>
             <text>Так, {userF}. Работать пошёл. Сейчас.</text>
-            <purpose>GO_WORK</purpose>
+            <purpose>DO_WORK</purpose>
             <sprite>SERIOUS</sprite>
             <range>
                 <empathy>-4 | -1</empathy>
@@ -4667,16 +4678,111 @@
             <range>
                 <empathy>-4 | -1</empathy>
                 <impulsivity>-2 | 4</impulsivity>
-                <selfconfidence>-1 | 4</selfconfidence>
+                <selfconfidence>1 | 4</selfconfidence>
                 <attitude>-4 | -2</attitude>
                 <experience>2 | 4</experience>
                 <relationship>-4 | 0</relationship>
             </range>
         </phrase>
         <phrase>
+            <text>Неа.</text>
+            <purpose>NO</purpose>
+            <sprite>CONFIDENT</sprite>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <manner>-4 | -1</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Конечно, {user}.</text>
+            <purpose>YES, ACCEPT</purpose>
+        </phrase>
+        <phrase>
+            <text>Угу, давай.</text>
+            <purpose>YES, ACCEPT</purpose>
+            <sprite>NORMAL</sprite>
+            <range>
+                <impulsivity>-1 | 4</impulsivity>
+                <manner>-4 | 1</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Не хочу.</text>
+            <purpose>REFUSE</purpose>
+            <sprite>ANGRY</sprite>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <energy>-4 | 0</energy>
+                <attitude>-4 | -1</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Я воздержусь.</text>
+            <purpose>REFUSE</purpose>
+            <sprite>SERIOUS</sprite>
+            <range>
+                <impulsivity>-4 | -1</impulsivity>
+                <experience>0 | 4</experience>
+                <manner>0 | 4</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Да, хочу.</text>
+            <purpose>YES</purpose>
+            <sprite>EXCITEMENT</sprite>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <energy>-1 | 4</energy>
+                <attitude>2 | 4</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Вперёд.</text>
+            <purpose>YES</purpose>
+            <sprite>CONFIDENT</sprite>
+            <range>
+                <selfconfidence>0 | 4</selfconfidence>
+                <experience>0 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ты уже начал заниматься делами, {user}? Начинай.</text>
+            <purpose>DO_WORK</purpose>
+            <sprite>ANGRY</sprite>
+            <range>
+                <empathy>-4 | 0</empathy>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <experience>0 | 4</experience>
+                <relationship>-4 | 0</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Займись уже делом, {user}.</text>
+            <purpose>DO_WORK</purpose>
+            <sprite>ANGRY</sprite>
+            <range>
+                <empathy>-4 | 2</empathy>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <experience>0 | 4</experience>
+                <relationship>-4 | 2</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Поехали.</text>
+            <purpose>ACCEPT</purpose>
+            <sprite>NORMAL</sprite>
+            <range>
+                <experience>0 | 4</experience>
+                <manner>-4 | -1</manner>
+            </range>
+        </phrase>
+        <phrase>
             <text>{user}, тебе не холодно? Или "не жарко"? Прости, я не чувствую температуры.</text>
             <purpose>CHAT</purpose>
             <sprite>NORMAL</sprite>
+            <species>"ai"</species>
             <range>
                 <empathy>1 | 4</empathy>
                 <impulsivity>-2 | 2</impulsivity>
@@ -4691,7 +4797,7 @@
             <interests>"irl"</interests>
             <range>
                 <empathy>1 | 4</empathy>
-                <attitude>1 | 4</attitude>
+                <impulsivity>-1 | 4</impulsivity>
                 <experience>0 | 4</experience>
             </range>
         </phrase>
@@ -4701,16 +4807,16 @@
             <sprite>NORMAL</sprite>
             <range>
                 <empathy>1 | 4</empathy>
+                <experience>-1 | 4</experience>
             </range>
         </phrase>
         <phrase>
             <text>Если бы меня спросили, чего я хочу, я бы ответила, что хотела бы принести тебе, {userF}, кружку горячего чая.</text>
             <purpose>CHAT</purpose>
             <sprite>HAPPY</sprite>
-            <interests>"user"</interests>
             <range>
                 <empathy>1 | 4</empathy>
-                <impulsivity>-2 | 2</impulsivity>
+                <impulsivity>-2 | 4</impulsivity>
                 <selfconfidence>-4 | 1</selfconfidence>
                 <energy>2 | 4</energy>
                 <attitude>1 | 4</attitude>

@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.input.MouseButton;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
@@ -18,10 +19,10 @@ public class FilesManagerDialog extends TemplateBox{
 
     public List<String> getSelectedFiles(){
         List<String> list = new LinkedList<>();
-        for(String file : filesList.getItems())
-            list.add(file);
+        list.addAll(filesList.getItems());
         return list;
     }
+    private int lastClickedElement;
 
     public FilesManagerDialog(Window parent, List<String> files){
         super("file-manager");
@@ -46,7 +47,7 @@ public class FilesManagerDialog extends TemplateBox{
             try {
                 Platform.runLater(() -> {
                     FileChooser chooser = new FileChooser();
-                    chooser.setInitialDirectory(Main.getInstance().getPluginProxy().getRootDirPath().toFile());
+                    chooser.setInitialDirectory(Main.getPluginProxy().getRootDirPath().toFile());
                     File newFile = chooser.showOpenDialog(getDialogPane().getScene().getWindow());
                     if (newFile != null)
                         filesList.getItems().add(newFile.toString());
@@ -60,6 +61,23 @@ public class FilesManagerDialog extends TemplateBox{
                     filesList.getItems().remove(filesList.getSelectionModel().getSelectedIndex());
                 });
             } catch(Exception e){ };
+        });
+
+        filesList.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
+            lastClickedElement = newValue.intValue();
+            if (listener != null)
+                listener.change(getSelectedFiles());
+        });
+
+        filesList.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2){
+                if (event.getButton() == MouseButton.PRIMARY){
+                    filesList.getSelectionModel().clearAndSelect(lastClickedElement);
+                    if (listener != null)
+                        listener.change(getSelectedFiles());
+                    close();
+                }
+            }
         });
     }
 
@@ -75,11 +93,4 @@ public class FilesManagerDialog extends TemplateBox{
         this.listener = listener;
     }
 
-    public void showDialog(){
-        filesList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (listener != null)
-                listener.change(getSelectedFiles());
-        });
-        showAndWait();
-    }
 }

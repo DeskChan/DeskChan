@@ -117,7 +117,7 @@ class AssetsManagerDialog extends FilesManagerDialog {
 			filesList.getSelectionModel().select(item.toString());
 		}
 
-		super.showDialog();
+		super.showAndWait();
 	}
 	
 	private List<String> getFilesList(Path path) {

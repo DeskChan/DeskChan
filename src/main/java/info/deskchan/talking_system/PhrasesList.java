@@ -197,13 +197,13 @@ public class PhrasesList {
 		current = character.copy();
 	}
 
-	public void update(CharacterController newCharacter) {
+	public synchronized void update(CharacterController newCharacter) {
 		if (newCharacter.equals(current)) return;
 		current = newCharacter.copy();
 		update();
 	}
 	
-	public void update() {
+	public synchronized void update() {
 		matchingPhrases = new ArrayList<>();
 		ArrayList<Map<String,Object>> checkList = new ArrayList<>();
 
@@ -252,22 +252,22 @@ public class PhrasesList {
 		return list;
 	}
 
-	public void add(List<String> files){
+	public synchronized void add(List<String> files){
 		add(files, PhrasesPack.PackType.USER);
 	}
 
-	public void add(List<String> files, PhrasesPack.PackType type){
+	public synchronized void add(List<String> files, PhrasesPack.PackType type){
 		for (String file : files)
 			add(file, type, true);
 
         update();
     }
 
-	public PhrasesPack add(String file, PhrasesPack.PackType packType) {
+	public synchronized PhrasesPack add(String file, PhrasesPack.PackType packType) {
 		return add(file, packType, true);
 	}
 
-	private PhrasesPack add(String file, PhrasesPack.PackType packType, boolean update) {
+	private synchronized PhrasesPack add(String file, PhrasesPack.PackType packType, boolean update) {
 		PhrasesPack pack;
 		try {
 			pack = new PhrasesPack(file, packType);
@@ -288,11 +288,11 @@ public class PhrasesList {
 		return pack;
 	}
 
-	public void set(List<String> files){
+	public synchronized void set(List<String> files){
 		set(files, PhrasesPack.PackType.USER);
 	}
 
-    public void set(List<String> files, PhrasesPack.PackType type){
+    public synchronized void set(List<String> files, PhrasesPack.PackType type){
 		ArrayList<PhrasesPack> dummyPacks = new ArrayList();
 		for(int k = 0;k < files.size(); k++)
 			dummyPacks.add(new PhrasesPack(files.get(k), type));
@@ -402,7 +402,7 @@ public class PhrasesList {
 		return matchingPhrases.size();
 	}
 	
-	public void clear() {
+	public synchronized void clear() {
 		packs = new ArrayList<>();
 		matchingPhrases = new ArrayList<>();
 		lastUsed = new LimitArrayList<>();

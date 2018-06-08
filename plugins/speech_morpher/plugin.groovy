@@ -22,7 +22,8 @@ class Module {
             name = name.substring(0, name.lastIndexOf('.'))
 
         try {
-            instance = new GroovyClassLoader().parseClass(path).newInstance()
+            def filetext = path.getText('UTF-8')
+            instance = new GroovyClassLoader().parseClass(filetext, name).newInstance()
         } catch (Exception e) {
             throw e
         }

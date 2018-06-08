@@ -140,7 +140,7 @@ public class Main implements Plugin {
 			else if (obj instanceof Number)
 				multiplier = ((Number) obj).floatValue();
 
-			currentCharacter.character.setValue(feature, multiplier);
+			currentCharacter.character.moveValue(feature, multiplier);
 			currentCharacter.inform();
 		});
 
@@ -519,7 +519,7 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentCharacter.setTags((String) data.getOrDefault("tags", null));
+				currentCharacter.setTags(data.getOrDefault("tags", null));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
