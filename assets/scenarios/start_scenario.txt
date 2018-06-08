@@ -2,7 +2,6 @@
 setMessagePriority(2500)
 
 sprite('normal')
-> Привет!
 def hourString
 when(Calendar.instance.get(Calendar.HOUR_OF_DAY)){
     equal ([23,24,0,1,2,3]){
@@ -18,7 +17,7 @@ when(Calendar.instance.get(Calendar.HOUR_OF_DAY)){
         hourString = "добрый вечер"
     }
 }
-> А точнее, $hourString.
+> Или лучше сказать, $hourString?
 > Судя по тому, что я сейчас произношу этот монолог, ты запускаешь меня в первый раз.
 sprite("thoughtful")
 > Или просто тестируешь? Если так, то, похоже, я ничего не помню с нашей прошлей беседы.

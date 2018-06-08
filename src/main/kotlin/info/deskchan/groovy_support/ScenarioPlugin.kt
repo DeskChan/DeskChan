@@ -5,9 +5,9 @@ import info.deskchan.core.MessageListener
 import info.deskchan.core.Plugin
 import info.deskchan.core.PluginProxyInterface
 import org.codehaus.groovy.control.CompilerConfiguration
+import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Files
-import java.nio.file.Paths
 import java.util.*
 import java.util.regex.Pattern
 
@@ -16,11 +16,22 @@ class ScenarioPlugin : Plugin {
     internal var scenarioThread: Thread? = null
     internal var currentScenario: Scenario? = null
 
+    internal var selected: String? = null
+
     override fun initialize(pluginProxyInterface: PluginProxyInterface): Boolean {
+
         pluginProxy = pluginProxyInterface
         pluginProxy.setResourceBundle("info/deskchan/groovy_support/strings")
         pluginProxy.setConfigField("name", pluginProxy.getString("scenario-plugin-name"))
-        pluginProxy.addMessageListener("groovy:run-scenario", MessageListener { sender, tag, dat ->
+        pluginProxy.getProperties().load()
+
+        pluginProxy.sendMessage("core:add-command",  HashMap<String, Any>().apply {
+            put("tag", "scenario:run-scenario")
+            put("info", pluginProxy.getString("scenario-command.info"))
+            put("msgInfo", pluginProxy.getString("scenario-command.msg-info"))
+        })
+
+        pluginProxy.addMessageListener("scenario:run-scenario", MessageListener { sender, tag, dat ->
             var path: String? = null
             if (dat is String)
                 path = dat
@@ -28,48 +39,68 @@ class ScenarioPlugin : Plugin {
                 val map = dat as Map<*, *>
                 path = map["path"] as String
             }
+            if (path == null)
+                path = selected
+
             if (path == null) {
                 pluginProxy.log("Path not specified for scenario")
-            } else {
-                currentScenario = createScenario(path)
-                runScenario()
+                return@MessageListener
             }
+
+            if (currentScenario != null)
+                stopScenario()
+
+            currentScenario = createScenario(path)
+            runScenario()
         })
+
         pluginProxy.sendMessage("gui:set-panel", HashMap<String, Any>().apply {
             put("id", "scenario")
             put("name", pluginProxy.getString("scenario"))
             put("type", "submenu")
             put("action", "set")
-            put("onSave", "scenario:menu")
             val list = LinkedList<HashMap<String, Any>>()
             list.add(HashMap<String, Any>().apply {
                 put("id", "path")
                 put("type", "AssetsManager")
                 put("folder","scenarios")
                 put("label", pluginProxy.getString("file"))
+                put("onChange","scenario:selected")
             })
-            list.add(HashMap<String, Any>().apply {
+            val blist = LinkedList<HashMap<String, Any>>()
+            blist.add(HashMap<String, Any>().apply {
+                put("id", "start")
+                put("type", "Button")
+                put("value", pluginProxy.getString("start"))
+                put("msgTag", "scenario:run-scenario")
+            })
+            blist.add(HashMap<String, Any>().apply {
                 put("id", "stop")
                 put("type", "Button")
                 put("value", pluginProxy.getString("stop"))
                 put("msgTag", "scenario:stop")
             })
+            list.add(HashMap<String, Any>().apply {
+                put("elements", blist)
+            })
             put("controls", list)
         })
-        pluginProxy.addMessageListener("scenario:menu", MessageListener{ sender, tag, dat ->
-            val map = dat as Map<*, *>
 
-            if (currentScenario != null)
-                stopScenario()
-
-            if (map["path"] != null) {
-                currentScenario = createScenario(map["path"] as String)
-                runScenario()
-            }
+        pluginProxy.addMessageListener("scenario:selected", MessageListener{ sender, tag, data ->
+            selected = data.toString()
         })
         pluginProxy.addMessageListener("scenario:stop", MessageListener { sender, tag, dat ->
             stopScenario()
         })
+
+        println(pluginProxy.getProperties().getBoolean("run-first", true))
+        if (pluginProxy.getProperties().getBoolean("run-first", true)){
+            pluginProxy.getProperties().set("run-first", false)
+            pluginProxy.getProperties().save()
+            currentScenario = createScenario("start_scenario.txt")
+            runScenario()
+        }
+
 
         return true
     }
@@ -123,12 +154,14 @@ class ScenarioPlugin : Plugin {
             val compilerConfiguration = CompilerConfiguration()
             compilerConfiguration.sourceEncoding = "UTF-8"
             compilerConfiguration.scriptBaseClass = "info.deskchan.groovy_support.Scenario"
-            val path = Paths.get(pathString)
+            var path = File(pathString)
+            if (!path.isAbsolute)
+                path = pluginProxy.assetsDirPath.resolve("scenarios").resolve(pathString).toFile()
             compilerConfiguration.setClasspath(path.parent.toString())
             val groovyShell = GroovyShell(compilerConfiguration)
             var scriptLines: MutableList<String>? = null
             try {
-                scriptLines = Files.readAllLines(path, Charset.forName("UTF-8"))
+                scriptLines = Files.readAllLines(path.toPath(), Charset.forName("UTF-8"))
             } catch (e: Exception) {
                 pluginProxy.log("Invalid path specified for scenario")
                 return null
