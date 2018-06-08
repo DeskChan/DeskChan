@@ -1189,6 +1189,16 @@ interface PluginOptionsControlItem {
 		String link;
 		String msgTag;
 
+
+		public HyperlinkItem(){
+			super();
+		}
+
+		public HyperlinkItem(String link, String text){
+			init(null, link);
+			setText(text);
+		}
+
 		@Override
 		public void init(Map<String, Object> options, Object value) {
 			if (options != null)

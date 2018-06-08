@@ -1,5 +1,7 @@
 package info.deskchan.gui_javafx;
 
+import javafx.stage.Stage;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,6 +31,18 @@ class ControlsWindow extends TemplateBox {
             customWindowOpened.remove(this);
         });
 
+    }
+
+    public static void open(ControlsPanel panel){
+        for(ControlsWindow window : customWindowOpened){
+            if(window.controls.getFullName().equals(panel.getFullName())){
+                window.controls = panel;
+                window.getDialogPane().setContent(panel.createControlsPane(window));
+                ((Stage) window.getDialogPane().getScene().getWindow()).toFront();
+                return;
+            }
+        }
+        new ControlsWindow(panel);
     }
 
     public static void closeCustomWindow(ControlsPanel panel){

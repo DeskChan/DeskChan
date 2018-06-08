@@ -222,9 +222,9 @@ class OptionsDialog extends TemplateBox {
 			put("id",    "interface-skin");
 			put("type",  "AssetsManager");
 			put("folder","styles");
+			put("acceptedExtensions", Arrays.asList(".css"));
 			put("moreURL", "https://forum.deskchan.info/category/9/themes");
 			put("label",  Main.getString("interface.path-skin"));
-			put("initialDirectory", Main.getPluginProxy().getAssetsDirPath().toString());
 			put("onChange","gui:set-interface-style");
 			put("value",  Main.getProperties().getString("interface.path-skin"));
 		}});

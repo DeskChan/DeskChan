@@ -50,6 +50,9 @@ public class TerminalGUI {
             }
 
             System.out.println(text);
+
+            if (sender.contains("#"))
+                Main.getPluginProxy().sendMessage(sender, null);
         });
 
         Main.getPluginProxy().addMessageListener("core-utils:show-technical", (sender, tag, data) -> {

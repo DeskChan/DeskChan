@@ -41,6 +41,12 @@ public class Main implements Plugin {
             put("priority", 100);
         }});
 
+        pluginProxy.sendMessage("core:set-event-link", new HashMap<String, String>(){{
+            put("eventName", "speech:get");
+            put("commandName", "DeskChan:commands-list");
+            put("rule", "(список команд)|(что умеешь)");
+        }});
+
         // Transforming rules to Command every time commands list updates
         pluginProxy.addMessageListener("core:update-links:speech:get", (sender, tag, data) -> {
             updateCommandsList((List) data);

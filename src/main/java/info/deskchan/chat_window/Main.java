@@ -242,11 +242,12 @@ public class Main implements Plugin {
                         Map<String, Object> cl = new HashMap<>(data);
                         cl.put("value", translate);
                         pluginProxy.sendMessage("DeskChan:user-said", cl);
+                        return;
                     }
-                    return;
                 }
+
             }
-            pluginProxy.sendMessage("DeskChan:say#chat:change-layout-and-resend", dat);
+            pluginProxy.sendMessage("DeskChan:user-said#chat:change-layout-and-resend", dat);
         });
 
         /* Saving options changed in options window.
@@ -372,10 +373,6 @@ public class Main implements Plugin {
             put("id", "chat");
             put("action", "update");
             LinkedList<HashMap<String, Object>> list = new LinkedList<>();
-            list.add(new HashMap<String, Object>() {{
-                put("id", "options");
-                put("value", pluginProxy.getString("options"));
-            }});
             list.add(new HashMap<String, Object>() {{
                 put("id", "input");
                 put("value", "");

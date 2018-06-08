@@ -3,7 +3,7 @@
     light: #ec741a;
     common: #424242;
     very-dark: #1f1f1f;
-}ю
+}
 
 /* Все окна */
 .dialog-pane > * {
@@ -412,14 +412,17 @@
 .chat_window-chat {
     pfx-stage-style: style-transparent;
     -fx-background-color: transparent;
-    -fx-min-height: 37em;
+    -fx-min-height: 35em;
 }
 .chat_window-chat #background {
-    -fx-background-color: rgba(30,50,60, 0.9);
+    -fx-background-color: dark;
+    -fx-opacity:0.9;
+    -fx-border-color: dark;
+    -fx-border-width: 1px;
 }
 .chat_window-chat .content {
-    -fx-translate-y: 2em;
-    -fx-border-color: rgb(10,30,40);
+    -fx-translate-y: 2.5em;
+    -fx-border-color: dark;
     -fx-border-width: 1 0 0 0;
 }
 .chat_window-chat .content, .chat_window-chat .grid-pane, .scroll-bar {
@@ -429,12 +432,15 @@
     -fx-background-color: transparent;
     -fx-font-size:1.20em;
 }
+.chat_window-chat TextFlow{
+    -fx-max-height: 4em;
+}
 .chat_window-chat #textarea #text{
     -fx-fill: white;
 }
 .chat_window-chat #input {
-    -fx-pref-width: 370px;
-    -fx-background-color: rgb(25,45,55);
+    -fx-pref-width: 25em;
+    -fx-background-color: light;
     -fx-text-fill: #AAA;
     -fx-border-color: rgb(10,30,40);
     -fx-border-width: 1px;
@@ -446,7 +452,10 @@
     -fx-pref-height: 2.3em;
 }
 .chat_window-chat #options {
-    -fx-background-color: #104060;
+    -fx-background-color: dark;
+}
+.chat_window-chat #options:hover{
+    -fx-background-color: very-dark;
 }
 
 

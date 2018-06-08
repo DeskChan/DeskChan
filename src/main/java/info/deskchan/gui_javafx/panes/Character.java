@@ -284,11 +284,14 @@ public class Character extends MovablePane {
 		setImageName(name);
 	}
 
-	public void say(Object data) {
+    public void say(Object data) {
+	    say(null, data);
+    }
+	public void say(String sender, Object data) {
 		if(OverlayStage.getCurrentStage() == OverlayStage.LayerMode.HIDE) return;
 		MessageInfo messageInfo = null;
 		if (data != null) {
-			messageInfo = new MessageInfo(data);
+			messageInfo = new MessageInfo(sender, data);
 			if ((messageInfo.priority < 0) && (messageQueue.size() > 0)) {
 				return;
 			}
@@ -316,6 +319,9 @@ public class Character extends MovablePane {
 		} else {
 			if(messageInfo.characterImage != null)
 				setImageName(messageInfo.characterImage);
+
+			if (messageInfo.notifyTo != null)
+				Main.getPluginProxy().sendMessage(messageInfo.notifyTo, null);
 			balloon = new CharacterBalloon(this, messageInfo.text[messageInfo.counter]);
             messageInfo.counter++;
 			balloon.setTimeout(messageInfo.timeout);
@@ -370,13 +376,19 @@ public class Character extends MovablePane {
 		private final int timeout;
 		private final boolean skippable;
 		private int counter = 0;
+		private final int globalId;
+		private final String notifyTo;
 
 		private static int max_length = 100;
+		private static int seq = 0;
 
-		MessageInfo(Object data) {
+
+		MessageInfo(String sender, Object data) {
+			globalId = seq++;
 			String text2;
 			int _timeout;
 			boolean partible = true;
+			notifyTo = (sender != null && sender.contains("#")) ? sender : null;
 
 			if(data instanceof Map){
 				Map<String,Object> mapData = (Map<String,Object>) data;
@@ -510,7 +522,9 @@ public class Character extends MovablePane {
 
 		@Override
 		public int compareTo(MessageInfo messageInfo) {
-			return -(priority - messageInfo.priority);
+			if (messageInfo.priority == priority)
+				return globalId - messageInfo.globalId;
+			return messageInfo.priority - priority;
 		}
 
 		@Override

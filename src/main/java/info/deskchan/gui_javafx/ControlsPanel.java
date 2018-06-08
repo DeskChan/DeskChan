@@ -110,28 +110,36 @@ public class ControlsPanel {
 	ControlsPanel(String sender, String name, String id, String type, List<Map<String, Object>> controls, String msgSave, String msgClose, String action) {
 		this.type = getType(type);
 
-		if (name == null){
-			switch (this.type){
-				case SUBMENU: name = Main.getString("options"); break;
-				case TAB: name = sender; break;
-				default: name = Main.getString("default_messagebox_name"); break;
+		if (name == null) {
+			switch (this.type) {
+				case SUBMENU:
+					name = Main.getString("options");
+					break;
+				case TAB:
+					name = sender;
+					break;
+				default:
+					name = Main.getString("default_messagebox_name");
+					break;
 			}
 		}
 		this.name = name;
 		this.id = id;
 		this.controls = controls;
-		this.msgSave  = msgSave;
+		this.msgSave = msgSave;
 		this.msgClose = msgClose;
 		this.owner = sender;
 
 		if (action == null) return;
-		switch (action.toLowerCase()){
-			case "show":   show();   break;
-			case "hide":   hide();   break;
-			case "set":    set();    break;
-			case "update": update(); break;
-			case "delete": delete(); break;
-		}
+		Platform.runLater(() -> {
+			switch (action.toLowerCase()){
+				case "show":   show();   break;
+				case "hide":   hide();   break;
+				case "set":    set();    break;
+				case "update": update(); break;
+				case "delete": delete(); break;
+			}
+		});
 
 	}
 
@@ -146,7 +154,9 @@ public class ControlsPanel {
 			if (type == null) type = oldPanel.type;
 			if (oldPanel.parentWindow != null && oldPanel.parentWindow.getDialogPane() != null && oldPanel.parentWindow.getDialogPane().getScene() != null) {
 				wrapper = oldPanel.wrapper;
-				createControlsPane(oldPanel.parentWindow);
+				Platform.runLater(() -> {
+					createControlsPane(oldPanel.parentWindow);
+				});
 			}
 		} else {
 			switch (type) {
@@ -181,7 +191,7 @@ public class ControlsPanel {
 			switch (currentPanel.type) {
 				case WINDOW:
 				case INFO: {
-					Platform.runLater(() -> new ControlsWindow(currentPanel));
+					Platform.runLater(() -> ControlsWindow.open(currentPanel));
 				}
 				break;
 				default: {

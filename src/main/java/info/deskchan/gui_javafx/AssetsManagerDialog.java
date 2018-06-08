@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.stage.Window;
 
 import java.io.File;
@@ -32,18 +33,29 @@ class AssetsManagerDialog extends FilesManagerDialog {
 	private List<FileItem> selected;
 	private String type;
 	private BorderPane pane;
+	private FlowPane bottom;
 
 
 	AssetsManagerDialog(Window parent, String assetsType) {
 		super(parent, new ArrayList<>());
 
+		bottom = new FlowPane();
+
 		pane = new BorderPane();
 		pane.setCenter(filesList);
+		pane.setBottom(bottom);
+
 		getDialogPane().setContent(pane);
 
 		type = assetsType;
 
 		folder = Main.getPluginProxy().getAssetsDirPath().resolve(assetsType);
+		bottom.getChildren().add(
+				new PluginOptionsControlItem.HyperlinkItem(
+						folder.toAbsolutePath().toString(),
+						Main.getString("open-folder")).getNode()
+		);
+
 		filesFolderStrLength = folder.toAbsolutePath().toString().length() + 1;
 
 		ObservableList<String> newFiles = FXCollections.observableArrayList();
@@ -78,10 +90,9 @@ class AssetsManagerDialog extends FilesManagerDialog {
 		if (url == null)
 			pane.setBottom(null);
 		else {
-			PluginOptionsControlItem.HyperlinkItem link = new PluginOptionsControlItem.HyperlinkItem();
-			link.init(null, url);
-			link.setText(Main.getString("more")+"...");
-			pane.setBottom(link.getNode());
+			bottom.getChildren().add(
+					new PluginOptionsControlItem.HyperlinkItem(url, Main.getString("more")+"...").getNode()
+			);
 		}
 
 	}

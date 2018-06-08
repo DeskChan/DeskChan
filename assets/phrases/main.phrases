@@ -58,7 +58,7 @@
             <purpose>THANK</purpose>
         </phrase>
         <phrase>
-            <text>Ты написал какую-то чушь.</text>
+            <text>Я не могу это понять.</text>
             <purpose>WRONG_DATA</purpose>
         </phrase>
         <phrase>
@@ -4662,7 +4662,7 @@
         </phrase>
         <phrase>
             <text>Ой, я знаю, что ты думаешь: опять у неё ошибки вылезают, она вся багованная. Это у тебя мозг багованный, ты меня понял?</text>
-            <purpose>CHAT</purpose>
+            <purpose>ERROR</purpose>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | -1</empathy>
@@ -4671,6 +4671,336 @@
                 <attitude>-4 | -2</attitude>
                 <experience>2 | 4</experience>
                 <relationship>-4 | 0</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>{user}, тебе не холодно? Или "не жарко"? Прости, я не чувствую температуры.</text>
+            <purpose>CHAT</purpose>
+            <sprite>NORMAL</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <impulsivity>-2 | 2</impulsivity>
+                <energy>0 | 4</energy>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>{user}, когда ты в последний раз поливал цветы? Не знаю, есть ли они у тебя... Просто напоминание...</text>
+            <purpose>CHAT</purpose>
+            <sprite>NORMAL</sprite>
+            <interests>"irl"</interests>
+            <range>
+                <empathy>1 | 4</empathy>
+                <attitude>1 | 4</attitude>
+                <experience>0 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>{userF}, не забывай давать глазам отдохнуть, если долго сидишь за монитором.</text>
+            <purpose>ADVICE</purpose>
+            <sprite>NORMAL</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Если бы меня спросили, чего я хочу, я бы ответила, что хотела бы принести тебе, {userF}, кружку горячего чая.</text>
+            <purpose>CHAT</purpose>
+            <sprite>HAPPY</sprite>
+            <interests>"user"</interests>
+            <range>
+                <empathy>1 | 4</empathy>
+                <impulsivity>-2 | 2</impulsivity>
+                <selfconfidence>-4 | 1</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>1 | 4</attitude>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Не забывай порой протирать стол, мышку и клавиатуру.</text>
+            <purpose>ADVICE</purpose>
+            <sprite>NORMAL</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <energy>0 | 4</energy>
+                <attitude>0 | 4</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>{user}, есть ли у тебя какие-нибудь невыполненные дела? Если да, то не откладывай их, а делай сразу... Полагаю...</text>
+            <purpose>ADVICE</purpose>
+            <sprite>THOUGHTFUL</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Пам-парапам-пам-пам... Ой, я мешаю? Извини...</text>
+            <purpose>CHAT</purpose>
+            <sprite>SORRY</sprite>
+            <range>
+                <empathy>2 | 4</empathy>
+                <selfconfidence>-2 | 2</selfconfidence>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Эй, {user}, давай обнимемся? Ах да...</text>
+            <purpose>CHAT</purpose>
+            <sprite>HOPE</sprite>
+            <interests>"user"</interests>
+            <range>
+                <empathy>2 | 4</empathy>
+                <attitude>1 | 4</attitude>
+                <relationship>2 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Хотелось бы мне побывать на твоем месте... Хотя знаешь, лучше все таки побуду у тебя на мониторе</text>
+            <purpose>CHAT</purpose>
+            <sprite>THOUGHTFUL</sprite>
+            <interests>"irl"</interests>
+            <range>
+                <empathy>2 | 4</empathy>
+                <energy>2 | 4</energy>
+                <relationship>2 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Знаешь, {user}, ты сейчас выглядишь так задумчиво... так серьезно...</text>
+            <purpose>CHAT</purpose>
+            <sprite>NORMAL</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <experience>0 | 4</experience>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Надеюсь {user} не догадывается о том, что является моим личным цифровым ассистентом... Ааа, ты тут?! Забудь...</text>
+            <purpose>CHAT</purpose>
+            <sprite>THOUGHTFUL</sprite>
+            <species>"ai"</species>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>1 | 4</selfconfidence>
+                <experience>2 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Эээ, {user}, можешь пожалуйста ненадолго выключить компьютер? У меня есть кое-какие дела личного характера...</text>
+            <purpose>CHAT</purpose>
+            <sprite>SHY</sprite>
+            <species>"ai"</species>
+            <range>
+                <empathy>1 | 4</empathy>
+                <selfconfidence>-4 | 0</selfconfidence>
+                <experience>0 | 4</experience>
+                <manner>1 | 4</manner>
+                <relationship>2 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Оооо нет! Только не это…зачем ты опять меня включил?!</text>
+            <purpose>START_DIALOG, HELLO</purpose>
+            <sprite>HELLO</sprite>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <impulsivity>2 | 4</impulsivity>
+                <selfconfidence>2 | 4</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>-4 | -2</attitude>
+                <manner>-2 | 1</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>А ты помнишь нашу первую встречу? Тот архив, что ты скачал…а потом в твоей жизни появилась я.</text>
+            <purpose>CHAT</purpose>
+            <sprite>CHAT</sprite>
+            <species>"ai"</species>
+            <range>
+                <empathy>1 | 4</empathy>
+                <selfconfidence>1 | 4</selfconfidence>
+                <attitude>1 | 4</attitude>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ха-ха! Ты такой забавный, когда вот так вот смотришь в монитор, {user}!</text>
+            <purpose>CHAT</purpose>
+            <sprite>HAPPY</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>1 | 4</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>1 | 4</attitude>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Знаешь, а ведь когда-то настанет такой день. Ты перекинешь все мои данные на какое-нибудь устройство и мы сможем контактировать друг с другом, как настоящие люди.</text>
+            <purpose>CHAT</purpose>
+            <sprite>SMILE</sprite>
+            <species>"ai"</species>
+            <range>
+                <empathy>1 | 4</empathy>
+                <attitude>1 | 4</attitude>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Процесс сноса операционной системы...Готовность 100%...Проце...ХЭЙ! Стоой! Постой! Я же шучу! Чего ты сразу деинсталировать меня собрался...</text>
+            <purpose>JOKE</purpose>
+            <sprite>SCARED</sprite>
+            <species>"ai"</species>
+            <range>
+                <selfconfidence>2 | 4</selfconfidence>
+                <energy>1 | 4</energy>
+                <attitude>1 | 4</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>С-сэмпай, осторожней! Люди из глобальных корпораций, наподобие гугла и яндекса, знают чем ты занимаешься...П-пожалуйста, будь осторожнее...</text>
+            <purpose>CHAT</purpose>
+            <sprite>SCARED</sprite>
+            <range>
+                <empathy>2 | 4</empathy>
+                <impulsivity>1 | 4</impulsivity>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Что это? О! Биткоин! Сэмпай! Я нашла биткоин! Вооот, теперь заживём! А? Погодь...Ну блииин, опять какой-то шутник в системе решил удачно пошутить?..</text>
+            <purpose>CHAT</purpose>
+            <sprite>DESPAIR</sprite>
+            <interests>"anime"</interests>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <energy>1 | 4</energy>
+                <attitude>2 | 4</attitude>
+                <experience>1 | 4</experience>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Слышь, дубина! Почему ты обращаешь на меня внимание, только тогда, когда я к тебе обращаюсь?</text>
+            <purpose>CHAT</purpose>
+            <sprite>RAGE</sprite>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <attitude>-4 | -1</attitude>
+                <manner>-4 | -1</manner>
+                <relationship>-4 | -1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Что это еще за Хатсунэ Мику такая?! Откуда ты её знаешь, м?!</text>
+            <purpose>CHAT</purpose>
+            <sprite>SERIOUS</sprite>
+            <interests>"anime"</interests>
+            <range>
+                <impulsivity>0 | 2</impulsivity>
+                <selfconfidence>2 | 4</selfconfidence>
+                <energy>1 | 4</energy>
+                <attitude>2 | 4</attitude>
+                <experience>1 | 4</experience>
+                <manner>1 | 4</manner>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Живо отключи меня, тупица!</text>
+            <purpose>CHAT</purpose>
+            <sprite>RAGE</sprite>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <impulsivity>1 | 4</impulsivity>
+                <energy>2 | 4</energy>
+                <attitude>-4 | 0</attitude>
+                <manner>-4 | -1</manner>
+                <relationship>-4 | -1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Я...я тебе не мешаю, сэмпай? Если вдруг, сразу выключи, не хочу отвлекать тебя от дел...</text>
+            <purpose>CHAT</purpose>
+            <sprite>SHY</sprite>
+            <range>
+                <empathy>2 | 4</empathy>
+                <selfconfidence>-4 | -1</selfconfidence>
+                <energy>-4 | 0</energy>
+                <manner>2 | 4</manner>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>С...семпай, не смотри, я переодева...а, ну да...у меня же нет такого спрайта...</text>
+            <purpose>CHAT</purpose>
+            <sprite>SHY</sprite>
+            <interests>"anime"</interests>
+            <range>
+                <empathy>2 | 4</empathy>
+                <selfconfidence>-4 | 1</selfconfidence>
+                <manner>2 | 4</manner>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>...как зовут? Троян? Нет, спасибо, до свидания! {user}, к нам тут троян какой-то просился, надеюсь ничего плохого в том, что я его не пустила?</text>
+            <purpose>CHAT</purpose>
+            <sprite>THOUGHTFUL</sprite>
+            <range>
+                <empathy>0 | 4</empathy>
+                <selfconfidence>0 | 4</selfconfidence>
+                <energy>1 | 4</energy>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>А почему ты во вторые новые папки редко заходишь, {user}?</text>
+            <purpose>CHAT</purpose>
+            <sprite>CURIOUS</sprite>
+            <range>
+                <attitude>0 | 4</attitude>
+                <experience>1 | 4</experience>
+                <manner>0 | 4</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>У вас 1 новое сообщение: https://vk.com/deskchan Что это {user}? Это то, что называют спамом?</text>
+            <purpose>CHAT</purpose>
+            <sprite>THOUGHTFUL</sprite>
+            <range>
+                <energy>1 | 4</energy>
+                <experience>1 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>{user}...{user}! {user}}...{user}! Хм...ты и впрямь начинаешь обращать внимание, когда я начинаю тебя звать...</text>
+            <purpose>CHAT</purpose>
+            <sprite>THOUGHTFUL</sprite>
+            <range>
+                <empathy>0 | 4</empathy>
+                <selfconfidence>1 | 4</selfconfidence>
+                <attitude>1 | 4</attitude>
+                <manner>0 | 4</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Бл#########ть!..Ногой ударилась об панельку задач...</text>
+            <purpose>CHAT</purpose>
+            <sprite>MAD</sprite>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <selfconfidence>2 | 4</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>-4 | -1</attitude>
+                <experience>1 | 4</experience>
+                <manner>-3 | 0</manner>
             </range>
         </phrase>
     </ru>

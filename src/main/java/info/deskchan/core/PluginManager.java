@@ -217,18 +217,20 @@ public class PluginManager {
 		if (listeners == null || listeners.size() == 0)
 			return;
 
-		for (MessageListener listener : listeners) {
-			Debug.TimeTest send = new Debug.TimeTest() {
-				@Override
-				void run() {
-					try {
-						listener.handleMessage(sender, tag, data);
-					} catch (Throwable e) {
-						if (!tag.equals("core-events:error"))
-							log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
+		synchronized (listeners) {
+			for (MessageListener listener : listeners) {
+				Debug.TimeTest send = new Debug.TimeTest() {
+					@Override
+					void run() {
+						try {
+							listener.handleMessage(sender, tag, data);
+						} catch (Throwable e) {
+							if (!tag.equals("core-events:error"))
+								log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
+						}
 					}
-				}
-			};
+				};
+			}
 		}
 	}
 

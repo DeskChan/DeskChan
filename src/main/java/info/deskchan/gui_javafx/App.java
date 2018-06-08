@@ -212,7 +212,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
 			Platform.runLater(() -> {
-				character.say(data);
+				character.say(sender, data);
 			});
 		});
 
