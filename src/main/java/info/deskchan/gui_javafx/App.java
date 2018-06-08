@@ -415,21 +415,6 @@ public class App extends Application {
 			});
 		});
 
-		/* Open distributor window
-        * Public message
-        * Params: None
-        * Returns: None */
-		pluginProxy.addMessageListener("gui:open-distributor", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				FileChooser packChooser = new FileChooser();
-				packChooser.setInitialDirectory(pluginProxy.getRootDirPath().toFile());
-				File f = packChooser.showOpenDialog(OptionsDialog.getInstance().getDialogPane().getScene().getWindow());
-				if (f != null)
-					pluginProxy.sendMessage("core:distribute-resources", f.toString());
-			});
-		});
-
-
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
 			Platform.runLater(() -> {

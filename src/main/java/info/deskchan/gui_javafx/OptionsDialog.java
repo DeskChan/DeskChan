@@ -255,12 +255,13 @@ class OptionsDialog extends TemplateBox {
 			put("value",  Main.getProperties().getBoolean("character.enable_context_menu", true));
 		}});
 		list.add(new HashMap<String, Object>() {{
-			put("id",    "load_resource_pack");
-			put("type",  "Button");
-			put("msgTag","gui:open-distributor");
-			put("hint",   Main.getString("help.resources"));
-			put("label",  Main.getString("load_resource_pack"));
-			put("value",  Main.getString("load"));
+			put("id",    "load_character_config");
+			put("type",  "AssetsManager");
+			put("folder","characters");
+			put("acceptedExtensions", Arrays.asList(".chr"));
+			put("hint",   Main.getString("help.character_config"));
+			put("label",  Main.getString("load_character_config"));
+			put("onChange","core:distribute-resources");
 		}});
 		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", ControlsPanel.PanelType.TAB, list).set();
 

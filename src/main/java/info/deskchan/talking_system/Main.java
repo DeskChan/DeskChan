@@ -6,6 +6,7 @@ import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core_utils.TextOperations;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -254,7 +255,8 @@ public class Main implements Plugin {
 					try {
 						Map<String, Object> map = (Map) data;
 						if (map.containsKey("preset")) {
-							currentCharacter = CharacterPreset.getFromFileUnsafe(Paths.get((String) map.get("preset")));
+							System.out.println(map.get("preset"));
+							currentCharacter = CharacterPreset.getFromFileUnsafe(new File((String) map.get("preset")));
 						}
 						String type = (String) map.getOrDefault("phrases", null);
 						if (type != null && type.length() > 0) {
@@ -540,7 +542,7 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 		} else {
-			currentCharacter = CharacterPreset.getFromFileUnsafe(Paths.get(val));
+			currentCharacter = CharacterPreset.getFromFileUnsafe(new File(val));
 		}
 		currentCharacter.updatePhrases();
 

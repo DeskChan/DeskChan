@@ -250,10 +250,12 @@ public class CharacterPreset {
 		}
 	}
 	
-	public static CharacterPreset getFromFileUnsafe(Path path) {
+	public static CharacterPreset getFromFileUnsafe(File path) {
 		try {
+			if (!path.isAbsolute())
+				path = Main.getPluginProxy().getAssetsDirPath().resolve("presets").resolve(path.getName()).toFile();
 			BufferedReader in = new BufferedReader(
-					new InputStreamReader(new FileInputStream(path.toFile()), "UTF-8")
+					new InputStreamReader(new FileInputStream(path), "UTF-8")
 			);
 			final StringBuilder str = new StringBuilder();
 			String str2;

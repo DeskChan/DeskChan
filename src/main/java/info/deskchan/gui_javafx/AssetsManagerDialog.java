@@ -39,6 +39,9 @@ class AssetsManagerDialog extends FilesManagerDialog {
 	AssetsManagerDialog(Window parent, String assetsType) {
 		super(parent, new ArrayList<>());
 
+		setId("assets-manager-"+assetsType);
+		setTitle(Main.getString("assets-manager")+": "+assetsType);
+
 		bottom = new FlowPane();
 
 		pane = new BorderPane();
