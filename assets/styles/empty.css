@@ -1,0 +1,58 @@
+
+/* Окно опций */
+.options-window {
+    -fx-min-width: 70em;
+    -fx-min-height: 40em;
+
+}
+.options-window > * {
+    -fx-padding: 0;
+}
+#options-menu {
+    -fx-max-width: 18em;
+    -fx-translate-y: -5em;
+    -fx-translate-x: -25em;
+    -fx-max-height: 22em;
+}
+#info-pane {
+    -fx-translate-x: -15em;
+    -fx-translate-y: 15em;
+    -fx-max-height: 3em;
+    -fx-max-width: 18em;
+    -fx-padding: 2em;
+    -fx-vgap: 0.7em;
+    -fx-orientation: horizontal;
+}
+#about-git_branch,
+#about-build_datetime {
+    -fx-translate-y: -5em;
+    -fx-font-size: 1.1em;
+    -fx-padding: 0;
+}
+#about-git_commit_hash,
+#about-site {
+    visibility: hidden;
+}
+#pagination {
+    -fx-translate-x: 10em;
+    -fx-padding: 0 5em 1em 0;
+    -fx-max-height: 0em;
+    -fx-translate-y: -15em;
+    -fx-alignment: center-right;
+    -fx-max-width: 55em;
+}
+#controls {
+    -fx-translate-x: 10em;
+    -fx-translate-y: 2em;
+    -fx-max-height: 33em;
+    -fx-pref-width: 52em;
+    -fx-max-width: 52em;
+}
+#controls > BorderPane {
+    -fx-max-height: 31em;
+    -fx-pref-height: 31em;
+    -fx-pref-width: 50em;
+    -fx-max-width: 50em;
+    -fx-border-width: 0;
+    -fx-translate-x: 1em;
+}

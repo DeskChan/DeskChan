@@ -299,8 +299,8 @@ public class Main implements Plugin {
             list.add(new HashMap<String, Object>() {{
                 put("id", "textarea");
                 put("type", "CustomizableTextArea");
-                put("width", 500d);
-                put("height", 300d);
+                put("width", 35d);
+                put("height", 22d);
                 put("value", historyToChat());
             }});
             List input = new ArrayList();

@@ -1129,8 +1129,8 @@ public class App extends Application {
 		} catch (IOException e) {
 			Main.log(e);
 		}
-		CharacterBalloon.setDefaultFont(Main.getProperties().getString("balloon.font"));
 		LocalFont.setDefaultFont(Main.getProperties().getString("interface.font"));
+		CharacterBalloon.setDefaultFont(Main.getProperties().getString("balloon.font"));
 	}
 
 	/** Trying to apply 'style.css' to application. **/
@@ -1150,7 +1150,7 @@ public class App extends Application {
 
 	/** Get interface size multiplier. **/
 	static double getInterfaceScale(){
-		return Main.getProperties().getDouble("interface-size", Screen.getPrimary().getDpi() / 96);
+		return LocalFont.defaultFont.getSize() * Screen.getPrimary().getDpi() / 96;
 	}
 
 	/** Show error dialog. **/

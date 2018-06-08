@@ -59,7 +59,7 @@
     -fx-border-color:
         linear-gradient(to right, rgba(0, 0, 0, 0.2), transparent);
     -fx-border-style: solid;
-    -fx-border-width: 0 0 0 10;
+    -fx-border-width: 0 0 0 2em;
 }
 
 
@@ -90,9 +90,8 @@
 }
 #about-git_branch,
 #about-build_datetime {
-    -fx-translate-y: -5em;
-    -fx-font-size: 1.1em;
     -fx-padding: 0;
+    -fx-font-size: 120%;
 }
 #about-git_commit_hash,
 #about-site {
@@ -372,17 +371,22 @@
 #plugins-list .plugin-cell .plugin-line {
     -fx-padding: 0.3em 0.3em 0.6em 0.3em;
     -fx-background-color: very-dark, common;
-    -fx-background-insets: 0 0 0 0, 0 0 0 2.9em;
+    -fx-background-insets: 0 0 0 0, 0 0 0 3em;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 2, 3, 0, 0);
     -fx-alignment: center;
 }
 
 #plugins-list .plugin-cell .plugin-type-letter {
-    -fx-pref-width: 3.2em;
-    -fx-padding: 0 0.7em 0 0.2em;
+    -fx-pref-width: 3em;
+    -fx-padding: 0 0.5em 0 0.3em;
     -fx-alignment: center;
     -fx-font-weight: bold;
-    -fx-font-size: 1.5em;
+    -fx-scale-x:1.5;
+    -fx-scale-y:1.5;
+}
+
+#plugins-list .plugin-name {
+    -fx-padding: 0.5em;
 }
 
 #plugins-list .plugin-cell .plugin-line:hover {

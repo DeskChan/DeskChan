@@ -116,13 +116,13 @@ class OptionsDialog extends TemplateBox {
 		infoPane.setId("info-pane");
 		infoPane.getChildren().addAll(
 				getFlowPane("build-name", new Label(CoreInfo.get("NAME") + " " + CoreInfo.get("VERSION"))),
-				getFlowPane("about-site", new Label(Main.getString("about.site")), siteLink),
 				getFlowPane("about-git_branch", new Label(Main.getString("about.git_branch")),
 						new Label(CoreInfo.get("GIT_BRANCH_NAME"))
 				),
 				getFlowPane("about-build_datetime", new Label(Main.getString("about.build_datetime")),
 						new Label(CoreInfo.get("BUILD_DATETIME"))
 				),
+				getFlowPane("about-site", new Label(Main.getString("about.site")), siteLink),
 				getFlowPane("about-git_commit_hash", new Label(Main.getString("about.git_commit_hash")),
 						new ControlsPanel.Hint(CoreInfo.get("GIT_COMMIT_HASH"), Main.getString("open"))
 				)
@@ -911,7 +911,7 @@ class OptionsDialog extends TemplateBox {
 			hbox.getChildren().clear();
 			hbox.getChildren().addAll(pluginLetter, label, pane, menuBox);
 
-			vbox = new VBox();
+			vbox.getChildren().clear();
 			vbox.setAlignment(Pos.CENTER_LEFT);
 			vbox.getChildren().add(hbox);
 

@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core_utils.LimitHashMap;
 import javafx.scene.text.Font;
+import javafx.stage.Screen;
 
 public class LocalFont {
     private LocalFont(){ }
@@ -9,7 +10,7 @@ public class LocalFont {
     public static Font defaultFont =  getSystemDefaultFont();
 
     private static Font getSystemDefaultFont(){
-        return Font.font(Font.getDefault().getName(), Font.getDefault().getSize() * App.getInterfaceScale());
+        return Font.font(Font.getDefault().getName(), Font.getDefault().getSize() * Screen.getPrimary().getDpi() / 96);
     }
 
     public static String getDefaultFontCSS(){
