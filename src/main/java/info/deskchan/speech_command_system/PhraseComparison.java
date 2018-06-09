@@ -28,7 +28,7 @@ public class PhraseComparison {
 
     public final static float ACCURACY = 0.65f;
 
-    private final static String suffixes1 = "аеюиэйуъыояьюs", suffixes2 = "гмтсшg";
+    private final static String suffixes1 = "aeiouys", suffixes2 = "gmthg";
     private static LimitHashMap<String, String> suffixCache = new LimitHashMap<>(500);
 
     public static String removeSuffix(String word){

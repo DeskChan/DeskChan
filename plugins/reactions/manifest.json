@@ -12,5 +12,6 @@
   "description": {
     "en": "Reaction is a subplugin that adds specific character reaction to some event in program. Reactions can be activated or deactivated in plugin options. You can create your own reactions, template can be found in plugin directory.",
     "ru": "Реакция - это подмодуль, который добавляет специфическую реакцию персонажа на какие-либо происходящие в программе события. Реакция может быть активирована или деактивирована в настройках плагина. Вы можете создавать собственные модули, шаблон лежит в папке плагина."
-  }
+  },
+  "link": "https://forum.deskchan.info/topic/122/reactions"
 }
