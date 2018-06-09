@@ -420,6 +420,12 @@
     -fx-background-color: dark;
 }
 
+.notification{
+    -fx-max-width:36.5em;
+}
+.notification Label {
+    -fx-max-width:35em;
+}
 .chat_window-chat {
     pfx-stage-style: style-transparent;
     -fx-background-color: transparent;

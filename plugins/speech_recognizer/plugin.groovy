@@ -15,7 +15,10 @@ listening = false
 addMessageListener("recognition:start-listening", { sender, tag, data ->
     if (listening) return
 
-    sendMessage("DeskChan:request-say", "START_DIALOG")
+    sendMessage("DeskChan:request-say", [
+            purpose: "START_DIALOG",
+            priority: 10000 ]
+    )
 
     microphone.startRecording(path)
     listening = true
@@ -70,7 +73,7 @@ void handleTimer(sender, data){
 
     def json = new JSONObject(response)
 
-    if (json.contains("_text"))
+    if (json.has("_text"))
         sendMessage("DeskChan:voice-recognition", [value: json.getString("_text")])
     else
         sendMessage("DeskChan:request-say", "WRONG_DATA")

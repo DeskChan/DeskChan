@@ -377,6 +377,7 @@ public class Character extends MovablePane {
 	}
 
 	private static class MessageInfo implements Comparable<MessageInfo> {
+		public final String fullText;
 		private final String[] text;
 		private final String characterImage;
 		private final int priority;
@@ -384,7 +385,7 @@ public class Character extends MovablePane {
 		private final boolean skippable;
 		private int counter = 0;
 		private final int globalId;
-		private String notifyTo;
+		private Object notifyTo;
 
 		private static int max_length = 100;
 		private static int seq = 0;
@@ -395,7 +396,7 @@ public class Character extends MovablePane {
 			String text2;
 			int _timeout;
 			boolean partible = true;
-			notifyTo = (sender != null && sender.contains("#")) ? sender : null;
+			notifyTo = (sender != null && sender.contains("#")) ? sender : false;
 
 			if(data instanceof Map){
 				Map<String,Object> mapData = (Map<String,Object>) data;
@@ -439,6 +440,8 @@ public class Character extends MovablePane {
 				priority = DEFAULT_MESSAGE_PRIORITY;
 				_timeout = Main.getProperties().getInteger("balloon.default_timeout", 200);
 			}
+
+			fullText = text2;
 
 			if(partible) {
 				ArrayList<String> list = new ArrayList<>();
@@ -548,7 +551,9 @@ public class Character extends MovablePane {
 
 		public void notifySender(){
             if (notifyTo != null) {
-                Main.getPluginProxy().sendMessage(notifyTo, null);
+				Main.getPluginProxy().sendMessage("DeskChan:just-said", fullText);
+				if (notifyTo instanceof String)
+                	Main.getPluginProxy().sendMessage((String) notifyTo, null);
                 notifyTo = null;
             }
         }

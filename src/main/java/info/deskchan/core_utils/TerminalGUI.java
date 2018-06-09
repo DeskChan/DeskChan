@@ -53,6 +53,7 @@ public class TerminalGUI {
 
             if (sender.contains("#"))
                 Main.getPluginProxy().sendMessage(sender, null);
+            Main.getPluginProxy().sendMessage("DeskChan:just-said", text);
         });
 
         Main.getPluginProxy().addMessageListener("core-utils:show-technical", (sender, tag, data) -> {

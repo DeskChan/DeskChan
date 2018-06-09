@@ -30,6 +30,8 @@ public class CorePlugin implements Plugin, MessageListener {
 			pluginProxy.log(e);
 		}
 
+		CommandsProxy.initialize(pluginProxy);
+
 		/* Change language
         * Public message
         * Params: String! - language key
@@ -41,9 +43,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			else
 				newValue = data.toString();
 
-			System.out.println(CoreInfo.locales.entrySet());
 			for(Map.Entry<String,String> locale : CoreInfo.locales.entrySet()){
-				System.out.println(locale + " " + newValue + " " + locale.getKey().equals(newValue) + " " + locale.getValue().equals(newValue) );
 				if(locale.getKey().equals(newValue) || locale.getValue().equals(newValue)){
 					Locale.setDefault(new Locale(locale.getKey()));
 					pluginProxy.getProperties().put("locale", locale.getKey());
@@ -73,6 +73,7 @@ public class CorePlugin implements Plugin, MessageListener {
 			Map<String, Object> m = new HashMap<>();
 			m.put("delay", delay);
 			pluginProxy.log("Plugin " + sender + " requested application quit in " + delay / 1000 + " seconds.");
+			pluginProxy.sendMessage("core:save-all-properties", null);
 			if(delay > 20) {
 				Timer quitTimer = new Timer();
 				quitTimer.schedule(new TimerTask() {
@@ -182,11 +183,6 @@ public class CorePlugin implements Plugin, MessageListener {
 			put("tag", "DeskChan:commands-list");
 			put("info", pluginProxy.getString("commands-list-info"));
 		}});
-		pluginProxy.sendMessage("core:set-event-link", new HashMap<String, String>(){{
-			put("eventName", "speech:get");
-			put("commandName", "speech:commands-list");
-			put("rule", pluginProxy.getString("commands-list-rule"));
-		}});
 
 		/* Get plugin data directory.
 		 * Public message
@@ -271,8 +267,6 @@ public class CorePlugin implements Plugin, MessageListener {
 				}});
 
 		});
-
-		CommandsProxy.initialize(pluginProxy);
 
 		return true;
 	}

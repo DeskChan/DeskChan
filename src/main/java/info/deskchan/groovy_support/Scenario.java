@@ -2,6 +2,7 @@ package info.deskchan.groovy_support;
 
 import groovy.lang.Closure;
 import groovy.lang.Script;
+import info.deskchan.core.PluginProperties;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -40,6 +41,8 @@ public abstract class Scenario extends Script{
         ScenarioPlugin.pluginProxy.log(e);
     }
 
+    protected PluginProperties getProperties() { return ScenarioPlugin.pluginProxy.getProperties(); }
+
     protected void alert(String text) {
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
             put("text", text);
@@ -76,7 +79,6 @@ public abstract class Scenario extends Script{
 
     private int messagePriority = 2000;
     protected int setMessagePriority(int val){
-        log("changed");
         return (messagePriority = val);
     }
 
@@ -84,7 +86,6 @@ public abstract class Scenario extends Script{
         return receive(null);
     }
     protected synchronized String receive(Object helpInfo){
-        System.out.println(helpInfo);
         ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech",
                 helpInfo != null ? helpInfo : defaultHelp,
         (sender, data) -> {

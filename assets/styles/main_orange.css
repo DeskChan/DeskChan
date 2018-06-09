@@ -158,6 +158,10 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, -4);
     -fx-border-width: 1 0 0 0;
 }
+#controls-bottom-buttons > .button {
+    -fx-min-width: 6em;
+    -fx-font-size: 0.9em;
+}
 /* Незаполненные заголовки таблицы*/
 #controls .filler {
     -fx-background-color: very-dark;
@@ -249,6 +253,9 @@
 
 .scroll-bar {
     -fx-background-color: dark;
+}
+.scroll-bar .track{
+    -fx-background-color: transparent;
 }
 .scroll-bar .increment-button,
 .scroll-bar .decrement-button,
@@ -382,7 +389,6 @@
     -fx-padding: 0.5em;
 }
 
-
 #plugins-list .plugin-cell .plugin-line:hover {
     -fx-background-color: black, very-dark;
 }
@@ -390,7 +396,6 @@
 #plugins-list .plugin-cell.blacklisted .plugin-line{
     -fx-background-color: #444;
 }
-
 
 #commandTab #saved-label, #commandTab .command-link Text,
 #commandTab .placeholder Text, .notification Text, .font-selector-dialog Text {
@@ -415,21 +420,26 @@
     -fx-background-color: dark;
 }
 
+.notification{
+    -fx-max-width:36.5em;
+}
+.notification Label {
+    -fx-max-width:35em;
+}
 .chat_window-chat {
     pfx-stage-style: style-transparent;
     -fx-background-color: transparent;
     -fx-min-height: 35em;
 }
 .chat_window-chat #background {
-    -fx-background-color: dark;
-    -fx-opacity:0.9;
-    -fx-border-color: dark;
+    -fx-background-color: rgba(40,40,40,0.8);
+    -fx-border-color: rgb(40,40,40);
     -fx-border-width: 1px;
 }
 .chat_window-chat .content {
     -fx-translate-y: 2.5em;
-    -fx-border-color: dark;
-    -fx-border-width: 1 0 0 0;
+    -fx-border-color: rgb(40,40,40);
+    -fx-border-width: 1px 0 0 0;
 }
 .chat_window-chat .content, .chat_window-chat .grid-pane, .scroll-bar {
     -fx-background-color: transparent;

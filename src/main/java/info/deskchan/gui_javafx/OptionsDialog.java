@@ -937,7 +937,9 @@ class OptionsDialog extends TemplateBox {
 					infoPluginButton.setTooltip(new Tooltip(Main.getString("info.plugin-info")));
 					if (description != null && link != null){
 						infoPluginButton.setOnAction(event -> {
-							VBox box = new VBox(new Text(description), newHyperlink(Main.getString("documentation"), e -> {
+							Label t = new Label(description);
+							t.setWrapText(true);
+							VBox box = new VBox(t, newHyperlink(Main.getString("documentation"), e -> {
 									try {
 										Browser.browse(link);
 									} catch (Exception ex){

@@ -144,6 +144,7 @@ public class App extends Application {
 			TemplateBox dialog = new TemplateBox("notification", name);
 			dialog.setGraphic(content);
 			dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+			dialog.setResizable(true);
 			dialog.show();
 			dialog.requestFocus();
 		});
@@ -744,7 +745,11 @@ public class App extends Application {
 				    String type = map.get("overlay-type");
 				    OverlayStage.updateStage(type);
 
-                }
+                } else if (map.containsKey("character-balloon-position")){
+					String type = map.get("overlay-type");
+					OverlayStage.updateStage(type);
+
+				}
 			} catch(Exception e){
 				Main.log(e);
 			}

@@ -93,10 +93,7 @@ class ScenarioPlugin : Plugin {
             stopScenario()
         })
 
-        println(pluginProxy.getProperties().getBoolean("run-first", true))
-        if (pluginProxy.getProperties().getBoolean("run-first", true)){
-            pluginProxy.getProperties().set("run-first", false)
-            pluginProxy.getProperties().save()
+        if (pluginProxy.getProperties().getInteger("start.run_first", 0) < 2){
             currentScenario = createScenario("start_scenario.txt")
             runScenario()
         }

@@ -162,7 +162,7 @@ public class Main implements Plugin {
         });
 
         /* Listening all DeskChan speech to show it in chat. */
-        pluginProxy.addMessageListener("DeskChan:say", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("DeskChan:just-said", (sender, tag, data) -> {
             String text;
             if(data instanceof Map){
                 Map m = (Map) data;
@@ -213,9 +213,12 @@ public class Main implements Plugin {
             }
             currentQuery = "";
 
-            history.add(new ChatPhrase(value, 1));
-
             pluginProxy.sendMessage("DeskChan:user-said",data);
+        });
+
+        pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
+            String value = (String) (data instanceof Map ? ((Map) data).getOrDefault("value", "") : data.toString());
+            history.add(new ChatPhrase(value, 1));
             setupChat();
         });
 

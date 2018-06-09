@@ -18,8 +18,9 @@ class ControlsWindow extends TemplateBox {
         setId(controls.getFullName());
 
         customWindowOpened.add(this);
-        requestFocus();
+
         show();
+        requestFocus();
         getDialogPane().getChildren().get(0).requestFocus();
         setOnHiding(event -> {
             customWindowOpened.remove(this);
