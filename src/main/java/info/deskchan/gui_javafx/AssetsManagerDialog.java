@@ -90,9 +90,14 @@ class AssetsManagerDialog extends FilesManagerDialog {
 	}
 
 	void setURL(String url){
-		if (url == null)
-			pane.setBottom(null);
-		else {
+		if (url == null) {
+			bottom.getChildren().clear();
+			bottom.getChildren().add(
+					new PluginOptionsControlItem.HyperlinkItem(
+							folder.toAbsolutePath().toString(),
+							Main.getString("open-folder")).getNode()
+			);
+		} else {
 			bottom.getChildren().add(
 					new PluginOptionsControlItem.HyperlinkItem(url, Main.getString("more")+"...").getNode()
 			);

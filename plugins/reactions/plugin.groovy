@@ -98,9 +98,20 @@ addMessageListener(getId() + ":save-options", {sender, tag, data ->
     properties.save()
 })
 
-addMessageListener(getId() + ":supply-resource", {sender, tag, data ->
-    for(def entry : data.entrySet())
-    properties.put(entry.key, entry.value)
+addMessageListener(getId() + ":supply-resource", { sender, tag, data ->
+    for (def entry : data.entrySet()) {
+        if (entry.key.toLowerCase() == "#all_on"){
+            for (Module module : modules)
+                properties.put(module.name, true)
+            continue
+        }
+        if (entry.key.toLowerCase() == "#all_off"){
+            for (Module module : modules)
+                properties.put(module.name, false)
+            continue
+        }
+        properties.put(entry.key, entry.value)
+    }
 })
 
 log("loading reactions complited")

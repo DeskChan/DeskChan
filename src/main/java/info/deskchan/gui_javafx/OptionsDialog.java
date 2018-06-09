@@ -258,6 +258,7 @@ class OptionsDialog extends TemplateBox {
 			put("id",    "load_character_config");
 			put("type",  "AssetsManager");
 			put("folder","characters");
+			put("moreURL", "https://forum.deskchan.info/category/20/character-configs");
 			put("acceptedExtensions", Arrays.asList(".chr"));
 			put("hint",   Main.getString("help.character_config"));
 			put("label",  Main.getString("load_character_config"));

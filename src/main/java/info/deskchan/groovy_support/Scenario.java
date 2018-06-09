@@ -68,7 +68,11 @@ public abstract class Scenario extends Script{
         lock.lock();
     }
     protected void requestPhrase(String text){
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-say", text);
+        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
+            put("purpose", text);
+            put("priority", messagePriority);
+            put("skippable", false);
+        }});
     }
 
     private String currentSprite = "normal";

@@ -64,6 +64,7 @@ class ScenarioPlugin : Plugin {
                 put("id", "path")
                 put("type", "AssetsManager")
                 put("folder","scenarios")
+                put("moreURL", "https://forum.deskchan.info/category/19/scenarios");
                 put("label", pluginProxy.getString("file"))
                 put("onChange","scenario:selected")
             })

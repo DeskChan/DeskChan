@@ -122,6 +122,21 @@ addMessageListener(getId() + ":save-options", {sender, tag, data ->
 addMessageListener(getId() + ":supply-resource", {sender, tag, data ->
     for (def entry : data.entrySet()) {
         def en = entry.value.toString().toUpperCase()
+        if (en == "#ALL_ON"){
+            for (Module module : modules)
+                properties.put(module.name, 2)
+            continue
+        }
+        if (en == "#ALL_BY_PRESET"){
+            for (Module module : modules)
+                properties.put(module.name, 1)
+            continue
+        }
+        if (en == "#ALL_OFF"){
+            for (Module module : modules)
+                properties.put(module.name, 0)
+            continue
+        }
         if (pluginValues.keySet().contains(en))
             properties.put(entry.key, pluginValues.get(en))
         else
