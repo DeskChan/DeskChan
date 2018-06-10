@@ -149,10 +149,9 @@ public abstract class Scenario extends Script{
         return answer.text;
     }
 
+    private int timerId = -1;
     protected synchronized void sleep(long delay){
-        Map data = new HashMap();
-        data.put("value", delay);
-        pluginProxy.sendMessage("core-utils:notify-after-delay", data, (sender, d) -> {
+        timerId = pluginProxy.setTimer(delay, (sender, d) -> {
             lock.unlock();
         });
         lock.lock();
@@ -190,7 +189,6 @@ public abstract class Scenario extends Script{
     void again() {
         whenCycle = true;
     }
-
     private class CaseCollector{
 
         private Map<Object, Function> matches = new HashMap<>();
@@ -337,6 +335,8 @@ public abstract class Scenario extends Script{
 
     protected void quit(){
         interrupted = true;
+        if (timerId >= 0)
+            pluginProxy.cancelTimer(timerId);
         throw new ScenarioPlugin.Companion.InterruptedScenarioException();
     }
 
