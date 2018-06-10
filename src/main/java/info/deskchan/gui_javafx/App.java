@@ -593,14 +593,6 @@ public class App extends Application {
 			);
 		});
 
-		/* Set interface size.
-        * Public message
-        * Params: size: Float! - size multiplier
-        * Returns: None */
-		pluginProxy.addMessageListener("gui:set-interface-size", (sender, tag, data) -> {
-			Main.getProperties().put("interface-size", data);
-		});
-
 		/* Set interface font.
         * Public message
         * Params: font: String! - font in inner format

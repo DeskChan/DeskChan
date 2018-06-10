@@ -1,6 +1,5 @@
 package info.deskchan.core;
 
-import java.nio.file.Path;
 import java.util.*;
 
 
@@ -183,15 +182,6 @@ public class CorePlugin implements Plugin, MessageListener {
 			put("tag", "DeskChan:commands-list");
 			put("info", pluginProxy.getString("commands-list-info"));
 		}});
-
-		/* Get plugin data directory.
-		 * Public message
-		 * Params: None
-		 * Returns: String - path to directory  */
-		pluginProxy.addMessageListener("core:get-plugin-data-dir", (sender, tag, data) -> {
-			Path pluginDataDirPath = PluginManager.getPluginDataDirPath(sender);
-			pluginProxy.sendMessage(sender, pluginDataDirPath.toString());
-		});
 
 		/* Catch logging from other plugins.
 		 * Public message

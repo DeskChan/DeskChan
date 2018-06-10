@@ -1210,7 +1210,6 @@ interface PluginOptionsControlItem {
 			setText(Main.getString("open"));
 
 			setOnAction(event -> {
-				System.out.println("here");
 				if (msgTag != null)
 					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, null));
 				if (link != null){

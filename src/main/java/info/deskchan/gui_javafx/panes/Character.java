@@ -551,7 +551,9 @@ public class Character extends MovablePane {
 
 		public void notifySender(){
             if (notifyTo != null) {
-				Main.getPluginProxy().sendMessage("DeskChan:just-said", fullText);
+				Main.getPluginProxy().sendMessage("DeskChan:just-said", new HashMap(){{
+					put("msgData", fullText);
+				}});
 				if (notifyTo instanceof String)
                 	Main.getPluginProxy().sendMessage((String) notifyTo, null);
                 notifyTo = null;

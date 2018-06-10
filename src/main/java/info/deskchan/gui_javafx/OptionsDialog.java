@@ -136,6 +136,7 @@ class OptionsDialog extends TemplateBox {
 			if (panelIndex > 0){
 				panelIndex--;
 				setPanel(panelsHistory.get(panelIndex));
+				tabListView.getSelectionModel().select(panelsHistory.get(panelIndex).name);
 			}
 			updateLinks();
 		});
@@ -146,6 +147,7 @@ class OptionsDialog extends TemplateBox {
 			if (panelIndex < panelsHistory.size() - 1){
 				panelIndex++;
 				setPanel(panelsHistory.get(panelIndex));
+				tabListView.getSelectionModel().select(panelsHistory.get(panelIndex).name);
 			}
 			updateLinks();
 		});
