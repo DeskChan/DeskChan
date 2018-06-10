@@ -3,6 +3,7 @@ package info.deskchan.groovy_support;
 import groovy.lang.Closure;
 import groovy.lang.Script;
 import info.deskchan.core.PluginProperties;
+import info.deskchan.core.PluginProxyInterface;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -11,45 +12,80 @@ import java.util.function.Function;
 
 public abstract class Scenario extends Script{
 
+    /** Object containing last user input.
+     *  It has complex map structure, so we store it here instead of giving it right to user.
+     */
     private Answer answer;
-    private static final List<String> defaultHelp = Arrays.asList(ScenarioPlugin.pluginProxy.getString("write-anything"));
-    private boolean interrupted = false;
 
+    private static final String DEFAULT_HELP = ScenarioPlugin.pluginProxy.getString("write-anything");
+
+    /** Variable containing is current thread was interrupted. **/
+    private volatile boolean interrupted = false;
+
+    /** Thread locking object. **/
     private final Locker lock = new Locker();
+    
+    private PluginProxyInterface pluginProxy = null;
+    private Object data = null;
+
+    /** Get data passed by owner of plugin. **/
+    public Object getPassedData(){ return data; }
+
+    /** Sets Plugin Proxy for this scenario. Should be called only from scenario initializer. **/
+    protected void initialize(PluginProxyInterface proxy, Object data){
+        if (pluginProxy != null)
+            throw new RuntimeException("This method should be called only once and from scenario initializer, it's not accessable anymore.");
+        this.pluginProxy = proxy;
+        this.data = data;
+    }
+
+    // Standard plugin API
 
     protected void sendMessage(String tag) {
-        ScenarioPlugin.pluginProxy.sendMessage(tag, null);
+        pluginProxy.sendMessage(tag, null);
     }
 
     protected void sendMessage(String tag, Object data) {
-        ScenarioPlugin.pluginProxy.sendMessage(tag, data);
+        pluginProxy.sendMessage(tag, data);
     }
 
     protected String getString(String key){
-        return ScenarioPlugin.pluginProxy.getString(key);
+        return pluginProxy.getString(key);
     }
 
     protected Path getDataDirPath() {
-        return ScenarioPlugin.pluginProxy.getDataDirPath();
+        return pluginProxy.getDataDirPath();
+    }
+
+    protected Path getPluginDirPath() {
+        return pluginProxy.getPluginDirPath();
+    }
+
+    protected Path getRootDirPath() {
+        return pluginProxy.getRootDirPath();
+    }
+
+    protected Path getAssetsDirPath() {
+        return pluginProxy.getAssetsDirPath();
     }
 
     protected void log(Object text) {
-        ScenarioPlugin.pluginProxy.log(text.toString());
+        pluginProxy.log(text.toString());
     }
 
     protected void log(Throwable e) {
-        ScenarioPlugin.pluginProxy.log(e);
+        pluginProxy.log(e);
     }
 
-    protected PluginProperties getProperties() { return ScenarioPlugin.pluginProxy.getProperties(); }
+    protected PluginProperties getProperties() { return pluginProxy.getProperties(); }
 
     protected void alert(String text) {
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
+        pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
             put("text", text);
         }});
     }
     protected void alert(String name, String text) {
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
+        pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
             put("name", name);
             put("text", text);
             put("priority", messagePriority);
@@ -57,7 +93,7 @@ public abstract class Scenario extends Script{
     }
 
     protected void say(String text){
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:say", new HashMap(){{
+        pluginProxy.sendMessage("DeskChan:say", new HashMap(){{
             put("text", text);
             put("characterImage", currentSprite);
             put("priority", messagePriority);
@@ -68,19 +104,21 @@ public abstract class Scenario extends Script{
         lock.lock();
     }
     protected void requestPhrase(String text){
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
+        pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
             put("purpose", text);
             put("priority", messagePriority);
             put("skippable", false);
         }});
     }
 
+    /** Current sprite forced by this scenario. **/
     private String currentSprite = "normal";
     protected void sprite(String text){
         currentSprite = text;
-        ScenarioPlugin.pluginProxy.sendMessage("gui:set-image", text);
+        pluginProxy.sendMessage("gui:set-image", text);
     }
 
+    /** Priority of all messages sent by this scenario. **/
     private int messagePriority = 2000;
     protected int setMessagePriority(int val){
         return (messagePriority = val);
@@ -89,12 +127,14 @@ public abstract class Scenario extends Script{
     protected synchronized String receive(){
         return receive(null);
     }
+    /** Request user speech with helpInfo as hint. **/
     protected synchronized String receive(Object helpInfo){
-        ScenarioPlugin.pluginProxy.sendMessage("DeskChan:request-user-speech",
-                helpInfo != null ? helpInfo : defaultHelp,
+        System.out.println(data);
+        pluginProxy.sendMessage("DeskChan:request-user-speech",
+                helpInfo != null ? helpInfo : DEFAULT_HELP,
         (sender, data) -> {
             if (interrupted) {
-                ScenarioPlugin.pluginProxy.sendMessage("DeskChan:discard-user-speech", data);
+                pluginProxy.sendMessage("DeskChan:discard-user-speech", data);
                 lock.unlock();
                 return;
             }
@@ -113,7 +153,7 @@ public abstract class Scenario extends Script{
     protected synchronized void sleep(long delay){
         Map data = new HashMap();
         data.put("value", delay);
-        ScenarioPlugin.pluginProxy.sendMessage("core-utils:notify-after-delay", data, (sender, d) -> {
+        pluginProxy.sendMessage("core-utils:notify-after-delay", data, (sender, d) -> {
             lock.unlock();
         });
         lock.lock();
@@ -137,12 +177,12 @@ public abstract class Scenario extends Script{
         List<String> helpInfo = caseCollector.getHelpInfo();
         Object obj;
         while(true){
-            obj = receive(helpInfo);
+            receive(helpInfo);
             whenCycle = false;
 
-            Function result = caseCollector.executeByInput(obj);
+            Function result = caseCollector.execute(answer);
             if (result != null)
-                result.apply(obj);
+                result.apply(answer);
             if(!whenCycle) break;
             cl.call();
         }
@@ -168,9 +208,7 @@ public abstract class Scenario extends Script{
         void equal(Object obj) {
             queue.add(obj);
         }
-        void equal(Boolean obj) {
-            if (obj) queue.add(obj);
-        }
+
         void equal(Object[] obj) {
             for (Object o : obj)
                 queue.add(o);
@@ -192,12 +230,7 @@ public abstract class Scenario extends Script{
                 matches.put(o, action);
             clearQueue(action);
         }
-        void equal(Boolean value, Function action){
-            if (value){
-                matches.put(true, action);
-                clearQueue(action);
-            }
-        }
+
 
         void match(String obj) {
             queue.add(new RegularRule(obj));
@@ -223,68 +256,33 @@ public abstract class Scenario extends Script{
 
         Function execute(Object key) {
 
-            final AtomicReference<Function> action = new AtomicReference<>();
-            action.set(matches.get(matches.containsKey(true)));
-
-            if(matches.size() == 0 || action.get() != null) return action.get();
-
-            List<String> rules = new LinkedList<>();
-
-            for(Map.Entry<Object, Function> entry : matches.entrySet()){
-                if(key.equals(entry.getKey())){
-                    return entry.getValue();
-                }
-                if(entry.getKey() instanceof RegularRule){
-                    rules.add(((RegularRule) entry.getKey()).rule);
-                }
-            }
-
-            if ((key instanceof String || key instanceof Answer) && rules.size() > 0) {
-                ScenarioPlugin.pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>() {{
-                    put("speech", key instanceof Answer ? ((Answer) key).text : key.toString());
-                    put("rules", rules);
-                }}, (sender, data) -> {
-                    Integer i = ((Number) data).intValue();
-
-                    if (i >= 0) {
-                        for (Map.Entry<Object, Function> entry : matches.entrySet()) {
-                            if (entry.getKey() instanceof RegularRule && ((RegularRule) entry.getKey()).rule.equals(rules.get(i))) {
-                                action.set(entry.getValue());
-                                break;
-                            }
-                        }
-                    }
-
-                    lock.unlock();
-                });
-                lock.lock();
-            }
-
-            return action.get();
-        }
-
-        Function executeByInput(Object key) {
-
+            // Taking "Otherwise"
             final AtomicReference<Function> action = new AtomicReference<>(matches.get(false));
 
+            // If there is no equal/match blocks
             if(matches.size() == 0) return action.get();
 
-            Answer current;
-            if (key.toString().equals(answer.toString()))
-                current = answer;
-            else
-                current = new Answer(key.toString());
-
+            // Container for rules
             List<String> rules = new LinkedList<>();
+
+            // Purposes comparison
             int maxVariantPriority = -1, vp;
             Function maxVariant = null;
 
             for(Map.Entry<Object, Function> entry : matches.entrySet()){
-                if(entry.getKey() instanceof String && (vp = current.purpose.indexOf(entry.getKey())) >= 0){
-                    if (maxVariantPriority < 0 || maxVariantPriority > vp){
-                        maxVariantPriority = vp;
-                        maxVariant = entry.getValue();
+                if(entry.getKey() instanceof String){
+                    vp = 0;
+                    if (entry.getKey().equals(key) ||
+                            (key instanceof Answer && (vp = ((Answer) key).purpose.indexOf(entry.getKey())) >= 0)) {
+                        if (maxVariantPriority < 0 || maxVariantPriority > vp) {
+                            maxVariantPriority = vp;
+                            maxVariant = entry.getValue();
+                        }
                     }
+                    continue;
+                }
+                if (entry.getKey() != null && entry.getKey().equals(key)){
+                    return entry.getValue();
                 }
                 if(entry.getKey() instanceof RegularRule){
                     rules.add(((RegularRule) entry.getKey()).rule);
@@ -293,9 +291,9 @@ public abstract class Scenario extends Script{
 
             if (maxVariant != null) return maxVariant;
 
-            if (rules.size() > 0) {
-                ScenarioPlugin.pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>() {{
-                    put("speech", current.text);
+            if ((key instanceof String || key instanceof Answer) && rules.size() > 0) {
+                pluginProxy.sendMessage("speech:match-any", new HashMap<String, Object>() {{
+                    put("speech", key instanceof Answer ? ((Answer) key).text : key.toString());
                     put("rules", rules);
                 }}, (sender, data) -> {
                     Integer i = ((Number) data).intValue();
@@ -329,10 +327,10 @@ public abstract class Scenario extends Script{
                 else if (an.equals(false))
                     isOtherwise = true;
                 else if (an instanceof String)
-                    help.add("~" + ScenarioPlugin.pluginProxy.getString(an.toString()));
+                    help.add("~" + pluginProxy.getString(an.toString()));
             }
             if (isOtherwise)
-                help.add(ScenarioPlugin.pluginProxy.getString("other"));
+                help.add(pluginProxy.getString("other"));
             return help;
         }
 
@@ -405,7 +403,7 @@ public abstract class Scenario extends Script{
         }
 
         public void update(){
-            ScenarioPlugin.pluginProxy.sendMessage("talk:get-preset", true, (sender, data) ->  {
+            pluginProxy.sendMessage("talk:get-preset", true, (sender, data) ->  {
                 presetMap = (Map) data;
                 lock.unlock();
             });
@@ -413,7 +411,7 @@ public abstract class Scenario extends Script{
         }
 
         public void save(){
-            ScenarioPlugin.pluginProxy.sendMessage("talk:save-options", presetMap);
+            pluginProxy.sendMessage("talk:save-options", presetMap);
         }
 
         public Object getField(String key){  return presetMap.get("key");  }
@@ -434,7 +432,7 @@ public abstract class Scenario extends Script{
         public float getCharacterField(String key){  return ((Number) presetMap.get(key)).floatValue();      }
         public float setCharacterField(String key, float val){
             save();
-            ScenarioPlugin.pluginProxy.sendMessage("talk:make-character-influence", new HashMap(){{
+            pluginProxy.sendMessage("talk:make-character-influence", new HashMap(){{
                 put("feature", key);
                 put("value", val - getCharacterField(key));
             }});
@@ -463,7 +461,7 @@ public abstract class Scenario extends Script{
 
 
         public void raiseEmotion(String key, String val){
-            ScenarioPlugin.pluginProxy.sendMessage("talk:make-emotion-influence", new HashMap(){{
+            pluginProxy.sendMessage("talk:make-emotion-influence", new HashMap(){{
                 put("emotion", key);
                 put("value", val);
             }});

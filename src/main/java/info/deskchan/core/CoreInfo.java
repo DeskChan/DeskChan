@@ -71,5 +71,9 @@ public class CoreInfo {
 		if(!locales.containsValue(language))
 			Locale.setDefault(new Locale("en"));
 	}
+
+	public static PluginProperties getCoreProperties(){
+		return PluginManager.getInstance().getPlugin("core").getProperties();
+	}
 	
 }

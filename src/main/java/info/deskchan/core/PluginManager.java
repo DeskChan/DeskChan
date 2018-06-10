@@ -90,7 +90,7 @@ public class PluginManager {
 		return plugins.keySet();
 	}
 
-	PluginProxy getPlugin(String name){
+	public PluginProxyInterface getPlugin(String name){
 		return plugins.get(name);
 	}
 
@@ -646,8 +646,6 @@ public class PluginManager {
 		}
 		return dataDir;
 	}
-
-	/* Manifest getter */
 
 	/** Get plugin config by plugin name. **/
 	public PluginConfig getPluginConfig(String name) {

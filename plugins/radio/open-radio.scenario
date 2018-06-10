@@ -1,0 +1,35 @@
+def text = ""
+
+if (passedData["msgData"] != null)
+    text = passedData["msgData"]
+
+def radioList = passedData["radioList"]
+
+def radioName = null
+while(radioName == null){
+     if (text.contains("://")){
+        ~ SELECT_NAME
+        def name = receive()
+
+        $ radio:save-radio [ "filename": name, "url": text.trim() ]
+        return
+    }
+    when(text){
+        match("любое|any"){
+            radioName = radioList.keySet().toArray()[new Random().nextInt(radioList.size())]
+        }
+        for (def radio : radioList)
+            match(radio.key){
+                radioName = radio.key
+            }
+
+        otherwise{
+            ~ WRONG_DATA
+            ~ CLARIFY
+            text = receive(radioList.keySet())
+        }
+    }
+}
+
+$ core:open-link radioList[radioName]
+~ DONE

@@ -94,6 +94,10 @@
             <purpose>NO_INFO</purpose>
         </phrase>
         <phrase>
+            <text>Выбери название.</text>
+            <purpose>SELECT_NAME</purpose>
+        </phrase>
+        <phrase>
             <text>Дяяяя.</text>
             <purpose>YES</purpose>
             <sprite>GRIN</sprite>
@@ -5198,6 +5202,10 @@
         <phrase>
             <text>Relax, {user}.</text>
             <purpose>RELAX</purpose>
+        </phrase>
+        <phrase>
+            <text>Select name.</text>
+            <purpose>SELECT_NAME</purpose>
         </phrase>
         <phrase>
             <text>I don't know what should I say.</text>
