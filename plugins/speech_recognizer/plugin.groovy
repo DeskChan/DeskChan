@@ -55,7 +55,7 @@ void handleTimer(sender, data){
     } else {
         responseStream = new BufferedInputStream(httpConn.getErrorStream());
     }
-    BufferedReader responseStreamReader = new BufferedReader(new InputStreamReader(responseStream));
+    BufferedReader responseStreamReader = new BufferedReader(new InputStreamReader(responseStream,"UTF-8"));
 
     String line;
     StringBuilder stringBuilder = new StringBuilder();
