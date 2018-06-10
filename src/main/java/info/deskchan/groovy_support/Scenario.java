@@ -129,7 +129,6 @@ public abstract class Scenario extends Script{
     }
     /** Request user speech with helpInfo as hint. **/
     protected synchronized String receive(Object helpInfo){
-        System.out.println(data);
         pluginProxy.sendMessage("DeskChan:request-user-speech",
                 helpInfo != null ? helpInfo : DEFAULT_HELP,
         (sender, data) -> {

@@ -7,7 +7,6 @@ def oldLang = Locale.getDefault().getLanguage(), newLang
 if (properties.getInteger("start.run_first", 0) == 0){
     alert("Введите свой язык / Type your language\nРусский\nEnglish")
     $ gui:raise-user-balloon
-    log(oldLang)
     whenInput(){
         match("english"){
             newLang = "en"
@@ -190,6 +189,7 @@ whenInput(){
     equal("YES"); equal("ACCEPT"); equal("DO_WORK"){
         needConfigure = true;
     }
+    equal("NO"); equal("REFUSE");
     otherwise{
         > Ладно, не будем.
     }
