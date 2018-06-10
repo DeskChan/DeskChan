@@ -1,5 +1,7 @@
 pluginName = 'system'
 
+setResourceBundle("resources")
+
 class PluginData{
     def instance
     enum OS{ WINDOWS, UNIX, MACOS, ANDROID, IOS }

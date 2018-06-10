@@ -115,11 +115,26 @@ class OpenCommand{
         def instance = data.instance
         filename = data.dataPath.resolve('links').toString()
         load()
-        instance.sendMessage("core:add-command", [tag: pluginName + ':run'])
-        instance.sendMessage("core:add-command", [tag: pluginName + ':open'])
-        instance.sendMessage("core:add-command", [tag: pluginName + ':open-link'])
-        instance.sendMessage("core:add-command", [tag: pluginName + ':run-with-report' ])
-        instance.sendMessage("core:add-command", [tag: pluginName + ':run-with-multiple-report' ])
+        instance.sendMessage("core:add-command", [
+                tag: pluginName + ':run',
+                info: instance.getString('run-info'),
+                msgInfo: instance.getString('run-msg-info')
+        ])
+        instance.sendMessage("core:add-command", [
+                tag: pluginName + ':open',
+                info: instance.getString('open-info'),
+                msgInfo: instance.getString('open-msg-info')
+        ])
+        instance.sendMessage("core:add-command", [
+                tag: pluginName + ':open-link',
+                info: instance.getString('open-link-info'),
+                msgInfo: instance.getString('open-link-msg-info')
+        ])
+        instance.sendMessage("core:add-command", [
+                tag: pluginName + ':run-with-report',
+                info: instance.getString('run-with-report-link-info'),
+                msgInfo: instance.getString('run-msg-info')
+        ])
 
         instance.addMessageListener(pluginName + ':open-link', { sender, tag, d ->
             if (d instanceof Map)
@@ -154,7 +169,7 @@ class OpenCommand{
                 [
                         eventName  : 'speech:get',
                         commandName: pluginName + ':open',
-                        rule       : 'открой {text:List}'
+                        rule       : instance.getString("open-rule")
                 ]
         )
 
@@ -182,28 +197,6 @@ class OpenCommand{
                     instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'DONE', 'message': process.text])
                 else
                     instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'ERROR', 'message': 'Error code '+process.exitValue() + " / " + process.text])
-            }
-        })
-
-        instance.addMessageListener(pluginName+':run-with-multiple-report', { sender, tag, dat ->
-            if(dat == null) return
-            String line = ((Map)dat).get("msgData").toString()
-            instance.sendMessage("DeskChan:say","Запущено, ожидаем")
-            Process process = line.execute()
-            Thread.start {
-                def (output, error) = new StringWriter().with { o -> // For the output
-                    new StringWriter().with { e ->                     // For the error stream
-                        process.waitForProcessOutput(o, e)
-                        [o, e]*.toString()                             // Return them both
-                    }
-                }
-                process.waitFor()
-                if(process.exitValue() == 0)
-                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'DONE', 'message': process.text])
-                else
-                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'ERROR', 'message': 'Error code '+process.exitValue() + " / " + process.text])
-                instance.sendMessage("gui:show-notification", [name: 'Standart output', text: output])
-                instance.sendMessage("gui:show-notification", [name: 'Error output', text: error])
             }
         })
 

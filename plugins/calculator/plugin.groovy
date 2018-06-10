@@ -2,6 +2,8 @@ import net.objecthunter.exp4j.ExpressionBuilder
 
 def tag(tag) { "${getId()}:$tag".toString() }
 
+setResourceBundle("resources")
+
 final EVALUATION_COMMAND_TAG = tag('evaluate-expression')
 
 def evaluateExpression(expression) {
@@ -9,7 +11,6 @@ def evaluateExpression(expression) {
         expression = expression.getOrDefault("value", expression.get("msgData"))
     } else expression = expression.toString()
 
-    println(expression)
     if (expression == null) expression = ''
     def exprStr = expression.toString().replace('**','^').replaceAll('[А-я\\s\\t\\n]', '')
     if (exprStr.length() == 0){
@@ -24,7 +25,7 @@ def evaluateExpression(expression) {
     try {
         expr = new ExpressionBuilder(exprStr).build()
     } catch(Exception e){
-        sendMessage('DeskChan:say', [text: 'Ты что мне написал? Думаешь, я вычислять это буду? Нет.', partible: false])
+        sendMessage('DeskChan:request-say', "WRONG_DATA")
         return
     }
     if (!expr.validate()) {
@@ -34,11 +35,11 @@ def evaluateExpression(expression) {
     try {
         res = expr.evaluate()
     } catch (ArithmeticException e){
-        sendMessage('DeskChan:say', [text: 'Ты что, дурак? Не дели на ноль!', partible: false])
+        sendMessage('DeskChan:say', [text: getString('zero-divide')])
         return
     }
     if (res.isNaN()){
-        sendMessage('DeskChan:say', [text: 'Ну это вообще не число.', partible: false])
+        sendMessage('DeskChan:say', [text: getString('nan-result')])
         return
     }
 
@@ -54,10 +55,14 @@ addMessageListener(EVALUATION_COMMAND_TAG) { sender, tag, data ->
     evaluateExpression(data)
 }
 
-sendMessage('core:add-command', [tag: EVALUATION_COMMAND_TAG])
+sendMessage('core:add-command', [
+        tag: EVALUATION_COMMAND_TAG,
+        info: getString('command-info'),
+        msgInfo: getString('msg-info')
+])
 
 sendMessage('core:set-event-link', [
         eventName: 'speech:get',
         commandName: EVALUATION_COMMAND_TAG,
-        rule: '(сколько будет)|вычисли|посчитай|(забей калькулятор) {msgData:text}'
+        rule: getString('rule-text')
 ])

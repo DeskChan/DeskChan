@@ -1,8 +1,16 @@
 class BootCommands{
     static void initialize(pluginName, data) {
         def instance = data.instance
-        instance.sendMessage("core:add-command", [tag: pluginName + ':turn-off'])
-        instance.sendMessage("core:add-command", [tag: pluginName + ':reboot'])
+        instance.sendMessage("core:add-command", [
+                tag: pluginName + ':turn-off',
+                info: instance.getString('turn-off-info'),
+                msgInfo: [datetime: instance.getString('boot-msg-info')]
+        ])
+        instance.sendMessage("core:add-command", [
+                tag: pluginName + ':reboot',
+                info: instance.getString('reboot-info'),
+                msgInfo: [datetime: instance.getString('boot-msg-info')]
+        ])
 
         instance.addMessageListener(pluginName + ':turn-off', { sender, tag, d ->
             String shutdown_info = "shutdown"
@@ -73,7 +81,7 @@ class BootCommands{
                 [
                         eventName  : 'speech:get',
                         commandName: pluginName + ':turn-off',
-                        rule       : 'выключи компьютер {datetime:DateTime}'
+                        rule       : instance.getString('turn-off-rule')
                 ]
         )
 
@@ -81,7 +89,7 @@ class BootCommands{
                 [
                         eventName  : 'speech:get',
                         commandName: pluginName + ':reboot',
-                        rule       : 'перезагрузи компьютер {datetime:DateTime}'
+                        rule       : instance.getString('reboot-rule')
                 ]
         )
     }

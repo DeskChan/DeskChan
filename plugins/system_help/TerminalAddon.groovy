@@ -5,8 +5,6 @@ class TerminalAddon{
 
     static void initialize(pluginName, data) {
         def instance = data.instance
-        instance.sendMessage("core:add-command", [tag: pluginName + ':turn-off'])
-        instance.sendMessage("core:add-command", [tag: pluginName + ':reboot'])
 
         def command = pluginName + ":run-in-terminal"
         instance.sendMessage("core:register-alternative", [

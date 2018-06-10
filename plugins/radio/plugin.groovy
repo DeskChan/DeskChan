@@ -35,9 +35,9 @@ sendMessage("core:add-command", [
 addMessageListener('radio:play', { sender, tag, data ->
     println("opening scenario")
     sendMessage("scenario:run-scenario", [
-            "path": getPluginDirPath().resolve("open-radio.scenario").toString(),
-            "giveOwnership": true,
-            "msgData": [
+            path: getPluginDirPath().resolve("open-radio.scenario").toString(),
+            giveOwnership: true,
+            msgData: [
                     "radioList": getNamesList(),
                     "msgData": data["msgData"]
             ]
