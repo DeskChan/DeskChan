@@ -4,7 +4,6 @@ if (passedData["msgData"] != null)
     text = passedData["msgData"]
 
 def radioList = passedData["radioList"]
-
 def radioName = null
 while(radioName == null){
      if (text.contains("://")){
@@ -18,11 +17,12 @@ while(radioName == null){
         match("любое|any"){
             radioName = radioList.keySet().toArray()[new Random().nextInt(radioList.size())]
         }
-        for (def radio : radioList)
-            match(radio.key){
-                radioName = radio.key
-            }
-
+        for (def radio : radioList) {
+            final def key = radio.key
+            match(key){
+                radioName = key
+                }
+        }
         otherwise{
             ~ WRONG_DATA
             ~ CLARIFY
@@ -30,6 +30,5 @@ while(radioName == null){
         }
     }
 }
-
 $ core:open-link radioList[radioName]
 ~ DONE
