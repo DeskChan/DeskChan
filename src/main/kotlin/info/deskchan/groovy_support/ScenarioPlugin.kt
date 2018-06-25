@@ -181,7 +181,7 @@ class ScenarioPlugin : Plugin {
             try {
                 scriptLines = Files.readAllLines(path.toPath(), Charset.forName("UTF-8"))
             } catch (e: Exception) {
-                pluginProxy.log("Invalid path specified for scenario")
+                pluginProxy.log(e)
                 return null
             }
 
