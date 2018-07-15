@@ -93,10 +93,10 @@ public class PhraseComparison {
             }
             return sb.toString();
         }
-        WordPair getSimplified(){
+        WordPair simplified(){
             return new WordPair(simplify(one), simplify(two));
         }
-        WordPair getWithoutSuffixed(){
+        WordPair withoutSuffixes(){
             return new WordPair(removeSuffix(one), removeSuffix(two));
         }
         @Override
@@ -129,8 +129,7 @@ public class PhraseComparison {
         if(repl != null) return repl;
 
         int l1 = Levenshtein(pair);
-        int l2 = Levenshtein(removeSuffixes ? pair.getWithoutSuffixed().getSimplified() : pair.getSimplified());
-
+        int l2 = Levenshtein(removeSuffixes ? pair.simplified().withoutSuffixes() : pair.simplified());
 
         float l = (l1+l2)/2.0f;
         compareCache.put(pair, l);

@@ -116,7 +116,7 @@ public class Parsers {
                 this.category = category; this.object = object;
             }
             @Override
-            public String toString(){ return object.toString(); }
+            public String toString(){ return object !=null ? object.toString() : "Not found"; }
             Number getNumber(){ return (Number) object; }
             @Override
             public Result clone(){
@@ -752,6 +752,7 @@ public class Parsers {
             if(words.used[i]) continue;
 
             WordFinder.Result result = WordFinder.check(words.get(i));
+            //System.out.println(words.get(i) + " " + result);
             switch(result.category){
                 case DAYTIME: {
                     if (dayTime != null) {
@@ -869,7 +870,10 @@ public class Parsers {
             for(;d<len;d++)
                 if(offsetWords[permutation[d]]!=null && !offsetWords[permutation[d]].exact) u++;
 
-            if(u==0) break;
+            //System.out.print("[");
+            //for(int i=0;i<nlen;i++) System.out.print(permutation[i] + ",");
+            //System.out.println("]" + u);
+                if(u==0) break;
 
             if(u>0 && u<max){
                 finalPermutation=permutation.clone();

@@ -84,7 +84,7 @@ public class RegularRule{
         }
     }
 
-    protected abstract class PhraseLevel{
+    protected abstract static class PhraseLevel{
         boolean parsed;
         public boolean required = true;
 
@@ -95,7 +95,7 @@ public class RegularRule{
         public abstract int getLastPosition(ParseOptions.UsersStats users);
     }
 
-    protected abstract class PhraseLevelComplex extends PhraseLevel{
+    protected abstract static class PhraseLevelComplex extends PhraseLevel{
         public ArrayList<PhraseLevel> levels = new ArrayList <>();
         public void add(PhraseLevel level){
             levels.add(level);
@@ -127,7 +127,7 @@ public class RegularRule{
         }
     }
 
-    protected class PhraseLevelTypeAnd extends PhraseLevelComplex{
+    protected static class PhraseLevelTypeAnd extends PhraseLevelComplex{
         public SearchResult parse(){
             int length = 0;
             float currentResult = 0;
@@ -162,7 +162,7 @@ public class RegularRule{
         public String toString(){ return (required ? "" : "?") + printer(' '); }
     }
 
-    protected class PhraseLevelTypeOr extends PhraseLevelComplex{
+    protected static class PhraseLevelTypeOr extends PhraseLevelComplex{
         private int found;
         public SearchResult parse(){
             found = 0;
@@ -200,7 +200,7 @@ public class RegularRule{
     protected ArrayList<Argument> arguments=new ArrayList<>();
 
     private enum ArgumentType { Text , Word , List , Integer , Number , Date , Time , DateTime , RelativeDateTime }
-    protected class Argument extends PhraseLevel{
+    protected static class Argument extends PhraseLevel{
         public String name;
         public ArgumentType type;
         private PhraseLevel previous;
@@ -310,7 +310,7 @@ public class RegularRule{
         }
         public int getLastPosition(ParseOptions.UsersStats users){
             if(lastPos < 0){
-                return previous != null ? previous.getLastPosition(users) : 0;
+                return previous != null ? previous.getLastPosition(users) : -1;
             }
             return lastPos;
         }
@@ -640,7 +640,7 @@ public class RegularRule{
 
     public static class MatchResult{
         final float matchPercentage;
-        final Words words;
+        Words words;
         final int firstWordUsed;
         final int wordsUsed;
         private final ParseOptions.UsersStats users;
@@ -749,6 +749,21 @@ public class RegularRule{
 
         return map;
     }
+
+    public static Object getArgument(String type, String phrase) throws Exception{
+        RegularRule.Argument argument = new RegularRule.Argument(
+                "{data:" + type + "}",
+                null
+        );
+        argument.dropPosition();
+        MatchResult r = new MatchResult();
+        r.words = new Words(PhraseComparison.toClearWords(phrase));
+        Object data = argument.localize(phrase, r);
+
+        return data;
+    }
+
+
     @Override
     public String toString(){
         return start.toString();

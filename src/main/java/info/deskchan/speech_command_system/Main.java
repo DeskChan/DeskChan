@@ -135,9 +135,34 @@ public class Main implements Plugin {
             }
         });
 
+        /* Extracts data of specific type from speech.
+         * Public message
+         * Params: Map
+         *           speech: String! - speech
+         *           type: String! - type of data. Can be Integer, Number, Date, Time, DateTime, RelativeDateTime
+         * Returns: Object of specified type or null if data cannot be extracted. */
+        pluginProxy.addMessageListener("speech:extract-data", (sender, tag, data) -> {
+            if (!(data instanceof Map)){
+                throw new IllegalArgumentException();
+            }
+
+            Map query = (Map) data;
+            try {
+                pluginProxy.sendMessage(sender, RegularRule.getArgument(query.get("type").toString(), query.get("speech").toString()));
+            } catch (Exception e){
+                pluginProxy.log(e);
+            }
+        });
+
         pluginProxy.addMessageListener("recognition:get-words", (sender, tag, data) -> {
             pluginProxy.sendMessage(sender, Parsers.getWords());
         });
+
+        try {
+            RegularRule.getArgument("Date","20 июля");
+        } catch (Exception e){
+            pluginProxy.log(e);
+        }
 
         log("loading completed");
         return true;
