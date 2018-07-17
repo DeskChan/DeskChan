@@ -89,9 +89,10 @@ public class Main implements Plugin {
 				pluginProxy.log(e);
 			}
 		});
-
+        
 		UserSpeechRequest.initialize(pluginProxy);
-
+        Downloader.initialize(pluginProxy);
+        
 		pluginProxy.getProperties().load();
 		if (pluginProxy.getProperties().getBoolean("terminal", false))
 			TerminalGUI.initialize();
