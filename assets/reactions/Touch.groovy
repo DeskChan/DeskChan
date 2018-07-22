@@ -3,7 +3,7 @@ class Touch {
     def proxy
 
     def touch = { sender, tag, data ->
-        proxy.sendMessage("DeskChan:request-say", [ purpose: 'TOUCH', priority: 2000, timeout: 1000 ])
+        proxy.sendMessage("DeskChan:request-say", [ intent: 'TOUCH', priority: 2000, timeout: 1000 ])
     }
 
     void initialize(proxy) {

@@ -30,16 +30,8 @@ public class Main implements Plugin {
         }});
 
         // Registering as alternative
-        pluginProxy.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
-            put("srcTag", "DeskChan:user-said");
-            put("dstTag", "speech:get");
-            put("priority", 100);
-        }});
-        pluginProxy.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
-            put("srcTag", "DeskChan:commands-list");
-            put("dstTag", "speech:commands-list");
-            put("priority", 100);
-        }});
+        pluginProxy.setAlternative("DeskChan:user-said", "speech:get", 100);
+        pluginProxy.setAlternative("DeskChan:commands-list", "speech:commands-list", 100);
 
         pluginProxy.sendMessage("core:set-event-link", new HashMap<String, String>(){{
             put("eventName", "speech:get");
@@ -60,7 +52,7 @@ public class Main implements Plugin {
         pluginProxy.addMessageListener("speech:commands-list", (sender, tag, data) -> {
             StringBuilder sb = new StringBuilder();
             for (Command command : commands)
-                sb.append(command.rule.getRule()+"\n");
+                sb.append(command.rule.toPrettyString()+"\n");
 
             pluginProxy.sendMessage("DeskChan:say", "Я умею много всего! Сейчас список даже покажу.");
             pluginProxy.setTimer(200, (s, d) -> {
@@ -254,9 +246,10 @@ public class Main implements Plugin {
         }
         return best != null;
     }
-    static void log(String text) {
-        pluginProxy.log(text);
-    }
+
+    static String getString(String tag){ return pluginProxy.getString(tag); }
+
+    static void log(String text) { pluginProxy.log(text); }
 
     static void log(Throwable e) {
         pluginProxy.log(e);

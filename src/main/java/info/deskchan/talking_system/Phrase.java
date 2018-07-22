@@ -23,36 +23,36 @@ public class Phrase {
 	// Array of { block_name of String, start of Int, end of Int, params.. of String/Integer/Float }
 	protected Object[][] blocks;
 
-	// null means defaultPurpose
-	protected List<String> purposeType;
+	// null means default intent
+	protected List<String> intentType;
 
 	protected String spriteType;
 
-	protected static final String defaultPurpose = "CHAT";
-	protected static final String defaultSprite = "AUTO";
+	protected static final String DEFAULT_INTENT = "CHAT";
+	protected static final String DEFAULT_SPRITE = "AUTO";
 
 	public Phrase(String text) {
 		phraseText = text.replace("\n", "");
-		purposeType = null;
+		intentType = null;
 		character = new CharacterRange();
-		spriteType = defaultSprite;
+		spriteType = DEFAULT_SPRITE;
 		timeout = 0;
 		tags = null;
 		setBlocks();
 	}
 
-	public void setPurposeType(String text){
+	public void setIntentType(String text){
 		if (text == null || text.length() == 0) return;
 
-		List<String> purposes = new ArrayList<>();
-		for(String purpose : text.replace("\n", "").split(",")) {
-			purpose = purpose.trim().toUpperCase();
-			if (purpose.length() > 0) purposes.add(purpose);
+		List<String> intents = new ArrayList<>();
+		for(String intent : text.replace("\n", "").split(",")) {
+			intent = intent.trim().toUpperCase();
+			if (intent.length() > 0) intents.add(intent);
 		}
-		if (purposes.size() != 0 && !(purposes.size() == 1 && purposes.get(0).equals(defaultPurpose)))
-			purposeType = purposes;
+		if (intents.size() != 0 && !(intents.size() == 1 && intents.get(0).equals(DEFAULT_INTENT)))
+			intentType = intents;
 		else
-			purposeType = null;
+			intentType = null;
 	}
 
 	public void setSpriteType(String text){
@@ -60,7 +60,7 @@ public class Phrase {
 		spriteType = text.trim().replace("\n", "").toUpperCase();
 	}
 
-	protected static final String[] notTags = {"text", "purpose", "sprite", "timeout", "range"};
+	protected static final String[] notTags = {"text", "intent", "purpose", "sprite", "timeout", "range"};
 
 	public static Phrase create(Node node) {
 		NodeList list = node.getChildNodes();
@@ -75,13 +75,17 @@ public class Phrase {
 		Phrase phrase = new Phrase(p);
 		
 		try {
-			phrase.setPurposeType(findInNode(list, "purpose").getTextContent());
+			phrase.setIntentType(findInNode(list, "purpose").getTextContent());
+		} catch (Exception e) { }
+
+		try {
+			phrase.setIntentType(findInNode(list, "intent").getTextContent());
 		} catch (Exception e) { }
 		
 		try {
 			phrase.setSpriteType(findInNode(list, "sprite").getTextContent());
 		} catch (Exception e) {
-			phrase.spriteType = defaultSprite;
+			phrase.spriteType = DEFAULT_SPRITE;
 		}
 		try {
 			phrase.timeout = Integer.valueOf(findInNode(list, "timeout").getTextContent());
@@ -226,7 +230,7 @@ public class Phrase {
 						phrase.setSpriteType(array.getString(k));
 					break;
 					case 2:
-						phrase.setPurposeType(array.getString(k));
+						phrase.setIntentType(array.getString(k));
 					break;
 					case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10: {
 						Range range = new Range(array.getString(k));
@@ -253,8 +257,8 @@ public class Phrase {
 			if (timeout > 0)
 				appendTo(doc, mainNode, "timeout", String.valueOf(timeout));
 
-			appendTo(doc, mainNode, "purpose", getPurposesAsString());
-			if (!spriteType.equals(defaultSprite))
+			appendTo(doc, mainNode, "intent", getIntentsAsString());
+			if (!spriteType.equals(DEFAULT_SPRITE))
 				appendTo(doc, mainNode, "sprite", spriteType);
 
 			if (tags != null) {
@@ -293,9 +297,9 @@ public class Phrase {
 		return (new Date().getTime() - last_usage.getTime() > timeout * 1000);
 	}
 
-	public boolean purposeEquals(String match){
-		if (purposeType == null)  return match.equals(defaultPurpose);
-		return purposeType.contains(match);
+	public boolean intentEquals(String match){
+		if (intentType == null)  return match.equals(DEFAULT_INTENT);
+		return intentType.contains(match);
 	}
 
 	protected static Node findInNode(NodeList list, String name) {
@@ -313,7 +317,7 @@ public class Phrase {
 			map.put("timeout", timeout);
 
 		map.put("characterImage", spriteType);
-		map.put("purpose", getPurposes());
+		map.put("intent", getIntents());
 		map.put("hash", this.hashCode());
 		map.put("blocks", blocks);
 
@@ -325,8 +329,8 @@ public class Phrase {
 	}
 
 	public String toString() {
-		StringBuilder s = new StringBuilder("{" + phraseText + "} / Purpose: " + getPurposesAsString() + " / Range: { " + character.toString() + " }");
-		if (!spriteType.equals(defaultSprite)) {
+		StringBuilder s = new StringBuilder("{" + phraseText + "} / intent: " + getIntentsAsString() + " / Range: { " + character.toString() + " }");
+		if (!spriteType.equals(DEFAULT_SPRITE)) {
 			s.append(" / SpriteType: " + spriteType);
 		}
 		if (timeout > 0) {
@@ -339,17 +343,17 @@ public class Phrase {
 		return s.toString();
 	}
 
-	public List<String> getPurposes(){
-		return purposeType != null ? purposeType : Arrays.asList(defaultPurpose);
+	public List<String> getIntents(){
+		return intentType != null ? intentType : Arrays.asList(DEFAULT_INTENT);
 	}
 
-	public String getPurposesAsString(){
-		if (purposeType == null || purposeType.size() == 0)
-			return defaultPurpose;
+	public String getIntentsAsString(){
+		if (intentType == null || intentType.size() == 0)
+			return DEFAULT_INTENT;
 
 		StringBuilder sb = new StringBuilder();
-		for(String purpose : purposeType)
-			sb.append(purpose + ", ");
+		for(String intent : intentType)
+			sb.append(intent + ", ");
 		sb.setLength(sb.length() - 2);
 		return sb.toString();
 	}

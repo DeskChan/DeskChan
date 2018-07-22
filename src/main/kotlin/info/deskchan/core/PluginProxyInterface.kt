@@ -38,6 +38,18 @@ interface PluginProxyInterface : MessageListener {
     /** Remove listener to tag. */
     fun removeMessageListener(tag: String, listener: MessageListener)
 
+    /** Set alternative */
+    fun setAlternative(srcTag: String, dstTag: String, priority:Int)
+
+    /** Delete alternative */
+    fun deleteAlternative(srcTag: String, dstTag: String)
+
+    /** Call next alternative in the chain. */
+    fun callNextAlternative(sender: String, tag: String, currentAlternative: String, data: Any?)
+
+    /** Check if message sender is asking for advice. */
+    fun isAskingAnswer(sender: String) : Boolean
+
     /** Set timer.
      * @param delay Delay, ms
      * @param responseListener Function that will be called after delay

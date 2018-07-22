@@ -101,6 +101,26 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         }
     }
 
+    // Alternatives
+
+    override fun setAlternative(srcTag: String, dstTag: String, priority:Int) {
+        Alternatives.registerAlternative(srcTag, dstTag, id, priority)
+    }
+
+    override fun deleteAlternative(srcTag: String, dstTag: String) {
+        Alternatives.unregisterAlternative(srcTag, dstTag, id)
+    }
+
+    override fun callNextAlternative(sender: String, tag: String, currentAlternative: String, data: Any?) {
+        Alternatives.callNextAlternative(sender, tag, currentAlternative, data)
+    }
+
+    override fun isAskingAnswer(sender: String) : Boolean {
+        return sender.contains('#')
+    }
+
+    // Other
+
     override fun handleMessage(sender: String, tag: String, data: Any?) {
         val delimiterPas = tag.indexOf('#')
         if (delimiterPas >= 0 && tag.startsWith(id)) {

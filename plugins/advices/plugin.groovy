@@ -1,13 +1,9 @@
-sendMessage("core:register-alternative", [
-        "srcTag": "DeskChan:request-say",
-        "dstTag": "advices:replace-request",
-        "priority": 15000
-])
+setAlternative("DeskChan:request-say", "advices:replace-request", 15000)
 
 addMessageListener("advices:replace-request", { s,t,d ->
     if (d != null && new Random().nextFloat() > 0.85) {
-        if (d instanceof Map && d.get("purpose").toString().toUpperCase() == "CHAT") {
-            d.put("purpose", "ADVICE")
+        if (d instanceof Map && d.get("intent").toString().toUpperCase() == "CHAT") {
+            d.put("intent", "ADVICE")
         } else if (d.toString().toUpperCase() == "CHAT"){
             d = "ADVICE"
         }

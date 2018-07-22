@@ -5,25 +5,19 @@ class ActionRefuse {
 
     def refuse = { sender, tag, data ->
         if (Math.random() < chance)
-            proxy.sendMessage("DeskChan:request-say", [ purpose: 'REFUSE' ])
+            proxy.sendMessage("DeskChan:request-say", [ intent: 'REFUSE' ])
         else
             proxy.sendMessage("DeskChan:user-said#reactions:refuse", data)
     }
 
-    def alternativeMap = [
-            "srcTag": "DeskChan:user-said",
-            "dstTag": "reactions:refuse",
-            "priority": 110
-    ]
-
     void initialize(proxy) {
         this.proxy = proxy
-        proxy.sendMessage("core:register-alternative", alternativeMap)
+        proxy.setAlternative("DeskChan:user-said", "reactions:refuse", 110)
         proxy.addMessageListener("reactions:refuse", refuse)
     }
 
     void unload(proxy){
-        proxy.sendMessage("core:unregister-alternative", alternativeMap)
+        proxy.deleteAlternative("DeskChan:user-said", "reactions:refuse")
         proxy.removeMessageListener("reactions:refuse", refuse)
     }
 

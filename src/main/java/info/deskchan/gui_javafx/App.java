@@ -753,20 +753,10 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:toggle-redirect-recognition", (sender, tag, data) -> {
 			Main.getProperties().put("redirect-recognition", data);
-			pluginProxy.sendMessage("core:register-alternative",
-						new HashMap<String, Object>() {{
-							put("srcTag", "DeskChan:voice-recognition");
-							put("dstTag", "gui:raise-user-balloon");
-							put("priority", (Boolean) data ? 100 : 1);
-						}}
-			);
+			pluginProxy.setAlternative("DeskChan:voice-recognition", "gui:raise-user-balloon", (Boolean) data ? 100 : 1);
 		});
-		pluginProxy.sendMessage("core:register-alternative",
-				new HashMap<String, Object>() {{
-					put("srcTag", "DeskChan:voice-recognition");
-					put("dstTag", "gui:raise-user-balloon");
-					put("priority",  Main.getProperties().getBoolean("redirect-recognition", false) ? 100 : 1);
-				}}
+		pluginProxy.setAlternative("DeskChan:voice-recognition", "gui:raise-user-balloon",
+				Main.getProperties().getBoolean("redirect-recognition", false) ? 100 : 1
 		);
 
 		/* Open folder containing log file.  */
@@ -989,33 +979,11 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:show-error",    errorListener);
 
 		/* Registering all alternatives. */
-		pluginProxy.sendMessage("core:register-alternatives", Arrays.asList(
-				new HashMap<String, Object>() {{
-					put("srcTag", "DeskChan:register-simple-action");
-					put("dstTag", "gui:register-simple-action");
-					put("priority", 100);
-				}},
-				new HashMap<String, Object>() {{
-					put("srcTag", "DeskChan:register-simple-actions");
-					put("dstTag", "gui:register-simple-actions");
-					put("priority", 100);
-				}},
-				new HashMap<String, Object>() {{
-					put("srcTag", "DeskChan:say");
-					put("dstTag", "gui:say");
-					put("priority", 100);
-				}},
-				new HashMap<String, Object>() {{
-					put("srcTag", "core-utils:notify-after-delay");
-					put("dstTag", "gui:notify-after-delay");
-					put("priority", 100);
-				}},
-				new HashMap<String, Object>() {{
-					put("srcTag", "DeskChan:show-technical");
-					put("dstTag", "gui:show-notification");
-					put("priority", 100);
-				}}
-		));
+		pluginProxy.setAlternative("DeskChan:register-simple-action", "gui:register-simple-action", 100);
+		pluginProxy.setAlternative("DeskChan:register-simple-actions", "gui:register-simple-actions", 100);
+		pluginProxy.setAlternative("DeskChan:say", "gui:say", 100);
+		pluginProxy.setAlternative("core-utils:notify-after-delay", "gui:notify-after-delay", 100);
+		pluginProxy.setAlternative("DeskChan:show-technical", "gui:show-notification", 100);
 
 		pluginProxy.sendMessage("core:add-command", new HashMap(){{
 			put("tag", "gui:show-character");

@@ -15,17 +15,17 @@ class KnowledgeBase {
         text = text.replace("\\{[^\\{\\}]+\\}", "");
         ArrayList<String> words = TextOperations.simplifyWords(TextOperations.extractWordsLower(text));
 
-        for (String purpose : phrase.getPurposes()) {
+        for (String intent : phrase.getIntents()) {
             boolean found = false;
             for (Container container : classes) {
-                if (purpose.equals(container.getName())) {
+                if (intent.equals(container.getName())) {
                     found = true;
                     container.add(words);
                     break;
                 }
             }
             if (!found) {
-                Container container = new Container(purpose);
+                Container container = new Container(intent);
                 container.add(words);
                 classes.add(container);
             }

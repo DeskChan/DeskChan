@@ -194,9 +194,9 @@ class OpenCommand{
                 process.waitFor()
 
                 if(process.exitValue() == 0)
-                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'DONE', 'message': process.text])
+                    instance.sendMessage("DeskChan:notify", [ 'speech-intent': 'DONE', 'message': process.text])
                 else
-                    instance.sendMessage("DeskChan:notify", [ 'speech-purpose': 'ERROR', 'message': 'Error code '+process.exitValue() + " / " + process.text])
+                    instance.sendMessage("DeskChan:notify", [ 'speech-intent': 'ERROR', 'message': 'Error code '+process.exitValue() + " / " + process.text])
             }
         })
 

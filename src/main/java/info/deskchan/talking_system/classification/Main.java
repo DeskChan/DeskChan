@@ -17,11 +17,7 @@ public class Main {
 
         setClassifier();
 
-        pluginProxy.sendMessage("core:register-alternative", new HashMap<String,Object>(){{
-            put("srcTag", "DeskChan:user-said");
-            put("dstTag", "talk:classify-text");
-            put("priority", 50000);
-        }});
+        pluginProxy.setAlternative("DeskChan:user-said", "talk:classify-text", 50000);
 
         pluginProxy.addMessageListener("talk:classify-text", (sender, tag, data) -> {
             String text;
@@ -34,9 +30,9 @@ public class Main {
                 map = new HashMap();
                 map.put("value", text);
             }
-            map.put("purpose", classifier.classify(text));
-            //System.out.println(map.get("purpose"));
-            pluginProxy.sendMessage("DeskChan:user-said#talk:classify-text", map);
+            map.put("intent", classifier.classify(text));
+            //System.out.println(map.get("intent"));
+            pluginProxy.callNextAlternative(sender, "DeskChan:user-said", "talk:classify-text", map);
         });
 
         pluginProxy.addMessageListener("talk:character-updated", (sender, tag, data) -> {

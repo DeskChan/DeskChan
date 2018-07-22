@@ -2,7 +2,6 @@ package info.deskchan.core_utils;
 
 import info.deskchan.core.PluginManager;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -10,18 +9,8 @@ import java.util.Scanner;
 public class TerminalGUI {
 
     public static void initialize(){
-        Main.getPluginProxy().sendMessage("core:register-alternatives", Arrays.asList(
-                new HashMap<String, Object>() {{
-                    put("srcTag", "DeskChan:say");
-                    put("dstTag", "core-utils:say");
-                    put("priority", 1000);
-                }},
-                new HashMap<String, Object>() {{
-                    put("srcTag", "DeskChan:show-technical");
-                    put("dstTag", "core-utils:show-technical");
-                    put("priority", 1000);
-                }}
-        ));
+        Main.getPluginProxy().setAlternative("DeskChan:say", "core-utils:say", 1000);
+        Main.getPluginProxy().setAlternative("DeskChan:show-technical", "core-utils:show-technical", 1000);
 
         Main.getPluginProxy().addMessageListener("core-events:plugin-load", (sender, tag, data) -> {
             String name = data.toString();
@@ -51,7 +40,7 @@ public class TerminalGUI {
 
             System.out.println(text);
 
-            if (sender.contains("#"))
+            if (Main.getPluginProxy().isAskingAnswer(sender))
                 Main.getPluginProxy().sendMessage(sender, null);
 
             Map m = new HashMap(); m.put("msgData", text);

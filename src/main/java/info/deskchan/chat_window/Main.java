@@ -222,13 +222,7 @@ public class Main implements Plugin {
             setupChat();
         });
 
-        pluginProxy.sendMessage("core:register-alternative",
-                new HashMap<String, Object>() {{
-                    put("srcTag", "DeskChan:user-said");
-                    put("dstTag", "chat:change-layout-and-resend");
-                    put("priority", 5);
-                }}
-        );
+        pluginProxy.setAlternative("DeskChan:user-said", "chat:change-layout-and-resend", 5);
 
         // if user missed layout, we're trying to fix it and resend user speech again
         pluginProxy.addMessageListener("chat:change-layout-and-resend", (sender, tag, dat) -> {

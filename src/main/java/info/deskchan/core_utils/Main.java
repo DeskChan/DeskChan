@@ -2,6 +2,7 @@ package info.deskchan.core_utils;
 
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.core.ResponseListener;
 
 import java.util.*;
 
@@ -68,11 +69,7 @@ public class Main implements Plugin {
 			ResourceDistributor.distribute((String) data);
 		});
 
-		pluginProxy.sendMessage("core:register-alternative", new HashMap<String, Object>() {{
-			put("srcTag", "core-utils:notify-after-delay");
-			put("dstTag", "core-utils:notify-after-delay-default-impl");
-			put("priority", 1);
-		}});
+		pluginProxy.setAlternative("core-utils:notify-after-delay", "core-utils:notify-after-delay-default-impl", 1);
 
 		pluginProxy.addMessageListener("core:open-link", (sender, tag, data) -> {
 			if (data == null) return;
@@ -96,6 +93,12 @@ public class Main implements Plugin {
 		if (pluginProxy.getProperties().getBoolean("terminal", false))
 			TerminalGUI.initialize();
 
+		pluginProxy.setTimer(20000, -1, new ResponseListener() {
+			@Override
+			public void handle(String sender, Object data) {
+				System.gc();
+			}
+		});
 		return true;
 	}
 

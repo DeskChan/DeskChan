@@ -104,4 +104,16 @@ abstract class GroovyPlugin : Script(), Plugin {
         pluginProxy!!.log(e)
     }
 
+    fun setAlternative(srcTag: String, dstTag: String, priority:Int) {
+        pluginProxy!!.setAlternative(srcTag, dstTag, priority)
+    }
+
+    fun deleteAlternative(srcTag: String, dstTag: String) {
+        pluginProxy!!.deleteAlternative(srcTag, dstTag)
+    }
+
+    fun callNextAlternative(sender: String, tag: String, currentAlternative: String, data: Any?) {
+        pluginProxy!!.callNextAlternative(sender, tag, currentAlternative, data)
+    }
+
 }

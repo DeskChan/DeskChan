@@ -67,7 +67,7 @@ public class Main implements Plugin {
 
             TimeForecast forecast = server.getNow();
             if (forecast == null){
-                say.put("purpose", "NO_NETWORK");
+                say.put("intent", "NO_NETWORK");
                 pluginProxy.sendMessage("DeskChan:request-say", say);
                 return;
             }

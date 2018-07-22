@@ -34,14 +34,13 @@ class Module {
             proxy.log(e)
         }
         this.name = name
-        proxy.sendMessage("core:register-alternative",
-                ["srcTag": "DeskChan:request-say", "dstTag": proxy.getId()+":"+name, "priority": priority--])
+        proxy.setAlternative("DeskChan:request-say", proxy.getId()+":"+name, priority--)
 
         proxy.addMessageListener( proxy.getId() + ":" + name, { sender, tag, data ->
             int usage = proxy.getProperties().getInteger(name, 1)
             if (usage == 2 || (usage == 1 && active))
                 data = morphPhrase(data)
-            proxy.sendMessage("DeskChan:request-say#" + proxy.getId() + ":" + name, data)
+            proxy.callNextAlternative(sender, "DeskChan:request-say", proxy.getId() + ":" + name, data)
         })
     }
 
