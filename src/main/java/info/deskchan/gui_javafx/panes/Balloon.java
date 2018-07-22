@@ -60,7 +60,7 @@ public class Balloon extends MovablePane {
     protected float balloonOpacity = 100;
     protected BubblePane bubblePane;
 
-    Balloon() {
+    protected Balloon() {
         openedBalloons.add(this);
 
         bubbleShadow.setRadius(10.0);

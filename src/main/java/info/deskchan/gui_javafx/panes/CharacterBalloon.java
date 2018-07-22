@@ -17,9 +17,13 @@ import javafx.util.Duration;
 
 public class CharacterBalloon extends Balloon {
 
-	private static CharacterBalloon instance;
+	private static CharacterBalloon instance = null;
 
-	public static CharacterBalloon getInstance(){ return instance; }
+	public static CharacterBalloon getInstance(){
+		if (instance == null)
+			instance = new CharacterBalloon();
+		return instance;
+	}
 
 	public enum PositionMode {
 		AUTO,
@@ -52,7 +56,7 @@ public class CharacterBalloon extends Balloon {
 
 	protected SymbolsAdder symbolsAdder;
 
-	CharacterBalloon(Character character, String text) {
+	protected CharacterBalloon() {
 		super();
 		instance = this;
 		setId("character-balloon");
@@ -71,12 +75,6 @@ public class CharacterBalloon extends Balloon {
 		} else {
 			label.setFont(LocalFont.defaultFont);
 		}
-
-		Integer animation_delay = Main.getProperties().getInteger("balloon.text-animation-delay", 50);
-		if (animation_delay > 0)
-			symbolsAdder = new SymbolsAdder(text, animation_delay);
-		else
-			label.setText(text);
 
 		content = label;
 		bubblePane = drawer.createBalloon(content);
@@ -129,6 +127,15 @@ public class CharacterBalloon extends Balloon {
 		if (positionMode != PositionMode.ABSOLUTE) {
 			positionRelativeToDesktopSize = false;
 		}
+	}
+
+	protected void setup(Character character, String text){
+		Integer animation_delay = Main.getProperties().getInteger("balloon.text-animation-delay", 50);
+		if (animation_delay > 0)
+			symbolsAdder = new SymbolsAdder(text, animation_delay);
+		else
+			content.setText(text);
+		this.character = character;
 	}
 
 	@Override
@@ -278,7 +285,6 @@ public class CharacterBalloon extends Balloon {
 		super.show();
 		setPositionStorageID(character.getId() + ".balloon");
 	}
-
 
 	class SymbolsAdder implements EventHandler<javafx.event.ActionEvent> {
 

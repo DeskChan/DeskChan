@@ -37,7 +37,7 @@ public class UserBalloon extends Balloon {
 
     BalloonDialog dialog;
 
-    public UserBalloon() {
+    protected UserBalloon() {
         super();
         setId("user-balloon");
         instance = this;

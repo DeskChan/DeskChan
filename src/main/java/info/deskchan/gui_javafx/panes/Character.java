@@ -330,7 +330,8 @@ public class Character extends MovablePane {
 		    setImageName(messageInfo.characterImage);
 
 		messageInfo.notifySender();
-		balloon = new CharacterBalloon(this, messageInfo.text[messageInfo.counter]);
+		balloon = CharacterBalloon.getInstance();
+		balloon.setup(this, messageInfo.text[messageInfo.counter]);
 		messageInfo.counter++;
 		balloon.setTimeout(messageInfo.timeout);
 		balloon.show();
@@ -396,7 +397,7 @@ public class Character extends MovablePane {
 			String text2;
 			int _timeout;
 			boolean partible = true;
-			notifyTo = (sender != null && sender.contains("#")) ? sender : false;
+			notifyTo = (sender != null && Main.getPluginProxy().isAskingAnswer(sender)) ? sender : false;
 
 			if(data instanceof Map){
 				Map<String,Object> mapData = (Map<String,Object>) data;
