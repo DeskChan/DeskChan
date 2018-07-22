@@ -93,6 +93,7 @@ public class RegularRule{
         public abstract boolean canBeRemoved();
         public abstract void remove();
         public abstract int getLastPosition(ParseOptions.UsersStats users);
+        public abstract String toPrettyString();
     }
 
     protected abstract static class PhraseLevelComplex extends PhraseLevel{
@@ -160,6 +161,14 @@ public class RegularRule{
         }
         @Override
         public String toString(){ return (required ? "" : "?") + printer(' '); }
+        public String toPrettyString(){
+            StringBuilder pr = new StringBuilder();
+            for(int i=0;i<levels.size();i++) {
+                if (i > 0) pr.append(' ');
+                pr.append(levels.get(i).toPrettyString());
+            }
+            return pr.toString();
+        };
     }
 
     protected static class PhraseLevelTypeOr extends PhraseLevelComplex{
@@ -195,6 +204,7 @@ public class RegularRule{
         }
         @Override
         public String toString(){ return (required ? "" : "?")+printer('|'); }
+        public String toPrettyString(){ return levels.get(0).toPrettyString(); };
     }
 
     protected ArrayList<Argument> arguments=new ArrayList<>();
@@ -316,6 +326,7 @@ public class RegularRule{
         }
         @Override
         public String toString(){ return '{'+name+":"+type.toString()+"}"; }
+        public String toPrettyString(){ return '{' + Main.getString("arg."+type.toString()) + '}'; }
     }
 
     /** SIMILAR - we found word that looks similar to required word
@@ -432,6 +443,7 @@ public class RegularRule{
         public String toString(){
             return (required ? "" : "?") + word;
         }
+        public String toPrettyString(){ return word; }
     }
 
     private PhraseLevel start;
@@ -767,6 +779,10 @@ public class RegularRule{
     @Override
     public String toString(){
         return start.toString();
+    }
+
+    public String toPrettyString(){
+        return start.toPrettyString();
     }
 
     private static final LimitHashMap<String, RegularRule> hash = new LimitHashMap<>(100);
