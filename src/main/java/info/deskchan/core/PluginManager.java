@@ -213,6 +213,8 @@ public class PluginManager {
 	 * @param data Additional data that will be sent with query, can be null
 	 */
 	void sendMessage(String sender, String tag, Object data) {
+		Object serializedData = MessageDataUtils.serialize(data);
+		
 		Set<MessageListener> listeners = getMessageListeners(tag);
 		if (listeners == null || listeners.size() == 0)
 			return;
@@ -223,7 +225,7 @@ public class PluginManager {
 					@Override
 					void run() {
 						try {
-							listener.handleMessage(sender, tag, data);
+							listener.handleMessage(sender, tag, serializedData);
 						} catch (Throwable e) {
 							if (!tag.equals("core-events:error"))
 								log(sender, new Exception("Error while calling " + tag + ", called by " + sender, e));
