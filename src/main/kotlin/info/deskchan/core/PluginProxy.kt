@@ -93,7 +93,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 		PluginManager.getInstance().registerMessageListener(tag, listener)
 	}
 	
-	override fun <T> addMessageListener(tag: String, listener: TypedMessageListener<T>) {
+	override fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
 		for (method in listener.javaClass.methods) {
 			if ((method.name == "handleMessage") && (method.parameterCount == 3)) {
 				val cls = method.parameterTypes.last()
@@ -119,7 +119,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 		}
 	}
 	
-	override fun <T> removeMessageListener(tag: String, listener: TypedMessageListener<T>) {
+	override fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
 		val l = typedListeners.remove(listener)
 		if (l != null) {
 			removeMessageListener(tag, l)

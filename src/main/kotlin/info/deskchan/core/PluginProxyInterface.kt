@@ -36,13 +36,13 @@ interface PluginProxyInterface : MessageListener {
 	fun addMessageListener(tag: String, listener: MessageListener)
 	
 	/** Add typed listener to tag. All messages from everywhere in program will be received by this listener. */
-	fun <T> addMessageListener(tag: String, listener: TypedMessageListener<T>)
+	fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
 	
 	/** Remove listener to tag. */
 	fun removeMessageListener(tag: String, listener: MessageListener)
 	
 	/** Remove typed listener to tag. */
-	fun <T> removeMessageListener(tag: String, listener: TypedMessageListener<T>)
+	fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
 	
 	/** Set timer.
 	 * @param delay Delay, ms
