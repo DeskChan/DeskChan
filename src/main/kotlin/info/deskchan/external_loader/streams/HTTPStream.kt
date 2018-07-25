@@ -5,7 +5,9 @@ import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import info.deskchan.external_loader.wrappers.MessageWrapper
 import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.InetSocketAddress
+import java.net.URL
 
 
 class HTTPStream : ExternalStream, HttpHandler {
@@ -23,27 +25,46 @@ class HTTPStream : ExternalStream, HttpHandler {
         server?.start()
     }
 
-    var lastExchange: HttpExchange? = null
+    private lateinit var info: MessageWrapper.Message
+    private var lastExchange: HttpExchange? = null
+    private val registeredListeners = mutableMapOf<String, MutableList<MessageWrapper.Message>>()
+    private val sendToServerListeners = mutableMapOf<String, URL>()
 
     @Throws(IOException::class)
     override fun handle(t: HttpExchange) {
-        if (key != null && t.requestHeaders.getFirst(key) != key){
+        // Not authorized
+        if (key != null && t.requestHeaders.getFirst("Authorization") != key){
             t.sendResponseHeaders(401, 0)
             val os = t.responseBody
             os.close()
             return
         }
         if (t.requestMethod == "GET") {
-            val response = MessageWrapper.serialize(buffer).toString().toByteArray()
+            val list = mutableListOf<MessageWrapper.Message>()
+            if ("Expect" in t.requestHeaders){
+                t.requestHeaders["Expect"]!!.forEach {
+                    if (registeredListeners.containsKey(it)) {
+                        list.addAll(registeredListeners[it]!!)
+                        registeredListeners.remove(it)
+                    }
+                }
+            } else {
+                info.additionalArguments["called"] = registeredListeners.keys
+                list.add(info)
+            }
+            val response = MessageWrapper.serialize(list).toString().toByteArray()
             t.sendResponseHeaders(200, response.size.toLong())
             val os = t.responseBody
             os.write(response)
             os.close()
-            buffer.clear()
             return
         }
-        println("received "+t.requestMethod)
-        lastExchange = t
+        if (t.requestMethod == "POST")
+            lastExchange = t
+        else {
+            t.sendResponseHeaders(400, 0)
+            t.responseBody.close()
+        }
     }
 
     override fun read(wrapper: MessageWrapper) : MessageWrapper.Message {
@@ -51,7 +72,30 @@ class HTTPStream : ExternalStream, HttpHandler {
             if (!isAlive()) throw IOException("Process stopped working by unknown reason")
             Thread.sleep(2000)
         }
-        return wrapper.unwrap(lastExchange!!.requestBody.reader(Charsets.UTF_8).readText())
+        val message = wrapper.unwrap(lastExchange!!.requestBody.reader(Charsets.UTF_8).readText())
+
+        if ("sendTo" in message.additionalArguments){
+            when (message.type){
+                "addMessageListener" -> {
+                    sendToServerListeners[message.getRequiredAsString(1)] =
+                            URL(message.additionalArguments["sendTo"].toString())
+                }
+                "sendMessage" -> {
+                    if ("response" in message.additionalArguments)
+                        sendToServerListeners[message.additionalArguments["response"].toString()] =
+                                URL(message.additionalArguments["sendTo"].toString())
+                    if ("return" in message.additionalArguments)
+                        sendToServerListeners[message.additionalArguments["return"].toString()] =
+                                URL(message.additionalArguments["sendTo"].toString())
+                }
+                "setTimer" -> {
+                    sendToServerListeners[message.getRequiredAsString(2)] =
+                            URL(message.additionalArguments["sendTo"].toString())
+                }
+            }
+        }
+
+        return message
     }
 
     override fun canRead() : Boolean = (lastExchange != null)
@@ -60,21 +104,39 @@ class HTTPStream : ExternalStream, HttpHandler {
 
     override fun canReadError() : Boolean = false
 
-    private val buffer = mutableListOf<Any>()
     override fun write(message: MessageWrapper.Message, wrapper: MessageWrapper){
         val data = wrapper.wrap(message)
-        if (message.type != "confirm"){
-            buffer.add(data)
-            return
+        when (message.type){
+            "setInfo" -> {
+                info = message
+            }
+            "confirm" -> {
+                if (lastExchange == null) throw Exception("No request to response.")
+                val ex = lastExchange!!
+                lastExchange = null
+                val response = data.toString().toByteArray()
+                ex.sendResponseHeaders(200, response.size.toLong())
+                val os = ex.responseBody
+                os.write(response)
+                os.close()
+            }
+            "call" -> {
+                val tag = message.getRequiredAsString(0)
+                if (tag in sendToServerListeners){
+                    val url = sendToServerListeners[tag]!!
+                    val con = url.openConnection() as HttpURLConnection
+                    con.requestMethod = "POST"
+                    con.outputStream.writer(Charsets.UTF_8).write(data.toString())
+                    con.outputStream.close()
+                } else if (tag in registeredListeners)
+                    registeredListeners[tag]!!.add(message)
+                else
+                    registeredListeners[tag] = mutableListOf(message)
+            }
+            "unload" -> {
+                // TODO:  TOO LAZY
+            }
         }
-        if (lastExchange == null) throw Exception("No request to response.")
-        val ex = lastExchange!!
-        lastExchange = null
-        val response = data.toString().toByteArray()
-        ex.sendResponseHeaders(200, response.size.toLong())
-        val os = ex.responseBody
-        os.write(response)
-        os.close()
     }
 
     override fun isAlive() : Boolean = (server != null)

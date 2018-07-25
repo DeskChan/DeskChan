@@ -22,6 +22,8 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
    private lateinit var stream: ExternalStream
    private lateinit var wrapper: MessageWrapper
 
+   private var ping = 200L
+
    override fun initialize(pluginProxy: PluginProxyInterface):Boolean {
       this.pluginProxy = pluginProxy
       //println("type: "+pluginProxy.getConfigField("type"))
@@ -38,11 +40,13 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
          "HttpServer" -> {
             val file = Properties()
             file.load(pluginFile.reader())
+            ping = file.getProperty("delay", ping.toString()).toLong()
             stream = HTTPStream(
                     file.getProperty("context", "/"),
                     file.getProperty("port", "3640").toInt(),
                     file.getProperty("key", null)
             )
+
             wrapper = JSONMessageWrapper()
          }
          else -> return false
@@ -82,7 +86,7 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
                  pluginProxy.log(Exception("Process stopped working by unknown reason"))
                  return
              }
-             Thread.sleep(200)
+             Thread.sleep(ping)
              continue
          }
 
@@ -109,14 +113,14 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
                val result: Any
                val args = message.requiredArguments
                val msg = args[0].toString()
-               val ret:  Int? = (message.additionalArguments["return"] as Number?)?.toInt()
-               val resp: Int? = (message.additionalArguments["response"] as Number?)?.toInt()
+               val ret = message.additionalArguments["return"]?.toString()
+               val resp = message.additionalArguments["response"]?.toString()
                val data = args[1]
                if (resp != null){
                   if (ret != null)
-                     result = pluginProxy.sendMessage(msg, data, ExternListener(resp!!), ExternListener(ret))
+                     result = pluginProxy.sendMessage(msg, data, ExternListener(resp), ExternListener(ret))
                   else
-                     result = pluginProxy.sendMessage(msg, data, ExternListener(resp!!))
+                     result = pluginProxy.sendMessage(msg, data, ExternListener(resp))
                } else
                   result = pluginProxy.sendMessage(msg, data)
                confirm(result)
@@ -133,12 +137,12 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
             "addMessageListener" -> {
                pluginProxy.addMessageListener(
                        message.getRequiredAsString(0),
-                       ExternListener(message.getRequiredAsInt(1))
+                       ExternListener(message.getRequiredAsString(1))
                )
                confirm(null)
             }
             "removeMessageListener" -> {
-               val id = message.requiredArguments[1] as Int
+               val id = message.getRequiredAsString(1)
                if (id in listeners)
                   pluginProxy.addMessageListener(
                        message.getRequiredAsString(0),
@@ -147,17 +151,19 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
                confirm(null)
             }
             "setTimer" -> {
+               val listener = ExternListener(message.getRequiredAsString(2), false)
                val r = pluginProxy.setTimer(
                        message.getRequiredAsLong(0),
                        message.getRequiredAsInt(1),
-                       ExternListener(message.getRequiredAsInt(2))
+                       listener
                )
+               listeners["timer"+r] = listener
                confirm(r)
             }
             "cancelTimer" -> {
                val id = message.getRequiredAsInt(0)
                pluginProxy.cancelTimer(id)
-               listeners.remove(id)
+               listeners.remove("timer"+id)
                confirm(null)
             }
             "setAlternative" -> {
@@ -257,17 +263,22 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
 
    /* Handling messages */
 
-   val listeners = mutableMapOf<Int, ExternListener>()
-   inner class ExternListener(private val seq:Int) : ResponseListener, MessageListener {
+   val listeners = mutableMapOf<String, ExternListener>()
+   open inner class ExternListener : ResponseListener, MessageListener {
 
-      init {
-         listeners.put(seq, this)
+      protected val seq:String
+
+      constructor(seq:String, add:Boolean = true) {
+         this.seq = seq
+         if (add)
+            listeners[seq] = this
       }
+
       override fun handle(sender:String, data: Any?){
-         //println("-- handling1 " + seq.toString() + " " + sender + " " + data)
+         //println("-- handling1 " + seq + " " + sender + " " + data)
           val message = MessageWrapper.Message(
                   "call",
-                  mutableListOf(seq.toString(), sender, data)
+                  mutableListOf(seq, sender, data)
           )
           stream.write(message, wrapper)
       }
@@ -276,7 +287,7 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
          //println("-- handling2 " + seq.toString() + " " + sender + " " + tag + " " + data)
           val message = MessageWrapper.Message(
                   "call",
-                  mutableListOf(seq.toString(), sender, data),
+                  mutableListOf(seq, sender, data),
                   mutableMapOf("tag" to tag)
           )
           stream.write(message, wrapper)

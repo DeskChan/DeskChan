@@ -1,5 +1,6 @@
 package info.deskchan.core_utils;
 
+import info.deskchan.core.CoreInfo;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core.ResponseListener;
@@ -90,7 +91,7 @@ public class Main implements Plugin {
 		UserSpeechRequest.initialize(pluginProxy);
 
 		pluginProxy.getProperties().load();
-		if (pluginProxy.getProperties().getBoolean("terminal", false))
+		if (CoreInfo.getCoreProperties().getBoolean("terminal", false))
 			TerminalGUI.initialize();
 
 		pluginProxy.setTimer(20000, -1, new ResponseListener() {
