@@ -41,13 +41,14 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
             val file = Properties()
             file.load(pluginFile.reader())
             ping = file.getProperty("delay", ping.toString()).toLong()
+            wrapper = JSONMessageWrapper()
             stream = HTTPStream(
                     file.getProperty("context", "/"),
                     file.getProperty("port", "3640").toInt(),
-                    file.getProperty("key", null)
+                    file.getProperty("key", null),
+                    wrapper
             )
 
-            wrapper = JSONMessageWrapper()
          }
          else -> return false
       }

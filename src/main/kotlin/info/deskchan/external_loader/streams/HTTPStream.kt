@@ -14,9 +14,11 @@ class HTTPStream : ExternalStream, HttpHandler {
 
     var server: HttpServer?
     val key: String?
+    val wrapper: MessageWrapper
 
-    constructor(context: String, port: Int, key: String?){
+    constructor(context: String, port: Int, key: String?, wrapper: MessageWrapper){
         this.key = key
+        this.wrapper = wrapper
         server = HttpServer.create(InetSocketAddress("localhost", port), 0)
         server!!.createContext(context, this)
         server!!.executor = null
@@ -52,7 +54,7 @@ class HTTPStream : ExternalStream, HttpHandler {
                 info.additionalArguments["called"] = registeredListeners.keys
                 list.add(info)
             }
-            val response = MessageWrapper.serialize(list).toString().toByteArray()
+            val response = wrapper.serialize(list).toString().toByteArray()
             t.sendResponseHeaders(200, response.size.toLong())
             val os = t.responseBody
             os.write(response)
