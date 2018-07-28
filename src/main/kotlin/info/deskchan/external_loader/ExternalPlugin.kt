@@ -10,6 +10,7 @@ import info.deskchan.external_loader.streams.ProcessIOStream
 import info.deskchan.external_loader.wrappers.InlineMessageWrapper
 import info.deskchan.external_loader.wrappers.JSONMessageWrapper
 import info.deskchan.external_loader.wrappers.MessageWrapper
+import org.json.JSONException
 import java.io.File
 import java.io.IOException
 import java.security.InvalidKeyException
@@ -104,142 +105,149 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
          } catch (e: InvalidKeyException){
             pluginProxy.log(e)
             continue
+         } catch (e: JSONException){
+            pluginProxy.log(e)
+            continue
          } catch (e: Throwable){
             pluginProxy.log(e)
             break
          }
 
-         when (message.type){
-            "sendMessage" -> {
-               val result: Any
-               val args = message.requiredArguments
-               val msg = args[0].toString()
-               val ret = message.additionalArguments["return"]?.toString()
-               val resp = message.additionalArguments["response"]?.toString()
-               val data = args[1]
-               if (resp != null){
-                  if (ret != null)
-                     result = pluginProxy.sendMessage(msg, data, ExternListener(resp), ExternListener(ret))
-                  else
-                     result = pluginProxy.sendMessage(msg, data, ExternListener(resp))
-               } else
-                  result = pluginProxy.sendMessage(msg, data)
-               confirm(result)
-            }
-            "callNextAlternative" -> {
-               pluginProxy.callNextAlternative(
-                       message.getRequiredAsString(0),
-                       message.getRequiredAsString(1),
-                       message.getRequiredAsString(2),
-                       message.requiredArguments[3]
-               )
-               confirm(null)
-            }
-            "addMessageListener" -> {
-               pluginProxy.addMessageListener(
-                       message.getRequiredAsString(0),
-                       ExternListener(message.getRequiredAsString(1))
-               )
-               confirm(null)
-            }
-            "removeMessageListener" -> {
-               val id = message.getRequiredAsString(1)
-               if (id in listeners)
-                  pluginProxy.addMessageListener(
-                       message.getRequiredAsString(0),
-                       listeners.remove(id)!!
-                  )
-               confirm(null)
-            }
-            "setTimer" -> {
-               val listener = ExternListener(message.getRequiredAsString(2), false)
-               val r = pluginProxy.setTimer(
-                       message.getRequiredAsLong(0),
-                       message.getRequiredAsInt(1),
-                       listener
-               )
-               listeners["timer"+r] = listener
-               confirm(r)
-            }
-            "cancelTimer" -> {
-               val id = message.getRequiredAsInt(0)
-               pluginProxy.cancelTimer(id)
-               listeners.remove("timer"+id)
-               confirm(null)
-            }
-            "setAlternative" -> {
-               pluginProxy.setAlternative(
-                       message.getRequiredAsString(0),
-                       message.getRequiredAsString(1),
-                       message.getRequiredAsInt(2)
-               )
-               confirm(null)
-            }
-            "deleteAlternative" -> {
-               pluginProxy.deleteAlternative(
-                       message.getRequiredAsString(0),
-                       message.getRequiredAsString(1)
-               )
-               confirm(null)
-            }
-            "setProperty" -> {
-               val last = when(message.requiredArguments[1]){
-                  null -> pluginProxy.getProperties().remove(message.getRequiredAsString(0))
-                  else -> pluginProxy.getProperties().put(
-                           message.getRequiredAsString(0),
-                           message.requiredArguments[1]!!
-                  )
+         try {
+            when (message.type) {
+               "sendMessage" -> {
+                  val result: Any
+                  val args = message.requiredArguments
+                  val msg = args[0].toString()
+                  val ret = message.additionalArguments["return"]?.toString()
+                  val resp = message.additionalArguments["response"]?.toString()
+                  val data = args[1]
+                  if (resp != null) {
+                     if (ret != null)
+                        result = pluginProxy.sendMessage(msg, data, ExternListener(resp), ExternListener(ret))
+                     else
+                        result = pluginProxy.sendMessage(msg, data, ExternListener(resp))
+                  } else
+                     result = pluginProxy.sendMessage(msg, data)
+                  confirm(result)
                }
+               "callNextAlternative" -> {
+                  pluginProxy.callNextAlternative(
+                          message.getRequiredAsString(0),
+                          message.getRequiredAsString(1),
+                          message.getRequiredAsString(2),
+                          message.requiredArguments[3]
+                  )
+                  confirm(null)
+               }
+               "addMessageListener" -> {
+                  pluginProxy.addMessageListener(
+                          message.getRequiredAsString(0),
+                          ExternListener(message.getRequiredAsString(1))
+                  )
+                  confirm(null)
+               }
+               "removeMessageListener" -> {
+                  val id = message.getRequiredAsString(1)
+                  if (id in listeners)
+                     pluginProxy.addMessageListener(
+                             message.getRequiredAsString(0),
+                             listeners.remove(id)!!
+                     )
+                  confirm(null)
+               }
+               "setTimer" -> {
+                  val listener = ExternListener(message.getRequiredAsString(2), false)
+                  val r = pluginProxy.setTimer(
+                          message.getRequiredAsLong(0),
+                          message.getRequiredAsInt(1),
+                          listener
+                  )
+                  listeners["timer" + r] = listener
+                  confirm(r)
+               }
+               "cancelTimer" -> {
+                  val id = message.getRequiredAsInt(0)
+                  pluginProxy.cancelTimer(id)
+                  listeners.remove("timer" + id)
+                  confirm(null)
+               }
+               "setAlternative" -> {
+                  pluginProxy.setAlternative(
+                          message.getRequiredAsString(0),
+                          message.getRequiredAsString(1),
+                          message.getRequiredAsInt(2)
+                  )
+                  confirm(null)
+               }
+               "deleteAlternative" -> {
+                  pluginProxy.deleteAlternative(
+                          message.getRequiredAsString(0),
+                          message.getRequiredAsString(1)
+                  )
+                  confirm(null)
+               }
+               "setProperty" -> {
+                  val last = when (message.requiredArguments[1]) {
+                     null -> pluginProxy.getProperties().remove(message.getRequiredAsString(0))
+                     else -> pluginProxy.getProperties().put(
+                             message.getRequiredAsString(0),
+                             message.requiredArguments[1]!!
+                     )
+                  }
 
-               confirm(last)
-            }
-            "getProperty" -> {
-               val ret = pluginProxy.getProperties().get(
-                       message.getRequiredAsString(0)
-               )
+                  confirm(last)
+               }
+               "getProperty" -> {
+                  val ret = pluginProxy.getProperties().get(
+                          message.getRequiredAsString(0)
+                  )
 
-               confirm(ret)
-            }
-            "setConfigField" -> {
-               val last = pluginProxy.setConfigField(
-                       message.getRequiredAsString(0),
-                       message.requiredArguments[1]!!
-               )
+                  confirm(ret)
+               }
+               "setConfigField" -> {
+                  val last = pluginProxy.setConfigField(
+                          message.getRequiredAsString(0),
+                          message.requiredArguments[1]!!
+                  )
 
-               confirm(last)
-            }
-            "getConfigField" -> {
-               val ret = pluginProxy.getConfigField(
-                       message.getRequiredAsString(0)
-               )
+                  confirm(last)
+               }
+               "getConfigField" -> {
+                  val ret = pluginProxy.getConfigField(
+                          message.getRequiredAsString(0)
+                  )
 
-               confirm(ret)
-            }
-            "getString" -> {
-               val ret = pluginProxy.getString(
-                       message.getRequiredAsString(0)
-               )
+                  confirm(ret)
+               }
+               "getString" -> {
+                  val ret = pluginProxy.getString(
+                          message.getRequiredAsString(0)
+                  )
 
-               confirm(ret)
+                  confirm(ret)
+               }
+               "log" -> {
+                  pluginProxy.log(
+                          message.getRequiredAsString(0)
+                  )
+                  confirm(null)
+               }
+               "error" -> {
+                  pluginProxy.sendMessage("core-events:error",
+                          mapOf(
+                                  "class" to message.additionalArguments.getOrDefault("class", "Error"),
+                                  "message" to message.getRequiredAsString(0),
+                                  "stacktrace" to message.additionalArguments.getOrDefault("stacktrace", listOf("No traceback specified"))
+                          ))
+                  confirm(null)
+               }
+               "initializationCompleted" -> {
+                  confirm(null)
+               }
             }
-            "log" -> {
-               pluginProxy.log(
-                       message.getRequiredAsString(0)
-               )
-               confirm(null)
-            }
-            "error" -> {
-               pluginProxy.sendMessage("core-events:error",
-                  mapOf(
-                       "class" to message.additionalArguments.getOrDefault("class", "Error"),
-                       "message" to message.getRequiredAsString(0),
-                       "stacktrace" to message.additionalArguments.getOrDefault("stacktrace", listOf("No traceback specified"))
-                  ))
-               confirm(null)
-            }
-            "initializationCompleted" -> {
-               confirm(null)
-            }
+         } catch (e: Throwable){
+            pluginProxy.log(e)
          }
       }
    }
@@ -277,21 +285,29 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
 
       override fun handle(sender:String, data: Any?){
          //println("-- handling1 " + seq + " " + sender + " " + data)
-          val message = MessageWrapper.Message(
-                  "call",
-                  mutableListOf(seq, sender, data)
-          )
-          stream.write(message, wrapper)
+          try {
+             val message = MessageWrapper.Message(
+                     "call",
+                     mutableListOf(seq, sender, data)
+             )
+             stream.write(message, wrapper)
+          } catch (e: Exception){
+             pluginProxy.log(e)
+          }
       }
 
       override fun handleMessage(sender: String?, tag: String?, data: Any?) {
          //println("-- handling2 " + seq.toString() + " " + sender + " " + tag + " " + data)
-          val message = MessageWrapper.Message(
-                  "call",
-                  mutableListOf(seq, sender, data),
-                  mutableMapOf("tag" to tag)
-          )
-          stream.write(message, wrapper)
+          try {
+             val message = MessageWrapper.Message(
+                     "call",
+                     mutableListOf(seq, sender, data),
+                     mutableMapOf("tag" to tag)
+             )
+             stream.write(message, wrapper)
+          } catch (e: Exception){
+             pluginProxy.log(e)
+          }
       }
    }
 

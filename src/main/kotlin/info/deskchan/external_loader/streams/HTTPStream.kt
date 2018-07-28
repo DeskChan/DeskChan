@@ -126,10 +126,17 @@ class HTTPStream : ExternalStream, HttpHandler {
                 val tag = message.getRequiredAsString(0)
                 if (tag in sendToServerListeners){
                     val url = sendToServerListeners[tag]!!
+                    println(url)
                     val con = url.openConnection() as HttpURLConnection
+                    con.doOutput = true
                     con.requestMethod = "POST"
-                    con.outputStream.writer(Charsets.UTF_8).write(data.toString())
-                    con.outputStream.close()
+                    println(data.toString())
+                    val writer = con.outputStream.writer(Charsets.UTF_8)
+                    writer.write(data.toString())
+                    writer.flush()
+                    writer.close()
+                    val code = con.responseCode
+                    con.disconnect()
                 } else if (tag in registeredListeners)
                     registeredListeners[tag]!!.add(message)
                 else
