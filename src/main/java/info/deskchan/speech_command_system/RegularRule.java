@@ -252,8 +252,14 @@ public class RegularRule{
                     String textCopy = text;
                     for (int k=0; k < words.size(); k++) {
                         if (k < i || words.used[k]) {
-                            Pattern pattern = Pattern.compile("(^|[^A-zА-я])("+words.get(k)+")($|[^A-zА-я])");
-                            textCopy = pattern.matcher(textCopy).replaceAll("$1$3");
+                            String word = words.get(k);
+                            StringBuilder wordRE = new StringBuilder();
+                            for (int u = 0; u < word.length(); u++)
+                                wordRE.append("[" + Character.toLowerCase(word.charAt(u)) + Character.toUpperCase(word.charAt(u)) + "]");
+                            String patternString = "(^|[^A-zА-я])("+wordRE.toString()+")($|[^A-zА-я])";
+                            System.out.println(patternString);
+                            Pattern pattern = Pattern.compile(patternString);
+                            textCopy = pattern.matcher(textCopy).replaceFirst("$1$3");
                         }
                         words.used[k] = true;
                     }

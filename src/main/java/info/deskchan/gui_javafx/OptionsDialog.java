@@ -1637,7 +1637,8 @@ class OptionsDialog extends TemplateBox {
 
 			Map<String, String> m = new HashMap<>();
 			for (Map.Entry<String, TextField> entry : msgElements.entrySet()){
-				m.put(entry.getKey(), entry.getValue().getText());
+				if (entry.getValue().getText().length() > 0)
+					m.put(entry.getKey(), entry.getValue().getText());
 			}
 			Object msgData = m;
 			if (msgElements.size() == 1 && msgElements.get("value") != null)
