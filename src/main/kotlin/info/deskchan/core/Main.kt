@@ -8,7 +8,8 @@ fun main(args: Array<String>) {
 
 	// don't change this order, it's very important
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.core_utils")
-	pluginManager.tryLoadPluginByPackageName("info.deskchan.gui_javafx")
+	if (!CoreInfo.getCoreProperties().getBoolean("terminal", false))
+		pluginManager.tryLoadPluginByPackageName("info.deskchan.gui_javafx")
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.jar_loader")
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.groovy_support")
 	pluginManager.tryLoadPluginByPackageName("info.deskchan.external_loader")

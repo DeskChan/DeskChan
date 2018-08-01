@@ -5,22 +5,35 @@ import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import info.deskchan.external_loader.wrappers.MessageWrapper
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.InetSocketAddress
-import java.net.URL
-
+import java.net.*
 
 class HTTPStream : ExternalStream, HttpHandler {
 
     var server: HttpServer?
     val key: String?
     val wrapper: MessageWrapper
+    val strRepr: String
 
-    constructor(context: String, port: Int, key: String?, wrapper: MessageWrapper){
+    constructor(address: String?, port: Int, context: String, key: String?, wrapper: MessageWrapper){
         this.key = key
         this.wrapper = wrapper
-        server = HttpServer.create(InetSocketAddress("localhost", port), 0)
-        server!!.createContext(context, this)
+        var address = address
+        var Context = context
+        if (address == null){
+            try {
+                val socket = DatagramSocket()
+                socket.connect(InetAddress.getByName("8.8.8.8"), 10002)
+                address = socket.localAddress.hostAddress
+            } catch(e: Exception){
+                address = "localhost"
+            }
+        }
+        server = HttpServer.create(InetSocketAddress(address, port), 0)
+        if (!context.startsWith("/"))
+            Context = "/" + Context
+
+        strRepr = address + ":" + port + Context
+        server!!.createContext(Context, this)
         server!!.executor = null
     }
     override fun start(){
@@ -152,6 +165,10 @@ class HTTPStream : ExternalStream, HttpHandler {
 
     override fun close(){
         server?.stop(0)
+    }
+
+    override fun toString(): String {
+        return "HTTP Server at: " + strRepr
     }
 
 }

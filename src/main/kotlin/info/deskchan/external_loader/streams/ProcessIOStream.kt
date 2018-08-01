@@ -31,7 +31,6 @@ class ProcessIOStream : ExternalStream {
     }
 
     override fun start() {
-        println("starting " + processBuilder.command())
         process = processBuilder.start()
         input = process!!.inputStream.bufferedReader(Charsets.UTF_8)
         output = process!!.outputStream.bufferedWriter(Charsets.UTF_8)
@@ -89,7 +88,6 @@ class ProcessIOStream : ExternalStream {
         if (!isAlive()) return
 
         val data = wrapper.wrap(message).toString()
-        println("written: "+data)
         output.write(data)
         output.write("#\n")
         output.flush()
@@ -102,6 +100,10 @@ class ProcessIOStream : ExternalStream {
     override fun close() {
         process?.destroyForcibly()
         process?.waitFor()
+    }
+
+    override fun toString(): String {
+        return "Process named: " + processBuilder.command() + ", at: " + processBuilder.directory()
     }
 
 }

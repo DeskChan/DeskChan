@@ -94,12 +94,14 @@ public class Main implements Plugin {
 		if (CoreInfo.getCoreProperties().getBoolean("terminal", false))
 			TerminalGUI.initialize();
 
-		pluginProxy.setTimer(20000, -1, new ResponseListener() {
-			@Override
-			public void handle(String sender, Object data) {
-				System.gc();
-			}
-		});
+		int GCdelay = CoreInfo.getCoreProperties().getInteger("garbage-collection-delay", 20000);
+		if (GCdelay > 0)
+			pluginProxy.setTimer(GCdelay, -1, new ResponseListener() {
+				@Override
+				public void handle(String sender, Object data) {
+					System.gc();
+				}
+			});
 		return true;
 	}
 

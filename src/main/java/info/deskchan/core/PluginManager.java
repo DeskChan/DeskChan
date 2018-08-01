@@ -107,7 +107,7 @@ public class PluginManager {
 	 */
 	public boolean initializePlugin(String id, Plugin plugin, PluginConfig config) throws Throwable {
 		if (plugins.containsKey(id)) {
-			throw new Throwable("Cannot load plugin " + id + ": plugin with such name already exist");
+			throw new Throwable("Cannot load plugin \"" + id + "\": plugin with such name already exist");
 		}
 		if (blacklistedPlugins.contains(id)) {
 			return false;

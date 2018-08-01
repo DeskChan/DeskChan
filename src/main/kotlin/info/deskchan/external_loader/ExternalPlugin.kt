@@ -44,18 +44,19 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
             ping = file.getProperty("delay", ping.toString()).toLong()
             wrapper = JSONMessageWrapper()
             stream = HTTPStream(
-                    file.getProperty("context", "/"),
+                    file.getProperty("ip"),
                     file.getProperty("port", "3640").toInt(),
+                    file.getProperty("context", "/"),
                     file.getProperty("key", null),
                     wrapper
             )
-
          }
          else -> return false
       }
 
       try {
          stream.start()
+         pluginProxy.log("Started "+stream.toString())
       } catch (e: IOException){
          pluginProxy.log(IOException("Cannot run external plugin of type "+pluginProxy.getConfigField("type")+": "+e.message, e))
          return false
@@ -94,11 +95,11 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
 
          var message : MessageWrapper.Message
          try {
-            println("waiting for another message")
+            //println("waiting for another message")
             message = stream.read(wrapper)
-            println("==== got: "+message.type)
+            //println("==== got: "+message.type)
          } catch (e: IOException){
-            println("breaking with exception "+e)
+            //println("breaking with exception "+e)
             val error = stream.readError()
             pluginProxy.log(Exception(error))
             break
@@ -243,6 +244,7 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
                   confirm(null)
                }
                "initializationCompleted" -> {
+                  pluginProxy.log("Client initialization confirmed")
                   confirm(null)
                }
             }
