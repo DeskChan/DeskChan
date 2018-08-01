@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx.panes;
 import info.deskchan.gui_javafx.LocalFont;
 import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.MouseEventNotificator;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
@@ -39,10 +40,10 @@ public class CharacterBalloon extends Balloon {
 		INVERTED_DIRECTION
 	}
 
-	protected static BalloonDrawer drawer;
+	protected static Sprite sprite;
 
 	public static void updateDrawer(){
-		drawer = getDrawer("balloon.path-character");
+		sprite = getBalloonSprite("balloon.path-character");
 	}
 
 	protected Character character = null;
@@ -77,8 +78,8 @@ public class CharacterBalloon extends Balloon {
 		}
 
 		content = label;
-		bubblePane = drawer.createBalloon(content);
-
+		bubblePane = sprite;
+		sprite.setSpriteContent(content);
 		getChildren().add(bubblePane);
 
 		label.setWrappingWidth(bubblePane.getContentWidth());
@@ -101,7 +102,7 @@ public class CharacterBalloon extends Balloon {
 				if (character != null) {
 					character.say(null);
 				} else {
-					close();
+					hide();
 				}
 			}
 		});
@@ -122,14 +123,14 @@ public class CharacterBalloon extends Balloon {
 				.setOnMovedListener()
 				.setOnScrollListener(event -> true);
 
-		this.character = character;
-
 		if (positionMode != PositionMode.ABSOLUTE) {
 			positionRelativeToDesktopSize = false;
 		}
 	}
 
 	protected void setup(Character character, String text){
+		if (symbolsAdder != null)
+			symbolsAdder.stop();
 		Integer animation_delay = Main.getProperties().getInteger("balloon.text-animation-delay", 50);
 		if (animation_delay > 0)
 			symbolsAdder = new SymbolsAdder(text, animation_delay);
@@ -181,25 +182,21 @@ public class CharacterBalloon extends Balloon {
 	public static ChangeListener<java.lang.Number> updateBalloonLayoutX = new ChangeListener<Number>() {
 		@Override
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-			if(getInstance()!=null) {
-				javafx.application.Platform.runLater(() -> {
-					try {
-						getInstance().impl_updateBalloonLayoutX();
-					} catch (Exception e){ }
-				});
-			}
+			javafx.application.Platform.runLater(() -> {
+				try {
+					getInstance().impl_updateBalloonLayoutX();
+				} catch (Exception e){ }
+			});
 		}
 	};
 	public static ChangeListener<java.lang.Number> updateBalloonLayoutY = new ChangeListener<Number>() {
 		@Override
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-			if(getInstance()!=null) {
-				javafx.application.Platform.runLater(() -> {
-					try {
-						getInstance().impl_updateBalloonLayoutY();
-					} catch (Exception e){ }
-				});
-			}
+			javafx.application.Platform.runLater(() -> {
+				try {
+					getInstance().impl_updateBalloonLayoutY();
+				} catch (Exception e){ }
+			});
 		}
 	};
 
@@ -301,6 +298,7 @@ public class CharacterBalloon extends Balloon {
 			} else
 				addCount = 1;
 
+			content.setText("");
 			timeline = new Timeline(new KeyFrame(Duration.millis(delay), this));
 			timeline.setCycleCount(Timeline.INDEFINITE);
 			timeline.play();
@@ -327,6 +325,10 @@ public class CharacterBalloon extends Balloon {
 				content.setText(content.getText() + c);
 				counter--;
 			}
+		}
+
+		public void stop(){
+			timeline.stop();
 		}
 	}
 }

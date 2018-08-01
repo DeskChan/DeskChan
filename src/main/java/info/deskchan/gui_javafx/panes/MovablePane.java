@@ -36,7 +36,7 @@ public class MovablePane extends Pane {
 	};
 	private EventHandler<MouseEvent> releaseEventHandler = (e) -> stopDrag();
 
-	MovablePane(){
+	protected MovablePane(){
 		setOnMousePressed(pressEventHandler);
 	}
 	protected boolean positionRelativeToDesktopSize = true;
@@ -72,7 +72,7 @@ public class MovablePane extends Pane {
 		Rectangle2D rect = new Rectangle2D(topLeft.getX(), topLeft.getY(),
 				bounds.getWidth(), bounds.getHeight());
 
-		// Anchoring to screen edges if pane is too close to edge
+		// Anchoring to screen edges if pane is too hide to edge
 		for (Screen screen : Screen.getScreens()) {
 			rect = anchorToEdges(rect, screen.getBounds());
 			rect = anchorToEdges(rect, screen.getVisualBounds());

@@ -65,7 +65,7 @@ public class App extends Application {
 		Main.log("hacked JavaFX, " + getTime(start));
 		// Loading balloon asset
 		CharacterBalloon.updateDrawer();
-		UserBalloon.updateDrawer();
+		UserBalloon.updateBalloonSprite();
 		Main.log("balloon loaded, " + getTime(start));
 		// Trying to apply 'style.css' to application
 		Main.log("stylesheets overrided, " + getTime(start));
@@ -270,7 +270,7 @@ public class App extends Application {
 		pluginProxy.addMessageListener("gui:set-user-balloon-path", (sender, tag, data) -> {
 			Platform.runLater(() -> {
 				Main.getProperties().put("balloon.path-user", (String) data);
-				UserBalloon.updateDrawer();
+				UserBalloon.updateBalloonSprite();
 			});
 		});
 
@@ -717,7 +717,7 @@ public class App extends Application {
                 } else if (map.containsKey("user-balloon")){
                     String path = map.get("user-balloon");
                     Main.getProperties().put("balloon.path-user", path);
-                    UserBalloon.updateDrawer();
+                    UserBalloon.updateBalloonSprite();
 
                 } else if (map.containsKey("character-balloon-size")){
                     String size = map.get("character-balloon-size");

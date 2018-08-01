@@ -1,6 +1,8 @@
 package info.deskchan.gui_javafx.panes;
 
 import info.deskchan.gui_javafx.*;
+import info.deskchan.gui_javafx.panes.sprite_drawers.AnimatedSprite;
+import info.deskchan.gui_javafx.panes.sprite_drawers.ImageSprite;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -31,7 +33,7 @@ public class Character extends MovablePane {
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
 
 	private final String id;
-	private AnimatedImageView imageView = new AnimatedImageView();
+	private AnimatedSprite<ImageSprite> sprite;
 	private Skin skin = null;
 	private String imageName = "normal";
 	private String idleImageName = "normal";
@@ -49,13 +51,15 @@ public class Character extends MovablePane {
 		imageShadow.setOffsetX(1.5);
 		imageShadow.setOffsetY(2.5);
 
+		sprite = new AnimatedSprite<>();
+
 		setScaleFactor(Main.getProperties().getFloat("skin.scale_factor", 100));
 		setSkinOpacity(Main.getProperties().getFloat("skin.opacity", 100));
-		getChildren().add(imageView);
+		getChildren().add(sprite);
 		setSkin(skin);
 		setPositionStorageID("character." + id);
 
-		imageView.setMouseTransparent(true);
+		sprite.setMouseTransparent(true);
 
 		addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
 			startDrag(event);
@@ -101,6 +105,7 @@ public class Character extends MovablePane {
 					x0 /= scaleFactor;
 					y0 /= scaleFactor;
 
+					ImageView imageView = sprite.getCurrentSprite().toImageView();
 					PixelReader imagePixels = imageView.getImage().getPixelReader();
 					if (imageView.getImage() != null && x0 < imageView.getImage().getWidth() && y0 < imageView.getImage().getHeight()){
 						try {
@@ -158,20 +163,20 @@ public class Character extends MovablePane {
 
 	private void updateImage(boolean reloadImage) {
 
-		double oldWidth = imageView.getFitWidth();
-		double oldHeight = imageView.getFitHeight();
+		Point2D oldSize = sprite.getCurrentSprite() != null ? new Point2D(sprite.getFitWidth(), sprite.getFitHeight()) : null;
+		Image image = getImage();
+		ImageSprite sp = new ImageSprite(image);
 	    if (reloadImage) {
-            imageView.setImage(getImage());
+			sprite.addAnimation(new AnimatedSprite.AnimationData<>(sp, true));
         }
-        Image image = imageView.getImage();
 	    if(image == null){
 	    	setSkin(null);
 	    	return;
 		}
-		double newWidth = imageView.getWidth() * scaleFactor;
-		double newHeight = imageView.getHeight() * scaleFactor;
-		imageView.setFitWidth(newWidth);
-		imageView.setFitHeight(newHeight);
+		double newWidth = sprite.getOriginWidth() * scaleFactor;
+		double newHeight = sprite.getOriginHeight() * scaleFactor;
+		sprite.setFitWidth(newWidth);
+		sprite.setFitHeight(newHeight);
 		resize(newWidth, newHeight);
 
 		Lighting lighting = null;
@@ -183,14 +188,15 @@ public class Character extends MovablePane {
 			lighting.setSurfaceScale(0.0);
 			lighting.setLight(new Light.Distant(45, 45, skinColor));
 		}
-		imageView.applyEffect(lighting);
+		sprite.applyEffect(lighting);
+		setShadowOpacity(Main.getProperties().getFloat("skin.shadow-opacity", 1.0f));
+		if (oldSize == null) return;
 
         Point2D oldPosition = getPosition();
-        double deltaX = -(newWidth - oldWidth) / 2;
-        double deltaY = -(newHeight - oldHeight) / 2;
+        double deltaX = -(newWidth - oldSize.getX()) / 2;
+        double deltaY = -(newHeight - oldSize.getY()) / 2;
         Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
-        setPosition(newPosition);
-        setShadowOpacity(Main.getProperties().getFloat("skin.shadow-opacity", 1.0f));
+        //setPosition(newPosition);
 	}
 
 	private void updateImage() {
@@ -220,9 +226,9 @@ public class Character extends MovablePane {
 	public void resizeSkin(Integer width, Integer height) {
 	    Double scaleFactor = null;
 	    if (width != null) {
-	        scaleFactor = width / imageView.getImage().getWidth();
+	        scaleFactor = width / sprite.getOriginWidth();
         } else if (height != null) {
-            scaleFactor = height / imageView.getImage().getHeight();
+            scaleFactor = height / sprite.getOriginHeight();
         } else {
 	        return;
         }
@@ -248,12 +254,12 @@ public class Character extends MovablePane {
 
 		if (opacity < 0 || opacity > 0.99) {
 			skinOpacity = 1.0f;
-			imageView.setEffect(imageShadow);
+			sprite.setEffect(imageShadow);
 		} else {
 			skinOpacity = opacity;
-			imageView.setEffect(null);
+			sprite.setEffect(null);
 		}
-		imageView.setOpacity(skinOpacity);
+		sprite.setOpacity(skinOpacity);
 		updateImage(false);
 	}
 
@@ -314,7 +320,7 @@ public class Character extends MovablePane {
 			}
 		}
 		if (balloon != null) {
-			balloon.close();
+			balloon.hide();
 			balloon = null;
 		}
 		messageInfo = messageQueue.peek();
@@ -359,12 +365,12 @@ public class Character extends MovablePane {
 		opacity /= 100;
 		if (opacity == 0 || opacity > 0.99) {
 			skinOpacity = 1.0f;
-			imageView.setEffect(imageShadow);
+			sprite.setEffect(imageShadow);
 		} else {
 			skinOpacity = opacity;
-			imageView.setEffect(null);
+			sprite.setEffect(null);
 		}
-		imageView.setOpacity(skinOpacity);
+		sprite.setOpacity(skinOpacity);
 	}
 
 	/** Set shadow opacity, in percents (x100). **/
@@ -374,7 +380,7 @@ public class Character extends MovablePane {
 			opacity = 1.0f;
 
 		imageShadow.setColor(Color.color(0, 0, 0, opacity));
-		imageView.setEffect(imageShadow);
+		sprite.setEffect(imageShadow);
 	}
 
 	private static class MessageInfo implements Comparable<MessageInfo> {

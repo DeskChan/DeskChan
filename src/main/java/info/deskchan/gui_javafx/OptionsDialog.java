@@ -991,6 +991,7 @@ class OptionsDialog extends TemplateBox {
 			blacklistPluginButton = new Button(blacklisted ? locked : unlocked);
 			blacklistPluginButton.setTooltip(new Tooltip(Main.getString("info.blacklist-plugin")));
 			blacklistPluginButton.setOnAction(event -> {
+				System.out.println(id);
 				if (!blacklisted)
 					for(String pluginId : importantPlugins) {
 						if (pluginId.equals(id)) {
