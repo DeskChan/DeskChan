@@ -1,4 +1,4 @@
-package info.deskchan.gui_javafx;
+package info.deskchan.gui_javafx.skins;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

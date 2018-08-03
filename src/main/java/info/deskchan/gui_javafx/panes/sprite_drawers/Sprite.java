@@ -1,6 +1,5 @@
 package info.deskchan.gui_javafx.panes.sprite_drawers;
 
-import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import info.deskchan.gui_javafx.panes.MovablePane;
 import javafx.geometry.Insets;
@@ -20,6 +19,7 @@ import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InvalidObjectException;
+import java.nio.file.InvalidPathException;
 
 public abstract class Sprite extends MovablePane {
 
@@ -53,14 +53,18 @@ public abstract class Sprite extends MovablePane {
         }
     }
 
-    public static Sprite getSpriteFromFile(String path) throws Exception {
-        if (!new File(path).exists()) throw new FileNotFoundException("Not found: "+path);
+    public static Sprite getSpriteFromFile(File path) throws Exception {
+        if (!path.exists()) throw new FileNotFoundException("Not found: "+path);
         Sprite sprite;
         if (SVGSprite.canRead(path)) {
             sprite = SVGSprite.create(path);
         } else if (ImageSprite.canRead(path)) {
             sprite = ImageSprite.create(path);
-        } else throw new InvalidObjectException("Cannot load sprite from file "+ path + ", unknown type");
+        } else if (path.toString().contains(" ") || path.toString().contains("#")){
+            throw new InvalidPathException(path.toString(), "Path of file contains invalid symbols such as spaces or sharps");
+        } else {
+            throw new InvalidObjectException("Cannot load sprite from file "+ path + ", unknown type of file");
+        }
 
         return sprite;
     }
@@ -72,6 +76,8 @@ public abstract class Sprite extends MovablePane {
     public abstract double getOriginWidth();
 
     public abstract double getOriginHeight();
+
+    public String getSpritePath(){ return null; }
 
     public void invert(boolean turn, CharacterBalloon.DirectionMode mode){
         switch (mode){
@@ -119,7 +125,6 @@ public abstract class Sprite extends MovablePane {
             DocumentBuilder builder = factory.newDocumentBuilder();
             return builder.parse(new File(path).toURI().toURL().toString());
         } catch (Exception e) {
-            Main.log(e);
             return null;
         }
     }

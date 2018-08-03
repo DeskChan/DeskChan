@@ -258,39 +258,37 @@ public class CharacterBalloon extends Balloon {
 		}
 	}
 
-	public static void setDefaultPositionMode(String positionMode){
-		PositionMode mode;
-		try {
-			mode = PositionMode.valueOf(positionMode.toUpperCase());
-		} catch (Exception e){
-			mode = PositionMode.AUTO;
-		}
-		Main.getProperties().put("balloon_position_mode", mode);
+	public static void setDefaultPositionMode(PositionMode positionMode){
+		Main.getProperties().put("balloon_position_mode", positionMode.toString());
+		if (instance != null)
+			instance.positionMode = positionMode;
 	}
 
-	public static void setDefaultDirectionMode(String directionMode){
-		DirectionMode mode;
-		try {
-			mode = DirectionMode.valueOf(directionMode.toUpperCase());
-		} catch (Exception e){
-			mode = DirectionMode.STANDARD_DIRECTION;
-		}
-		Main.getProperties().put("balloon_direction_mode", mode);
+	public void setPositionMode(PositionMode mode){
+		positionMode = mode;
 	}
 
-	void show() {
+	public static void setDefaultDirectionMode(DirectionMode directionMode){
+		Main.getProperties().put("balloon_direction_mode", directionMode);
+		if (instance != null)
+			instance.directionMode = directionMode;
+	}
+
+	@Override
+	public void show() {
 		super.show();
 		setPositionStorageID(character.getId() + ".balloon");
 	}
 
 	class SymbolsAdder implements EventHandler<javafx.event.ActionEvent> {
 
-		private static final int delayLimit = 40;
 		private final Timeline timeline;
 		private final String text;
 		private final int addCount;
 
 		SymbolsAdder(String text, Integer delay) {
+			int delayLimit = Main.getProperties().getInteger("sprites-animation-delay", 50);
+
 			this.text = text;
 			if (delay < delayLimit){
 				addCount = delayLimit / delay;

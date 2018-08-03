@@ -3,16 +3,11 @@ package info.deskchan.gui_javafx.panes;
 import info.deskchan.gui_javafx.*;
 import info.deskchan.gui_javafx.panes.sprite_drawers.AnimatedSprite;
 import info.deskchan.gui_javafx.panes.sprite_drawers.ImageSprite;
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.event.EventHandler;
+import info.deskchan.gui_javafx.skins.Skin;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Parent;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.Effect;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
@@ -22,8 +17,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
-import javafx.util.Duration;
 
+import java.io.File;
 import java.util.*;
 
 public class Character extends MovablePane {
@@ -33,7 +28,7 @@ public class Character extends MovablePane {
 	private static final int DEFAULT_MESSAGE_PRIORITY = 1000;
 
 	private final String id;
-	private AnimatedSprite<ImageSprite> sprite;
+	private AnimatedSprite sprite;
 	private Skin skin = null;
 	private String imageName = "normal";
 	private String idleImageName = "normal";
@@ -51,7 +46,7 @@ public class Character extends MovablePane {
 		imageShadow.setOffsetX(1.5);
 		imageShadow.setOffsetY(2.5);
 
-		sprite = new AnimatedSprite<>();
+		sprite = new AnimatedSprite();
 
 		setScaleFactor(Main.getProperties().getFloat("skin.scale_factor", 100));
 		setSkinOpacity(Main.getProperties().getFloat("skin.opacity", 100));
@@ -105,7 +100,10 @@ public class Character extends MovablePane {
 					x0 /= scaleFactor;
 					y0 /= scaleFactor;
 
-					ImageView imageView = sprite.getCurrentSprite().toImageView();
+					if (!(sprite.getCurrentSprite() instanceof ImageSprite))
+						return true;
+
+					ImageView imageView = ((ImageSprite) sprite.getCurrentSprite()).toImageView();
 					PixelReader imagePixels = imageView.getImage().getPixelReader();
 					if (imageView.getImage() != null && x0 < imageView.getImage().getWidth() && y0 < imageView.getImage().getHeight()){
 						try {
@@ -120,6 +118,14 @@ public class Character extends MovablePane {
 
 		layoutXProperty().addListener(CharacterBalloon.updateBalloonLayoutX);
 		layoutYProperty().addListener(CharacterBalloon.updateBalloonLayoutY);
+
+		sprite.onSpriteHandlers.add(() -> {
+			Map<String, Object> infoMap = new HashMap<>();
+			infoMap.put("sprite", sprite.getCurrentSprite().getSpritePath());
+			infoMap.put("width", sprite.getFitWidth());
+            infoMap.put("height", sprite.getFitHeight());
+			Main.getPluginProxy().sendMessage("gui-events:character-sprite-changed", infoMap);
+		});
 	}
 
 	public Skin getSkin() {
@@ -150,7 +156,7 @@ public class Character extends MovablePane {
 		updateImage();
 	}
 
-	private Image getImage() {
+	private File getImage() {
 		return (skin != null) ? skin.getImage(imageName) : null;
 	}
 
@@ -164,17 +170,24 @@ public class Character extends MovablePane {
 	private void updateImage(boolean reloadImage) {
 
 		Point2D oldSize = sprite.getCurrentSprite() != null ? new Point2D(sprite.getFitWidth(), sprite.getFitHeight()) : null;
-		Image image = getImage();
-		ImageSprite sp = new ImageSprite(image);
-	    if (reloadImage) {
-			sprite.addAnimation(new AnimatedSprite.AnimationData<>(sp, true));
-        }
-	    if(image == null){
-	    	setSkin(null);
-	    	return;
+		ImageSprite sp = null;
+		Image image = null;
+		try {
+			sp = ImageSprite.create(getImage());
+			image = sp.toImageView().getImage();
+			if (reloadImage) {
+				sprite.dropAnimation();
+				sprite.addAnimation(new AnimatedSprite.AnimationData(sp, true));
+			}
+		} catch (Exception e){
+			Main.log(e);
 		}
-		double newWidth = sprite.getOriginWidth() * scaleFactor;
-		double newHeight = sprite.getOriginHeight() * scaleFactor;
+		if(image == null){
+			setSkin(null);
+			return;
+		}
+		double newWidth = image.getWidth() * scaleFactor;
+		double newHeight = image.getHeight() * scaleFactor;
 		sprite.setFitWidth(newWidth);
 		sprite.setFitHeight(newHeight);
 		resize(newWidth, newHeight);
@@ -188,15 +201,15 @@ public class Character extends MovablePane {
 			lighting.setSurfaceScale(0.0);
 			lighting.setLight(new Light.Distant(45, 45, skinColor));
 		}
-		sprite.applyEffect(lighting);
-		setShadowOpacity(Main.getProperties().getFloat("skin.shadow-opacity", 1.0f));
+		sprite.setEffect(lighting);
+		setShadowOpacity(Main.getProperties().getFloat("skin.shadow-opacity", 100f));
 		if (oldSize == null) return;
 
         Point2D oldPosition = getPosition();
         double deltaX = -(newWidth - oldSize.getX()) / 2;
         double deltaY = -(newHeight - oldSize.getY()) / 2;
         Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
-        //setPosition(newPosition);
+        setPosition(newPosition);
 	}
 
 	private void updateImage() {
@@ -259,7 +272,7 @@ public class Character extends MovablePane {
 			skinOpacity = opacity;
 			sprite.setEffect(null);
 		}
-		sprite.setOpacity(skinOpacity);
+		setOpacity(skinOpacity);
 		updateImage(false);
 	}
 
@@ -343,7 +356,16 @@ public class Character extends MovablePane {
 		balloon.show();
 	}
 
-	public float getScaleFactor() {
+	public void addAnimation(AnimatedSprite.AnimationData data){
+		sprite.addAnimation(data);
+	}
+
+    public void dropAnimation(){
+        sprite.dropAnimation();
+    }
+
+
+    public float getScaleFactor() {
 	    return scaleFactor * 100;
     }
 
@@ -365,12 +387,12 @@ public class Character extends MovablePane {
 		opacity /= 100;
 		if (opacity == 0 || opacity > 0.99) {
 			skinOpacity = 1.0f;
-			sprite.setEffect(imageShadow);
+			setEffect(imageShadow);
 		} else {
 			skinOpacity = opacity;
-			sprite.setEffect(null);
+			setEffect(null);
 		}
-		sprite.setOpacity(skinOpacity);
+		setOpacity(skinOpacity);
 	}
 
 	/** Set shadow opacity, in percents (x100). **/
@@ -380,7 +402,7 @@ public class Character extends MovablePane {
 			opacity = 1.0f;
 
 		imageShadow.setColor(Color.color(0, 0, 0, opacity));
-		sprite.setEffect(imageShadow);
+		setEffect(imageShadow);
 	}
 
 	private static class MessageInfo implements Comparable<MessageInfo> {
@@ -566,83 +588,6 @@ public class Character extends MovablePane {
                 notifyTo = null;
             }
         }
-	}
-
-	class AnimatedImageView extends Parent implements EventHandler<javafx.event.ActionEvent> {
-
-		private ImageView mainImage = new ImageView();
-		private ImageView secondImage = new ImageView();
-		private Effect effect;
-		private Timeline timeline;
-
-		AnimatedImageView(){
-			getChildren().add(mainImage);
-			getChildren().add(secondImage);
-			secondImage.setOpacity(0);
-			timeline = new Timeline(new KeyFrame(Duration.millis(20), this));
-		}
-
-		public void setImage(Image image){
-			if (mainImage.getImage() == image) return;
-			swap();
-			mainImage.setImage(image);
-			mainImage.setOpacity(0);
-			mainImage.setEffect(effect);
-			secondImage.setOpacity(1);
-			if (timeline.getStatus() == Animation.Status.RUNNING){
-				timeline.stop();
-			}
-			timeline.setCycleCount(10);
-			timeline.play();
-		}
-
-		@Override
-		public void handle(javafx.event.ActionEvent actionEvent) {
-			double opacity = mainImage.getOpacity() + 0.1;
-			mainImage.setOpacity(opacity);
-			secondImage.setOpacity(1 - opacity);
-			if (opacity >= 1)
-				secondImage.setImage(null);
-		}
-
-		private void swap(){
-			ImageView t = mainImage;
-			mainImage = secondImage;
-			secondImage = t;
-		}
-
-		public Image getImage(){ return mainImage.getImage(); }
-
-		public double getWidth(){
-			return mainImage.getImage() != null ? mainImage.getImage().getWidth() : 0;
-		}
-
-		public double getHeight(){
-			return mainImage.getImage() != null ?   mainImage.getImage().getHeight() : 0;
-		}
-
-		public double getFitWidth(){
-			return mainImage.getFitWidth();
-		}
-
-		public double getFitHeight(){
-			return mainImage.getFitHeight();
-		}
-
-		public void setFitWidth(double width){
-			mainImage.setFitWidth(width);
-		}
-
-		public void setFitHeight(double height){
-			mainImage.setFitHeight(height);
-		}
-
-		public void applyEffect(Effect effect){
-			this.effect = effect;
-			mainImage.setEffect(null);
-			mainImage.setEffect(effect);
-		}
-
 	}
 
 }

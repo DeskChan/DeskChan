@@ -135,9 +135,10 @@ public class UserBalloon extends Balloon {
         instance = null;
     }
 
-    void show() { dialog.show(); }
 
-    void hide() {
+    public void show() { dialog.show(); }
+
+    public void hide() {
         dialog.close();
     }
 

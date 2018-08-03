@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.gui_javafx.skins.Skin;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.layout.BorderPane;
@@ -141,6 +142,7 @@ class AssetsManagerDialog extends FilesManagerDialog {
 					list.add(name);
 					continue;
 				}
+				if (acceptableExtensions != null)
 				for (String ext : acceptableExtensions){
 					if (name.endsWith(ext)) {
 						list.add(name);

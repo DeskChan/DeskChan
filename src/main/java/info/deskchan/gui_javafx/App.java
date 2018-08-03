@@ -1,15 +1,20 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core.MessageDataMap;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.gui_javafx.panes.Balloon;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
+import info.deskchan.gui_javafx.panes.ControllableSprite;
 import info.deskchan.gui_javafx.panes.UserBalloon;
+import info.deskchan.gui_javafx.panes.sprite_drawers.AnimatedSprite;
+import info.deskchan.gui_javafx.skins.Skin;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
@@ -36,15 +41,14 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static info.deskchan.gui_javafx.OverlayStage.LayerMode.HIDE;
+
 public class App extends Application {
 
 	static final String NAME = "DeskChan";
 	public static final URL ICON_URL = App.class.getResource("icon.png");
 	
 	private static App instance = null;
-	static final List<SkinLoader> skinLoaders = Arrays.asList(
-			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader()
-	);
 
 	private info.deskchan.gui_javafx.panes.Character character;
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
@@ -88,6 +92,7 @@ public class App extends Application {
 		Main.log("overlay initialized, " + getTime(start));
 		OverlayStage.updateStage();
 		Main.log("overlay setted, " + getTime(start));
+		character.show();
 		// Registering plugin's API
 		initMessageListeners();
 		Main.log("message listeners initialized, " + getTime(start));
@@ -127,7 +132,7 @@ public class App extends Application {
 	 * @param name Title of window
 	 * @param text Text of window **/
 	public static void showNotification(String name, String text){
-		Platform.runLater(() -> {
+		Main.runLater(() -> {
 			TemplateBox dialog = new TemplateBox("notification", name);
 			dialog.setContentText(text);
 			dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
@@ -140,7 +145,7 @@ public class App extends Application {
 	 * @param name Title of window
 	 * @param content Content inside window **/
 	public static void showNotification(String name, Node content){
-		Platform.runLater(() -> {
+		Main.runLater(() -> {
 			TemplateBox dialog = new TemplateBox("notification", name);
 			dialog.setGraphic(content);
 			dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
@@ -162,13 +167,13 @@ public class App extends Application {
         *           msgData: String? - data to send when menu item will be chosen
         * Returns: None */
 		pluginProxy.addMessageListener("gui:register-simple-action", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Map m = (Map) data;
-				if(!m.containsKey("msgTag")){
-					Main.log("Not enough data to setup simple action, received by "+sender);
-					return;
-				}
-				Menu.getInstance().add(sender, (String) m.getOrDefault("name", sender), (String) m.get("msgTag"), m.get("msgData"));
+			Main.runLater(() -> {
+				MessageDataMap m = new MessageDataMap(data);
+				m.assertForTag(sender, pluginProxy.getId(), tag, "msgTag");
+				Menu.getInstance().add(sender,
+						m.getString("name", sender),
+						m.getString("msgTag"),
+						m.getString("msgData"));
 			});
 		});
 
@@ -182,7 +187,7 @@ public class App extends Application {
         *             msgData: String? - data to send when menu item will be chosen
         * Returns: None */
 		pluginProxy.addMessageListener("gui:register-simple-actions", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				List<Map<String, Object>> actionList;
 				String name = sender;
 				if(data instanceof List){
@@ -212,7 +217,7 @@ public class App extends Application {
 		*		    partible: Boolean? - message can be divided to parts
         * Returns: None */
 		pluginProxy.addMessageListener("gui:say", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				character.say(sender, data);
 			});
 		});
@@ -222,7 +227,7 @@ public class App extends Application {
         * Params: name: String? - name of sprite, "normal" by default
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-image", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				character.setImageName(data != null ? data.toString() : null);
 			});
 		});
@@ -232,12 +237,8 @@ public class App extends Application {
         * Params: path: String! - path to skin
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				if (data instanceof Path) {
-					character.setSkin(Skin.load((Path) data));
-				} else {
-					character.setSkin(Skin.load(data.toString()));
-				}
+			Main.runLater(() -> {
+				character.setSkin(Skin.load(data != null ? data.toString() : null));
 			});
 		});
 
@@ -246,8 +247,8 @@ public class App extends Application {
         * Params: path: String! - path to skin
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-interface-style", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Main.getProperties().put("interface.path-skin", (String) data);
+			Main.runLater(() -> {
+				Main.getProperties().put("interface.path-skin", data);
 				TemplateBox.updateStyle();
 			});
 		});
@@ -257,8 +258,8 @@ public class App extends Application {
         * Params: path: String! - path to skin
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-character-balloon-path", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Main.getProperties().put("balloon.path-character", (String) data);
+			Main.runLater(() -> {
+				Main.getProperties().put("balloon.path-character", data);
 				CharacterBalloon.updateDrawer();
 			});
 		});
@@ -268,8 +269,8 @@ public class App extends Application {
         * Params: path: String! - path to skin
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-user-balloon-path", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Main.getProperties().put("balloon.path-user", (String) data);
+			Main.runLater(() -> {
+				Main.getProperties().put("balloon.path-user", data);
 				UserBalloon.updateBalloonSprite();
 			});
 		});
@@ -284,22 +285,17 @@ public class App extends Application {
         *             relative: Float! - value relative from current, float percent
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-skin-opacity", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				System.out.println(data);
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("absolute", data);
+				map.assertAnyForTag(sender, pluginProxy.getId(), tag, "absolute", "relative");
+
 				double opacity = 100;
-				if (data instanceof Map) {
-					Map<String, Object> m = (Map<String, Object>) data;
-					if (m.containsKey("absolute")) {
-						opacity = getDouble(m.get("absolute"), 1.);
-					} else if (m.containsKey("relative")) {
-						Double opacityIncrement = getDouble(m.get("relative"), 0.);
-						character.changeOpacityRelatively(opacityIncrement.floatValue());
-						return;
-					}
-				} else if (data instanceof Number){
-					opacity = ((Number) data).floatValue();
-				} else {
-					opacity = Float.parseFloat(data.toString());
+
+				if (map.containsKey("absolute")) {
+					opacity = map.getDouble("absolute", 1);
+				} else if (map.containsKey("relative")) {
+					character.changeOpacityRelatively(map.getFloat("relative", 0));
+					return;
 				}
 
 				Main.getProperties().put("skin.opacity", opacity);
@@ -316,15 +312,15 @@ public class App extends Application {
         *           opacity: Float! - opacity of filter
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-skin-filter", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				if (data != null) {
-					Map<String, Object> m = (Map<String, Object>) data;
-					double red, green, blue, opacity;
-					red =     getDouble(m, "red",     0.0);
-					green =   getDouble(m, "green",   0.0);
-					blue =    getDouble(m, "blue",    0.0);
-					opacity = getDouble(m, "opacity", 1.0);
-					character.setColorFilter(red, green, blue, opacity);
+					MessageDataMap map = new MessageDataMap(data);
+					character.setColorFilter(
+							map.getDouble("red", 0),
+							map.getDouble("green", 0),
+							map.getDouble("blue", 0),
+							map.getDouble("opacity", 0)
+					);
 				} else {
 					character.setColorFilter(null);
 				}
@@ -344,22 +340,17 @@ public class App extends Application {
         *             height: Integer! - height of image
         * Returns: None */
 		pluginProxy.addMessageListener("gui:resize-character", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				if (data instanceof Map) {
-					Map<String, Object> m = (Map<String, Object>) data;
-					if (m.containsKey("scaleFactor")) {
-						Double scaleFactor = getDouble(m.get("scaleFactor"), 1.);
-						character.resizeSkin(scaleFactor.floatValue());
-					} else if (m.containsKey("zoom")) {
-						Double zoom = getDouble(m.get("zoom"), 0.);
-						character.resizeSkinRelatively(zoom.floatValue());
-					} else if (m.containsKey("width") || m.containsKey("height")) {
-						character.resizeSkin((Integer) m.get("width"), (Integer) m.get("height"));
-					}
-				} else if (data instanceof Number){
-					character.resizeSkin(((Number) data).floatValue());
-				} else {
-					character.resizeSkin(Float.parseFloat(data.toString()));
+			Main.runLater(() -> {
+				MessageDataMap m = new MessageDataMap("scaleFactor", data);
+
+				m.assertAnyForTag(sender, pluginProxy.getId(), tag, "scaleFactor", "zoom", "width", "height");
+
+				if (m.containsKey("scaleFactor")) {
+					character.resizeSkin(m.getFloat("scaleFactor", 1));
+				} else if (m.containsKey("zoom")) {
+					character.resizeSkinRelatively(m.getFloat("scaleFactor", 0));
+				} else if (m.containsKey("width") || m.containsKey("height")) {
+					character.resizeSkin(m.getInteger("width"), m.getInteger("height"));
 				}
 
 				Main.getProperties().put("skin.scale_factor", character.getScaleFactor());
@@ -371,16 +362,10 @@ public class App extends Application {
         * Params: value:Float - absolute scaling value, integer percents
         * Returns: None */
 		pluginProxy.addMessageListener("gui:resize-balloon", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				if (data instanceof Map) {
-					Map m = (Map) data;
-					if (m.containsKey("value"))
-						CharacterBalloon.setScaleFactor(((Number) m.get("value")).floatValue());
-				} else if (data instanceof Number){
-					CharacterBalloon.setScaleFactor(((Number) data).floatValue());
-				} else {
-					CharacterBalloon.setScaleFactor(Float.parseFloat(data.toString()));
-				}
+			Main.runLater(() -> {
+				MessageDataMap m = new MessageDataMap("value", data);
+				m.assertForTag(sender, pluginProxy.getId(), tag, "value");
+				CharacterBalloon.setScaleFactor(m.getFloat("value", 1));
 			});
 		});
 
@@ -411,49 +396,55 @@ public class App extends Application {
         * Params: check: Boolean! - turn menu on/off
         * Returns: None */
 		pluginProxy.addMessageListener("gui:toggle-context-menu", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				Main.getProperties().put("character.enable_context_menu", data);
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-tab", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				new ControlsPanel(sender, "tab", "tab", (Map) data).set();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:setup-options-submenu", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				new ControlsPanel(sender, "submenu", "submenu", (Map) data).set();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-tab", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				new ControlsPanel(sender, "tab", "tab", (Map) data).update();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-options-submenu", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				new ControlsPanel(sender, "submenu", "submenu", (Map) data).update();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-options-dialog", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				OptionsDialog.open();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-options-submenu", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				if(data instanceof Map) {
 					new ControlsPanel(sender, "submenu", "submenu", (Map) data).show();
 				} else {
@@ -474,7 +465,7 @@ public class App extends Application {
 		 *           onClose: String? - if present, onClose will be message tag to send panel data when closed
 		 * Returns: None */
 		pluginProxy.addMessageListener("gui:set-panel", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				new ControlsPanel(sender, (Map) data);
 			});
 		});
@@ -484,8 +475,10 @@ public class App extends Application {
 		 * Params: String - id of panel
 		 * Returns: None */
 		pluginProxy.addMessageListener("gui:show-panel", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				ControlsPanel.open(data instanceof Map ? ((Map) data).get("msgData").toString() : data.toString());
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("msgData", data);
+				map.assertForTag(sender, pluginProxy.getId(), tag, "msgData");
+				ControlsPanel.open(map.getString("msgData"));
 			});
 		});
 
@@ -496,14 +489,13 @@ public class App extends Application {
         *           text: String? - text of notification
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-notification", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				if (data instanceof Map) {
-					Map<String, Object> m = (Map<String, Object>) data;
-					showNotification((String) m.getOrDefault("name", Main.getString("default_messagebox_name")),
-							(String) m.get("text"));
-				} else {
-					showNotification(Main.getString("default_messagebox_name"), data.toString());
-				}
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("text", data);
+				map.assertForTag(sender, pluginProxy.getId(), tag, "text");
+				showNotification(
+						map.getString("name", Main.getString("default_messagebox_name")),
+						map.getString("text")
+				);
 			});
 		});
 
@@ -514,25 +506,22 @@ public class App extends Application {
         *           volume: Integer? - volume
         * Returns: None */
 		pluginProxy.addMessageListener("gui:play-sound", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				String filename = null;
-				if(m.containsKey("value")) filename = (String) m.get("value");
-				if(m.containsKey("file"))  filename = (String) m.get("file");
-				if(filename == null || filename.equals("")){
-					Main.log("Received empty file to play");
-					return;
-				}
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("text", data);
+				map.assertAnyForTag(sender, pluginProxy.getId(), tag, "value", "file");
+
+				File filename = null;
+				if(map.containsKey("value")) filename = map.getFile("value");
+				if(map.containsKey("file"))  filename = map.getFile("file");
+
 				AudioClip clip;
 				try {
-					clip = new AudioClip(Paths.get(filename).toUri().toString());
+					clip = new AudioClip(filename.getAbsolutePath());
 				} catch(Exception e){
 					Main.log(e);
 					return;
 				}
-				Object volume = m.getOrDefault("volume", 100);
-				if     (volume instanceof Number) clip.setVolume(((Number) volume).doubleValue() / 100);
-				else if(volume instanceof String) clip.setVolume(Double.valueOf((String)volume));
+				Integer volume = map.getInteger("volume", 100);
 				//if(m.containsKey("count"))
 				///	clip.setCycleCount(2);
 				clip.play();
@@ -541,14 +530,16 @@ public class App extends Application {
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:show-custom-window", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				new ControlsPanel(sender, "window", "window", (Map) data).show();
 			});
 		});
 
 		/* DEPRECATED */
 		pluginProxy.addMessageListener("gui:update-custom-window", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			System.out.println(tag + " is DEPRECATED");
+			Main.runLater(() -> {
 				new ControlsPanel(sender, "window", "window", (Map) data).update();
 			});
 		});
@@ -558,7 +549,7 @@ public class App extends Application {
         * Params: None
         * Returns: None */
 		pluginProxy.addMessageListener("gui:send-character-front", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				OverlayStage.getInstance().toFront();
 			});
 		});
@@ -568,8 +559,8 @@ public class App extends Application {
         * Params: None
         * Returns: None */
 		pluginProxy.addMessageListener("gui:hide-character", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				OverlayStage.updateStage("HIDE");
+			Main.runLater(() -> {
+				OverlayStage.updateStage(HIDE);
 			});
 		});
 
@@ -578,7 +569,7 @@ public class App extends Application {
         * Params: None
         * Returns: None */
 		pluginProxy.addMessageListener("gui:show-character", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				OverlayStage.updateStage();
 			});
 		});
@@ -588,8 +579,8 @@ public class App extends Application {
         * Params: font: String! - font in inner format
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-balloon-font", (sender, tag, data) -> {
-			Platform.runLater(() ->
-					Balloon.setDefaultFont((String) data)
+			Main.runLater(() ->
+				Balloon.setDefaultFont((String) data)
 			);
 		});
 
@@ -599,6 +590,12 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-interface-font", (sender, tag, data) -> {
 			LocalFont.setDefaultFont((String) data);
+			if (OptionsDialog.getInstance().isShowing()){
+				Main.runLater(() -> {
+					OptionsDialog.getInstance().close();
+					OptionsDialog.getInstance().show();
+				});
+			}
 		});
 
 		/* Set balloon shadow opacity.
@@ -606,9 +603,10 @@ public class App extends Application {
         * Params: opacity: Integer! - opacity, in percents (x100)
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-balloon-shadow-opacity", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				float opacity = ((Number) data).floatValue();
-				CharacterBalloon.setShadowOpacity(opacity);
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("opacity", data);
+				map.assertAnyForTag(sender, pluginProxy.getId(), tag, "opacity");
+				CharacterBalloon.setShadowOpacity(map.getFloat("opacity"));
 			});
 		});
 
@@ -617,12 +615,14 @@ public class App extends Application {
         * Params: opacity: Integer! - opacity, in percents (x100)
         * Returns: None */
 		pluginProxy.addMessageListener("gui:set-skin-shadow-opacity", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				float opacity = ((Number) data).floatValue();
-				Main.getProperties().getFloat("skin.shadow-opacity", opacity);
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("opacity", data);
+				map.assertAnyForTag(sender, pluginProxy.getId(), tag, "opacity");
+
+				Main.getProperties().put("skin.shadow-opacity", map.getFloat("opacity"));
 
 				if (character != null)
-					character.setShadowOpacity(opacity);
+					character.setShadowOpacity(map.getFloat("opacity"));
 			});
 		});
 
@@ -640,12 +640,13 @@ public class App extends Application {
         *        or
         *          List of String - selected filenames list */
 		pluginProxy.addMessageListener("gui:choose-files", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				FileChooser chooser = new FileChooser();
-				chooser.setTitle((String) m.getOrDefault("title", Main.getString("chooser.file.default_title")));
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap(data);
 
-				List<Map<String, Object>> filters = (List<Map<String, Object>>) m.getOrDefault("filters", null);
+				FileChooser chooser = new FileChooser();
+				chooser.setTitle(map.getString("title", Main.getString("chooser.file.default_title")));
+
+				Collection<Map<String, Object>> filters = map.getListOfMap("filters", true);
 				for (Map<String, Object> filter : filters) {
 					String description = (String) filter.getOrDefault("description", null);
 					List<String> extensions = (List<String>) filter.getOrDefault("extensions", null);
@@ -654,23 +655,23 @@ public class App extends Application {
 					}
 				}
 
-				String initialDirectory = (String) m.getOrDefault("initialDirectory", null);
+				File initialDirectory = map.getFile("initialDirectory");
 				if (initialDirectory != null) {
-					Path initialDirectoryPath = Paths.get(initialDirectory);
-					if (Files.isDirectory(initialDirectoryPath)) {
-						chooser.setInitialDirectory(initialDirectoryPath.toFile());
-					}
+
+					if (!initialDirectory.isDirectory())
+						initialDirectory = initialDirectory.getParentFile();
+					chooser.setInitialDirectory(initialDirectory);
 				}
 
-				String initialFilename = (String) m.getOrDefault("initialFilename", null);
+				File initialFilename = map.getFile("initialFilename");
 				if (initialFilename != null) {
-					chooser.setInitialFileName(initialFilename);
+					chooser.setInitialFileName(initialFilename.toString());
 				}
 
 				Window ownerWindow = OverlayStage.getInstance().getOwner();
 				Object result;
-				boolean multiple = (boolean) m.getOrDefault("multiple", false);
-				if (multiple) {
+
+				if (map.getBoolean("multiple", false)) {
 					List<File> chosenFiles = chooser.showOpenMultipleDialog(ownerWindow);
 					if (chosenFiles != null) {
 						result = chosenFiles.stream().map(File::toString).collect(Collectors.toList());
@@ -678,7 +679,7 @@ public class App extends Application {
 						result = null;
 					}
 				} else {
-					boolean saveDialog = (boolean) m.getOrDefault("saveDialog", false);
+					boolean saveDialog = map.getBoolean("saveDialog", false);
 					File chosenFile = (saveDialog) ? chooser.showSaveDialog(ownerWindow) : chooser.showOpenDialog(ownerWindow);
 					result = (chosenFile != null) ? chosenFile.toString() : null;
 				}
@@ -701,45 +702,45 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:supply-resource", (sender, tag, data) -> {
 			try {
-				Map<String, String> map = (Map<String, String>) data;
+				MessageDataMap map = new MessageDataMap(data);
 				if (map.containsKey("skin")) {
-					String path = map.get("skin");
-					character.setSkin(Skin.load(path));
+					File path = map.getFile("skin");
+					character.setSkin(Skin.load(path.toPath()));
 
 				} else if (map.containsKey("character-pos")){
-				    String[] pos = map.get("character-pos").split(":");
+				    String[] pos = map.getString("character-pos").split(":");
 				    character.relocate(pos[0].trim(), Integer.parseInt(pos[1].trim()));
 
                 } else if (map.containsKey("character-size")){
-                    String size = map.get("character-size");
-                    character.resizeSkin(Float.parseFloat(size));
+                    Float size = map.getFloat("character-size");
+                    character.resizeSkin(size);
 
                 } else if (map.containsKey("user-balloon")){
-                    String path = map.get("user-balloon");
+                    File path = map.getFile("user-balloon");
                     Main.getProperties().put("balloon.path-user", path);
                     UserBalloon.updateBalloonSprite();
 
                 } else if (map.containsKey("character-balloon-size")){
-                    String size = map.get("character-balloon-size");
-                    CharacterBalloon.setScaleFactor(Float.parseFloat(size));
+                    Float size = map.getFloat("character-balloon-size");
+                    CharacterBalloon.setScaleFactor(size);
 
                 } else if (map.containsKey("character-balloon")){
-                    String path = map.get("character-balloon");
+                    File path = map.getFile("character-balloon");
                     Main.getProperties().put("balloon.path-character", path);
                     CharacterBalloon.updateDrawer();
 
                 } else if (map.containsKey("interface")){
-                    String path = map.get("interface");
+                    File path = map.getFile("interface");
                     Main.getProperties().put("interface.path-skin", path);
                     TemplateBox.updateStyle();
 
                 } else if (map.containsKey("overlay-type")){
-				    String type = map.get("overlay-type");
+				    OverlayStage.LayerMode type = map.getOneOf("overlay-type", OverlayStage.LayerMode.values());
 				    OverlayStage.updateStage(type);
 
                 } else if (map.containsKey("character-balloon-position")){
-					String type = map.get("overlay-type");
-					OverlayStage.updateStage(type);
+					CharacterBalloon.PositionMode type = map.getOneOf("overlay-type", CharacterBalloon.PositionMode.values());
+					CharacterBalloon.getInstance().setPositionMode(type);
 
 				}
 			} catch(Exception e){
@@ -776,7 +777,7 @@ public class App extends Application {
         * Returns: Map
         *           path: String - selected directory  */
 		pluginProxy.addMessageListener("gui:choose-directory", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				Map<String, Object> m = (Map<String, Object>) data;
 				DirectoryChooser chooser = new DirectoryChooser();
 				chooser.setTitle((String) m.getOrDefault("title", Main.getString("chooser.directory.default_title")));
@@ -799,6 +800,80 @@ public class App extends Application {
 			});
 		});
 
+		pluginProxy.addMessageListener("gui:set-sprite", (sender, tag, data) -> {
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap(data);
+				switch (map.getOneOf("type",
+						ControllableSprite.SpriteActionType.values(),
+						ControllableSprite.SpriteActionType.CREATE)){
+					case CREATE: {
+						ControllableSprite sprite = new ControllableSprite(sender, map.getString("id"), map.getFile("file"));
+
+						Point2D pos = character.getPosition();
+						if (map.containsKey("posX")) pos = new Point2D(map.getInteger("posX"), pos.getY());
+						if (map.containsKey("posY")) pos = new Point2D(pos.getX(), map.getInteger("posY"));
+                        sprite.setPosition(pos);
+
+						if (map.containsKey("scaleX")) sprite.setScaleX(map.getFloat("scaleX"));
+						if (map.containsKey("scaleY")) sprite.setScaleY(map.getFloat("scaleY"));
+
+						if (map.containsKey("rotation")) sprite.setRotate(map.getFloat("rotation"));
+
+						if (map.containsKey("draggable")) sprite.setDraggable(map.getBoolean("draggable", true));
+
+					} break;
+					case SHOW: {
+						ControllableSprite sprite = ControllableSprite.getSprite(sender, map.getString("id"));
+						if (sprite != null)
+							sprite.show();
+						else
+							pluginProxy.log("Sprite named "+map.getString("id")+" is not registered");
+					} break;
+					case HIDE: {
+						ControllableSprite sprite = ControllableSprite.getSprite(sender, map.getString("id"));
+						if (sprite != null)
+							sprite.hide();
+						else
+							pluginProxy.log("Sprite named "+map.getString("id")+" is not registered");
+					} break;
+					case DELETE: {
+						ControllableSprite sprite = ControllableSprite.getSprite(sender, map.getString("id"));
+						if (sprite != null)
+							sprite.destroy();
+						else
+							pluginProxy.log("Sprite named "+map.getString("id")+" is not registered");
+					} break;
+					case ANIMATE: {
+						ControllableSprite sprite = ControllableSprite.getSprite(sender, map.getString("id"));
+						if (sprite != null){
+							for (Map<String, Object> entry : map.getListOfMap("animations", true)){
+								sprite.addAnimation(new AnimatedSprite.AnimationData(entry));
+							}
+						} else
+							pluginProxy.log("Sprite named "+map.getString("id")+" is not registered");
+					} break;
+					case DROP_ANIMATION: {
+						ControllableSprite sprite = ControllableSprite.getSprite(sender, map.getString("id"));
+						if (sprite != null)
+							sprite.dropAnimation();
+						else
+							pluginProxy.log("Sprite named "+map.getString("id")+" is not registered");
+					} break;
+				}
+			});
+		});
+
+		pluginProxy.addMessageListener("gui:add-character-animation", (sender, tag, data) -> {
+			List<Map<String, Object>> animations = (List) data;
+			for (Map<String, Object> entry : animations){
+				character.addAnimation(new AnimatedSprite.AnimationData(entry));
+			}
+		});
+
+		pluginProxy.addMessageListener("gui:drop-character-animation", (sender, tag, data) -> {
+			character.dropAnimation();
+		});
+
 		/* Notify after delay.
         * Public message
         * Params: Map
@@ -808,7 +883,7 @@ public class App extends Application {
         *           initialDirectory: String? - dialog initial directory
         * Returns: message with None */
 		pluginProxy.addMessageListener("gui:notify-after-delay", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				Map m = (Map) data;
 
 				// canceling timer
@@ -844,7 +919,7 @@ public class App extends Application {
         * Params: value: Integer? - multiplier
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-balloon-timeout", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				Integer value = getDouble(data, 200.0).intValue();
 				Main.getProperties().put("balloon.default_timeout", value);
 			});
@@ -855,7 +930,7 @@ public class App extends Application {
         * Params: value: Integer? - opacity, 0-100
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-balloon-opacity", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				Double value = getDouble(data, 100.0);
 				CharacterBalloon.setOpacity(value.floatValue());
 			});
@@ -863,27 +938,31 @@ public class App extends Application {
 
 		/* Change layer mode
         * Public message
-        * Params: Map
-        *           value: String? - layer mode name, "ALWAYS_TOP" by default
+        * Params: String - layer mode name, "ALWAYS_TOP" by default
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-layer-mode", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				String value = (String) m.get("value");
-				OverlayStage.updateStage(value);
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("value", data);
+				map.assertForTag(sender, pluginProxy.getId(), tag, "value");
+				OverlayStage.updateStage(map.getOneOf("value",
+						OverlayStage.LayerMode.values(),
+						OverlayStage.LayerMode.ALWAYS_TOP
+				));
 			});
 		});
 
 		/* Change balloon position mode
         * Public message
-        * Params: Map
-        *           value: String? - position mode name, "AUTO" by default
+        * Params: String - position mode name, "AUTO" by default
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-balloon-position-mode", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				String value = (String) m.get("value");
-				CharacterBalloon.setDefaultPositionMode(value);
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("value", data);
+				map.assertForTag(sender, pluginProxy.getId(), tag, "value");
+				CharacterBalloon.setDefaultPositionMode(map.getOneOf("value",
+						CharacterBalloon.PositionMode.values(),
+						CharacterBalloon.PositionMode.AUTO
+				));
 			});
 		});
 
@@ -893,11 +972,13 @@ public class App extends Application {
         *           value: String? - direction mode name, "STANDARD_DIRECTION" by default
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-balloon-direction-mode", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Map<String, Object> m = (Map<String, Object>) data;
-				String value = (String) m.get("value");
-				Main.getProperties().put("balloon_direction_mode", value);
-				CharacterBalloon.setDefaultDirectionMode(value);
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("value", data);
+				map.assertForTag(sender, pluginProxy.getId(), tag, "value");
+				CharacterBalloon.setDefaultDirectionMode(map.getOneOf("value",
+						CharacterBalloon.DirectionMode.values(),
+						CharacterBalloon.DirectionMode.STANDARD_DIRECTION
+				));
 			});
 		});
 
@@ -908,39 +989,38 @@ public class App extends Application {
         *         delay: Integer! - animation delay in ms, 0 to turn off
         * Returns: None */
 		pluginProxy.addMessageListener("gui:switch-balloon-animation", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				if (data instanceof Boolean){
-					Main.getProperties().put("balloon.text-animation-delay", (Boolean) data ? 50 : 0);
-				} else if (data instanceof Number){
-					Main.getProperties().put("balloon.text-animation-delay", ((Number) data).intValue());
-				} else if (data instanceof String){
-					try {
-						Main.getProperties().put("balloon.text-animation-delay", ((Float) Float.parseFloat(data.toString())).intValue());
-					} catch (Exception e){
-						Main.getProperties().put("balloon.text-animation-delay", data.toString().equals("true"));
-					}
-				}
+			Main.runLater(() -> {
+				MessageDataMap map = new MessageDataMap("value", data);
+				map.assertForTag(sender, pluginProxy.getId(), tag, "value");
+
+				if (map.getBoolean("value") != null){
+					Main.getProperties().put("balloon.text-animation-delay", map.getBoolean("value") ? 50 : 0);
+				} else if (map.getInteger("value") != null){
+					Main.getProperties().put("balloon.text-animation-delay", map.getInteger("value"));
+				} else throw new RuntimeException("Unknown format for "+data+" at tag "+tag);
 			});
 		});
 
 		/* Raise user balloon. Replaces text inside if already on screen.
         * Public message
-        * Params: Map
-        *           value: String? - start text
+        * Params: String - start text
         * Returns: None */
 		pluginProxy.addMessageListener("gui:raise-user-balloon", (sender, tag, data) -> {
-			Platform.runLater(() -> {
-				Map m = (Map) data;
-				UserBalloon.show(m != null ? (String) m.get("value") : null);
+			Main.runLater(() -> {
+				MessageDataMap m = new MessageDataMap("value", data);
+				UserBalloon.show(m.getString("value"));
 			});
 		});
 
 		/* Delete all information about menus and actions of plugin. */
 		pluginProxy.addMessageListener("core-events:plugin-unload", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				String pluginId = (String) data;
 				for (ControlsPanel panel : ControlsPanel.getPanels(pluginId))
 					panel.delete();
+
+				for (ControllableSprite sprite : ControllableSprite.getSprites(pluginId))
+					sprite.destroy();
 
 				Menu.getInstance().remove(pluginId);
 				Iterator<DelayNotifier> iterator = delayNotifiers.iterator();
@@ -956,7 +1036,7 @@ public class App extends Application {
 
 		/* Adding notification to reload program at language changing */
 		pluginProxy.addMessageListener("core:set-language", (sender, tag, data) -> {
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				TemplateBox dialog = new TemplateBox("message-box", Main.getString("default_messagebox_name"));
 				dialog.setContentText(Main.getString("info.restart"));
 				dialog.show();
@@ -967,9 +1047,10 @@ public class App extends Application {
 		MessageListener errorListener = new MessageListener() {
 			@Override
 			public void handleMessage(String sender, String tag, Object data) {
-				Platform.runLater(() -> {
-					Map map = (Map) data;
-					App.showThrowable(sender, (String) map.get("class"), (String) map.get("message"), (List) map.get("stacktrace"));
+				Main.runLater(() -> {
+					MessageDataMap map = new MessageDataMap("value", data);
+					map.assertAnyForTag(sender, pluginProxy.getId(), tag, "class", "message");
+					App.showThrowable(sender, map.getString("class"), map.getString("message"), (List) map.get("stacktrace"));
 				});
 			}
 		};
@@ -1157,7 +1238,7 @@ public class App extends Application {
 		new Thread(() -> {
 			caller.run();
 			needAlert = false;
-			Platform.runLater(() -> {
+			Main.runLater(() -> {
 				if (waitingAlert != null) {
 					waitingAlert.close();
 					waitingAlert = null;

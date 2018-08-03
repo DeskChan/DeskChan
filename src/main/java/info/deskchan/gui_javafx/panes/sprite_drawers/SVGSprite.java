@@ -12,17 +12,20 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.util.ArrayList;
 
 public class SVGSprite extends Sprite {
 
-    public static boolean canRead(String path){
-        return path.endsWith(".svg");
+    private String path = null;
+
+    public static boolean canRead(File path){
+        return path.getName().endsWith(".svg");
     }
 
-    public static Sprite create(String path) throws Exception {
+    public static SVGSprite create(File path) throws Exception {
 
-        Document document = getDocument(path);
+        Document document = getDocument(path.toString());
 
         Insets margin = getMarginFromFile(document);
 
@@ -51,17 +54,18 @@ public class SVGSprite extends Sprite {
 
         String textStyle = getTextStyle(document);
 
-        return new SVGSprite(shapesPaths, textStyle, margin);
+        return new SVGSprite(shapesPaths, textStyle, margin, path);
     }
 
     private SVGPath[] svgParts;
     private double originWidth, originHeight;
 
-    public SVGSprite(SVGPath[] shapes, String contentStyle, Insets margin) {
+    public SVGSprite(SVGPath[] shapes, String contentStyle, Insets margin, File path) {
         super(new Group(shapes), contentStyle, margin);
         svgParts = shapes;
         originWidth = getFitWidth();
         originHeight = getFitHeight();
+        this.path = path != null ? path.toString() : null;
     }
 
     public double getOriginWidth(){
@@ -85,4 +89,6 @@ public class SVGSprite extends Sprite {
         for (SVGPath path : svgParts)
             path.setScaleY(height / originWidth);
     }
+
+    public String getSpritePath(){ return path; }
 }

@@ -13,7 +13,6 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 
 import java.io.File;
-import java.io.InvalidObjectException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,9 +31,9 @@ public class Balloon extends MovablePane {
         }
 
         try {
-            sprite = Sprite.getSpriteFromFile(path);
+            sprite = Sprite.getSpriteFromFile(new File(path));
         } catch (Exception e) {
-            Main.log(new InvalidObjectException("Cannot set file " + path + "as balloon skin, unsupported format"));
+            Main.log(new Exception("Cannot set file " + path + "as balloon skin, unsupported format", e));
             sprite = createDefaultBubble();
         }
         return sprite;
@@ -120,14 +119,11 @@ public class Balloon extends MovablePane {
         bubblePane.setScaleY(scale);
     }
 
-    void show() {
-        OverlayStage.getInstance().showBalloon(this);
+    @Override
+    public void show() {
+        OverlayStage.getInstance().showSprite(this);
         toFront();
         requestFocus();
-    }
-
-    void hide() {
-        OverlayStage.getInstance().hideBalloon(this);
     }
 
     private static final String DEFAULT_FONT = "PT Sans, 16.0";
@@ -170,7 +166,7 @@ public class Balloon extends MovablePane {
         Insets margin = new Insets(20, 40, 20, 20);
         String textStyle = Sprite.getTextStyle(null);
 
-        return new SVGSprite(bubbleShapes, textStyle, margin);
+        return new SVGSprite(bubbleShapes, textStyle, margin, null);
     }
 
 }

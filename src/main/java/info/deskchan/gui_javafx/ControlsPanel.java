@@ -23,16 +23,21 @@ public class ControlsPanel {
 	private static ListView<String> registeredPanelsListView = new ListView<>();
 
 	static {
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("panels-id"), "panels-id", PanelType.SUBMENU, new Pane(registeredPanelsListView)).set();
-		registeredPanelsListView.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent click) {
-                if (click.getClickCount() == 2) {
-                    String item = registeredPanelsListView.getSelectionModel().getSelectedItem();
-                    item = item.substring(1+item.lastIndexOf('('), item.length()-1);
-                    open(item);
-                }
-            }
-        });
+		try {
+			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("panels-id"), "panels-id", PanelType.SUBMENU, new Pane(registeredPanelsListView)).set();
+			registeredPanelsListView.setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent click) {
+					if (click.getClickCount() == 2) {
+						String item = registeredPanelsListView.getSelectionModel().getSelectedItem();
+						item = item.substring(1 + item.lastIndexOf('('), item.length() - 1);
+						open(item);
+					}
+				}
+			});
+		} catch (Exception e){
+			Main.log(e);
+		}
 	}
 
 	final String name;
@@ -439,10 +444,10 @@ public class ControlsPanel {
 	static List<ControlsPanel> getPanels(String owner, PanelType panelType){
 
 		List<ControlsPanel> result = new LinkedList<>();
-		for (Map.Entry<String, ControlsPanel> panel : registeredPanels.entrySet())
-			if ((     owner == null || panel.getValue().owner.equals(owner) ) &&
-				( panelType == null || panel.getValue().type == panelType ) )
-				result.add(panel.getValue());
+		for (ControlsPanel panel : registeredPanels.values())
+			if ((     owner == null || panel.owner.equals(owner) ) &&
+				( panelType == null || panel.type == panelType ) )
+				result.add(panel);
 
 		return result;
 	}

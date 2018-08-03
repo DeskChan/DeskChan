@@ -1,38 +1,22 @@
-package info.deskchan.gui_javafx;
+package info.deskchan.gui_javafx.skins;
 
+import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
-import javafx.scene.image.Image;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
 class SingleImageSkin implements Skin {
 	
-	private final Path path;
-	private final Image image;
+	private final File path;
 	private final Path propertiesPath;
 	private final Properties properties = new Properties();
 	
 	SingleImageSkin(Path path) {
-		this.path = path;
-		InputStream stream = null;
-		try {
-			stream = Files.newInputStream(path);
-		} catch (IOException e) {
-			Main.getInstance().getPluginProxy().log(e);
-		}
-		image = (stream != null) ? new Image(stream) : null;
-		if (stream != null) {
-			try {
-				stream.close();
-			} catch (IOException e) {
-				Main.log(e);
-			}
-		}
-		propertiesPath = Main.getInstance().getPluginProxy().getDataDirPath().resolve(
+		this.path = path.toFile();
+		propertiesPath = Main.getPluginProxy().getDataDirPath().resolve(
 				"skin_" + getName() + ".properties"
 		);
 		try {
@@ -50,12 +34,12 @@ class SingleImageSkin implements Skin {
 	
 	@Override
 	public String getName() {
-		return Skin.getSkinsPath().relativize(path).toString();
+		return Skin.getSkinsPath().relativize(path.toPath()).toString();
 	}
 	
 	@Override
-	public Image getImage(String name) {
-		return image;
+	public File getImage(String name) {
+		return path;
 	}
 	
 	@Override
@@ -94,7 +78,7 @@ class SingleImageSkin implements Skin {
 		/*String name = Skin.getSkinsPath().relativize(path).toString();
 		name=name.replace(".pack","");
 		return name.substring(0, name.length() - 4) + " [SINGLE IMAGE]";*/
-		return path.toFile().getAbsolutePath();
+		return path.getAbsolutePath();
 	}
 	
 	static class Loader implements SkinLoader {

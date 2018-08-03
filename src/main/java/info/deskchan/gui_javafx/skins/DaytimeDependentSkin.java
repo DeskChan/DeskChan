@@ -1,7 +1,7 @@
-package info.deskchan.gui_javafx;
+package info.deskchan.gui_javafx.skins;
 
+import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
-import javafx.scene.image.Image;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
@@ -94,7 +94,7 @@ class DaytimeDependentSkin implements Skin {
     }
 
     @Override
-    public Image getImage(String name) {
+    public File getImage(String name) {
         return skin.getImage(name);
     }
 
