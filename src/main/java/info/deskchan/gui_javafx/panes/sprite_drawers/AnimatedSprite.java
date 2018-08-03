@@ -45,7 +45,6 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
         public long delay = 200;
         protected float changeSpriteOpacity = 0;
         public AnimationData(){}
-        public AnimationData(Sprite sprite, boolean smooth){ next = sprite; this.smooth = smooth; }
         public AnimationData(Map<String, Object> dat){
             MessageDataMap data = new MessageDataMap(dat);
             movingX = data.getFloat("movingX", 0);
@@ -127,8 +126,10 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
                 setScaleY(getScaleY() + currentAnimation.scalingY);
 
         }
-        if (currentAnimation.delay < 0)
+        if (currentAnimation.delay < 0) {
             currentAnimation = null;
+            notify(onSpriteHandlers);
+        }
     }
 
     private boolean setCurrentAnimation(){
@@ -155,8 +156,6 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
             mainSprite = currentAnimation.next;
             getChildren().add(mainSprite);
             mainSprite.setOpacity(0);
-
-            notify(onSpriteHandlers);
 
             if (swappingSprite != null) {
                 swappingSprite.setOpacity(1);

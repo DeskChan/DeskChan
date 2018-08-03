@@ -120,11 +120,12 @@ public class Character extends MovablePane {
 		layoutYProperty().addListener(CharacterBalloon.updateBalloonLayoutY);
 
 		sprite.onSpriteHandlers.add(() -> {
-			Map<String, Object> infoMap = new HashMap<>();
-			infoMap.put("sprite", sprite.getCurrentSprite().getSpritePath());
-			infoMap.put("width", sprite.getFitWidth());
+            Map<String, Object> infoMap = new HashMap<>();
+            infoMap.put("sprite", sprite.getCurrentSprite().getSpritePath());
+            infoMap.put("emotion", imageName);
+            infoMap.put("width", sprite.getFitWidth());
             infoMap.put("height", sprite.getFitHeight());
-			Main.getPluginProxy().sendMessage("gui-events:character-sprite-changed", infoMap);
+            Main.getPluginProxy().sendMessage("gui-events:character-sprite-changed", infoMap);
 		});
 	}
 
@@ -167,6 +168,12 @@ public class Character extends MovablePane {
 				screenBounds.getMaxY() - getHeight()));
 	}
 
+	private AnimatedSprite.AnimationData newAnimationData(ImageSprite newSprite){
+        AnimatedSprite.AnimationData data = new AnimatedSprite.AnimationData();
+        data.next = newSprite;
+        data.smooth = true;
+        return data;
+    }
 	private void updateImage(boolean reloadImage) {
 
 		Point2D oldSize = sprite.getCurrentSprite() != null ? new Point2D(sprite.getFitWidth(), sprite.getFitHeight()) : null;
@@ -177,7 +184,7 @@ public class Character extends MovablePane {
 			image = sp.toImageView().getImage();
 			if (reloadImage) {
 				sprite.dropAnimation();
-				sprite.addAnimation(new AnimatedSprite.AnimationData(sp, true));
+				sprite.addAnimation(newAnimationData(sp));
 			}
 		} catch (Exception e){
 			Main.log(e);
