@@ -71,10 +71,10 @@ abstract class MessageWrapper {
             return JSONToData(JSONObject(rdata))
         } catch (e:Exception){ }
         try {
-            return rdata.toDouble()
-        } catch (e:Exception){ }
-        try {
-            return rdata.toLong()
+            if (rdata.contains("."))
+                return rdata.toDouble()
+            else
+                return rdata.toLong()
         } catch (e:Exception){ }
         try {
             if (rdata.toLowerCase() == "true")  return true

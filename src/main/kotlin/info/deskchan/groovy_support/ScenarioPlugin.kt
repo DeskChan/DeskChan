@@ -142,6 +142,7 @@ class ScenarioPlugin : Plugin {
                         pluginProxy.log(e)
                     }
                     scenarioThread = null
+                    currentScenario = null
                 }
             }
             scenarioThread!!.name = "Scenario thread"

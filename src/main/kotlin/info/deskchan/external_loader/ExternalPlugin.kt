@@ -74,6 +74,7 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
               )
       ), wrapper)
       processThread = Thread{
+         activated = true
          checkThread()
       }
       processThread.name = pluginProxy.getId() + " plugin thread"
@@ -81,9 +82,9 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       return true
    }
 
-
+   private var activated = false
    private fun checkThread() {
-      while (true){
+      while (activated){
          if (!stream.canRead() && !stream.canReadError()) {
              if (!stream.isAlive()) {
                  pluginProxy.log(Exception("Process stopped working by unknown reason"))
@@ -266,6 +267,7 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
    }
 
    override fun unload(){
+      activated = false
       stream.write(MessageWrapper.Message("unload"), wrapper)
       pluginProxy.log("Waiting for process exit")
       stream.close()

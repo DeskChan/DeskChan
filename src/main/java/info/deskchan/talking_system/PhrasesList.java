@@ -15,11 +15,12 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 class PhrasesPack {
@@ -27,22 +28,20 @@ class PhrasesPack {
 	public enum PackType { USER, PLUGIN, DATABASE }
 
 	protected PackType packType;
-	protected Path packFile;
+	protected File packFile;
 	protected String packName;
 	protected ArrayList<Phrase> phrases = new ArrayList<>();
 	protected boolean loaded;
 
 	public PhrasesPack(String file, PackType packType) {
 		packName = file;
-		packFile = Paths.get(file).normalize();
+		packFile = new File(file);
 		this.packType = packType;
 
-		if (!packFile.getFileName().toString().contains("."))
-			packFile = Paths.get(file + ".phrases").normalize();
+		if (!packFile.getName().contains("."))
+			packFile = new File(packFile.toString() + ".phrases");
 		if (!packFile.isAbsolute())
-			packFile = Main.getPhrasesDirPath().resolve(packFile);
-		else if (packFile.startsWith(Main.getPhrasesDirPath().normalize()))
-			packName = packFile.getFileName().toString();
+			packFile = Main.getPhrasesDirPath().resolve(packFile.toPath()).toFile();
 
 		if (packName.contains(".")) {
 			if (packName.endsWith(".database")) this.packType = PackType.DATABASE;
@@ -63,7 +62,7 @@ class PhrasesPack {
 			f.setValidating(false);
 
 			DocumentBuilder builder = f.newDocumentBuilder();
-			InputStream inputStream = Files.newInputStream(packFile);
+			InputStream inputStream = new FileInputStream(packFile);
 			Document doc = builder.parse(inputStream);
 			inputStream.close();
 			Node mainNode = doc.getChildNodes().item(0);

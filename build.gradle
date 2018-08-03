@@ -33,6 +33,8 @@ targetCompatibility = 1.8
 
 compileJava.options.encoding = 'UTF-8'
 
+applicationDefaultJvmArgs = ["-XX:MinHeapFreeRatio=10", "-XX:MaxHeapFreeRatio=25"]
+
 sourceSets {
 	main {
 		java {
@@ -188,6 +190,7 @@ task assembleProxyInterface(type: Jar, group: 'desk-chan') {
 		include 'info/deskchan/core/Plugin.class'
 		include 'info/deskchan/core/PluginProperties.class'
 		include 'info/deskchan/core/LoggerLevel.class'
+		include 'info/deskchan/core/MessageDataMap.class'
 	}
 	manifest {
 		attributes 'Main-Class': "info.deskchan.${baseName}.Main", 'Implementation-Version': appVersion

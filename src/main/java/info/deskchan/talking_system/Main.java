@@ -87,11 +87,15 @@ public class Main implements Plugin {
         * Returns: Phrase if requested, else None */
 		pluginProxy.addMessageListener("talk:request-say", (sender, tag, dat) -> {
 			Map data = createMapFromObject(dat, "intent");
-			if (data.containsKey("purpose") && !data.containsKey("intent"))
-				data.put("intent", data.get("purpose"));
-			data.put("sender", sender);
+			if (data.containsKey("text")){
+				sendPhrase(null, data);
+			} else {
+				if (data.containsKey("purpose") && !data.containsKey("intent"))
+					data.put("intent", data.get("purpose"));
+				data.put("sender", sender);
 
-			phraseRequest(data);
+				phraseRequest(data);
+			}
 		});
 
 		/* Replacing fields in brackets to values set in preset
@@ -376,7 +380,7 @@ public class Main implements Plugin {
 
 	/** Convert phrase to map format and send to DeskChan:say or sender. **/
 	void sendPhrase(Phrase phrase, Map<String, Object> data){
-		Map<String, Object> ret = phrase.toMap();
+		Map<String, Object> ret = phrase != null ? phrase.toMap() : new HashMap<>();
 
 		if (ret.get("characterImage").equals("AUTO")) {
 			String characterImage = currentCharacter.getDefaultSpriteType();
