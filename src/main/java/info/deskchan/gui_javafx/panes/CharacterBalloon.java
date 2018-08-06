@@ -4,6 +4,7 @@ import info.deskchan.gui_javafx.LocalFont;
 import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.MouseEventNotificator;
 import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
@@ -99,10 +100,14 @@ public class CharacterBalloon extends Balloon {
 		});
 		setOnMouseReleased(event -> {
 			if(!isDragging() && event.getButton().equals(MouseButton.PRIMARY) && (System.currentTimeMillis()-lastClick)<200) {
-				if (character != null) {
-					character.say(null);
+				if (symbolsAdder.isDone()) {
+					if (character != null) {
+						character.say(null);
+					} else {
+						hide();
+					}
 				} else {
-					hide();
+					symbolsAdder.stop();
 				}
 			}
 		});
@@ -327,6 +332,9 @@ public class CharacterBalloon extends Balloon {
 
 		public void stop(){
 			timeline.stop();
+			content.setText(text);
 		}
+
+		public boolean isDone(){ return timeline.getStatus() == Animation.Status.STOPPED; }
 	}
 }

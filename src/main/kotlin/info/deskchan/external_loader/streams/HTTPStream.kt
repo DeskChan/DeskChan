@@ -69,6 +69,7 @@ class HTTPStream : ExternalStream, HttpHandler {
             }
             val response = wrapper.serialize(list).toString().toByteArray()
             t.sendResponseHeaders(200, response.size.toLong())
+            t.responseHeaders.add("Access-Control-Allow-Origin", "*")
             val os = t.responseBody
             os.write(response)
             os.close()
@@ -131,6 +132,7 @@ class HTTPStream : ExternalStream, HttpHandler {
                 lastExchange = null
                 val response = data.toString().toByteArray()
                 ex.sendResponseHeaders(200, response.size.toLong())
+                ex.responseHeaders.add("Access-Control-Allow-Origin", "*")
                 val os = ex.responseBody
                 os.write(response)
                 os.close()
@@ -139,11 +141,9 @@ class HTTPStream : ExternalStream, HttpHandler {
                 val tag = message.getRequiredAsString(0)
                 if (tag in sendToServerListeners){
                     val url = sendToServerListeners[tag]!!
-                    println(url)
                     val con = url.openConnection() as HttpURLConnection
                     con.doOutput = true
                     con.requestMethod = "POST"
-                    println(data.toString())
                     val writer = con.outputStream.writer(Charsets.UTF_8)
                     writer.write(data.toString())
                     writer.flush()
