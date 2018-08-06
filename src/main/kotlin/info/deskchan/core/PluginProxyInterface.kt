@@ -5,7 +5,7 @@ import java.nio.file.Path
 interface PluginProxyInterface : MessageListener {
 
     /** Get name of plugin. **/
-    fun getId() : String
+    fun getId(): String
 
     /** Unload plugin from program immediately. This method is usually called from core. **/
     fun unload()
@@ -35,8 +35,14 @@ interface PluginProxyInterface : MessageListener {
     /** Add listener to tag. All messages from everywhere in program will be received by this listener. */
     fun addMessageListener(tag: String, listener: MessageListener)
 
+    /** Add typed listener to tag. All messages from everywhere in program will be received by this listener. */
+    fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
+
     /** Remove listener to tag. */
     fun removeMessageListener(tag: String, listener: MessageListener)
+
+    /** Remove typed listener to tag. */
+    fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
 
     /** Set alternative */
     fun setAlternative(srcTag: String, dstTag: String, priority:Int)
@@ -54,20 +60,20 @@ interface PluginProxyInterface : MessageListener {
      * @param delay Delay, ms
      * @param responseListener Function that will be called after delay
      * @return Id of timer  **/
-    fun setTimer(delay: Long, responseListener: ResponseListener) : Int
+    fun setTimer(delay: Long, responseListener: ResponseListener): Int
 
     /** Set cycled timer.
      * @param delay Delay, ms
      * @param count Count of cycles, -1 to infinite
      * @param responseListener Function that will be called after delay
      * @return Id of timer  **/
-    fun setTimer(delay: Long, count: Int, responseListener: ResponseListener) : Int
+    fun setTimer(delay: Long, count: Int, responseListener: ResponseListener): Int
 
     /** Cancel timer by id. **/
     fun cancelTimer(id: Int)
 
     /** Properties of plugin **/
-    fun getProperties() : PluginProperties
+    fun getProperties(): PluginProperties
 
     /** Set path to resource bundle that you want to be used by your plugin.
      * @param path Path to resources folder
@@ -78,7 +84,7 @@ interface PluginProxyInterface : MessageListener {
     fun setConfigField(key: String, value: Any)
 
     /** Get config field of your plugin. */
-    fun getConfigField(key:String): Any?
+    fun getConfigField(key: String): Any?
 
     /** Get resource string from resource bundles. Resources will be searched not only in bundle that you specified
      * but also in main bundle. */
@@ -101,12 +107,10 @@ interface PluginProxyInterface : MessageListener {
 
     /** Log stack and text of error thrown to file and console. **/
     fun log(e: Throwable)
-    
+
     /** Log text to file and console.
      * @param text
      * @param level
      */
-    fun log(text: String,level: LoggerLevel)
+    fun log(text: String, level: LoggerLevel)
 }
-
-

@@ -10,6 +10,7 @@ import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.*
 import java.util.Locale
+import kotlin.collections.HashMap
 
 
 class PluginProxy (private val id:String, private val plugin: Plugin, private val config: PluginConfig)
@@ -17,6 +18,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     private val loader: ClassLoader = plugin::class.java.classLoader
     private val messageListeners = HashMap<String, MutableSet<MessageListener>>()
+    private val typedListeners = HashMap<TypedMessageListener<*>, MessageListener>()
     private val responseListeners = HashMap<Any, ResponseInfo>()
     private var seq = 0
     private val properties: PluginProperties = PluginProperties(this)
@@ -47,6 +49,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             }
         }
         messageListeners.clear()
+        typedListeners.clear()
         PluginManager.getInstance().unregisterPlugin(this)
     }
 
@@ -90,6 +93,21 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         PluginManager.getInstance().registerMessageListener(tag, listener)
     }
 
+    override fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
+        for (method in listener.javaClass.methods) {
+            if ((method.name == "handleMessage") && (method.parameterCount == 3)) {
+                val cls = method.parameterTypes.last()
+                val l = MessageListener { sender, tag, data ->
+                    listener.handleMessage(sender, tag,
+                            MessageDataUtils.deserialize(data as Map<String, Object>, cls) as T)
+                }
+                addMessageListener(tag, l)
+                typedListeners[listener] = l
+                break
+            }
+        }
+    }
+
     override fun removeMessageListener(tag: String, listener: MessageListener) {
         PluginManager.getInstance().unregisterMessageListener(tag, listener)
         val listeners = messageListeners[tag]
@@ -98,6 +116,13 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             if (listeners.size == 0) {
                 messageListeners.remove(tag)
             }
+        }
+    }
+
+    override fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
+        val l = typedListeners.remove(listener)
+        if (l != null) {
+            removeMessageListener(tag, l)
         }
     }
 
