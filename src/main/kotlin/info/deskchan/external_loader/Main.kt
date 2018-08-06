@@ -10,7 +10,10 @@ class Main : Plugin, PluginLoader {
 
     private lateinit var pluginProxy: PluginProxyInterface
     private val supportedPlugins = mutableMapOf<String, String>(
-            ".py" to "Python"
+            ".py" to "Python",
+            ".py2" to "Python",
+            ".py3" to "Python",
+            ".http" to "HttpServer"
     )
 
     override fun initialize(pluginProxy: PluginProxyInterface): Boolean {
@@ -68,7 +71,6 @@ class Main : Plugin, PluginLoader {
     }
 
     private fun loadPlugin(file: File) {
-        println(file)
         var type: String? = null
         supportedPlugins.keys.forEach {
             if (file.name.endsWith(it)){
@@ -79,8 +81,8 @@ class Main : Plugin, PluginLoader {
         if (type == null) return
 
         val config = PluginConfig(supportedPlugins[type.toString()].toString())
-        val manifestPath = File(file.absolutePath + ".manifest")
-        if (manifestPath.exists()) config.appendFromJson(file)
+        val manifestPath = file.parentFile.toPath().resolve( "manifest.json").toFile()
+        if (manifestPath.exists()) config.appendFromJson(manifestPath)
 
         val plugin = ExternalPlugin(file)
 

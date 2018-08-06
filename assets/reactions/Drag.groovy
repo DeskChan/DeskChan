@@ -8,11 +8,11 @@ class Drag {
 			if (hash >= 0) return
 			drag = 1
 			hash = proxy.setTimer(1000, { s, d ->
-				proxy.sendMessage("DeskChan:request-say", [purpose: 'DRAG', priority: 3000])
+				proxy.sendMessage("DeskChan:request-say", [intent: 'DRAG', priority: 3000])
 				drag++
 				hash = proxy.setTimer(5000, -1, { s2, d2 ->
 					drag++
-					proxy.sendMessage("DeskChan:request-say", [purpose: 'DRAG', priority: 500])
+					proxy.sendMessage("DeskChan:request-say", [intent: 'DRAG', priority: 500])
 				})
 			})
 		}
@@ -20,7 +20,7 @@ class Drag {
 
 	def stopDrag = { sender, tag, data ->
 		if(drag > 1 && hash >= 0)
-			proxy.sendMessage("DeskChan:request-say", [ purpose: 'DROP', priority: 3001 ] )
+			proxy.sendMessage("DeskChan:request-say", [ intent: 'DROP', priority: 3001 ] )
 		proxy.cancelTimer(hash)
 		hash = -1
 	}

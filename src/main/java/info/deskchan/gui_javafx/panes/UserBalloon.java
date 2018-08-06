@@ -4,6 +4,7 @@ import info.deskchan.gui_javafx.App;
 import info.deskchan.gui_javafx.LocalFont;
 import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.OverlayStage;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -29,15 +30,15 @@ public class UserBalloon extends Balloon {
 
     protected final TextInputControl content;
 
-    protected static BalloonDrawer drawer;
+    protected static Sprite sprite;
 
-    public static void updateDrawer(){
-        drawer = getDrawer("balloon.path-user");
+    public static void updateBalloonSprite(){
+        sprite = getBalloonSprite("balloon.path-user");
     }
 
     BalloonDialog dialog;
 
-    public UserBalloon() {
+    protected UserBalloon() {
         super();
         setId("user-balloon");
         instance = this;
@@ -61,7 +62,8 @@ public class UserBalloon extends Balloon {
         HBox buttons = new HBox(sendButton, closeButton);
         buttons.setAlignment(Pos.CENTER);
 
-        bubblePane = drawer.createBalloon(new VBox(textLine, buttons));
+        bubblePane = sprite;
+        sprite.setSpriteContent(new VBox(textLine, buttons));
         getChildren().add(bubblePane);
 
         label.setPrefWidth(bubblePane.getContentWidth());
@@ -111,8 +113,8 @@ public class UserBalloon extends Balloon {
     public void setDefaultPosition() {
         setPosition(
            new Point2D(
-                   (OverlayStage.getDesktopSize().getWidth() - bubblePane.getBubbleWidth()) / 2,
-                   (OverlayStage.getDesktopSize().getHeight() - bubblePane.getBubbleHeight()) / 2
+                   (OverlayStage.getDesktopSize().getWidth() - bubblePane.getFitWidth()) / 2,
+                   (OverlayStage.getDesktopSize().getHeight() - bubblePane.getFitHeight()) / 2
            )
         );
     }
@@ -133,9 +135,10 @@ public class UserBalloon extends Balloon {
         instance = null;
     }
 
-    void show() { dialog.show(); }
 
-    void hide() {
+    public void show() { dialog.show(); }
+
+    public void hide() {
         dialog.close();
     }
 
@@ -150,8 +153,8 @@ public class UserBalloon extends Balloon {
             Scene scene = new Scene(balloon);
             balloon.setStyle("-fx-background-color: transparent;");
             scene.setFill(Color.TRANSPARENT);
-            balloon.setMinWidth(balloon.bubblePane.getBubbleWidth());
-            balloon.setMinHeight(balloon.bubblePane.getBubbleHeight());
+            balloon.setMinWidth(balloon.bubblePane.getFitWidth());
+            balloon.setMinHeight(balloon.bubblePane.getFitHeight());
 
             dialog.setScene(scene);
         }

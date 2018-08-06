@@ -15,11 +15,12 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 class PhrasesPack {
@@ -27,22 +28,20 @@ class PhrasesPack {
 	public enum PackType { USER, PLUGIN, DATABASE }
 
 	protected PackType packType;
-	protected Path packFile;
+	protected File packFile;
 	protected String packName;
 	protected ArrayList<Phrase> phrases = new ArrayList<>();
 	protected boolean loaded;
 
 	public PhrasesPack(String file, PackType packType) {
 		packName = file;
-		packFile = Paths.get(file).normalize();
+		packFile = new File(file);
 		this.packType = packType;
 
-		if (!packFile.getFileName().toString().contains("."))
-			packFile = Paths.get(file + ".phrases").normalize();
+		if (!packFile.getName().contains("."))
+			packFile = new File(packFile.toString() + ".phrases");
 		if (!packFile.isAbsolute())
-			packFile = Main.getPhrasesDirPath().resolve(packFile);
-		else if (packFile.startsWith(Main.getPhrasesDirPath().normalize()))
-			packName = packFile.getFileName().toString();
+			packFile = Main.getPhrasesDirPath().resolve(packFile.toPath()).toFile();
 
 		if (packName.contains(".")) {
 			if (packName.endsWith(".database")) this.packType = PackType.DATABASE;
@@ -63,7 +62,7 @@ class PhrasesPack {
 			f.setValidating(false);
 
 			DocumentBuilder builder = f.newDocumentBuilder();
-			InputStream inputStream = Files.newInputStream(packFile);
+			InputStream inputStream = new FileInputStream(packFile);
 			Document doc = builder.parse(inputStream);
 			inputStream.close();
 			Node mainNode = doc.getChildNodes().item(0);
@@ -117,7 +116,7 @@ class PhrasesPack {
 		return packFile.equals(((PhrasesPack) other).packFile);
 	}
 
-	public void printPhrasesLack(String purpose){
+	public void printPhrasesLack(String intent){
 		System.out.println(packName);
 
 		int minimumsCount = 10;
@@ -168,7 +167,7 @@ class PhrasesPack {
 			// counting matching phrases
 			int matchingPhrasesCount = 0;
 			for (Phrase phrase : phrases)
-				if (phrase.purposeEquals(purpose) && phrase.matchToCharacter(current)) matchingPhrasesCount++;
+				if (phrase.intentEquals(intent) && phrase.matchToCharacter(current)) matchingPhrasesCount++;
 
 			// if count of some's minimum is more than to current, replacing it
 			for (int k = 0; k < minimumsCount; k++)
@@ -320,13 +319,13 @@ public class PhrasesList {
 		update();
 	}
 
-	public void requestRandomQuote(String purpose, PhraseGetterCallback callback) {
-		requestRandomQuote(purpose, null, callback);
+	public void requestRandomQuote(String intent, PhraseGetterCallback callback) {
+		requestRandomQuote(intent, null, callback);
 	}
-	public void requestRandomQuote(String purpose, Map info, PhraseGetterCallback callback) {
-		purpose = purpose.toUpperCase();
+	public void requestRandomQuote(String intent, Map info, PhraseGetterCallback callback) {
+		intent = intent.toUpperCase();
 		if (matchingPhrases.size() == 0) {
-			callback.call(new Phrase(Main.getString("phrase." + purpose)));
+			callback.call(new Phrase(Main.getString("phrase." + intent)));
 			return;
 		}
 
@@ -340,14 +339,14 @@ public class PhrasesList {
 
 		List<Map> matchingList = new ArrayList<>();
 		for (Phrase phrase : matchingPhrases)
-			if (phrase.noTimeout() && phrase.purposeEquals(purpose)){
+			if (phrase.noTimeout() && phrase.intentEquals(intent)){
 				if (info == null || (phrase.getTags() != null && phrase.getTags().match(info))){
 					currentlySuitable.add(phrase);
 					matchingList.add(phrase.toMap());
 				}
 			}
 
-		final String fPurpose = purpose;
+		final String finalIntent = intent;
 		Main.getPluginProxy().sendMessage("talk:reject-quote", matchingList,
 				(sender, data) -> {
 					List<Map<String, Object>> phrasesList = (ArrayList<Map<String,Object>>) data;
@@ -366,7 +365,7 @@ public class PhrasesList {
 				},
 				(sender, dat) -> {
 					if (currentlySuitable.size() == 0) {
-						callback.call(new Phrase(Main.getString("phrase."+fPurpose)));
+						callback.call(new Phrase(Main.getString("phrase."+finalIntent)));
 						return;
 					}
 					int counter = LimitArrayList.LIMIT + 1;
@@ -384,10 +383,10 @@ public class PhrasesList {
 		);
 	}
 
-	public void printPhrasesLack(String purpose){
-    	purpose = purpose.toUpperCase();
+	public void printPhrasesLack(String intent){
+    	intent = intent.toUpperCase();
 		for(PhrasesPack pack : packs)
-			pack.printPhrasesLack(purpose);
+			pack.printPhrasesLack(intent);
 	}
 
 	public interface PhraseGetterCallback {

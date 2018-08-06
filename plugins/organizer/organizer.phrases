@@ -3,7 +3,7 @@
     <ru>
         <phrase>
             <text>Динь-дон! Динь-дон! Будильник звонит!</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>AUTO</sprite>
             <range>
                 <impulsivity>2 | 4</impulsivity>
@@ -13,7 +13,7 @@
         </phrase>
         <phrase>
             <text>Ты ставил напоминание. И вот я напоминаю.</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>AUTO</sprite>
             <range>
                 <manner>0 | 4</manner>
@@ -21,18 +21,18 @@
         </phrase>
         <phrase>
             <text>Rise and shine, Мr. {userF}.</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>NORMAL</sprite>
             <interests>games</interests>
         </phrase>
         <phrase>
             <text>Твой час настал, {user}.</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>AUTO</sprite>
         </phrase>
         <phrase>
             <text>Ой, что это тут звенит? Ты ничего не ставил, случаем?</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>CURIOUS</sprite>
             <range>
                 <empathy>1 | 4</empathy>
@@ -42,7 +42,7 @@
         </phrase>
         <phrase>
             <text>Нужный человек в нужном месте может перевернуть мир! Время настало!</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>HAPPY</sprite>
             <range>
                 <impulsivity>1 | 4</impulsivity>
@@ -52,7 +52,7 @@
         </phrase>
         <phrase>
             <text>Так, время пришло. Что ты там задумывал?</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>SERIOUS</sprite>
             <range>
                 <empathy>-4 | 1</empathy>
@@ -62,7 +62,7 @@
         </phrase>
         <phrase>
             <text>Рота, подъём!</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <impulsivity>3 | 4</impulsivity>
@@ -73,7 +73,7 @@
     <en>
         <phrase>
             <text>Reminder is ringing.</text>
-            <purpose>ALARM</purpose>
+            <intent>ALARM</intent>
         </phrase>
     </en>
 </phrases>

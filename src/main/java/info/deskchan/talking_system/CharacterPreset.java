@@ -113,8 +113,9 @@ public class CharacterPreset {
 		phrases.reload();
 
 		emotionState = getDefaultEmotionsController();
-		if (json.has("emotions"))
-			emotionState.setFromJSON(json.getJSONObject("emotions"));
+		try {
+            emotionState.setFromJSON(json.getJSONObject("emotions"));
+        } catch (Exception e){ }
 
 		tags = new TextOperations.TagsMap();
 		if (json.has("tags")) {
@@ -280,13 +281,12 @@ public class CharacterPreset {
 		JSONArray ar = null;
 		if (obj.get(arrayname) instanceof String) {
 			String sa = obj.getString(arrayname);
-			if (sa.charAt(0) != '[') {
-				sa = "[" + sa;
-			}
-			if (sa.charAt(sa.length() - 1) != '[') {
-				sa = sa + "]";
-			}
-			ar = new JSONArray(sa);
+			try {
+                ar = new JSONArray(sa);
+            } catch (Exception e){
+			    list.add(sa);
+            }
+
 		}
 		if (obj.get(arrayname) instanceof JSONArray) {
 			ar = obj.getJSONArray(arrayname);

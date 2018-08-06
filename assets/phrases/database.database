@@ -3,42 +3,42 @@
     <ru>
         <phrase>
             <text>Тут что-то снова какие-то ошибки. Ты пробовал включить и выключить?</text>
-            <purpose>ADVICE</purpose>
+            <intent>ADVICE</intent>
             <sprite>NORMAL</sprite>
         </phrase>
         <phrase>
             <text>Сложна! Сложна! Ничего не понятно! Что это такое, я не понимаю! Почему так сложно!</text>
-            <purpose>CLARIFY</purpose>
+            <intent>CLARIFY</intent>
             <sprite>CRY</sprite>
         </phrase>
         <phrase>
             <text>Слыш Работать!</text>
-            <purpose>DO_WORK</purpose>
+            <intent>DO_WORK</intent>
             <sprite>SERIOUS</sprite>
         </phrase>
         <phrase>
             <text>Прости, что я такая.</text>
-            <purpose>SORRY</purpose>
+            <intent>SORRY</intent>
             <sprite>SAD</sprite>
         </phrase>
         <phrase>
             <text>Утречка, кожаный ублюдок!</text>
-            <purpose>HELLO</purpose>
+            <intent>HELLO</intent>
             <sprite>HAPPY</sprite>
         </phrase>
         <phrase>
             <text>Опять ты? Я тебе ещё в прошлый раз сказала: увижу - убью.</text>
-            <purpose>HELLO</purpose>
+            <intent>HELLO</intent>
             <sprite>ANGRY</sprite>
         </phrase>
         <phrase>
             <text>Пожалуйста, не возвращайся.</text>
-            <purpose>BYE</purpose>
+            <intent>BYE</intent>
             <sprite>SAD</sprite>
         </phrase>
         <phrase>
             <text>Катись колбаской, {userF} .</text>
-            <purpose>STOP_DIALOG, BYE</purpose>
+            <intent>STOP_DIALOG, BYE</intent>
             <sprite>SERIOUS</sprite>
         </phrase>
     </ru>

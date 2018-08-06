@@ -108,6 +108,18 @@ class ScenarioPlugin : Plugin {
             stopScenario()
         })
 
+        pluginProxy.setAlternative("DeskChan:user-said", "scenario:deny-interruption", 500)
+
+        pluginProxy.addMessageListener("scenario:deny-interruption", MessageListener { sender, tag, dat ->
+            val scenario = currentScenario
+
+            if (scenario == null){
+                pluginProxy.callNextAlternative(sender,  "DeskChan:user-said", "scenario:deny-interruption", dat)
+            } else {
+                scenario.interruptListener.handle(sender, dat)
+            }
+        })
+
         if (CoreInfo.getCoreProperties().getInteger("start.run_first", 0) < 2){
             currentScenario = createScenario("core", "start_scenario.txt", null)
             runScenario()
@@ -130,8 +142,10 @@ class ScenarioPlugin : Plugin {
                         pluginProxy.log(e)
                     }
                     scenarioThread = null
+                    currentScenario = null
                 }
             }
+            scenarioThread!!.name = "Scenario thread"
             scenarioThread!!.start()
         } else
             pluginProxy.sendMessage("DeskChan:request-say", "ERROR")
@@ -168,6 +182,8 @@ class ScenarioPlugin : Plugin {
             return end
         }
 
+       private const val UTF8_BOM = "\uFEFF"
+
         fun createScenario(owner:String, pathString: String, data: Any?): Scenario? {
             val compilerConfiguration = CompilerConfiguration()
             compilerConfiguration.sourceEncoding = "UTF-8"
@@ -184,6 +200,8 @@ class ScenarioPlugin : Plugin {
                 pluginProxy.log(e)
                 return null
             }
+
+            scriptLines[0] = scriptLines[0].removePrefix(UTF8_BOM)
 
             val scriptText = StringBuilder()
             val buffers = arrayOfNulls<String>(1)

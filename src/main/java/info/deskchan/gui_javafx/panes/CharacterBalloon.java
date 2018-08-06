@@ -3,6 +3,8 @@ package info.deskchan.gui_javafx.panes;
 import info.deskchan.gui_javafx.LocalFont;
 import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.MouseEventNotificator;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.value.ChangeListener;
@@ -17,9 +19,13 @@ import javafx.util.Duration;
 
 public class CharacterBalloon extends Balloon {
 
-	private static CharacterBalloon instance;
+	private static CharacterBalloon instance = null;
 
-	public static CharacterBalloon getInstance(){ return instance; }
+	public static CharacterBalloon getInstance(){
+		if (instance == null)
+			instance = new CharacterBalloon();
+		return instance;
+	}
 
 	public enum PositionMode {
 		AUTO,
@@ -35,10 +41,10 @@ public class CharacterBalloon extends Balloon {
 		INVERTED_DIRECTION
 	}
 
-	protected static BalloonDrawer drawer;
+	protected static Sprite sprite;
 
 	public static void updateDrawer(){
-		drawer = getDrawer("balloon.path-character");
+		sprite = getBalloonSprite("balloon.path-character");
 	}
 
 	protected Character character = null;
@@ -52,7 +58,7 @@ public class CharacterBalloon extends Balloon {
 
 	protected SymbolsAdder symbolsAdder;
 
-	CharacterBalloon(Character character, String text) {
+	protected CharacterBalloon() {
 		super();
 		instance = this;
 		setId("character-balloon");
@@ -72,15 +78,9 @@ public class CharacterBalloon extends Balloon {
 			label.setFont(LocalFont.defaultFont);
 		}
 
-		Integer animation_delay = Main.getProperties().getInteger("balloon.text-animation-delay", 50);
-		if (animation_delay > 0)
-			symbolsAdder = new SymbolsAdder(text, animation_delay);
-		else
-			label.setText(text);
-
 		content = label;
-		bubblePane = drawer.createBalloon(content);
-
+		bubblePane = sprite;
+		sprite.setSpriteContent(content);
 		getChildren().add(bubblePane);
 
 		label.setWrappingWidth(bubblePane.getContentWidth());
@@ -100,10 +100,14 @@ public class CharacterBalloon extends Balloon {
 		});
 		setOnMouseReleased(event -> {
 			if(!isDragging() && event.getButton().equals(MouseButton.PRIMARY) && (System.currentTimeMillis()-lastClick)<200) {
-				if (character != null) {
-					character.say(null);
+				if (symbolsAdder.isDone()) {
+					if (character != null) {
+						character.say(null);
+					} else {
+						hide();
+					}
 				} else {
-					close();
+					symbolsAdder.stop();
 				}
 			}
 		});
@@ -124,11 +128,20 @@ public class CharacterBalloon extends Balloon {
 				.setOnMovedListener()
 				.setOnScrollListener(event -> true);
 
-		this.character = character;
-
 		if (positionMode != PositionMode.ABSOLUTE) {
 			positionRelativeToDesktopSize = false;
 		}
+	}
+
+	protected void setup(Character character, String text){
+		if (symbolsAdder != null)
+			symbolsAdder.stop();
+		Integer animation_delay = Main.getProperties().getInteger("balloon.text-animation-delay", 50);
+		if (animation_delay > 0)
+			symbolsAdder = new SymbolsAdder(text, animation_delay);
+		else
+			content.setText(text);
+		this.character = character;
 	}
 
 	@Override
@@ -174,25 +187,21 @@ public class CharacterBalloon extends Balloon {
 	public static ChangeListener<java.lang.Number> updateBalloonLayoutX = new ChangeListener<Number>() {
 		@Override
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-			if(getInstance()!=null) {
-				javafx.application.Platform.runLater(() -> {
-					try {
-						getInstance().impl_updateBalloonLayoutX();
-					} catch (Exception e){ }
-				});
-			}
+			javafx.application.Platform.runLater(() -> {
+				try {
+					getInstance().impl_updateBalloonLayoutX();
+				} catch (Exception e){ }
+			});
 		}
 	};
 	public static ChangeListener<java.lang.Number> updateBalloonLayoutY = new ChangeListener<Number>() {
 		@Override
 		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-			if(getInstance()!=null) {
-				javafx.application.Platform.runLater(() -> {
-					try {
-						getInstance().impl_updateBalloonLayoutY();
-					} catch (Exception e){ }
-				});
-			}
+			javafx.application.Platform.runLater(() -> {
+				try {
+					getInstance().impl_updateBalloonLayoutY();
+				} catch (Exception e){ }
+			});
 		}
 	};
 
@@ -254,40 +263,37 @@ public class CharacterBalloon extends Balloon {
 		}
 	}
 
-	public static void setDefaultPositionMode(String positionMode){
-		PositionMode mode;
-		try {
-			mode = PositionMode.valueOf(positionMode.toUpperCase());
-		} catch (Exception e){
-			mode = PositionMode.AUTO;
-		}
-		Main.getProperties().put("balloon_position_mode", mode);
+	public static void setDefaultPositionMode(PositionMode positionMode){
+		Main.getProperties().put("balloon_position_mode", positionMode.toString());
+		if (instance != null)
+			instance.positionMode = positionMode;
 	}
 
-	public static void setDefaultDirectionMode(String directionMode){
-		DirectionMode mode;
-		try {
-			mode = DirectionMode.valueOf(directionMode.toUpperCase());
-		} catch (Exception e){
-			mode = DirectionMode.STANDARD_DIRECTION;
-		}
-		Main.getProperties().put("balloon_direction_mode", mode);
+	public void setPositionMode(PositionMode mode){
+		positionMode = mode;
 	}
 
-	void show() {
+	public static void setDefaultDirectionMode(DirectionMode directionMode){
+		Main.getProperties().put("balloon_direction_mode", directionMode);
+		if (instance != null)
+			instance.directionMode = directionMode;
+	}
+
+	@Override
+	public void show() {
 		super.show();
 		setPositionStorageID(character.getId() + ".balloon");
 	}
 
-
 	class SymbolsAdder implements EventHandler<javafx.event.ActionEvent> {
 
-		private static final int delayLimit = 40;
 		private final Timeline timeline;
 		private final String text;
 		private final int addCount;
 
 		SymbolsAdder(String text, Integer delay) {
+			int delayLimit = Main.getProperties().getInteger("sprites-animation-delay", 50);
+
 			this.text = text;
 			if (delay < delayLimit){
 				addCount = delayLimit / delay;
@@ -295,6 +301,7 @@ public class CharacterBalloon extends Balloon {
 			} else
 				addCount = 1;
 
+			content.setText("");
 			timeline = new Timeline(new KeyFrame(Duration.millis(delay), this));
 			timeline.setCycleCount(Timeline.INDEFINITE);
 			timeline.play();
@@ -322,5 +329,12 @@ public class CharacterBalloon extends Balloon {
 				counter--;
 			}
 		}
+
+		public void stop(){
+			timeline.stop();
+			content.setText(text);
+		}
+
+		public boolean isDone(){ return timeline.getStatus() == Animation.Status.STOPPED; }
 	}
 }

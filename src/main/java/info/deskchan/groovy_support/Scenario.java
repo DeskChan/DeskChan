@@ -4,6 +4,8 @@ import groovy.lang.Closure;
 import groovy.lang.Script;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.core.ResponseListener;
+import javafx.beans.property.SimpleObjectProperty;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -13,10 +15,10 @@ import java.util.function.Function;
 public abstract class Scenario extends Script{
 
     /** Object containing last user input.
-     *  It has complex map structure, so we store it here instead of giving it right to user.
-     */
+     *  It has complex map structure, so we store it here instead of giving it right to user. */
     private Answer answer;
 
+    /** Default help message in answer dialog. */
     private static final String DEFAULT_HELP = ScenarioPlugin.pluginProxy.getString("write-anything");
 
     /** Variable containing is current thread was interrupted. **/
@@ -38,6 +40,7 @@ public abstract class Scenario extends Script{
         this.pluginProxy = proxy;
         this.data = data;
     }
+
 
     // Standard plugin API
 
@@ -79,6 +82,8 @@ public abstract class Scenario extends Script{
 
     protected PluginProperties getProperties() { return pluginProxy.getProperties(); }
 
+
+
     protected void alert(String text) {
         pluginProxy.sendMessage("DeskChan:show-technical", new HashMap(){{
             put("text", text);
@@ -93,7 +98,7 @@ public abstract class Scenario extends Script{
     }
 
     protected void say(String text){
-        pluginProxy.sendMessage("DeskChan:say", new HashMap(){{
+        pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
             put("text", text);
             put("characterImage", currentSprite);
             put("priority", messagePriority);
@@ -103,9 +108,10 @@ public abstract class Scenario extends Script{
         });
         lock.lock();
     }
-    protected void requestPhrase(String text){
+
+    protected void requestPhrase(String intent){
         pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
-            put("purpose", text);
+            put("intent", intent);
             put("priority", messagePriority);
             put("skippable", false);
         }});
@@ -118,11 +124,34 @@ public abstract class Scenario extends Script{
         pluginProxy.sendMessage("gui:set-image", text);
     }
 
-    /** Priority of all messages sent by this scenario. **/
-    private int messagePriority = 2000;
+    /** Priority of all messages sent by this scenario. All messages with lower priority will be skipped. **/
+    private int messagePriority = 2500;
     protected int setMessagePriority(int val){
         return (messagePriority = val);
     }
+    public int getMessagePriority(){ return messagePriority; }
+
+    public ResponseListener interruptListener = new ResponseListener() {
+        @Override
+        public void handle(String sender, Object data) {
+            pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
+                put("intent", "DONT_INTERRUPT");
+                put("priority", messagePriority + 5);
+            }});
+        }
+    };
+
+
+    private int timerId = -1;
+    protected synchronized void sleep(long delay){
+        timerId = pluginProxy.setTimer(delay, (sender, d) -> {
+            lock.unlock();
+        });
+        lock.lock();
+    }
+
+
+    // Getting input from user
 
     protected synchronized String receive(){
         return receive(null);
@@ -149,13 +178,63 @@ public abstract class Scenario extends Script{
         return answer.text;
     }
 
-    private int timerId = -1;
-    protected synchronized void sleep(long delay){
-        timerId = pluginProxy.setTimer(delay, (sender, d) -> {
+    protected synchronized Boolean receiveBoolean(){ return receiveBoolean(null); }
+    protected synchronized Boolean receiveBoolean(Object helpInfo){
+        receive(helpInfo);
+        if (answer.intent == null) return null;
+        for (String intent : answer.intent){
+            if (intent.equals("YES") || intent.equals("ACCEPT") || intent.equals("DO_WORK"))
+                return true;
+            if (intent.equals("NO") || intent.equals("REFUSE"))
+                return false;
+        }
+        return null;
+    }
+
+    private synchronized Object receiveDatatype(String datatype, Object helpInfo){
+        receive(helpInfo);
+        final SimpleObjectProperty<Object> pr = new SimpleObjectProperty<>();
+        pluginProxy.sendMessage("speech:extract-data", new HashMap(){{
+            put("speech", answer.text);
+            put("type", datatype);
+        }},
+        (sender, data1) -> {
+            pr.setValue(data1);
             lock.unlock();
         });
+
         lock.lock();
+        return pr.getValue();
     }
+
+    private synchronized Calendar receiveDatetype(String datatype, Object helpInfo){
+        Long result = (Long) receiveDatatype(datatype, helpInfo);
+        if (result == null) return null;
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(result);
+        return cal;
+    }
+
+    protected synchronized Long receiveInteger(){ return receiveInteger(null); }
+    protected synchronized Long receiveInteger(Object helpInfo){ return (Long) receiveDatatype("Integer", helpInfo); }
+
+    protected synchronized Double receiveNumber(){ return receiveNumber(null); }
+    protected synchronized Double receiveNumber(Object helpInfo){ return (Double) receiveDatatype("Number", helpInfo); }
+
+    protected synchronized Calendar receiveDate(){ return receiveDate(null); }
+    protected synchronized Calendar receiveDate(Object helpInfo){ return receiveDatetype("Date", helpInfo); }
+
+    protected synchronized Calendar receiveDateTime(){ return receiveDate(null); }
+    protected synchronized Calendar receiveDateTime(Object helpInfo){ return receiveDatetype("DateTime", helpInfo); }
+
+    protected synchronized Calendar receiveTime(){ return receiveDate(null); }
+    protected synchronized Calendar receiveTime(Object helpInfo){ return receiveDatetype("Time", helpInfo); }
+
+    protected synchronized String getLastUserSpeech(){
+        return answer.text;
+    }
+
+    // Checking some data (especially speech from user)
 
     private boolean whenCycle;
     void when(Object obj, Closure cl) {
@@ -262,7 +341,7 @@ public abstract class Scenario extends Script{
             // Container for rules
             List<String> rules = new LinkedList<>();
 
-            // Purposes comparison
+            // intents comparison
             int maxVariantPriority = -1, vp;
             Function maxVariant = null;
 
@@ -270,7 +349,7 @@ public abstract class Scenario extends Script{
                 if(entry.getKey() instanceof String){
                     vp = 0;
                     if (entry.getKey().equals(key) ||
-                            (key instanceof Answer && (vp = ((Answer) key).purpose.indexOf(entry.getKey())) >= 0)) {
+                            (key instanceof Answer && (vp = ((Answer) key).intent.indexOf(entry.getKey())) >= 0)) {
                         if (maxVariantPriority < 0 || maxVariantPriority > vp) {
                             maxVariantPriority = vp;
                             maxVariant = entry.getValue();
@@ -343,18 +422,18 @@ public abstract class Scenario extends Script{
     private static class Answer{
 
         String text;
-        List<String> purpose = null;
+        List<String> intent = null;
 
         Answer(String text){ this.text = text; }
         Answer(Map data){
             this.text = data.get("value") != null ? data.get("value").toString() : "";
-            Object p = data.get("purpose");
+            Object p = data.get("intent");
             if (p == null) return;
             if (p instanceof Collection){
-                purpose = new LinkedList<>((Collection) p);
+                intent = new LinkedList<>((Collection) p);
             } else {
-                purpose = new LinkedList<>();
-                purpose.add(p.toString());
+                intent = new LinkedList<>();
+                intent.add(p.toString());
             }
         }
 

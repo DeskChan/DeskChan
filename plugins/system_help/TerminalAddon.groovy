@@ -7,11 +7,7 @@ class TerminalAddon{
         def instance = data.instance
 
         def command = pluginName + ":run-in-terminal"
-        instance.sendMessage("core:register-alternative", [
-            srcTag: "DeskChan:user-said",
-            dstTag: command,
-            priority: 200
-        ])
+        instance.setAlternative("DeskChan:user-said", command, 200)
 
         instance.addMessageListener(command, { sender, tag, d ->
             String text

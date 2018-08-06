@@ -228,7 +228,7 @@ class Database{
                       'speech-intent': "ALARM",
                       'priority': 10000
                     ])
-            //instance.sendMessage('DeskChan:request-say',[ 'purpose': "ALARM", 'timeout': 20, 'priority': 10000, 'partible': false ])
+            //instance.sendMessage('DeskChan:request-say',[ 'intent': "ALARM", 'timeout': 20, 'priority': 10000, 'partible': false ])
             if(entry.soundPath!=null)
                 instance.sendMessage('gui:play-sound',[ 'file': entry.soundPath, /*'count': 10*/ ])
             entries -= entry

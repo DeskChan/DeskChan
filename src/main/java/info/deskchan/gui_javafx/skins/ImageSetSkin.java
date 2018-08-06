@@ -1,11 +1,10 @@
-package info.deskchan.gui_javafx;
+package info.deskchan.gui_javafx.skins;
 
+import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
-import javafx.scene.image.Image;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +25,7 @@ class ImageSetSkin implements Skin {
 	};
 	private final Path path;
 	private final String skinName;
-	private final Map<String, List<Image>> images = new HashMap<>();
+	private final Map<String, List<File>> images = new HashMap<>();
 	private final Path propertiesPath;
 	private final Properties properties = new Properties();
 	
@@ -53,8 +52,8 @@ class ImageSetSkin implements Skin {
 		return skinName;
 	}
 
-	private List<Image> getImageArray(String name) {
-		List<Image> l = images.getOrDefault(name, null);
+	private List<File> getImageArray(String name) {
+		List<File> l = images.getOrDefault(name, null);
 		if (l != null) {
 			return l;
 		}
@@ -63,11 +62,7 @@ class ImageSetSkin implements Skin {
 		if (Files.isDirectory(imagePath)) {
 			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(imagePath)) {
 				for (Path imgPath : directoryStream) {
-					try (InputStream inputStream = Files.newInputStream(imgPath)) {
-						l.add(new Image(inputStream));
-					} catch (IOException e) {
-						Main.getPluginProxy().log(e);
-					}
+					l.add(imgPath.toFile());
 				}
 			} catch (IOException e) {
 				Main.getPluginProxy().log(e);
@@ -81,11 +76,7 @@ class ImageSetSkin implements Skin {
 				if (index >= 0) fileName = fileName.substring(0, index);
 
 				if (fileName.equals(name)){
-					try (InputStream inputStream = Files.newInputStream(file.toPath())) {
-						l.add(new Image(inputStream));
-					} catch (IOException e) {
-						Main.getPluginProxy().log(e);
-					}
+					l.add(file);
 				}
 			}
 		}
@@ -94,8 +85,8 @@ class ImageSetSkin implements Skin {
 	}
 	
 	@Override
-	public Image getImage(String name) {
-		List<Image> l = getImageArray(name);
+	public File getImage(String name) {
+		List<File> l = getImageArray(name);
 		if (l.size() == 0) {
 			for (String[] aReplacing : replacing) {
 				for (int j = 0; j < aReplacing.length; j++) {

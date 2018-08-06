@@ -16,7 +16,7 @@ addMessageListener("recognition:start-listening", { sender, tag, data ->
     if (listening) return
 
     sendMessage("DeskChan:request-say", [
-            purpose: "START_DIALOG",
+            intent: "START_DIALOG",
             priority: 10000 ]
     )
 

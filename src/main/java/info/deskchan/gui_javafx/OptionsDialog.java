@@ -991,6 +991,7 @@ class OptionsDialog extends TemplateBox {
 			blacklistPluginButton = new Button(blacklisted ? locked : unlocked);
 			blacklistPluginButton.setTooltip(new Tooltip(Main.getString("info.blacklist-plugin")));
 			blacklistPluginButton.setOnAction(event -> {
+				System.out.println(id);
 				if (!blacklisted)
 					for(String pluginId : importantPlugins) {
 						if (pluginId.equals(id)) {
@@ -1637,7 +1638,8 @@ class OptionsDialog extends TemplateBox {
 
 			Map<String, String> m = new HashMap<>();
 			for (Map.Entry<String, TextField> entry : msgElements.entrySet()){
-				m.put(entry.getKey(), entry.getValue().getText());
+				if (entry.getValue().getText().length() > 0)
+					m.put(entry.getKey(), entry.getValue().getText());
 			}
 			Object msgData = m;
 			if (msgElements.size() == 1 && msgElements.get("value") != null)

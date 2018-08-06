@@ -74,25 +74,28 @@ public class Main implements Plugin {
 		info.deskchan.talking_system.classification.Main.initialize(pluginProxy);
 
 		/* Building DeskChan:request-say chain. */
-		pluginProxy.sendMessage("core:register-alternatives", new ArrayList<Map>(){{
-			add(createMapFromString("srcTag: \"DeskChan:request-say\", dstTag: \"talk:request-say\", priority: 10000"));
-			add(createMapFromString("srcTag: \"DeskChan:request-say\", dstTag: \"talk:replace-by-preset-fields\", priority: 9990"));
-			add(createMapFromString("srcTag: \"DeskChan:request-say\", dstTag: \"talk:send-phrase\", priority: 100"));
-		}});
+		pluginProxy.setAlternative("DeskChan:request-say", "talk:request-say", 10000);
+		pluginProxy.setAlternative("DeskChan:request-say", "talk:replace-by-preset-fields", 9990);
+		pluginProxy.setAlternative("DeskChan:request-say", "talk:send-phrase", 100);
 
-		/* Request a phrase with certain purpose. If answer is not requested, automatically send it to DeskChan:say.
+		/* Request a phrase with certain intent. If answer is not requested, automatically send it to DeskChan:say.
         * Public message
-        * Params: purpose: String?
+        * Params: intent: String?
         *      or
         *         Map
-        *           purpose: String
+        *           intent: String
         * Returns: Phrase if requested, else None */
 		pluginProxy.addMessageListener("talk:request-say", (sender, tag, dat) -> {
-			Map data = createMapFromObject(dat, "purpose");
-			if (sender.contains("#"))
+			Map data = createMapFromObject(dat, "intent");
+			if (data.containsKey("text")){
+				sendPhrase(null, data);
+			} else {
+				if (data.containsKey("purpose") && !data.containsKey("intent"))
+					data.put("intent", data.get("purpose"));
 				data.put("sender", sender);
 
-			phraseRequest(data);
+				phraseRequest(data);
+			}
 		});
 
 		/* Replacing fields in brackets to values set in preset
@@ -102,18 +105,17 @@ public class Main implements Plugin {
 
 			data.replace("text", currentCharacter.replaceTags((String) data.get("text")));
 
-			pluginProxy.sendMessage("DeskChan:request-say#talk:replace-by-preset-fields", data);
+
+			pluginProxy.callNextAlternative(sender, "DeskChan:request-say", "talk:replace-by-preset-fields", data);
 		});
 
 		/* End of alternatives chain, sending phrase.
         * Technical message */
-		pluginProxy.addMessageListener("talk:send-phrase", (sender, tag, dat) -> {
-			Map data = (Map) dat;
-			String dst = (String) data.remove("dstTag");
-			if (dst == null)
-				dst = "DeskChan:say";
-
-			pluginProxy.sendMessage(dst, data);
+		pluginProxy.addMessageListener("talk:send-phrase", (sender, tag, data) -> {
+			if (pluginProxy.isAskingAnswer(sender))
+				pluginProxy.sendMessage(sender, data);
+			else
+				pluginProxy.sendMessage("DeskChan:say", data);
 		});
 
 		/* Make an influence on character features
@@ -236,10 +238,10 @@ public class Main implements Plugin {
 		/* Print to screen character combinations with the lowest count of suitable phrases.
         * Technical message
         * Params: Map
-        *           purpose: String? - purpose
+        *           intent: String? - intent
         * Returns: None */
 		pluginProxy.addMessageListener("talk:print-phrases-lack", (sender, tag, data) -> {
-			currentCharacter.phrases.printPhrasesLack( (String) ((Map) data).getOrDefault("purpose", "CHAT") );
+			currentCharacter.phrases.printPhrasesLack( (String) ((Map) data).getOrDefault("intent", "CHAT") );
 		});
 
 		/* Supply resources.
@@ -295,12 +297,12 @@ public class Main implements Plugin {
 
 		/* Saying 'Hello' at launch. */
 		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
-			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("purpose: HELLO, priority: 20001"));
+			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("intent: HELLO, priority: 20001"));
 		});
 
 		/* Saying 'Bye' when someone requests quit. */
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("purpose: BYE, priority: 10000"));
+			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("intent: BYE, priority: 10000"));
 		});
 
 		/* Adding request to say command */
@@ -352,6 +354,10 @@ public class Main implements Plugin {
 
 		resetTimer();
 
+		pluginProxy.sendMessage("DeskChan:request-say", "WRONG_DATA", (sender, data) -> {
+			System.out.println(data);
+		});
+
 		return true;
 	}
 
@@ -360,21 +366,21 @@ public class Main implements Plugin {
 
 	/** Request phrase with any data. **/
 	public void phraseRequest(Map<String, Object> data) {
-		String purpose = "CHAT";
+		String intent = "CHAT";
 		if (data != null)
-			purpose = data.getOrDefault("purpose", purpose).toString();
+			intent = data.getOrDefault("intent", intent).toString();
 
-		currentCharacter.phrases.requestRandomQuote( purpose, data, quote -> sendPhrase(quote, data) );
+		currentCharacter.phrases.requestRandomQuote( intent, data, quote -> sendPhrase(quote, data) );
 	}
 
-	/** Request phrase with purpose. **/
-	public void phraseRequest(String purpose) {
-		currentCharacter.phrases.requestRandomQuote( purpose, quote -> sendPhrase(quote, null) );
+	/** Request phrase with intent. **/
+	public void phraseRequest(String intent) {
+		currentCharacter.phrases.requestRandomQuote( intent, quote -> sendPhrase(quote, null) );
 	}
 
 	/** Convert phrase to map format and send to DeskChan:say or sender. **/
 	void sendPhrase(Phrase phrase, Map<String, Object> data){
-		Map<String, Object> ret = phrase.toMap();
+		Map<String, Object> ret = phrase != null ? phrase.toMap() : new HashMap<>();
 
 		if (ret.get("characterImage").equals("AUTO")) {
 			String characterImage = currentCharacter.getDefaultSpriteType();
@@ -385,11 +391,10 @@ public class Main implements Plugin {
 			ret.replace("characterImage", characterImage);
 		}
 		ret.put("priority", DEFAULT_PRIORITY);
-		ret.put("dstTag", "DeskChan:say");
 		if(data != null)
 			ret.putAll(data);
 
-		pluginProxy.sendMessage("DeskChan:request-say#talk:request-say", ret);
+		pluginProxy.callNextAlternative(data.get("sender").toString(), "DeskChan:request-say", "talk:request-say", ret);
 	}
 
 	void resetTimer(){
@@ -642,7 +647,7 @@ public class Main implements Plugin {
 		} else {
 			data = new HashMap<>();
 			if(object != null)
-				data.put("purpose", object.toString());
+				data.put("intent", object.toString());
 		}
 		return data;
 	}

@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.gui_javafx.panes.Balloon;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
+import info.deskchan.gui_javafx.panes.MovablePane;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
@@ -17,16 +18,21 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
+import javafx.util.Pair;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.util.*;
 
-public class OverlayStage extends Stage {
+import static info.deskchan.gui_javafx.OverlayStage.LayerMode.ALWAYS_TOP;
+import static info.deskchan.gui_javafx.OverlayStage.LayerMode.SEPARATE;
+
+public abstract class OverlayStage extends Stage {
 
 	public enum LayerMode {
 		BROKEN,
@@ -50,7 +56,7 @@ public class OverlayStage extends Stage {
 
 	public static void initialize(){
 		try {
-			instances.put(LayerMode.ALWAYS_TOP, TopStage.class);
+			instances.put(ALWAYS_TOP, TopStage.class);
 		} catch(Exception e){
 			Main.log("Cannot initialize ALWAYS_TOP stage");
 		}
@@ -75,7 +81,7 @@ public class OverlayStage extends Stage {
 			Main.log("Cannot initialize SHOW_IF_MESSAGE stage");
 		}
 		try {
-			instances.put(LayerMode.SEPARATE, SeparateStage.class);
+			instances.put(SEPARATE, SeparateStage.class);
 		} catch(Exception e){
 			Main.log("Cannot initialize SEPARATE stage");
 		}
@@ -87,27 +93,12 @@ public class OverlayStage extends Stage {
 	}
 
 	public static void updateStage(){
-		String mode = Main.getProperties().getString("character.layer_mode");
-		if(mode == null){
-			if(SystemUtils.IS_OS_MAC) mode = "SEPARATE";
-			else mode = "ALWAYS_TOP";
-		}
-		updateStage(mode);
-	}
-
-	public static void updateStage(String name){
 		LayerMode mode;
-		if (name == null){
-			updateStage();
-			return;
-		}
-		try {
-			mode = LayerMode.valueOf(name);
-		} catch (Exception e){
-			Main.log("No such stage: "+name);
-			return;
-		}
-		updateStage(mode);
+
+		if(SystemUtils.IS_OS_MAC) mode = SEPARATE;
+		else mode = ALWAYS_TOP;
+
+		updateStage(Main.getProperties().getOneOf("character.layer_mode", LayerMode.values(), mode));
 	}
 
 	private static boolean showConfirmation(String text){
@@ -122,17 +113,23 @@ public class OverlayStage extends Stage {
 	}
 
 	public static void updateStage(LayerMode mode){
-		if(mode == LayerMode.SEPARATE && !SystemUtils.IS_OS_MAC && instance != null)
+		if(mode == SEPARATE && !SystemUtils.IS_OS_MAC && instance != null)
 			if (showConfirmation("info.separated-stage")) return;
-		else if(mode == LayerMode.ALWAYS_TOP && SystemUtils.IS_OS_MAC)
+		else if(mode == ALWAYS_TOP && SystemUtils.IS_OS_MAC)
 			if (showConfirmation("info.separated-stage")) return;
 
 		if(mode == currentMode) return;
 		try {
 			OverlayStage nextInstance = (OverlayStage) instances.get(mode).newInstance();
+			List<Pair<Pane, Point2D>> nodesOnScreen = new LinkedList<>();
 			if(instance != null) {
-				instance.hideBalloons();
-				instance.hideCharacter();
+				for(Node node : instance.root.getChildren()){
+					try {
+						MovablePane pane = (MovablePane) node;
+						nodesOnScreen.add(new Pair<>(pane, pane.getPosition()));
+					} catch (Exception e){ }
+				}
+				instance.hideAllSprites();
 				instance.close();
 			}
 			instance = nextInstance;
@@ -144,7 +141,10 @@ public class OverlayStage extends Stage {
 				}
 			});
 			nextInstance.showStage();
-			nextInstance.showCharacter();
+			for (Pair<Pane, Point2D> pane : nodesOnScreen){
+				nextInstance.root.getChildren().add(pane.getKey());
+				pane.getKey().relocate(pane.getValue().getX(), pane.getValue().getY());
+			}
 		} catch (Exception e){
 			Main.log(e);
 			currentMode = LayerMode.BROKEN;
@@ -212,11 +212,9 @@ public class OverlayStage extends Stage {
 		setHeight(rect.getHeight());
 	}
 
-	void showCharacter() {}
-	void hideCharacter() {}
-	public void showBalloon(Balloon balloon) {}
-	public void hideBalloon(Balloon balloon) {}
-	synchronized void hideBalloons() {}
+	public abstract void showSprite(MovablePane pane);
+	public abstract void hideSprite(MovablePane pane);
+	public abstract void hideAllSprites();
 
 	public void relocate(Node node, double x, double y){
 		node.setLayoutX(x - this.getX());
@@ -252,7 +250,7 @@ public class OverlayStage extends Stage {
 		return true;
 	}
 }
-class NormalStage extends OverlayStage{
+class NormalStage extends OverlayStage {
 	EventHandler<WindowEvent> handler = new EventHandler<WindowEvent>() {
 		@Override
 		public void handle(WindowEvent event) {
@@ -274,39 +272,28 @@ class NormalStage extends OverlayStage{
 					"," + rect.getMaxX() + "," + rect.getMaxY());
 		});
 	}
+
 	@Override
-	void showCharacter(){
-		if(!root.getChildren().contains(App.getInstance().getCharacter()))
-			root.getChildren().add(App.getInstance().getCharacter());
-		App.getInstance().getCharacter().loadPositionFromStorage();
+	public void showSprite(MovablePane pane){
+		if(root.getChildren().contains(pane)) return;
+
+		root.getChildren().add(pane);
+		pane.loadPositionFromStorage();
 		update();
 	}
+
 	@Override
-	void hideCharacter(){
-		root.getChildren().remove(App.getInstance().getCharacter());
+	public void hideSprite(MovablePane pane){
+		root.getChildren().remove(pane);
 	}
+
 	@Override
-	public void showBalloon(Balloon balloon){
-		balloon.setDefaultPosition();
-		if(!root.getChildren().contains(balloon))
-			root.getChildren().add(balloon);
-		update();
-	}
-	@Override
-	public void hideBalloon(Balloon balloon){
-		root.getChildren().remove(balloon);
-	}
-	synchronized void hideBalloons(){
-		Iterator<Node> i = root.getChildren().iterator();
-		while (i.hasNext()) {
-			Node s = i.next();
-			if(s instanceof Balloon)
-				i.remove();
-		}
+	public synchronized void hideAllSprites(){
+		root.getChildren().clear();
 	}
 }
 
-class TopStage extends NormalStage{
+class TopStage extends NormalStage {
 	TopStage(){
 		super();
 		toFront();
@@ -327,30 +314,36 @@ class TopStage extends NormalStage{
 	}
 }
 
-class OnlyBalloonStage extends TopStage{
+class OnlyBalloonStage extends TopStage {
 	OnlyBalloonStage(){
 		super();
-		CharacterBalloon.setDefaultPositionMode(CharacterBalloon.PositionMode.ABSOLUTE.toString());
+		CharacterBalloon.setDefaultPositionMode(CharacterBalloon.PositionMode.ABSOLUTE);
 	}
 	@Override
-	void showCharacter(){ }
+	public void showSprite(MovablePane sprite){
+		if (sprite instanceof Balloon)
+			super.showSprite(sprite);
+	}
 	public boolean isCharacterVisible(){
 		return false;
 	}
 }
 
-class FrontNormalStage extends NormalStage{
+class FrontNormalStage extends NormalStage {
 	FrontNormalStage(){
 		super();
 	}
-	public void showBalloon(Balloon balloon){
-		super.showBalloon(balloon);
-		toFront();
-		requestFocus();
+	@Override
+	public void showSprite(MovablePane sprite){
+		super.showSprite(sprite);
+		if (sprite instanceof Balloon) {
+			toFront();
+			requestFocus();
+		}
 	}
 }
 
-class HideStage extends OverlayStage{
+class HideStage extends OverlayStage {
 	HideStage(){
 		super();
 		close();
@@ -360,43 +353,44 @@ class HideStage extends OverlayStage{
 	public boolean isCharacterVisible(){
 		return false;
 	}
+	@Override
+	public void showSprite(MovablePane pane){ }
+	@Override
+	public void hideSprite(MovablePane pane){ }
+	@Override
+	public void hideAllSprites(){ }
 }
 
-class ShowIfMessageStage extends TopStage{
+class ShowIfMessageStage extends TopStage {
 	@Override
-	public void showBalloon(Balloon balloon){
-		super.showBalloon(balloon);
-		show();
-	}
-	@Override
-	public void hideBalloon(Balloon balloon){
-		Iterator<Node> i = root.getChildren().iterator();
-		while (i.hasNext()) {
-			Node s = i.next();
-			if(s instanceof Balloon){
-				if(s==balloon)
-					i.remove();
-				else return;
-			}
+	public void showSprite(MovablePane sprite){
+		super.showSprite(sprite);
+		if (sprite instanceof Balloon) {
+			show();
 		}
-		hide();
 	}
 	@Override
-	synchronized void hideBalloons(){
-		super.hideBalloons();
+	public void hideSprite(MovablePane sprite){
+		super.hideSprite(sprite);
+		for(Node node : root.getChildren()){
+			if (node instanceof Balloon) return;
+		}
 		hide();
 	}
 	@Override
 	public void showStage(){
 		show();
-		if(CharacterBalloon.getInstance()==null)
-			hide();
+		for(Node node : root.getChildren()){
+			if (node instanceof Balloon) return;
+		}
+		hide();
 	}
 	public boolean isCharacterVisible(){
 		return isShowing();
 	}
 }
-class SeparatedStage extends OverlayStage{
+
+class SeparatedStage extends OverlayStage {
 	final Node node;
 	EventHandler<MouseEvent> startDragHandler = new EventHandler<MouseEvent>() {
 		@Override
@@ -470,64 +464,42 @@ class SeparatedStage extends OverlayStage{
 			node.setLayoutY(0);
 		}
 	}
+
+	public void showSprite(MovablePane pane){ throw new RuntimeException("This method should not be called"); }
+	public void hideSprite(MovablePane pane){ throw new RuntimeException("This method should not be called"); }
+	public void hideAllSprites(){ throw new RuntimeException("This method should not be called"); }
 }
-class SeparateStage extends OverlayStage{
-	private HashMap<Node,SeparatedStage> children = new HashMap<>();
+
+class SeparateStage extends OverlayStage {
+	private Map<MovablePane, SeparatedStage> children = new HashMap<>();
 	SeparateStage(){
 		super();
 		close();
 	}
-	synchronized void add(Node node){
-		if(!children.containsKey(node))
-			children.put(node, new SeparatedStage(node));
+	@Override
+	public void showSprite(MovablePane pane){
+		if(!children.containsKey(pane))
+			children.put(pane, new SeparatedStage(pane));
 	}
-	synchronized void remove(Node node){
-		SeparatedStage s = children.get(node);
-		if(s==null) return;
-		s.root.getChildren().remove(node);
-		children.remove(node);
+	@Override
+	public void hideSprite(MovablePane pane){
+		SeparatedStage s = children.get(pane);
+		if(s == null) return;
+		s.root.getChildren().remove(pane);
+		children.remove(pane);
 		s.hide();
 		s.close();
 		s.getScene().getWindow().hide();
 	}
 	@Override
-	void showCharacter(){
-		add(App.getInstance().getCharacter());
+	public void hideAllSprites(){
+		throw new RuntimeException("This method should not be called");
 	}
-	@Override
-	void hideCharacter(){
-		remove(App.getInstance().getCharacter());
-	}
-	@Override
-	public void showBalloon(Balloon balloon){
-		add(balloon);
-	}
-	@Override
-	public void hideBalloon(Balloon balloon){
-		remove(balloon);
-	}
-	@Override
-	synchronized void hideBalloons(){
-		javafx.application.Platform.runLater(() -> {
-			Iterator<Node> i = children.keySet().iterator();
-			while (i.hasNext()) {
-				try {
-					Node s = i.next();
-					if (s instanceof CharacterBalloon) {
-						children.remove(s);
-					}
-				} catch (ConcurrentModificationException e){
-					Main.log(e);
-					return;
-				}
-			}
-		});
-	}
-	@Override
-	public void relocate(Node node, double x, double y){
+
+	public void relocate(MovablePane pane, double x, double y){
 		if(new Double(x).isNaN()) x = 0;
 		if(new Double(y).isNaN()) y = 0;
-		add(node);
-		children.get(node).relocate(x, y);
+		showSprite(pane);
+		children.get(pane).relocate(x, y);
 	}
 }

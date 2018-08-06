@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import com.sun.javafx.application.PlatformImpl;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginManager;
 import info.deskchan.core.PluginProperties;
@@ -7,6 +8,7 @@ import info.deskchan.core.PluginProxyInterface;
 import javafx.application.Platform;
 import org.apache.commons.lang3.SystemUtils;
 
+import java.io.File;
 import java.util.concurrent.Semaphore;
 
 // This file contains only initialization of plugin itself
@@ -50,6 +52,10 @@ public class Main implements Plugin {
 		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/strings");
 		pluginProxy.setConfigField("name", pluginProxy.getString("plugin-name"));
 		pluginProxy.getProperties().putIfHasNot("use-tray", true);
+		pluginProxy.getProperties().putIfHasNot("sprites-animation-delay", 20);
+        pluginProxy.getProperties().putIfHasNot("balloon.text-animation-delay", 50);
+
+		System.out.println(new File("/home/dez/Coding/IdeaProjects/DeskChan/build/data/system_help/"));
 
 		new Thread(() -> {
 			App.run(PluginManager.getInstance().getArgs());
@@ -107,6 +113,19 @@ public class Main implements Plugin {
 
 	public static synchronized PluginProperties getProperties() {
 		return getPluginProxy().getProperties();
+	}
+
+	public static void runLater(Runnable runnable) {
+		PlatformImpl.runLater(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					runnable.run();
+				} catch (Throwable e){
+					getPluginProxy().log(e);
+				}
+			}
+		});
 	}
 
 }

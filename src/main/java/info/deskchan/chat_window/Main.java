@@ -74,7 +74,7 @@ public class Main implements Plugin {
         List<Map> ret = new ArrayList<>();
         List<ChatPhrase> list = history.subList(Math.max(history.size() - logLength, 0), history.size());
         if(list.size() == 0){
-            ret.add(new ChatPhrase("История сообщений пуста", 2).getNameMap());
+            ret.add(new ChatPhrase(pluginProxy.getString("message.chat_empty"), 2).getTextMap());
             return ret;
         }
         for(ChatPhrase phrase : list){
@@ -95,7 +95,7 @@ public class Main implements Plugin {
         // setting default properties
         properties = pluginProxy.getProperties();
         properties.load();
-        properties.putIfHasNot("length", 10);
+        properties.putIfHasNot("length", 50);
         properties.putIfHasNot("fixer", true);
         properties.putIfHasNot("user-color", "#00A");
         properties.putIfHasNot("deskchan-color", "#F00");
@@ -178,7 +178,6 @@ public class Main implements Plugin {
             // very small timer to run this func in other thread
             pluginProxy.setTimer(20, (s, d) -> {
                 history.add(new ChatPhrase(text, 0));
-                if (!chatIsOpened) return;
 
                 pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
                     put("id", "chat");
@@ -222,13 +221,7 @@ public class Main implements Plugin {
             setupChat();
         });
 
-        pluginProxy.sendMessage("core:register-alternative",
-                new HashMap<String, Object>() {{
-                    put("srcTag", "DeskChan:user-said");
-                    put("dstTag", "chat:change-layout-and-resend");
-                    put("priority", 5);
-                }}
-        );
+        pluginProxy.setAlternative("DeskChan:user-said", "chat:change-layout-and-resend", 5);
 
         // if user missed layout, we're trying to fix it and resend user speech again
         pluginProxy.addMessageListener("chat:change-layout-and-resend", (sender, tag, dat) -> {

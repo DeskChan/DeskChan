@@ -1,21 +1,27 @@
-package info.deskchan.gui_javafx;
+package info.deskchan.gui_javafx.skins;
 
 import info.deskchan.core.PluginManager;
+import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
-import javafx.scene.image.Image;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public interface Skin {
+
+	static final List<SkinLoader> skinLoaders = Arrays.asList(
+			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader()
+	);
 	
 	String getName();
 	
-	Image getImage(String name);
+	File getImage(String name);
 	
 	Point2D getPreferredBalloonPosition(String imageName);
 	
@@ -34,8 +40,8 @@ public interface Skin {
 	}
 	
 	static Skin load(Path path) {
-		synchronized (App.skinLoaders) {
-			for (SkinLoader loader : App.skinLoaders) {
+		synchronized (skinLoaders) {
+			for (SkinLoader loader : skinLoaders) {
 				if (loader.matchByPath(path)) {
 					return loader.loadByPath(path);
 				}
@@ -49,8 +55,8 @@ public interface Skin {
 		if (name == null) {
 			return null;
 		}
-		synchronized (App.skinLoaders) {
-			for (SkinLoader loader : App.skinLoaders) {
+		synchronized (skinLoaders) {
+			for (SkinLoader loader : skinLoaders) {
 				Skin skin = loader.loadByName(name);
 				if (skin != null) {
 					return skin;
@@ -69,8 +75,8 @@ public interface Skin {
 					list.addAll(getSkinList(skinPath));
 					continue;
 				}
-				synchronized (App.skinLoaders) {
-					for (SkinLoader loader : App.skinLoaders) {
+				synchronized (skinLoaders) {
+					for (SkinLoader loader : skinLoaders) {
 						if (loader.matchByPath(skinPath)) {
 							list.add(skinPath.toString());
 							break;
@@ -78,8 +84,8 @@ public interface Skin {
 					}
 				}
 			}
-			synchronized (App.skinLoaders) {
-				for (SkinLoader loader : App.skinLoaders) {
+			synchronized (skinLoaders) {
+				for (SkinLoader loader : skinLoaders) {
 					list.addAll(loader.getNames());
 				}
 			}
@@ -94,14 +100,14 @@ public interface Skin {
 	}
 	
 	static void registerSkinLoader(SkinLoader loader) {
-		synchronized (App.skinLoaders) {
-			App.skinLoaders.add(loader);
+		synchronized (skinLoaders) {
+			skinLoaders.add(loader);
 		}
 	}
 	
 	static void unregisterSkinLoader(SkinLoader loader) {
-		synchronized (App.skinLoaders) {
-			App.skinLoaders.remove(loader);
+		synchronized (skinLoaders) {
+			skinLoaders.remove(loader);
 		}
 	}
 	

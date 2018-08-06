@@ -34,14 +34,14 @@ class PluginConfig {
 
     /** Append fields from map. **/
     fun append(map: Map<String, Any?>){
-        map.forEach { t, u ->
+        map.forEach { k, u ->
             if(u != null && u != "") {
-                val u = when (u) {
+                val value = when (u) {
                     is JSONArray ->  u.toList()
                     is JSONObject -> u.toMap()
                     else -> u
                 }
-                val t = t.toLowerCase()
+                val t = k.toLowerCase()
                 if (t.length > 3 && t[t.length-3] == '_'){
                     // reformat data like
                     // { "tag_en": 1, "tag_ru": 2 }
@@ -51,9 +51,9 @@ class PluginConfig {
                     val t2 = t.substring(t.length-2)
                     if (!data.containsKey(t1))
                         data[t1] = mutableMapOf<String, String>()
-                    (data[t1] as MutableMap<String, Any>)[t2] = u
+                    (data[t1] as MutableMap<String, Any>)[t2] = value
                 } else {
-                    data[t.toLowerCase()] = u
+                    data[t.toLowerCase()] = value
                 }
             }
         }

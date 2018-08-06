@@ -408,7 +408,7 @@ interface PluginOptionsControlItem {
 		}
 
 		@Override
-		public void setValue(Object value) {
+		public synchronized void setValue(Object value) {
 			area.getChildren().clear();
 			if (value == null) return;
 
