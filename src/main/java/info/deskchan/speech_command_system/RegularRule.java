@@ -566,9 +566,9 @@ public class RegularRule{
                     if(rule.charAt(i)=='{') state=6;
                 } break;
                 case 3:{  // word
+                    simple_word_present = true;
                     if(i==len) break;
                     state=-1;
-                    simple_word_present = true;
                     if(rule.charAt(i)==' ') state=0;
                     if(Character.isLetter(rule.charAt(i))) state=3;
                     if(rule.charAt(i)=='|') state=4;

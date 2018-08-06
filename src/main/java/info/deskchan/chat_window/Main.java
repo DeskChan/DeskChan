@@ -95,7 +95,7 @@ public class Main implements Plugin {
         // setting default properties
         properties = pluginProxy.getProperties();
         properties.load();
-        properties.putIfHasNot("length", 10);
+        properties.putIfHasNot("length", 50);
         properties.putIfHasNot("fixer", true);
         properties.putIfHasNot("user-color", "#00A");
         properties.putIfHasNot("deskchan-color", "#F00");

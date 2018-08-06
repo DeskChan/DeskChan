@@ -81,8 +81,8 @@ class Main : Plugin, PluginLoader {
         if (type == null) return
 
         val config = PluginConfig(supportedPlugins[type.toString()].toString())
-        val manifestPath = File(file.absolutePath + ".manifest")
-        if (manifestPath.exists()) config.appendFromJson(file)
+        val manifestPath = file.parentFile.toPath().resolve( "manifest.json").toFile()
+        if (manifestPath.exists()) config.appendFromJson(manifestPath)
 
         val plugin = ExternalPlugin(file)
 

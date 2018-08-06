@@ -7,10 +7,10 @@ import javafx.stage.Screen;
 public class LocalFont {
     private LocalFont(){ }
 
-    public static Font defaultFont = Font.font("PT Sans",13);
+    public static Font defaultFont = getSystemDefaultFont();
 
     private static Font getSystemDefaultFont(){
-        return Font.font(defaultFont.getName(), defaultFont.getSize() * Screen.getPrimary().getDpi() / 96);
+        return Font.font("PT Sans", 14 * Screen.getPrimary().getDpi() / 96);
     }
 
     public static String getDefaultFontCSS(){

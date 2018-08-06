@@ -1143,11 +1143,6 @@ public class App extends Application {
 		return defaultValue;
 	}
 
-	/** Parsing value to double or returning default if we failed. **/
-	private Double getDouble(Map<String, Object> map, String key, double defaultValue) {
-		return getDouble(map.getOrDefault(key, defaultValue), defaultValue);
-	}
-
 	/** Load all fonts from 'assets/fonts'. **/
 	private void loadFonts() {
 		try (DirectoryStream<Path> directoryStream =
@@ -1181,7 +1176,7 @@ public class App extends Application {
 
 	/** Get interface size multiplier. **/
 	static double getInterfaceScale(){
-		return LocalFont.defaultFont.getSize() * Screen.getPrimary().getDpi() / 96;
+		return LocalFont.defaultFont.getSize();// * Screen.getPrimary().getDpi() / 96;
 	}
 
 	/** Show error dialog. **/

@@ -182,6 +182,8 @@ class ScenarioPlugin : Plugin {
             return end
         }
 
+       private const val UTF8_BOM = "\uFEFF"
+
         fun createScenario(owner:String, pathString: String, data: Any?): Scenario? {
             val compilerConfiguration = CompilerConfiguration()
             compilerConfiguration.sourceEncoding = "UTF-8"
@@ -198,6 +200,8 @@ class ScenarioPlugin : Plugin {
                 pluginProxy.log(e)
                 return null
             }
+
+            scriptLines[0] = scriptLines[0].removePrefix(UTF8_BOM)
 
             val scriptText = StringBuilder()
             val buffers = arrayOfNulls<String>(1)
