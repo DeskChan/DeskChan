@@ -290,99 +290,99 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     /* Timers */
 
-    protected var timers: MutableList<CoreTimerTask> = mutableListOf()
+	protected var timers: MutableList<CoreTimerTask> = mutableListOf()
 
-    inner class CoreTimerTask(val delay: Long, var count: Int, val response: ResponseListener) : ResponseListener, Runnable {
+	inner class CoreTimerTask(val delay: Long, var count: Int, val response: ResponseListener) : ResponseListener, Runnable {
 
-        protected var lastSeq: Any? = null
+		protected var lastSeq: Any? = null
 
-        init {
-            timers.add(this)
-            start()
-        }
+		init {
+			timers.add(this)
+			start()
+		}
 
-        override fun handle(sender: String, data: Any?) {
-            run()
-            if (count > 0) count--
-            if (count == 0) return
-            lastSeq = null
-            start()
-        }
+		override fun handle(sender: String, data: Any?) {
+			run()
+			if (count > 0) count--
+			if (count == 0) return
+			lastSeq = null
+			start()
+		}
 
-        fun start() {
-            if (lastSeq != null) stop()
-            lastSeq = sendMessage("core-utils:notify-after-delay", mapOf("delay" to delay), this)
-        }
+		fun start() {
+			if (lastSeq != null) stop()
+			lastSeq = sendMessage("core-utils:notify-after-delay", mapOf("delay" to delay), this)
+		}
 
-        fun stop() {
-            if (lastSeq != null)
-                sendMessage("core-utils:notify-after-delay", mapOf("cancel" to lastSeq))
-            timers.remove(this)
-        }
+		fun stop() {
+			if (lastSeq != null)
+				sendMessage("core-utils:notify-after-delay", mapOf("cancel" to lastSeq))
+			timers.remove(this)
+		}
 
-        override fun run() {
-            response.handle(getId(), null)
-        }
-    }
+		override fun run() {
+			response.handle(getId(), null)
+		}
+	}
 }
 
 internal class ResponseInfo {
-    private var count: Int = 0
-    private var res: ResponseListener? = null
-    private var ret: ResponseListener? = null
+	private var count: Int = 0
+	private var res: ResponseListener? = null
+	private var ret: ResponseListener? = null
 
-    constructor(responseListener: ResponseListener, count: Int) {
-        this.count = count
-        res = responseListener
-        ret = null
-    }
+	constructor(responseListener: ResponseListener, count: Int) {
+		this.count = count
+		res = responseListener
+		ret = null
+	}
 
-    constructor(responseListener: ResponseListener, count: Int, returnListener: ResponseListener) {
-        this.count = count
-        res = responseListener
-        ret = returnListener
-    }
+	constructor(responseListener: ResponseListener, count: Int, returnListener: ResponseListener) {
+		this.count = count
+		res = responseListener
+		ret = returnListener
+	}
 
-    fun handle(sender: String, id: String, data: Any?): Boolean {
-        res!!.handle(sender, data)
-        count--
-        if (count == 0) {
-            if (ret != null) ret!!.handle(id, null)
-            return true
-        }
-        return false
-    }
+	fun handle(sender: String, id: String, data: Any?): Boolean {
+		res!!.handle(sender, data)
+		count--
+		if (count == 0) {
+			if (ret != null) ret!!.handle(id, null)
+			return true
+		}
+		return false
+	}
 }
 
 // Override getBundle to correctly read bundles in UTF-8
 internal class UTF8Control : ResourceBundle.Control() {
-    @Throws(IllegalAccessException::class, InstantiationException::class, IOException::class)
-    override fun newBundle(baseName: String, locale: Locale, format: String, loader: ClassLoader, reload: Boolean): ResourceBundle? {
-        // The below is a copy of the default implementation.
-        val bundleName = toBundleName(baseName, locale)
-        val resourceName = toResourceName(bundleName, "properties")
-        var bundle: ResourceBundle? = null
-        var stream: InputStream? = null
-        if (reload) {
-            val url = loader.getResource(resourceName)
-            if (url != null) {
-                val connection = url.openConnection()
-                if (connection != null) {
-                    connection.useCaches = false
-                    stream = connection.getInputStream()
-                }
-            }
-        } else {
-            stream = loader.getResourceAsStream(resourceName)
-        }
-        if (stream != null) {
-            try {
-                // Only this line is changed to make it to read properties files as UTF-8.
-                bundle = PropertyResourceBundle(InputStreamReader(stream, "UTF-8"))
-            } finally {
-                stream!!.close()
-            }
-        }
-        return bundle
-    }
+	@Throws(IllegalAccessException::class, InstantiationException::class, IOException::class)
+	override fun newBundle(baseName: String, locale: Locale, format: String, loader: ClassLoader, reload: Boolean): ResourceBundle? {
+		// The below is a copy of the default implementation.
+		val bundleName = toBundleName(baseName, locale)
+		val resourceName = toResourceName(bundleName, "properties")
+		var bundle: ResourceBundle? = null
+		var stream: InputStream? = null
+		if (reload) {
+			val url = loader.getResource(resourceName)
+			if (url != null) {
+				val connection = url.openConnection()
+				if (connection != null) {
+					connection.useCaches = false
+					stream = connection.getInputStream()
+				}
+			}
+		} else {
+			stream = loader.getResourceAsStream(resourceName)
+		}
+		if (stream != null) {
+			try {
+				// Only this line is changed to make it to read properties files as UTF-8.
+				bundle = PropertyResourceBundle(InputStreamReader(stream, "UTF-8"))
+			} finally {
+				stream!!.close()
+			}
+		}
+		return bundle
+	}
 }
