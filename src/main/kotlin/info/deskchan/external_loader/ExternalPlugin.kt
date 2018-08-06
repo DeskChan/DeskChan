@@ -57,22 +57,29 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       try {
          stream.start()
          pluginProxy.log("Started "+stream.toString())
+
+         stream.write(MessageWrapper.Message(
+                 "setInfo",
+                 mutableListOf(),
+                 mutableMapOf(
+                         "id" to pluginProxy.getId(),
+                         "dataDirPath"   to   pluginProxy.dataDirPath.toAbsolutePath().toString(),
+                         "pluginDirPath" to pluginProxy.pluginDirPath.toAbsolutePath().toString(),
+                         "assetsDirPath" to pluginProxy.assetsDirPath.toAbsolutePath().toString(),
+                         "rootDirPath"   to   pluginProxy.rootDirPath.toAbsolutePath().toString()
+                 )
+         ), wrapper)
       } catch (e: IOException){
-         pluginProxy.log(IOException("Cannot run external plugin of type "+pluginProxy.getConfigField("type")+": "+e.message, e))
+         if (stream.canReadError()){
+            val error = stream.readError()
+            pluginProxy.log(Exception(error))
+         } else {
+            pluginProxy.log(IOException("Cannot run external plugin of type " + pluginProxy.getConfigField("type") + ": " + e.message, e))
+         }
          return false
       }
 
-      stream.write(MessageWrapper.Message(
-          "setInfo",
-              mutableListOf(),
-              mutableMapOf(
-                "id" to pluginProxy.getId(),
-                "dataDirPath"   to   pluginProxy.dataDirPath.toAbsolutePath().toString(),
-                "pluginDirPath" to pluginProxy.pluginDirPath.toAbsolutePath().toString(),
-                "assetsDirPath" to pluginProxy.assetsDirPath.toAbsolutePath().toString(),
-                "rootDirPath"   to   pluginProxy.rootDirPath.toAbsolutePath().toString()
-              )
-      ), wrapper)
+
       processThread = Thread{
          activated = true
          checkThread()

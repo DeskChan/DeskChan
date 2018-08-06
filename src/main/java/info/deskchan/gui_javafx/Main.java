@@ -52,7 +52,7 @@ public class Main implements Plugin {
 		pluginProxy.setResourceBundle("info/deskchan/gui_javafx/strings");
 		pluginProxy.setConfigField("name", pluginProxy.getString("plugin-name"));
 		pluginProxy.getProperties().putIfHasNot("use-tray", true);
-		pluginProxy.getProperties().putIfHasNot("sprites-animation-delay", 50);
+		pluginProxy.getProperties().putIfHasNot("sprites-animation-delay", 20);
         pluginProxy.getProperties().putIfHasNot("balloon.text-animation-delay", 50);
 
 		System.out.println(new File("/home/dez/Coding/IdeaProjects/DeskChan/build/data/system_help/"));

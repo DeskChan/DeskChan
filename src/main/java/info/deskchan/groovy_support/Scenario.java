@@ -98,7 +98,7 @@ public abstract class Scenario extends Script{
     }
 
     protected void say(String text){
-        pluginProxy.sendMessage("DeskChan:say", new HashMap(){{
+        pluginProxy.sendMessage("DeskChan:request-say", new HashMap(){{
             put("text", text);
             put("characterImage", currentSprite);
             put("priority", messagePriority);

@@ -20,7 +20,7 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
     private Sprite swappingSprite = null;
     private LinkedList<AnimationData> queue = new LinkedList<>();
     private Timeline timeline;
-    private static final int TIMELINE_DELAY = Main.getProperties().getInteger("sprites-animation-delay", 50);
+    private static final int TIMELINE_DELAY = Main.getProperties().getInteger("sprites-animation-delay", 20);
 
     public AnimatedSprite(){
         timeline = new Timeline(new KeyFrame(Duration.millis(TIMELINE_DELAY), this));
@@ -110,7 +110,7 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
 
         currentAnimation.delay -= TIMELINE_DELAY;
         if (currentAnimation.smooth || currentAnimation.delay < 0){
-            mainSprite.setOpacity(mainSprite.getOpacity() + currentAnimation.changeSpriteOpacity);
+            mainSprite.setOpacity(mainSprite.getOpacity() + currentAnimation.changeSpriteOpacity * 1.5);
             if (swappingSprite != null){
                 swappingSprite.setOpacity(swappingSprite.getOpacity() - currentAnimation.changeSpriteOpacity);
             }
@@ -155,6 +155,7 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
             swappingSprite = mainSprite;
             mainSprite = currentAnimation.next;
             getChildren().add(mainSprite);
+            swappingSprite.setOpacity(1);
             mainSprite.setOpacity(0);
 
             if (swappingSprite != null) {
