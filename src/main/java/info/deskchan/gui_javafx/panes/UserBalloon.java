@@ -34,6 +34,7 @@ public class UserBalloon extends Balloon {
 
     public static void updateBalloonSprite(){
         sprite = getBalloonSprite("balloon.path-user");
+        instance = null;
     }
 
     BalloonDialog dialog;

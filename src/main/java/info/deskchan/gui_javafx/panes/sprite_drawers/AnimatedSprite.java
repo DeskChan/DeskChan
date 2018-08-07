@@ -155,7 +155,6 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
             swappingSprite = mainSprite;
             mainSprite = currentAnimation.next;
             getChildren().add(mainSprite);
-            swappingSprite.setOpacity(1);
             mainSprite.setOpacity(0);
 
             if (swappingSprite != null) {

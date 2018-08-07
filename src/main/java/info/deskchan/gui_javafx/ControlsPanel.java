@@ -456,7 +456,7 @@ public class ControlsPanel {
 		try {
 			return PanelType.valueOf(type.toUpperCase());
 		} catch (Exception e){
-			throw new RuntimeException(e.getCause());
+			throw new RuntimeException("Cannot cast " + type + " to PanelType", e.getCause());
 		}
 	}
 

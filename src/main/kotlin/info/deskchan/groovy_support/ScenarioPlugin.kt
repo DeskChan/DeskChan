@@ -42,11 +42,10 @@ class ScenarioPlugin : Plugin {
             if (dat is String)
                 path = dat
             else if (dat is Map<*, *>) {
-                val map = dat as Map<*, *>
-                path = map["path"] as String
-                if (map["giveOwnership"] != null)
+                path = dat["path"] as String
+                if (dat["giveOwnership"] != null)
                     owner = sender
-                data = map["msgData"]
+                data = dat["msgData"]
             }
             if (path == null)
                 path = selected
@@ -193,7 +192,7 @@ class ScenarioPlugin : Plugin {
                 path = pluginProxy.assetsDirPath.resolve("scenarios").resolve(pathString).toFile()
             compilerConfiguration.setClasspath(path.parent.toString())
             val groovyShell = GroovyShell(compilerConfiguration)
-            var scriptLines: MutableList<String>? = null
+            var scriptLines: MutableList<String>?
             try {
                 scriptLines = Files.readAllLines(path.toPath(), Charset.forName("UTF-8"))
             } catch (e: Exception) {

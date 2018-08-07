@@ -30,12 +30,37 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       //println("type: "+pluginProxy.getConfigField("type"))
       when(pluginProxy.getConfigField("type")){
          "Python" -> {
-            if (pluginFile.absolutePath.endsWith(".py2"))
+            var pip = "pip";
+            if (pluginFile.absolutePath.endsWith(".py2")) {
                stream = ProcessIOStream(pluginFile, "python2")
-            else if (pluginFile.absolutePath.endsWith(".py3"))
+               pip = "pip2"
+            } else if (pluginFile.absolutePath.endsWith(".py3")) {
                stream = ProcessIOStream(pluginFile, "python3")
-            else
+               pip = "pip3"
+            } else {
                stream = ProcessIOStream(pluginFile, "python")
+            }
+
+            val deps = pluginProxy.getConfigField("python-dependencies")
+            if (deps != null && deps is List<*>){
+               val deps = deps.toMutableList()
+               deps.replaceAll { t -> t.toString().toLowerCase() }
+               ProcessIOStream.getInstalledLibs(pip).forEach {
+                  val lib = it.split(" ")[0].toLowerCase()
+                  for (dep in deps){
+                     if (lib == dep){
+                        deps.remove(dep)
+                        break
+                     }
+                  }
+                  if (deps.isEmpty()) return@forEach
+               }
+               if (deps.isNotEmpty()){
+                  pluginProxy.log(Exception("Python dependencies not satisfied: " + deps.toString() + " not installed by pip. Remove 'python-dependencies' inside plugin manifest to disgard this exception."))
+                  return false
+               }
+            }
+
             wrapper = InlineMessageWrapper()
          }
          "HttpServer" -> {

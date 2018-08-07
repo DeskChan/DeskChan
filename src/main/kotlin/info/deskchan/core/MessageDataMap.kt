@@ -11,7 +11,7 @@ open class MessageDataMap : HashMap<String, Any?>{
     constructor()
 
     /** Clone map **/
-    constructor(data: Any){
+    constructor(data: Any?){
         if (data != null) putAll(data as Map<String, Any?>)
     }
 
@@ -24,8 +24,13 @@ open class MessageDataMap : HashMap<String, Any?>{
         }
     }
 
-    /** Get value converted to string or null if no such key found. **/
-    fun getString(key:String) : String? = get(key)?.toString()
+    /** Get value converted to string if (value != null && !value.isEmpty()), else returns null. **/
+    fun getString(key:String) : String? {
+        val value = get(key)?.toString()
+        if (value != null && !value.isEmpty())
+            return value
+        return null
+    }
 
     /** Get value converted to string or default if no such key found. **/
     fun getString(key:String, default: String) = getString(key) ?: default
@@ -242,10 +247,7 @@ open class MessageDataMap : HashMap<String, Any?>{
         checkKeys.forEach { if (it in keys) return; }
         throw MessageDataDeserializationException("Given data for tag \"$tag\" is not enough. Received from $sender to $receiver. Needed any of this keys: ${checkKeys.toList()}")
     }
-
-    companion object {
-        class MessageDataDeserializationException : RuntimeException {
-            constructor(text: String) : super(text)
-        }
-    }
+}
+class MessageDataDeserializationException : RuntimeException {
+    constructor(text: String) : super(text)
 }

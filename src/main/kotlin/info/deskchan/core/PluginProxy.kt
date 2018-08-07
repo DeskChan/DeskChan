@@ -380,7 +380,7 @@ internal class UTF8Control : ResourceBundle.Control() {
 				// Only this line is changed to make it to read properties files as UTF-8.
 				bundle = PropertyResourceBundle(InputStreamReader(stream, "UTF-8"))
 			} finally {
-				stream!!.close()
+				stream.close()
 			}
 		}
 		return bundle

@@ -306,7 +306,6 @@ interface PluginOptionsControlItem {
 	class TextFieldItem implements PluginOptionsControlItem {
 
 		TextField textField;
-		Property currentText = new SimpleStringProperty();
 
 		@Override
 		public void init(Map<String, Object> options, Object value) {
@@ -334,7 +333,6 @@ interface PluginOptionsControlItem {
 		}
 
 		protected void event(String tag){
-			currentText.setValue(getValue());
 			if (tag != null) {
 				String text = textField.getText();
 				Main.getPluginProxy().sendMessage(tag, text);
@@ -358,7 +356,7 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public ObservableValue getProperty(){
-			return currentText;
+			return textField.textProperty();
 		}
 
 	}
@@ -374,6 +372,31 @@ interface PluginOptionsControlItem {
 			area.setWrapText(true);
 			area.setPrefRowCount(rowCount);
 			setValue(value);
+
+			String enterTag  = (String) options.get("enterTag");
+			String focusTag  = (String) options.get("onFocusLostTag");
+			String changeTag = (String) options.get("onChangeTag");
+
+			if (enterTag != null)
+				area.setOnKeyReleased(event -> {
+					if (event.getCode() == KeyCode.ENTER) event(enterTag);
+				});
+			if (focusTag != null)
+				area.focusedProperty().addListener(
+						(ObservableValue<? extends Boolean> arg0, Boolean oldValue, Boolean newValue) -> {
+							if (!newValue) event(focusTag);
+						});
+			if (changeTag != null)
+				area.textProperty().addListener((observable, oldValue, newValue) -> {
+					event(changeTag);
+				});
+		}
+
+		protected void event(String tag){
+			if (tag != null) {
+				String text = area.getText();
+				Main.getPluginProxy().sendMessage(tag, text);
+			}
 		}
 
 		@Override
@@ -386,6 +409,11 @@ interface PluginOptionsControlItem {
 
 		@Override
 		public Node getNode() { return area; }
+
+		@Override
+		public ObservableValue getProperty(){
+			return area.textProperty();
+		}
 	}
 
 	class CustomizableTextAreaItem implements PluginOptionsControlItem {

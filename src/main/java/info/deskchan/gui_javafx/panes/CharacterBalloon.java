@@ -45,6 +45,7 @@ public class CharacterBalloon extends Balloon {
 
 	public static void updateDrawer(){
 		sprite = getBalloonSprite("balloon.path-character");
+		instance = null;
 	}
 
 	protected Character character = null;
@@ -161,7 +162,7 @@ public class CharacterBalloon extends Balloon {
 			Point2D position = character.getSkin().getPreferredBalloonPosition(
 					positionMode == CharacterBalloon.PositionMode.RELATIVE ? character.getSkin().getName() : character.getImageName()
 			);
-			setPosition(character.getPosition().add(position));
+			setPosition(position != null ? character.getPosition().add(position) : character.getPosition());
 		} else if (positionMode == CharacterBalloon.PositionMode.ABSOLUTE) {
 			super.loadPositionFromStorage();
 		} else setDefaultPosition();

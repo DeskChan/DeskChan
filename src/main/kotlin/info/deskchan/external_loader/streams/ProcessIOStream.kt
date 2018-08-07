@@ -106,4 +106,14 @@ class ProcessIOStream : ExternalStream {
         return "Process named: " + processBuilder.command() + ", at: " + processBuilder.directory()
     }
 
+    companion object {
+        fun getInstalledLibs(pipName: String) : List<String> {
+            val pr = ProcessBuilder(pipName, "list")
+            val process = pr.start()
+            process.waitFor()
+            val ans = process.inputStream.bufferedReader(Charsets.UTF_8).readLines()
+            return ans
+        }
+    }
+
 }
