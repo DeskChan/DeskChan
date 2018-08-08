@@ -328,7 +328,7 @@ public class KeyboardEventNotificator implements NativeKeyListener {
 
             int size = pressed.size();
             for(KeyboardCommand command : commands){
-                if(command.keyCodes.length < size) continue;
+                if(command.keyCodes.length > size) continue;
 
                 boolean contains = true;
                 for(Object keyCode : command.keyCodes) {

@@ -25,7 +25,10 @@ class ScenarioPlugin : Plugin {
         pluginProxy.sendMessage("core:add-command",  HashMap<String, Any>().apply {
             put("tag", "scenario:run-scenario")
             put("info", pluginProxy.getString("scenario-command.info"))
-            put("msgInfo", pluginProxy.getString("scenario-command.msg-info"))
+            put("msgInfo", mapOf(
+                    "path" to pluginProxy.getString("scenario-command.msg-info-path"),
+                    "msgData" to pluginProxy.getString("scenario-command.msg-info-data"))
+            )
         })
 
         /* Run scenario.

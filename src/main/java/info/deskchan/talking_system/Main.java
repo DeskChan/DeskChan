@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core.MessageDataMap;
 import info.deskchan.core.Plugin;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
@@ -509,18 +510,20 @@ public class Main implements Plugin {
 	}
 
 	void saveOptions(Map<String, Object> data) {
-		String val = (String) data.getOrDefault("file", "");
+		MessageDataMap map = new MessageDataMap(data);
+		File presetFile = map.getFile("file");
 		String errorMessage = "";
-		if (val.isEmpty()) {
+		if (presetFile  == null) {
+			String val;
 			try {
-				val = (String) data.getOrDefault("name", "");
-				if (!val.isEmpty()) {
+				val = map.getString("name");
+				if (val != null) {
 					currentCharacter.name = val;
 				}
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
-			try{
+			try {
 				currentCharacter.phrases.set((List<String>) data.get("phrases"));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
@@ -531,8 +534,8 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try {
-				val = (String) data.getOrDefault("usernames", "");
-				if (!val.isEmpty()) {
+				val = map.getString("usernames");
+				if (val != null) {
 					currentCharacter.tags.put("usernames", val);
 				}
 			} catch (Exception e) {
@@ -540,14 +543,14 @@ public class Main implements Plugin {
 			}
 			try {
 				for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
-					Number k = (Number) data.getOrDefault(CharacterFeatures.getFeatureName(i), 0);
-					currentCharacter.character.setValue(i, k.intValue());
+					int k = map.getInteger(CharacterFeatures.getFeatureName(i), 0);
+					currentCharacter.character.setValue(i, k);
 				}
 			} catch (Exception e) {
 				errorMessage += e.getMessage() + "\n";
 			}
 		} else {
-			currentCharacter = CharacterPreset.getFromFileUnsafe(new File(val));
+			currentCharacter = CharacterPreset.getFromFileUnsafe(presetFile);
 		}
 		currentCharacter.updatePhrases();
 
@@ -568,15 +571,6 @@ public class Main implements Plugin {
 		String fromUrl = (String) data.get("fromUrl");
 		if (fromUrl != null && fromUrl.length() > 0)
 			PhrasesList.saveTo(fromUrl, (String) data.getOrDefault("filename", "new_phrases"));
-
-		try {
-			for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
-				Number k = (Number) data.getOrDefault(CharacterFeatures.getFeatureName(i), 0);
-				currentCharacter.character.setValue(i, k.intValue());
-			}
-		} catch (Exception e) {
-			errorMessage += e.getMessage() + "\n";
-		}
 
 		currentCharacter.inform();
 

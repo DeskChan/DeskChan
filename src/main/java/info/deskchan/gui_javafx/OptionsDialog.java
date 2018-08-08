@@ -1536,7 +1536,7 @@ class OptionsDialog extends TemplateBox {
 				}
 				content.applyCss();
 				content.layout();
-				setHeight(content.getBoundsInParent().getHeight() + 100 * App.getInterfaceScale());
+				setHeight(content.getBoundsInParent().getHeight() + 8 * App.getInterfaceScale());
 			});
 
 			getDialogPane().getButtonTypes().clear();

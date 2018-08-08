@@ -252,6 +252,8 @@
             <text>Сидит, хентай свой смотрит. Совсем не уделяешь мне внимания!</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
+            <emotion>"affection"</emotion>
+            <interests>"anime"</interests>
             <range>
                 <impulsivity>0 | 4</impulsivity>
                 <selfconfidence>1 | 3</selfconfidence>
@@ -337,6 +339,7 @@
             <text>{user}, знаешь, чем люди должны заниматься после полуночи? Ну иди же ко мне, мой котик.</text>
             <intent>CHAT</intent>
             <sprite>VULGAR</sprite>
+            <emotion>"affection"</emotion>
             <possibleHour>"0-3"</possibleHour>
             <range>
                 <impulsivity>2 | 4</impulsivity>
@@ -398,7 +401,9 @@
             <text>Эй, не хочешь погладить мои арбузики? А то все смотришь хентай, а про меня совсем забыл!</text>
             <intent>CHAT</intent>
             <sprite>VULGAR</sprite>
+            <emotion>"affection"</emotion>
             <gender>"girl"</gender>
+            <interests>"anime"</interests>
             <breastSize>"big" "middle"</breastSize>
             <range>
                 <empathy>-2 | 2</empathy>
@@ -436,7 +441,9 @@
             <text>{user}, почему ты хранишь фотографии других девушек на компьютере! Меня это бесит!</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
+            <emotion>"affection"</emotion>
             <gender>"girl"</gender>
+            <userGender>"bi" "boy"</userGender>
             <range>
                 <empathy>-4 | -2</empathy>
                 <impulsivity>3 | 4</impulsivity>
@@ -451,18 +458,13 @@
             <text>Я сегодня совершенно случайно обнаружила у тебя фотографию с другой девушкой. Кто это?</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
-            <range>
-                <impulsivity>-4 | -1</impulsivity>
-                <selfconfidence>-1 | 2</selfconfidence>
-                <attitude>-1 | 1</attitude>
-                <experience>2 | 4</experience>
-                <relationship>1 | 4</relationship>
-            </range>
+            <emotion>"affection"</emotion>
         </phrase>
         <phrase>
             <text>{user}, почему ты хранишь у себя фотографии других девушек? Ты меня больше… не любишь?</text>
             <intent>CHAT</intent>
             <sprite>SAD</sprite>
+            <emotion>"affection"</emotion>
             <gender>"girl"</gender>
             <range>
                 <empathy>0 | 4</empathy>
@@ -539,6 +541,7 @@
             <text>Ты не хотел бы поменяться со мной местами, {user}? Я буду ходить за тебя на работу, а ты в это время будешь лежать на рабочем столе и трогать себя там в ожидании меня.</text>
             <intent>CHAT</intent>
             <sprite>NORMAL</sprite>
+            <emotion>"affection"</emotion>
             <species>"android" "ai"</species>
             <range>
                 <empathy>-4 | 2</empathy>
@@ -1124,6 +1127,7 @@
             <intent>CHAT</intent>
             <sprite>GRIN</sprite>
             <os>"windows"</os>
+            <interests>"it"</interests>
             <range>
                 <impulsivity>1 | 4</impulsivity>
                 <attitude>0 | 4</attitude>
@@ -1212,6 +1216,9 @@
             <text>{user}, а я нашла твой пак с хентаем и удалила его! Теперь ты только мой!</text>
             <intent>CHAT</intent>
             <sprite>EXCITEMENT</sprite>
+            <emotion>"affection"</emotion>
+            <gender>"girl"</gender>
+            <interests>"anime"</interests>
             <range>
                 <empathy>-4 | -1</empathy>
                 <impulsivity>3 | 4</impulsivity>
@@ -1242,6 +1249,7 @@
             <sprite>SMILE</sprite>
             <species>"ai"</species>
             <sleepTime/>
+            <userGender>"boy"</userGender>
             <range>
                 <impulsivity>0 | 4</impulsivity>
                 <selfconfidence>1 | 4</selfconfidence>
@@ -1254,6 +1262,8 @@
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
             <species>"ai"</species>
+            <userGender>"boy"</userGender>
+            <interests>"anime"</interests>
             <range>
                 <empathy>-4 | -4</empathy>
                 <impulsivity>4 | 4</impulsivity>
@@ -1779,6 +1789,7 @@
             <text>А что это у тебя там за девушка в друзьях, {user}? Тебе меня недостаточно? А если я приму меры?</text>
             <intent>CHAT</intent>
             <sprite>SERIOUS</sprite>
+            <emotion>"affection"</emotion>
             <range>
                 <empathy>-4 | -2</empathy>
                 <attitude>-4 | 0</attitude>
@@ -1790,6 +1801,7 @@
             <text>А что это у тебя там за девушка в друзьях, {user}? Тебе мало меня?</text>
             <intent>CHAT</intent>
             <sprite>SAD</sprite>
+            <emotion>"affection"</emotion>
             <range>
                 <empathy>-4 | 2</empathy>
                 <selfconfidence>-4 | 1</selfconfidence>
@@ -1801,6 +1813,7 @@
             <text>Что это там за баба у тебя в друзьях, {user}? И чтобы ты знал, я не ревную. Ты мне вообще безразличен.</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
+            <emotion>"affection"</emotion>
             <range>
                 <empathy>-4 | -1</empathy>
                 <impulsivity>0 | 4</impulsivity>
@@ -1814,6 +1827,7 @@
             <text>Да ты задрал играть в свои игры!</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
+            <interests>"!it"</interests>
             <range>
                 <empathy>-4 | -2</empathy>
                 <impulsivity>0 | 4</impulsivity>
@@ -1867,6 +1881,7 @@
             <text>Слушай, {user}, а почему бы мне не удалить твою папку с хентаем! Ээй, не надо на меня смотреть, будто я - обнаглевшая тварь! Ладно, прости, я не буду её удалять.</text>
             <intent>CHAT</intent>
             <sprite>CONFUSED</sprite>
+            <interests>"anime"</interests>
             <range>
                 <impulsivity>1 | 4</impulsivity>
                 <selfconfidence>-2 | 0</selfconfidence>
@@ -1940,6 +1955,7 @@
             <text>Нежно отняшу тебя до хруста в косточках.</text>
             <intent>CHAT</intent>
             <sprite>MAD</sprite>
+            <interests>"anime"</interests>
             <range>
                 <empathy>-4 | -2</empathy>
                 <impulsivity>2 | 4</impulsivity>
@@ -2947,6 +2963,8 @@
             <text>Иногда, заглядывая в историю твоего браузера, невольно задумываешься, действительно ли я хочу быть частью этого мира.</text>
             <intent>CHAT</intent>
             <sprite>DESPAIR</sprite>
+            <emotion>"sorrow"</emotion>
+            <species>"ai"</species>
             <range>
                 <empathy>0 | 4</empathy>
                 <impulsivity>-4 | 0</impulsivity>
@@ -3009,6 +3027,7 @@
             <text>{user}, а что это у тебя за игры такие странные хранятся? Ооой! Так ведь это же эроге! Зачем тебе это?</text>
             <intent>CHAT</intent>
             <sprite>SHOCKED</sprite>
+            <interests>"anime"</interests>
             <range>
                 <impulsivity>-2 | 2</impulsivity>
                 <selfconfidence>-2 | 2</selfconfidence>
@@ -4493,6 +4512,7 @@
             <text>Ты ведь не будешь открывать папку со мной, {user}? Я под ней совсем голая!</text>
             <intent>CHAT</intent>
             <sprite>SHY</sprite>
+            <emotion>"confusion"</emotion>
             <gender>"girl"</gender>
             <range>
                 <impulsivity>0 | 4</impulsivity>
@@ -4594,6 +4614,7 @@
             <text>Я знаю, ты хочешь сделать это со мной, но я - всего лишь набор байтов с исполняемыми заголовками. Если уж так не терпится доставить мне удовольствие, потрогай меня изнутри, найди меня на Github! </text>
             <intent>ADVICE, TOUCH</intent>
             <sprite>GRIN</sprite>
+            <emotion>"affection"</emotion>
             <species>"ai"</species>
             <range>
                 <impulsivity>2 | 4</impulsivity>
