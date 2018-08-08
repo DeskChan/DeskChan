@@ -51,6 +51,10 @@ public class CorePlugin implements Plugin {
 			pluginProxy.log(new Exception("Unknown language key: " + newValue));
 		});
 
+		pluginProxy.addMessageListener("core:get-language", (sender, tag, data) -> {
+			pluginProxy.sendMessage(sender, pluginProxy.getProperties().getString("locale"));
+		});
+
 
 		/* Quit program.
 		* Public message

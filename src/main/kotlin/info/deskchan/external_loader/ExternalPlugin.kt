@@ -1,9 +1,6 @@
 package info.deskchan.external_loader
 
-import info.deskchan.core.MessageListener
-import info.deskchan.core.Plugin
-import info.deskchan.core.PluginProxyInterface
-import info.deskchan.core.ResponseListener
+import info.deskchan.core.*
 import info.deskchan.external_loader.streams.ExternalStream
 import info.deskchan.external_loader.streams.HTTPStream
 import info.deskchan.external_loader.streams.ProcessIOStream
@@ -91,7 +88,8 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
                          "dataDirPath"   to   pluginProxy.dataDirPath.toAbsolutePath().toString(),
                          "pluginDirPath" to pluginProxy.pluginDirPath.toAbsolutePath().toString(),
                          "assetsDirPath" to pluginProxy.assetsDirPath.toAbsolutePath().toString(),
-                         "rootDirPath"   to   pluginProxy.rootDirPath.toAbsolutePath().toString()
+                         "rootDirPath"   to   pluginProxy.rootDirPath.toAbsolutePath().toString(),
+                         "locale" to CoreInfo.getCoreProperties().getString("locale")
                  )
          ), wrapper)
       } catch (e: IOException){

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import random
 import time
 import json
 import traceback
-import sys
+import os
 from sys import stdin
 from sys import stdout
 from threading import Thread
+import codecs
 
 _logging = False
 _log_file = None
@@ -311,10 +311,14 @@ class Proxy:
     _bundle = None
     @_log_err
     def setResourceBundle(filename):
-        with codecs.open(filename, 'r', encoding='utf8') as f:
+        if Proxy._pluginData["locale"] == "en":
+            path = os.path.join(path, "strings.properties")
+        else:
+            path = os.path.join(path, "strings_" + Proxy._pluginData["locale"] + ".properties")
+        with codecs.open(path, 'r', encoding='utf8') as f:
             Proxy._bundle = {}
             for line in f.readlines():
-                line = line[:-1].strip('=',2)
+                line = line[:-1].split('=',2)
                 Proxy._bundle[line[0]] = line[1]
 
     @_log_err

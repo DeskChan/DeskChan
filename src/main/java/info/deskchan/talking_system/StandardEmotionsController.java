@@ -130,8 +130,8 @@ public class StandardEmotionsController implements EmotionsController{
 	public boolean tagsMatch(Map<String, Object> tags){
 		for(Map.Entry<String, Object> entry : tags.entrySet()){
 			if(!entry.getKey().equals("emotion")) continue;
-			
-			List<String> suitableEmotions = (List) entry.getValue();
+
+			Collection<String> suitableEmotions = (Collection) entry.getValue();
 			if (suitableEmotions == null || suitableEmotions.size() == 0) continue;
 			
 			if(currentEmotion == null) return false;
