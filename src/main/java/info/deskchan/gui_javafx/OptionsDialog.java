@@ -1096,14 +1096,13 @@ class OptionsDialog extends TemplateBox {
 		String command;
 		String rule;
 		Object msgData;
-		boolean realItem;
+		boolean newItem = false;
 
 		CommandItem(String event, String command, String rule, String msg) {
 			this.event = event;
 			this.command = command;
 			this.rule = rule;
 			this.msgData = msg;
-			this.realItem = true;
 		}
 
 		CommandItem(Map<String,Object> data) {
@@ -1111,18 +1110,15 @@ class OptionsDialog extends TemplateBox {
 			this.command = (String) data.get("command");
 			this.rule = (String) data.get("rule");
 			this.msgData = data.get("msgData");
-			this.realItem = true;
 		}
 
 		CommandItem(String event, String command) {
 			this.event = event;
 			this.command = command;
-			this.realItem = false;
 		}
 
 		CommandItem(String event) {
 			this.event = event;
-			this.realItem = false;
 		}
 
 		public String getEvent(){         return event;            }
@@ -1150,6 +1146,7 @@ class OptionsDialog extends TemplateBox {
 			data.put("commandName", command);
 			if(rule != null && rule.length() > 0)  data.put("rule", rule);
 			if(msgData != null) data.put("msgData", msgData);
+			data.put("isDefault", !newItem);
 
 			return data;
 		}
@@ -1512,7 +1509,7 @@ class OptionsDialog extends TemplateBox {
 						String itemDataString = item != null && item.msgData != null ? item.msgData.toString() : null;
 						for (Map.Entry<String, Object> entry : ((Map<String, Object>) m).entrySet()){
 							msgGrid.add(new Text(entry.getKey()), 0, index);
-							String str = itemData != null ? itemData.get(entry.getKey()).toString() : (index == 0 && itemDataString != null ? itemDataString : "");
+							String str = (itemData != null && itemData.get(entry.getKey()) != null) ? itemData.get(entry.getKey()).toString() : (index == 0 && itemDataString != null ? itemDataString : "");
 							TextField t = new TextField(str);
 							msgGrid.add(t, 1, index);
 							msgGrid.add(new ControlsPanel.Hint(entry.getValue().toString()), 2, index);
@@ -1645,6 +1642,8 @@ class OptionsDialog extends TemplateBox {
 			if (msgElements.size() == 1 && msgElements.get("value") != null)
 				msgData = msgElements.get("value").getText();
 			result.msgData = msgData;
+
+			result.newItem = true;
 
 			return result;
 		}

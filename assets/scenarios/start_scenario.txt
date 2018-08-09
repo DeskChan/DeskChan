@@ -8,6 +8,10 @@ if (properties.getInteger("start.run_first", 0) == 0){
     alert("Запустить стартовый сценарий? / Launch start scenario? Y/N")
     $ gui:raise-user-balloon
     whenInput(){
+        match("y"){
+           properties["start.run_first"] = 2
+            quit()
+        }
         match("n"){
             properties["start.run_first"] = 2
             quit()

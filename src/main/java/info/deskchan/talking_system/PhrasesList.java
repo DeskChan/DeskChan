@@ -17,6 +17,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -81,6 +82,9 @@ class PhrasesPack {
 					Main.log(e2);
 				}
 			}
+		} catch (FileNotFoundException e) {
+			loaded = false;
+			return;
 		} catch (Exception e) {
 			Main.log(e);
 			loaded = false;
@@ -347,6 +351,7 @@ public class PhrasesList {
 			}
 
 		final String finalIntent = intent;
+
 		Main.getPluginProxy().sendMessage("talk:reject-quote", matchingList,
 				(sender, data) -> {
 					List<Map<String, Object>> phrasesList = (ArrayList<Map<String,Object>>) data;

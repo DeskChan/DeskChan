@@ -125,12 +125,8 @@ public class Main implements Plugin {
                     for (Map<String, Object> entry : list) {
                         Collection<String> types = (Collection) entry.get("weather");
                         if (types == null) continue;
-                        if (now == null) {
-                            quotes_list.add(entry);
-                            continue;
-                        }
                         for (String type : types) {
-                            if (!isWeatherMatch(type, server.getNow().weather, server.getNow().temp)) {
+                            if (!isWeatherMatch(type, now.weather, now.temp)) {
                                 quotes_list.add(entry);
                                 break;
                             }

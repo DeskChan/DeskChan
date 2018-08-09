@@ -162,6 +162,7 @@ open class MessageDataMap : HashMap<String, Any?>{
 
     /** Get value converted to file or null if no such key found. **/
     fun getFile(key: String) : File? {
+        if (get(key) == null) return null
         try {
             return File(get(key).toString())
         } catch (e: Exception){ }

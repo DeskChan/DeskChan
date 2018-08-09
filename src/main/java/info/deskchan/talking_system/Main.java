@@ -1,9 +1,6 @@
 package info.deskchan.talking_system;
 
-import info.deskchan.core.MessageDataMap;
-import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProperties;
-import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.core.*;
 import info.deskchan.core_utils.TextOperations;
 import org.json.JSONObject;
 
@@ -87,13 +84,13 @@ public class Main implements Plugin {
         *           intent: String
         * Returns: Phrase if requested, else None */
 		pluginProxy.addMessageListener("talk:request-say", (sender, tag, dat) -> {
-			Map data = createMapFromObject(dat, "intent");
+			MessageDataMap data = new MessageDataMap("intent", dat);
+			data.put("sender", sender);
 			if (data.containsKey("text")){
 				sendPhrase(null, data);
 			} else {
 				if (data.containsKey("purpose") && !data.containsKey("intent"))
 					data.put("intent", data.get("purpose"));
-				data.put("sender", sender);
 
 				phraseRequest(data);
 			}
@@ -258,7 +255,6 @@ public class Main implements Plugin {
 					try {
 						Map<String, Object> map = (Map) data;
 						if (map.containsKey("preset")) {
-							System.out.println(map.get("preset"));
 							currentCharacter = CharacterPreset.getFromFileUnsafe(new File((String) map.get("preset")));
 						}
 						String type = (String) map.getOrDefault("phrases", null);
@@ -355,10 +351,6 @@ public class Main implements Plugin {
 
 		resetTimer();
 
-		pluginProxy.sendMessage("DeskChan:request-say", "WRONG_DATA", (sender, data) -> {
-			System.out.println(data);
-		});
-
 		return true;
 	}
 
@@ -383,7 +375,7 @@ public class Main implements Plugin {
 	void sendPhrase(Phrase phrase, Map<String, Object> data){
 		Map<String, Object> ret = phrase != null ? phrase.toMap() : new HashMap<>();
 
-		if (ret.get("characterImage").equals("AUTO")) {
+		if (ret.getOrDefault("characterImage", "AUTO").equals("AUTO")) {
 			String characterImage = currentCharacter.getDefaultSpriteType();
 
 			if (characterImage == null)
@@ -394,7 +386,7 @@ public class Main implements Plugin {
 		ret.put("priority", DEFAULT_PRIORITY);
 		if(data != null)
 			ret.putAll(data);
-
+		;
 		pluginProxy.callNextAlternative(data.get("sender").toString(), "DeskChan:request-say", "talk:request-say", ret);
 	}
 

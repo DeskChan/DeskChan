@@ -1,5 +1,6 @@
 package info.deskchan.core;
 
+import info.deskchan.gui_javafx.Main;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -34,6 +35,8 @@ public class CommandsProxy{
         static boolean equals(Object a, Object b){
             return a == b || (a!=null && a.equals(b));
         }
+
+        public String toString(){ return "rule: "+rule+", msgData: "+msgData; }
     }
 
     /** All events registered in program with all information about them. **/
@@ -370,9 +373,11 @@ public class CommandsProxy{
             PluginManager.log("Error while locate space for command links file");
             return;
         }
+        LinkContainer toSave = commandLinks.clone();
+        toSave.substract(defaultCommandLinks);
         BufferedWriter out=new BufferedWriter(writer);
         try {
-            out.write(commandLinks.toJSONArray().toString(2));
+            out.write(toSave.toJSONArray().toString(2));
             out.flush();
             PluginManager.log("Links successfully saved");
         } catch (Exception e){
@@ -390,7 +395,6 @@ public class CommandsProxy{
             return;
         }
         BufferedReader out=new BufferedReader(reader);
-        commandLinks.clear();
         try {
             StringBuilder b = new StringBuilder();
             out.lines().forEach(b::append);
@@ -403,7 +407,6 @@ public class CommandsProxy{
             }
             PluginManager.log("Links successfully loaded");
         } catch (Exception e){
-            commandLinks = defaultCommandLinks.clone();
             PluginManager.log("Error while loading command links file");
             PluginManager.log(e);
         }
@@ -426,6 +429,9 @@ public class CommandsProxy{
             }
             public boolean equals(Entry other){
                 return key1.equals(other.key1) && key2.equals(other.key2) && value.equals(other.value);
+            }
+            public String toString(){
+                return "["+key1+","+key2+","+value+"]";
             }
         }
 
@@ -547,7 +553,15 @@ public class CommandsProxy{
                     }
                 }
             } catch (Exception e){
-                PluginManager.log(e);
+                Main.log(e);
+            }
+        }
+
+        public void substract(LinkContainer other){
+            for (MatrixMap<String, String, ArrayList<Link>>.Entry<String, String, ArrayList<Link>> entry : other.entrySet()){
+                for (Link link : entry.value) {
+                    remove(entry.key1, entry.key2, link.rule);
+                }
             }
         }
 

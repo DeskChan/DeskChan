@@ -55,10 +55,14 @@ public class Main implements Plugin {
 		pluginProxy.getProperties().putIfHasNot("sprites-animation-delay", 20);
         pluginProxy.getProperties().putIfHasNot("balloon.text-animation-delay", 50);
 
-		System.out.println(new File("/home/dez/Coding/IdeaProjects/DeskChan/build/data/system_help/"));
-
 		new Thread(() -> {
-			App.run(PluginManager.getInstance().getArgs());
+			try {
+				App.run(PluginManager.getInstance().getArgs());
+			} catch (NoClassDefFoundError e){
+				pluginProxy.log("WARNING! JavaFX is not installed. GUI plugin is now closing. Please, install JavaFX.");
+				appInitSem.release();
+				instance = null;
+			}
 		}).start();
 		try {
 			appInitSem.acquire();
@@ -66,7 +70,7 @@ public class Main implements Plugin {
 			log(e);
 		}
 
-		return true;
+		return instance != null;
 	}
 	
 	@Override

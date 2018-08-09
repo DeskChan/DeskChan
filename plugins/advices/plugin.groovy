@@ -8,7 +8,7 @@ addMessageListener("advices:replace-request", { s,t,d ->
             d = "ADVICE"
         }
     }
-    sendMessage("DeskChan:request-say#advices:replace-request", d)
+    callNextAlternative(s, "DeskChan:request-say", "advices:replace-request", d)
 })
 
 sendMessage("core:add-command", [

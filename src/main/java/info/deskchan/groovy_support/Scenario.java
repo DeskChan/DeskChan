@@ -5,7 +5,6 @@ import groovy.lang.Script;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core.ResponseListener;
-import javafx.beans.property.SimpleObjectProperty;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -104,7 +103,9 @@ public abstract class Scenario extends Script{
             put("priority", messagePriority);
             put("skippable", false);
         }}, (sender, data) -> {
-            lock.unlock();
+            pluginProxy.sendMessage("DeskChan:say", data, (sender1, data1) -> {
+                lock.unlock();
+            });
         });
         lock.lock();
     }
@@ -193,18 +194,18 @@ public abstract class Scenario extends Script{
 
     private synchronized Object receiveDatatype(String datatype, Object helpInfo){
         receive(helpInfo);
-        final SimpleObjectProperty<Object> pr = new SimpleObjectProperty<>();
+        final List<Object> pr = new LinkedList<>();
         pluginProxy.sendMessage("speech:extract-data", new HashMap(){{
             put("speech", answer.text);
             put("type", datatype);
         }},
         (sender, data1) -> {
-            pr.setValue(data1);
+            pr.add(data1);
             lock.unlock();
         });
 
         lock.lock();
-        return pr.getValue();
+        return pr.size() > 0 ? pr.get(0) : null;
     }
 
     private synchronized Calendar receiveDatetype(String datatype, Object helpInfo){
