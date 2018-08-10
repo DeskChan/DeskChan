@@ -35,15 +35,17 @@ class ControlsWindow extends TemplateBox {
     }
 
     public static void open(ControlsPanel panel){
-        for(ControlsWindow window : customWindowOpened){
-            if(window.controls.getFullName().equals(panel.getFullName())){
-                window.controls = panel;
-                window.getDialogPane().setContent(panel.createControlsPane(window));
-                ((Stage) window.getDialogPane().getScene().getWindow()).toFront();
-                return;
+        App.showWaitingAlert(() -> {
+            for (ControlsWindow window : customWindowOpened) {
+                if (window.controls.getFullName().equals(panel.getFullName())) {
+                    window.controls = panel;
+                    window.getDialogPane().setContent(panel.createControlsPane(window));
+                    ((Stage) window.getDialogPane().getScene().getWindow()).toFront();
+                    return;
+                }
             }
-        }
-        new ControlsWindow(panel);
+            new ControlsWindow(panel);
+        });
     }
 
     public static void closeCustomWindow(ControlsPanel panel){

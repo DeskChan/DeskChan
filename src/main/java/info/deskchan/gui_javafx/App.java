@@ -1230,16 +1230,14 @@ public class App extends Application {
 				waitingAlert.show();
 			});
 
-		new Thread(() -> {
+		Main.runLater(() -> {
 			caller.run();
 			needAlert = false;
-			Main.runLater(() -> {
-				if (waitingAlert != null) {
-					waitingAlert.close();
-					waitingAlert = null;
-				}
-			});
-		}).start();
+			if (waitingAlert != null) {
+				waitingAlert.close();
+				waitingAlert = null;
+			}
+		});
 	}
 
 	class DelayNotifier implements EventHandler<javafx.event.ActionEvent> {

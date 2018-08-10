@@ -192,19 +192,17 @@ public class ControlsPanel {
 			_currentPanel = this;
 		}
 		final ControlsPanel currentPanel = _currentPanel;
-		App.showWaitingAlert(() -> {
-			switch (currentPanel.type) {
-				case WINDOW:
-				case INFO: {
-					Platform.runLater(() -> ControlsWindow.open(currentPanel));
-				}
-				break;
-				default: {
-					Platform.runLater(() -> OptionsDialog.showPanel(currentPanel));
-				}
-				break;
+		switch (currentPanel.type) {
+			case WINDOW:
+			case INFO: {
+				Platform.runLater(() -> ControlsWindow.open(currentPanel));
 			}
-		});
+			break;
+			default: {
+				Platform.runLater(() -> OptionsDialog.showPanel(currentPanel));
+			}
+			break;
+		}
 	}
 
 	public void hide(){

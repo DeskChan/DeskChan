@@ -786,15 +786,13 @@ class OptionsDialog extends TemplateBox {
 	}
 
 	private void setPanel(ControlsPanel panel){
-		Platform.runLater(() -> {
-			controlsPane.getChildren().clear();
-			if (panel == null) return;
+		controlsPane.getChildren().clear();
+		if (panel == null) return;
 
-			Pane pane = panel.createControlsPane(instance);
-			//pane.prefHeightProperty().bind(controlsPane.heightProperty());
-			//pane.prefWidthProperty().bind(controlsPane.widthProperty());
-			controlsPane.getChildren().add(pane);
-		});
+		Pane pane = panel.createControlsPane(instance);
+		//pane.prefHeightProperty().bind(controlsPane.heightProperty());
+		//pane.prefWidthProperty().bind(controlsPane.widthProperty());
+		controlsPane.getChildren().add(pane);
 	}
 
 	private void appendToHistory(ControlsPanel panel){
@@ -808,24 +806,22 @@ class OptionsDialog extends TemplateBox {
 
 	protected static void open() {
 		App.showWaitingAlert(() -> {
-			Platform.runLater(() -> {
-				OptionsDialog optionsDialog = OptionsDialog.getInstance();
-				if (optionsDialog == null)
-					optionsDialog = new OptionsDialog();
+			OptionsDialog optionsDialog = OptionsDialog.getInstance();
+			if (optionsDialog == null)
+				optionsDialog = new OptionsDialog();
 
-				if (!optionsDialog.isShowing()) {
-					optionsDialog.show();
-				}
-				Stage stage = (Stage) optionsDialog.getDialogPane().getScene().getWindow();
-				stage.setIconified(false);
-				optionsDialog.requestFocus();
+			if (!optionsDialog.isShowing()) {
+				optionsDialog.show();
+			}
+			Stage stage = (Stage) optionsDialog.getDialogPane().getScene().getWindow();
+			stage.setIconified(false);
+			optionsDialog.requestFocus();
 
-				if (panelToOpen != null){
-					optionsDialog.setPanel(panelToOpen);
-					optionsDialog.appendToHistory(panelToOpen);
-					panelToOpen = null;
-				}
-			});
+			if (panelToOpen != null){
+				optionsDialog.setPanel(panelToOpen);
+				optionsDialog.appendToHistory(panelToOpen);
+				panelToOpen = null;
+			}
 		});
 	}
 

@@ -68,8 +68,8 @@ class HTTPStream : ExternalStream, HttpHandler {
                 list.add(info)
             }
             val response = wrapper.serialize(list).toString().toByteArray()
-            t.sendResponseHeaders(200, response.size.toLong())
             t.responseHeaders.add("Access-Control-Allow-Origin", "*")
+            t.sendResponseHeaders(200, response.size.toLong())
             val os = t.responseBody
             os.write(response)
             os.close()
@@ -131,8 +131,8 @@ class HTTPStream : ExternalStream, HttpHandler {
                 val ex = lastExchange!!
                 lastExchange = null
                 val response = data.toString().toByteArray()
-                ex.sendResponseHeaders(200, response.size.toLong())
                 ex.responseHeaders.add("Access-Control-Allow-Origin", "*")
+                ex.sendResponseHeaders(200, response.size.toLong())
                 val os = ex.responseBody
                 os.write(response)
                 os.close()
