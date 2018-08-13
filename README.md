@@ -43,7 +43,7 @@ DeskChan разрабатывается такой, чтобы любой чел
 
 DeskChan is developing such that everyone despite their programming level can customize it for themself and instantly start to use.
 
-All additiona information can be found on [wiki](https://github.com/DeskChan/DeskChan/wiki) or [forum](https://forum.deskchan.info/).
+All additional information can be found on [wiki](https://github.com/DeskChan/DeskChan/wiki) or [forum](https://forum.deskchan.info/).
  
 Program is developing primarly for russian-speaking users. Although it has interface translated to english too. There is no limitations to embed other languages support by yourself, write us a mail if you want to know how to do it.
 
