@@ -43,7 +43,7 @@ public class TerminalGUI {
             if (Main.getPluginProxy().isAskingAnswer(sender))
                 Main.getPluginProxy().sendMessage(sender, null);
 
-            Map m = new HashMap(); m.put("msgData", text);
+            Map m = new HashMap(); m.put("text", text);
             Main.getPluginProxy().sendMessage("DeskChan:just-said", m);
         });
 

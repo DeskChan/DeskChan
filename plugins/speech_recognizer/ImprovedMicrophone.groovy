@@ -33,17 +33,12 @@ class ImprovedMicrophone {
         line.start();
     }
 
-    public void startRecording(Path path){
-        final File file = path.toFile();
+    public void startRecording(File file){
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run(){
-                try {
-                    file.createNewFile();
-                    AudioSystem.write((AudioInputStream) getStream(), AudioFileFormat.Type.WAVE, file);
-                } catch (Exception e){
-                    Main.log(new Exception("Cannot save recording", e));
-                }
+                file.createNewFile();
+                AudioSystem.write((AudioInputStream) getStream(), AudioFileFormat.Type.WAVE, file);
             }
         });
         startRecording();

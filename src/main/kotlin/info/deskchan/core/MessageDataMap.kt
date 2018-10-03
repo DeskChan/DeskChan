@@ -161,16 +161,16 @@ open class MessageDataMap : HashMap<String, Any?>{
     }
 
     /** Get value converted to file or null if no such key found. **/
-    fun getFile(key: String) : File? {
+    fun getFile(key: String) : Path? {
         if (get(key) == null) return null
         try {
-            return File(get(key).toString())
+            return Path(get(key).toString())
         } catch (e: Exception){ }
         return null
     }
 
     /** Get value converted to file or default if no such key found. **/
-    fun getFile(key: String, default: String) : File = getFile(key) ?: File(default)
+    fun getFile(key: String, default: String) : Path = getFile(key) ?: Path(default)
 
     /** Get one of values given if (value.toString().toLowerCase() == it.toString().toLowerCase()), else returns null **/
     fun<T: Any> getOneOf(key: String, values: Iterable<T>) : T? {

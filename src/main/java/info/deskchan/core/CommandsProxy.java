@@ -362,23 +362,22 @@ public class CommandsProxy{
         });
     }
 
-    private static final File file = PluginManager.getDataDirPath().resolve("core").resolve("links").toFile();
+    private static final Path file = PluginManager.getDataDirPath().resolve("core").resolve("links");
 
     /** Save current links configuration to file **/
     public static void save(){
-        OutputStreamWriter writer;
+        BufferedWriter writer;
         try {
-           writer=new OutputStreamWriter(new FileOutputStream(file.toString()), "UTF-8");
+           writer = file.newBufferedWriter();
         } catch(Exception e){
             PluginManager.log("Error while locate space for command links file");
             return;
         }
         LinkContainer toSave = commandLinks.clone();
         toSave.substract(defaultCommandLinks);
-        BufferedWriter out=new BufferedWriter(writer);
         try {
-            out.write(toSave.toJSONArray().toString(2));
-            out.flush();
+            writer.write(toSave.toJSONArray().toString(2));
+            writer.flush();
             PluginManager.log("Links successfully saved");
         } catch (Exception e){
             PluginManager.log("Error while writing command links file");
@@ -387,17 +386,16 @@ public class CommandsProxy{
 
     /** Load links configuration from file **/
     public static void load(){
-        InputStreamReader reader;
+        BufferedReader reader;
         try {
-            reader=new InputStreamReader(new FileInputStream(file.toString()), "UTF-8");
+            reader = file.newBufferedReader();
         } catch(Exception e){
             PluginManager.log("Links file is not found, using default links");
             return;
         }
-        BufferedReader out=new BufferedReader(reader);
         try {
             StringBuilder b = new StringBuilder();
-            out.lines().forEach(b::append);
+            reader.lines().forEach(b::append);
             JSONArray array = new JSONArray(b.toString());
             for(Object obj : array) {
                 if(!(obj instanceof JSONArray)) continue;

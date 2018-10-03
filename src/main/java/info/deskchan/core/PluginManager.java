@@ -4,10 +4,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.*;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class PluginManager {
@@ -61,8 +57,8 @@ public class PluginManager {
 		this.args = args;
 		Path logFile = getDataDirPath().resolve("DeskChan.log");
 		try {
-			logFile.toFile().createNewFile();
-			logStream = Files.newOutputStream(logFile);
+			logFile.createNewFile();
+			logStream = new FileOutputStream(logFile);
 		} catch (IOException e) {
 			log(e);
 		}
@@ -87,11 +83,15 @@ public class PluginManager {
 	}
 
 	Set<String> getNamesOfLoadedPlugins() {
-		return plugins.keySet();
+		synchronized (plugins) {
+			return plugins.keySet();
+		}
 	}
 
 	public PluginProxyInterface getPlugin(String name){
-		return plugins.get(name);
+		synchronized (plugins) {
+			return plugins.get(name);
+		}
 	}
 
 	/* Plugin initialization and unloading */
@@ -106,6 +106,8 @@ public class PluginManager {
 	 * @throws Throwable Plugin with such name already exist
 	 */
 	public boolean initializePlugin(String id, Plugin plugin, PluginConfig config) throws Throwable {
+		synchronized (plugins){
+
 		if (plugins.containsKey(id)) {
 			throw new Throwable("Cannot load plugin \"" + id + "\": plugin with such name already exist");
 		}
@@ -135,7 +137,7 @@ public class PluginManager {
 			return true;
 		}
 		return false;
-	}
+	}}
 
 	/** Plugin initialization. Plugin will be marked as inner plugin with default configuration. <br>
 	 * Other functional equals {@link #initializePlugin(String, Plugin, PluginConfig) this method}
@@ -151,7 +153,9 @@ public class PluginManager {
 
 	/**  Plugin will be unregistered from memory. **/
 	void unregisterPlugin(String id) {
-		plugins.remove(id);
+		synchronized (plugins) {
+			plugins.remove(id);
+		}
 		log("Unregistered plugin: " + id);
 		sendMessage("core", "core-events:plugin-unload", id);
 	}
@@ -160,12 +164,14 @@ public class PluginManager {
 	 * @return Is plugin has existed and has been unloaded successfully
 	 */
 	public boolean unloadPlugin(String name) {
-		PluginProxy plugin = plugins.get(name);
-		if (plugin != null) {
-			plugin.unload();
-			return true;
+		synchronized (plugins) {
+			PluginProxy plugin = plugins.get(name);
+			if (plugin != null) {
+				plugin.unload();
+				return true;
+			}
+			return false;
 		}
-		return false;
 	}
 	
 	/* Message bus */
@@ -178,8 +184,10 @@ public class PluginManager {
 			messageListeners.put(tag, listeners);
 		}
 		if (tag.equals("core-events:plugin-load")) {
-			for (String id : plugins.keySet()) {
-				listener.handleMessage("core", "core-events:plugin-load", id);
+			synchronized (plugins) {
+				for (String id : plugins.keySet()) {
+					listener.handleMessage("core", "core-events:plugin-load", id);
+				}
 			}
 		}
 		listeners.add(listener);
@@ -219,7 +227,7 @@ public class PluginManager {
 		if (listeners == null || listeners.size() == 0)
 			return;
 
-		synchronized (listeners) {
+		synchronized (messageListeners) {
 			for (MessageListener listener : listeners) {
 				Debug.TimeTest send = new Debug.TimeTest() {
 					@Override
@@ -294,13 +302,12 @@ public class PluginManager {
 		}
 	}
 
-    private static boolean IsPathEndsWithList(Path path,String[] names){
+    private static boolean IsPathEndsWithList(Path path, String[] names){
 	    for(String name: names){
 	        if (path.endsWith(name))
 	            return true;
         }
-
-                return false;
+		return false;
     }
 
 	/** Load plugin by its class name.
@@ -377,6 +384,8 @@ public class PluginManager {
 	 * @throws Throwable If plugin was found but cannot be loaded
 	 */
 	public boolean loadPluginByName(String name) throws Throwable {
+		synchronized (plugins){
+
 		// 1. Tries to find an already loaded plugin with the same name.
 		if (plugins.containsKey(name)) {
 			return true;
@@ -389,9 +398,9 @@ public class PluginManager {
 
 
 		// 2. If the plugin can be found in the plugins directory, it's loaded.
-		Path path = getDefaultPluginDirPath(name);
+		Path path = new Path(getDefaultPluginDirPath(name));
 
-		if (path.toFile().exists()) {
+		if (path.exists()) {
 			for (PluginLoader loader : loaders) {
 				if (loader.matchPath(path)) {
 					loader.loadByPath(path);
@@ -406,21 +415,19 @@ public class PluginManager {
 		}
 
 		// 4. If any plugin can be found in the plugins directory without respect to their extensions, the first one will be loaded.
-		File[] files = getPluginsDirPath().toFile().listFiles((file, s) -> FilenameUtils.removeExtension(s).equals(name));
-		if (files != null) {
-			if (files.length > 1) {
-				log("Too many plugins with similar names (" + name + ")!");
-			}
-			try {
-				return loadPluginByPath(files[0].toPath());
-			} catch (Exception e){
-				log(e.getMessage());
-			}
+		Set<Path> files = getPluginsDirPath().files((file, s) -> FilenameUtils.removeExtension(s).equals(name));
+		if (files.size() > 1) {
+			log("Too many plugins with similar names (" + name + ")!");
+		}
+		try {
+			return loadPluginByPath(files.iterator().next());
+		} catch (Exception e){
+			log(e.getMessage());
 		}
 
 		// 5. Otherwise, the plugin cannot be loaded by name.
 		return false;
-	}
+	}}
 
 	/** Load plugin by name.
 	 * @param name Plugin name
@@ -439,6 +446,8 @@ public class PluginManager {
 
 	/** Unload all plugins and close immediately. **/
 	void quit() {
+		synchronized (plugins){
+
 		List<PluginProxy> pluginsToUnload = new ArrayList<>();
 		for (Map.Entry<String, PluginProxy> entry : plugins.entrySet()) {
 			if (!entry.getKey().equals("core")) {
@@ -460,11 +469,13 @@ public class PluginManager {
 			logStream = null;
 		}
 		System.exit(0);
-	}
+	}}
 
 	/** Get list of plugins. **/
 	public List<String> getPlugins() {
-		return new ArrayList<>(plugins.keySet());
+		synchronized (plugins) {
+			return new ArrayList<>(plugins.keySet());
+		}
 	}
 
 	/* Plugins blacklist */
@@ -491,29 +502,18 @@ public class PluginManager {
 
 	/** Load blacklist from file. **/
 	private void loadPluginsBlacklist() {
-		try {
-			BufferedReader reader = Files.newBufferedReader(
-					getPluginDataDirPath("core").resolve("blacklisted-plugins.txt"),
-					Charset.forName("UTF-8")
-			);
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (line.length() == 0) {
-					continue;
-				}
-				blacklistedPlugins.add(line);
+		for (String line : getPluginDataDirPath("core").resolve("blacklisted-plugins.txt").readAllLines()){
+			if (line.length() > 0) {
+				continue;
 			}
-			reader.close();
-		} catch (IOException e) { }
+			blacklistedPlugins.add(line);
+		}
 	}
 
 	/** Save blacklist to file. **/
 	private void savePluginsBlacklist() {
 		try {
-			BufferedWriter writer = Files.newBufferedWriter(
-					getPluginDataDirPath("core").resolve("blacklisted-plugins.txt"),
-					Charset.forName("UTF-8")
-			);
+			BufferedWriter writer = getPluginDataDirPath("core").resolve("blacklisted-plugins.txt").newBufferedWriter();
 			for (String id : blacklistedPlugins) {
 				writer.write(id);
 				writer.newLine();
@@ -525,8 +525,10 @@ public class PluginManager {
 	}
 
 	public void saveProperties(){
-		for (Map.Entry<String, PluginProxy> plugin : plugins.entrySet())
-			sendMessage("core", plugin.getKey() + ":save-properties", null);
+		synchronized (plugins) {
+			for (Map.Entry<String, PluginProxy> plugin : plugins.entrySet())
+				sendMessage("core", plugin.getKey() + ":save-properties", null);
+		}
 	}
 	
 	/* Plugins and data directories */
@@ -535,11 +537,11 @@ public class PluginManager {
 	public static Path getCorePath() {
 		if (corePath == null) {
 			try {
-				corePath = Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+				corePath = new Path(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 			} catch (URISyntaxException e) {
-				corePath = Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+				corePath = new Path(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
 			}
-			debugBuild = Files.isDirectory(corePath);
+			debugBuild = corePath.isDirectory();
 		}
 		return corePath;
 	}
@@ -554,14 +556,14 @@ public class PluginManager {
 			path = path.resolve("build").resolve("launch4j");
 		}
 		path = path.resolve("plugins");
-		pluginsDirPath = path.normalize();
+		pluginsDirPath = path;
 		return pluginsDirPath;
 	}
 
 	/** Get 'plugins/%pluginName%' folder path. **/
 	public static Path getDefaultPluginDirPath(String name) {
 		Stack<File> paths = new Stack<>();
-		paths.push(getPluginsDirPath().toFile());
+		paths.push(getPluginsDirPath());
 		while (!paths.empty()) {
 			File path = paths.pop();
 			File[] files = path.listFiles();
@@ -569,11 +571,11 @@ public class PluginManager {
 			for(File file : files){
 				if(file.isFile()){
 					if(FilenameUtils.getBaseName(file.toString()).equals(name)){
-						return Paths.get(FilenameUtils.getFullPath(file.toString()));
+						return new Path(file);
 					}
 				} else if(file.isDirectory()){
 					if(file.getName().equals(name)){
-						return file.toPath();
+						return new Path(file);
 					}
 					paths.push(file);
 				}
@@ -592,11 +594,11 @@ public class PluginManager {
 			path = path.resolve("build");
 		}
 		path = path.resolve("data");
-		if (!Files.isDirectory(path)) {
-			path.toFile().mkdir();
+		if (!path.isDirectory()) {
+			path.mkdir();
 			log("Created directory: " + path);
 		}
-		dataDirPath = path.normalize();
+		dataDirPath = path;
 		return dataDirPath;
 	}
 
@@ -607,11 +609,11 @@ public class PluginManager {
 		}
 		Path path = getRootDirPath();
 		path = path.resolve("assets");
-		if (!Files.isDirectory(path)) {
-			path.toFile().mkdir();
+		if (!path.isDirectory()) {
+			path.mkdir();
 			log("Created directory: " + path);
 		}
-		assetsDirPath = path.normalize();
+		assetsDirPath = path;
 		return assetsDirPath;
 	}
 
@@ -626,15 +628,15 @@ public class PluginManager {
 			path = corePath;
 			try {
                 while (!IsPathEndsWithList(path,debugBuildFolders))
-					path = path.getParent();
-				path = path.getParent();
+					path = path.getParentPath();
+				path = path.getParentPath();
 			} catch (Exception e){
 				log("Error while locating root path with path: "+corePath);
 			}
 		} else {
-			path = corePath.getParent().resolve("../");
+			path = corePath.getParentPath().resolve("../");
 		}
-		rootDirPath = path.normalize();
+		rootDirPath = path;
 		return rootDirPath;
 	}
 
@@ -642,8 +644,8 @@ public class PluginManager {
 	public static Path getPluginDataDirPath(String id) {
 		final Path baseDir = getDataDirPath();
 		final Path dataDir = baseDir.resolve(id);
-		if (!Files.isDirectory(dataDir)) {
-			dataDir.toFile().mkdirs();
+		if (!dataDir.isDirectory()) {
+			dataDir.mkdirs();
 			log("Created directory: " + dataDir.toString());
 		}
 		return dataDir;
@@ -651,10 +653,12 @@ public class PluginManager {
 
 	/** Get plugin config by plugin name. **/
 	public PluginConfig getPluginConfig(String name) {
-		if (!plugins.containsKey(name)) {
-			return null;
+		synchronized (plugins) {
+			if (!plugins.containsKey(name)) {
+				return null;
+			}
+			return plugins.get(name).getConfig();
 		}
-		return plugins.get(name).getConfig();
 	}
 
 	/* Logging */

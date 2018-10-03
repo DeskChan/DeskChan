@@ -190,14 +190,14 @@ class ScenarioPlugin : Plugin {
             val compilerConfiguration = CompilerConfiguration()
             compilerConfiguration.sourceEncoding = "UTF-8"
             compilerConfiguration.scriptBaseClass = "info.deskchan.groovy_support.Scenario"
-            var path = File(pathString)
+            var path = Path(pathString)
             if (!path.isAbsolute)
-                path = pluginProxy.assetsDirPath.resolve("scenarios").resolve(pathString).toFile()
+                path = pluginProxy.assetsDirPath.resolve("scenarios").resolve(pathString)
             compilerConfiguration.setClasspath(path.parent.toString())
             val groovyShell = GroovyShell(compilerConfiguration)
-            var scriptLines: MutableList<String>?
+            val scriptLines: MutableList<String>?
             try {
-                scriptLines = Files.readAllLines(path.toPath(), Charset.forName("UTF-8"))
+                scriptLines = path.readAllLines().toMutableList()
             } catch (e: Exception) {
                 pluginProxy.log(e)
                 return null

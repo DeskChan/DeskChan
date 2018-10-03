@@ -1,10 +1,8 @@
 import net.objecthunter.exp4j.ExpressionBuilder
 
-def tag(tag) { "${getId()}:$tag".toString() }
-
 setResourceBundle("resources")
 
-final EVALUATION_COMMAND_TAG = tag('evaluate-expression')
+final EVALUATION_COMMAND_TAG = getId() + ":evaluate-expression"
 
 def evaluateExpression(expression) {
     if (expression instanceof Map){

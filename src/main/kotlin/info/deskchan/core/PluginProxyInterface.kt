@@ -1,7 +1,5 @@
 package info.deskchan.core
 
-import java.nio.file.Path
-
 interface PluginProxyInterface : MessageListener {
 
     /** Get name of plugin. **/

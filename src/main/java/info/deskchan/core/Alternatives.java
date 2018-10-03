@@ -118,7 +118,10 @@ public class Alternatives{
         Iterator<AlternativeInfo> iterator = list.iterator();
         if (currentAlternative != null){
             do {
-                if (!iterator.hasNext()) return;
+                if (!iterator.hasNext()){
+                    PluginManager.log("Warning: tag \"" + currentAlternative + "\" is not subscribed to \"" + tag + "\"");
+                    return;
+                }
                 AlternativeInfo nextInfo = iterator.next();
                 if (nextInfo.tag.equals(currentAlternative)) break;
             } while (true);
