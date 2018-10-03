@@ -56,7 +56,7 @@ public class DefaultTagsListeners {
         checkCondition(sender, data, (quote) -> {
             Collection<String> tag;
 
-            // first five conditions filling TextBooleanSet
+            // isCharacter five conditions filling TextBooleanSet
             // example: listOf("1-3", "5-6") -> [false, true, true, true, false, true, true, false...]
             // if we have 'false' at needed index, it means we cannot use quote at current time
 

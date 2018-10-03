@@ -1,12 +1,12 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core.Path;
 import info.deskchan.core_utils.TextOperations;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,188 +15,20 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
-class PhrasesPack {
-
-	public enum PackType { USER, PLUGIN, DATABASE }
-
-	protected PackType packType;
-	protected File packFile;
-	protected String packName;
-	protected ArrayList<Phrase> phrases = new ArrayList<>();
-	protected boolean loaded;
-
-	public PhrasesPack(String file, PackType packType) {
-		packName = file;
-		packFile = new File(file);
-		this.packType = packType;
-
-		if (!packFile.getName().contains("."))
-			packFile = new File(packFile.toString() + ".phrases");
-		if (!packFile.isAbsolute())
-			packFile = Main.getPhrasesDirPath().resolve(packFile.toPath()).toFile();
-
-		if (packName.contains(".")) {
-			if (packName.endsWith(".database")) this.packType = PackType.DATABASE;
-			packName = packName.substring(0, packName.lastIndexOf("."));
-		}
-
-		loaded = false;
-	}
-
-	public PackType getPackType() {
-		return packType;
-	}
-
-	public void load(){
-		try {
-			phrases.clear();
-			DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-			f.setValidating(false);
-
-			DocumentBuilder builder = f.newDocumentBuilder();
-			InputStream inputStream = new FileInputStream(packFile);
-			Document doc = builder.parse(inputStream);
-			inputStream.close();
-			Node mainNode = doc.getChildNodes().item(0);
-			for (int i = 0; i < mainNode.getChildNodes().getLength(); i++) {
-				if (mainNode.getChildNodes().item(i).getNodeName().equals(Locale.getDefault().toLanguageTag())){
-					mainNode = mainNode.getChildNodes().item(i);
-					break;
-				}
-			}
-			NodeList list = mainNode.getChildNodes();
-			for (int i = 0; i < list.getLength(); i++) {
-				if (!list.item(i).getNodeName().equals("phrase")) continue;
-				try {
-					add(Phrase.create(list.item(i)));
-				} catch (Exception e2) {
-					Main.log(e2);
-				}
-			}
-		} catch (FileNotFoundException e) {
-			loaded = false;
-			return;
-		} catch (Exception e) {
-			Main.log(e);
-			loaded = false;
-			return;
-		}
-		loaded = true;
-	}
-
-	public void add(Phrase quote) {
-		if (quote != null) phrases.add(quote);
-	}
-
-	public int size(){
-		return phrases.size();
-	}
-
-	public Phrase get(int i){
-		return phrases.get(i);
-	}
-
-	public String getFile(){ return packFile.toString(); }
-
-	public String getName(){
-		return packName;
-	}
-
-	public String toString(){ return "[" + packName + " - " + packFile.toString() + "]" +
-			(loaded ? "" : " -- " + Main.getString("error") + " -- "); }
-
-	@Override
-	public boolean equals(Object other){
-		if (other.getClass() != this.getClass()) return false;
-		return packFile.equals(((PhrasesPack) other).packFile);
-	}
-
-	public void printPhrasesLack(String intent){
-		System.out.println(packName);
-
-		int minimumsCount = 10;
-		CharacterController[] characters = new CharacterController[minimumsCount];
-		int[] matchingPhrasesCounts = new int[minimumsCount];
-
-		long charactersCount = (long) Math.pow(CharacterFeatures.LENGTH, CharacterFeatures.getFeatureCount());
-
-		// generating start points
-		for(int i = 0; i < minimumsCount; i++){
-			characters[i] = CharacterPreset.getDefaultCharacterController();
-			matchingPhrasesCounts[i] = 0;
-			for(Phrase phrase : phrases)
-				if(phrase.matchToCharacter(characters[i])) matchingPhrasesCounts[i]++;
-		}
-
-		// iterating over other points to find minimum
-		for (int i = minimumsCount; i < charactersCount; i+=2) {
-			if(i % 1000000 == 0) System.out.println(i*1./charactersCount);
-
-			// generating new point
-			CharacterController current = CharacterPreset.getDefaultCharacterController();
-
-			for (int j = 0, num = i; j < CharacterFeatures.getFeatureCount(); j++){
-				current.setValue(j, num % CharacterFeatures.LENGTH - CharacterFeatures.BORDER);
-				num /= CharacterFeatures.LENGTH;
-			}
-
-			// comparing to minimum points. if current and any of minimum are too close, skip current point
-			boolean close = false, ct;
-			for (int k = 0; k < minimumsCount; k++) {
-				ct = true;
-
-				for (int j = 0; j < CharacterFeatures.getFeatureCount(); j++) {
-					if (Math.abs(characters[k].getValue(j) - current.getValue(j)) > 2) {
-						ct = false;
-						break;
-					}
-				}
-				if (ct) {
-					close = true;
-					break;
-				}
-			}
-
-			if (close) continue;
-
-			// counting matching phrases
-			int matchingPhrasesCount = 0;
-			for (Phrase phrase : phrases)
-				if (phrase.intentEquals(intent) && phrase.matchToCharacter(current)) matchingPhrasesCount++;
-
-			// if count of some's minimum is more than to current, replacing it
-			for (int k = 0; k < minimumsCount; k++)
-				if (matchingPhrasesCounts[k] > matchingPhrasesCount) {
-					matchingPhrasesCounts[k] = matchingPhrasesCount;
-					characters[k] = current;
-					break;
-				}
-		}
-
-		// printing points
-		for(int k=0;k<minimumsCount;k++)
-			System.out.println(k + " " + characters[k].toString() + " " + matchingPhrasesCounts[k]);
-	}
-
-}
-
-public class PhrasesList {
+public class PhrasesPackList {
 
 	private CharacterController current;
 	private LimitArrayList<Phrase> lastUsed = new LimitArrayList<>();
 	private volatile ArrayList<PhrasesPack> packs = new ArrayList<>();
 	private ArrayList<Phrase> matchingPhrases = new ArrayList<>();
 
-	PhrasesList(CharacterController character){
+	PhrasesPackList(CharacterController character){
 		current = character.copy();
 	}
 
@@ -205,13 +37,13 @@ public class PhrasesList {
 		current = newCharacter.copy();
 		update();
 	}
-	
+
 	public synchronized void update() {
 		matchingPhrases = new ArrayList<>();
 		ArrayList<Map<String,Object>> checkList = new ArrayList<>();
 
 		for (PhrasesPack pack : packs) {
-			if (pack.packType == PhrasesPack.PackType.DATABASE) continue;
+			if (pack.packType == PhrasesPack.PackType.INTENT_DATABASE) continue;
 			for (Phrase phrase : pack.phrases)
 				if (phrase.matchToCharacter(current)) {
 					matchingPhrases.add(phrase);
@@ -236,15 +68,42 @@ public class PhrasesList {
 		});
 	}
 
-	public static PhrasesList getDefault(CharacterController character){
-		PhrasesList list = new PhrasesList(character);
+	public static PhrasesPackList getDefault(CharacterController character){
+		PhrasesPackList list = new PhrasesPackList(character);
 		List<String> standard = new ArrayList<>();
 		standard.add("main");
+		standard.add("database");
+		standard.add(Main.getProperties().getString("user-phrases"));
 		list.set(standard);
 		return list;
 	}
 
-	public List<String> toList(PhrasesPack.PackType... packTypes){
+	public List<Phrase> toPhrasesList(){
+		List<Phrase> list = new ArrayList<>();
+		for (PhrasesPack pack : packs)
+			list.addAll(pack.phrases);
+		return list;
+	}
+
+	public List<Phrase> toPhrasesList(PhrasesPack.PackType... packTypes){
+		List<Phrase> list = new LinkedList<>();
+		List<PhrasesPack.PackType> types = Arrays.asList(packTypes);
+		for (PhrasesPack pack : packs) {
+			if (types.contains(pack.packType))
+				list.addAll(pack.phrases);
+		}
+
+		return list;
+	}
+
+	public List<String> toPacksList(){
+		List<String> list = new ArrayList<>();
+		for (PhrasesPack pack : packs)
+			list.add(pack.getFile());
+		return list;
+	}
+
+	public List<String> toPacksList(PhrasesPack.PackType... packTypes){
 		List<String> list = new LinkedList<>();
 		List<PhrasesPack.PackType> types = Arrays.asList(packTypes);
 		for (PhrasesPack pack : packs) {
@@ -309,13 +168,6 @@ public class PhrasesList {
         add(files);
     }
 
-    public List<Phrase> getAllPhrases(){
-    	List<Phrase> list = new ArrayList<>();
-    	for (PhrasesPack pack : packs)
-    		list.addAll(pack.phrases);
-    	return list;
-	}
-
 	public synchronized void reload(){
 		for(PhrasesPack pack : packs){
 			pack.load();
@@ -323,13 +175,30 @@ public class PhrasesList {
 		update();
 	}
 
-	public void requestRandomQuote(String intent, PhraseGetterCallback callback) {
-		requestRandomQuote(intent, null, callback);
+	private List<PhraseRequest> phraseRequestQueue = new LinkedList<>();
+	public void requestRandomPhrase(String intent, PhraseGetterCallback callback) {
+		if (intent != null)
+		requestRandomPhrase(intent, null, callback);
 	}
-	public void requestRandomQuote(String intent, Map info, PhraseGetterCallback callback) {
-		intent = intent.toUpperCase();
+	public void requestRandomPhrase(String intent, Map info, PhraseGetterCallback callback) {
+		phraseRequestQueue.add(new PhraseRequest(intent, info, callback));
+		if (phraseRequestQueue.size() == 1)
+			requestRandomPhrase_impl(phraseRequestQueue.get(0).intents, info, callback);
+	}
+	public void requestRandomPhrase(Collection<String> intents, PhraseGetterCallback callback) {
+		requestRandomPhrase(intents, null, callback);
+	}
+	public void requestRandomPhrase(Collection<String> intents, Map info, PhraseGetterCallback callback) {
+		phraseRequestQueue.add(new PhraseRequest(intents, info, callback));
+		if (phraseRequestQueue.size() == 1)
+			requestRandomPhrase_impl(intents, info, callback);
+	}
+
+	private void requestRandomPhrase_impl(Collection<String> intents, Map info, PhraseGetterCallback callback){
+		final String finalIntent = intents.iterator().next();
+
 		if (matchingPhrases.size() == 0) {
-			callback.call(new Phrase(Main.getString("phrase." + intent)));
+			callback.call(new Phrase(Main.getString("phrase." + finalIntent)));
 			return;
 		}
 
@@ -342,15 +211,20 @@ public class PhrasesList {
 		} else info = null;
 
 		List<Map> matchingList = new ArrayList<>();
-		for (Phrase phrase : matchingPhrases)
-			if (phrase.noTimeout() && phrase.intentEquals(intent)){
-				if (info == null || (phrase.getTags() != null && phrase.getTags().match(info))){
-					currentlySuitable.add(phrase);
-					matchingList.add(phrase.toMap());
+		for (Phrase phrase : matchingPhrases) {
+			if (!phrase.noTimeout()) continue;
+			for (String intent : intents) {
+				if (phrase.hasIntent(intent)) {
+					if (info == null || (phrase.getTags() != null && phrase.getTags().match(info))) {
+						currentlySuitable.add(phrase);
+						matchingList.add(phrase.toMap());
+					}
+					break;
 				}
 			}
+		}
 
-		final String finalIntent = intent;
+
 
 		Main.getPluginProxy().sendMessage("talk:reject-quote", matchingList,
 				(sender, data) -> {
@@ -371,45 +245,46 @@ public class PhrasesList {
 				(sender, dat) -> {
 					if (currentlySuitable.size() == 0) {
 						callback.call(new Phrase(Main.getString("phrase."+finalIntent)));
-						return;
-					}
-					int counter = LimitArrayList.LIMIT + 1;
-					Phrase phrase;
-					do {
-						counter--;
-						int r = new Random().nextInt(currentlySuitable.size());
-						phrase = currentlySuitable.get(r);
-					} while (counter > 0 && lastUsed.contains(phrase));
+					} else {
+						int counter = LimitArrayList.LIMIT + 1;
+						Phrase phrase;
+						do {
+							counter--;
+							int r = new Random().nextInt(currentlySuitable.size());
+							phrase = currentlySuitable.get(r);
+						} while (counter > 0 && lastUsed.contains(phrase));
 
-					lastUsed.add(phrase);
-					phrase.updateLastUsage();
-					callback.call(phrase);
+						lastUsed.add(phrase);
+						phrase.updateLastUsage();
+						callback.call(phrase);
+					}
+
+					phraseRequestQueue.remove(0);
+					if (phraseRequestQueue.size() > 0) {
+						PhraseRequest next = phraseRequestQueue.get(0);
+						requestRandomPhrase_impl(next.intents, next.msgData, next.callback);
+					}
 				}
 		);
 	}
 
-	public void printPhrasesLack(String intent){
-    	intent = intent.toUpperCase();
-		for(PhrasesPack pack : packs)
-			pack.printPhrasesLack(intent);
-	}
-
-	public interface PhraseGetterCallback {
-    	void call(Phrase phrase);
-	}
-
-	public Phrase get(int index) {
-		return matchingPhrases.get(index);
-	}
-	
-	public int size() {
-		return matchingPhrases.size();
-	}
-	
 	public synchronized void clear() {
 		packs = new ArrayList<>();
 		matchingPhrases = new ArrayList<>();
 		lastUsed = new LimitArrayList<>();
+	}
+
+	public PhrasesPack getUserDatabasePack(){
+		String dbname = Main.getProperties().getString("user-phrases");
+		for (PhrasesPack pack : packs){
+			if (pack.packName.equals(dbname)){
+				return pack;
+			}
+		}
+		PhrasesPack userDatabase = new PhrasesPack(Main.getPhrasesDirPath().resolve(dbname+".phrases").toString(), PhrasesPack.PackType.INTENT_DATABASE);
+		userDatabase.load();
+		packs.add(userDatabase);
+		return userDatabase;
 	}
 
 	public static boolean saveTo(String URL, String filename) {
@@ -473,8 +348,8 @@ public class PhrasesList {
 			}
 			Path address = Main.getPhrasesDirPath();
 
-			if (!address.toFile().exists())
-				if (!address.toFile().mkdir())
+			if (!address.exists())
+				if (!address.mkdir())
 					throw new Exception("Can't create folder at assets/phrases");
 
 			address = address.resolve(filename);
@@ -485,7 +360,7 @@ public class PhrasesList {
 				tr.setOutputProperty(OutputKeys.METHOD, "xml");
 				tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 				tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-				tr.transform(new DOMSource(doc), new StreamResult(Files.newOutputStream(address)));
+				tr.transform(new DOMSource(doc), new StreamResult(new FileOutputStream(address)));
 			} catch (Exception er) {
 				throw new Exception("Error while rewriting file " + filename + ".phrases", er);
 			}
@@ -496,13 +371,13 @@ public class PhrasesList {
 		Main.log("Phrases pack \""+filename+"\" successfully loaded");
 		return true;
 	}
-	
+
 	public void saveTo(Phrase quote, String file) {
 		Document doc;
 		Node mainNode;
 		Path address = Main.getPhrasesDirPath();
-		if (!address.toFile().exists()){
-			if (!address.toFile().mkdir()) {
+		if (!address.exists()){
+			if (!address.mkdir()) {
 				Main.log(new Exception("Can't create folder at assets/phrases"));
 				return;
 			}
@@ -514,7 +389,7 @@ public class PhrasesList {
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			// create instance of DOM
 			try {
-				doc = db.parse(Files.newInputStream(address));
+				doc = db.parse(new FileInputStream(address));
 				mainNode = doc.getChildNodes().item(0);
 			} catch (Exception er) {
 				Main.log("Error while reading file " + file + ".phrases" + ": " + er);
@@ -536,18 +411,40 @@ public class PhrasesList {
 			tr.setOutputProperty(OutputKeys.METHOD, "xml");
 			tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 			tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-			tr.transform(new DOMSource(doc), new StreamResult(Files.newOutputStream(address)));
+			tr.transform(new DOMSource(doc), new StreamResult(new FileOutputStream(address)));
 		} catch (Exception er) {
 			Main.log("Error while rewriting file " + file + ".phrases" + ": " + er);
 		}
 	}
 
-	class LimitArrayList<E> extends ArrayList<E>{
+	private class LimitArrayList<E> extends ArrayList<E>{
 		protected static final int LIMIT = 30;
 		@Override
 		public boolean add(E object){
 			while (size() >= LIMIT) remove(0);
 			return super.add(object);
+		}
+	}
+
+	public interface PhraseGetterCallback {
+		void call(Phrase phrase);
+	}
+	private class PhraseRequest {
+		Collection<String> intents;
+		Map msgData;
+		PhraseGetterCallback callback;
+		PhraseRequest(String intent, Map msgData, PhraseGetterCallback callback){
+			this.intents = Collections.singletonList(intent.toUpperCase());
+			this.msgData = msgData;
+			this.callback = callback;
+		}
+		PhraseRequest(Collection<String> intents, Map msgData, PhraseGetterCallback callback){
+			this.intents = new LinkedList<>();
+			for (String i : intents)
+				this.intents.add(i.toUpperCase());
+			this.intents = intents;
+			this.msgData = msgData;
+			this.callback = callback;
 		}
 	}
 }

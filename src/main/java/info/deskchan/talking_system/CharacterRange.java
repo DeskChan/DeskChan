@@ -3,6 +3,11 @@ package info.deskchan.talking_system;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 class Range {
 
 	public final int start;
@@ -51,6 +56,13 @@ class Range {
 		return node;
 	}
 
+	public float getCenter(){
+		return (end + start) / 2;
+	}
+	public float getRadius(){
+		return (end - start) / 2.0F;
+	}
+
 }
 
 public class CharacterRange extends CharacterFeatures {
@@ -64,6 +76,15 @@ public class CharacterRange extends CharacterFeatures {
 			} catch (Exception e) {
 				range[i] = new Range(-BORDER, BORDER);
 			}
+		}
+	}
+
+	CharacterRange(Map<String, List<Integer>> data) {
+		range = new Range[getFeatureCount()];
+		for (int i = 0; i < getFeatureCount(); i++) {
+			List<Integer> line = data.get(getFeatureName(i));
+			if (line == null) continue;
+			range[i] = new Range(line.get(0), line.get(1));
 		}
 	}
 	
@@ -88,7 +109,7 @@ public class CharacterRange extends CharacterFeatures {
 	}
 	
 	public String toString() {
-		StringBuilder s = new StringBuilder();
+		StringBuilder s = new StringBuilder("[");
 		boolean f = false;
 		for (int i = 0; i < getFeatureCount(); i++) {
 			if (range[i].start != -BORDER || range[i].end != BORDER) {
@@ -98,6 +119,25 @@ public class CharacterRange extends CharacterFeatures {
 				s.append(getFeatureName(i) + ": {" + range[i].start + ";" + range[i].end + "}");
 			}
 		}
+		s.append("]");
 		return s.toString();
+	}
+
+	public Map toMap(){
+		Map<String, List<Integer>> map = new HashMap<>();
+		for (int i = 0; i < getFeatureCount(); i++) {
+			List<Integer> d = new ArrayList<>(2);
+			d.add(range[i].start); d.add(range[i].end);
+			map.put(getFeatureName(i), d);
+		}
+		return map;
+	}
+
+	public float[] toCentersArray(){
+		float[] ar = new float[range.length];
+		for (int i = 0; i < range.length; i++){
+			ar[i] = range[i].getCenter();
+		}
+		return ar;
 	}
 }

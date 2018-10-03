@@ -1,9 +1,13 @@
 package info.deskchan.core_utils;
 
+import java.lang.Character;
+
 import java.util.*;
+
 
 public class TextOperations {
     private final static char[][] simplify = {{'ъ', 'й'}, {'ь', 'й'}, {'ы', 'и'}, {'ё', 'е'}};
+    private final static String VOWELS = "уеъыаоэяиью";
 
     public static ArrayList<String> simplifyWords(String[] words) {
         ArrayList<String> w = new ArrayList<>();
@@ -55,44 +59,76 @@ public class TextOperations {
                     break;
                 }
         }
+
+        if (sb.length() > 0 && notOfVowels(sb.toString()))
+            while (VOWELS.contains(sb.subSequence(sb.length()-1, sb.length())))
+                sb.deleteCharAt(sb.length()-1);
         return sb.toString();
     }
 
+    private enum WordExtractionMode { WORDS_NO_CHANGE, WORDS_LOWER, WORDS_UPPER, IMPORTANT_PARTS_LOWER }
+
     public static ArrayList<String> extractWords(String phrase) {
-        return extractWords(phrase, 0);
+        return extractWordsImpl(phrase, WordExtractionMode.WORDS_NO_CHANGE);
     }
 
     public static ArrayList<String> extractWordsLower(String phrase) {
-        return extractWords(phrase, 1);
+        return extractWordsImpl(phrase, WordExtractionMode.WORDS_LOWER);
     }
 
     public static ArrayList<String> extractWordsUpper(String phrase) {
-        return extractWords(phrase, 2);
+        return extractWordsImpl(phrase, WordExtractionMode.WORDS_UPPER);
     }
 
-    private static ArrayList<String> extractWords(String phrase, int type) {
+    public static ArrayList<String> extractSpeechParts(String phrase) {
+        return extractWordsImpl(phrase, WordExtractionMode.IMPORTANT_PARTS_LOWER);
+    }
+
+    private static ArrayList<String> extractWordsImpl(String phrase, WordExtractionMode mode) {
         ArrayList<String> words = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i <= phrase.length(); i++) {
-            if (i==phrase.length() || phrase.charAt(i) == ' ' || phrase.charAt(i) == '\n') {
+            char at = i<phrase.length() ? phrase.charAt(i) : '\0';
+            if (i == phrase.length() || at == ' ' || at == '\n') {
                 if (sb.length() == 0) continue;
+
                 words.add(sb.toString());
                 sb = new StringBuilder();
-            } else if (Character.isLetter(phrase.charAt(i)) || Character.UnicodeBlock.of(phrase.charAt(i)).equals(Character.UnicodeBlock.CYRILLIC)) {
-                switch (type) {
-                    case 0:
-                        sb.append(phrase.charAt(i));
+
+            } else if (isLetter(at)) {
+                switch (mode) {
+                    case WORDS_NO_CHANGE:
+                        sb.append(at);
                         break;
-                    case 1:
-                        sb.append(Character.toLowerCase(phrase.charAt(i)));
+                    case WORDS_LOWER: case IMPORTANT_PARTS_LOWER:
+                        sb.append(Character.toLowerCase(at));
                         break;
-                    case 2:
-                        sb.append(Character.toUpperCase(phrase.charAt(i)));
+                    case WORDS_UPPER:
+                        sb.append(Character.toUpperCase(at));
                         break;
+                }
+            } else if (mode == WordExtractionMode.IMPORTANT_PARTS_LOWER){
+                if (at == '?' || at == '!' || at == '.'){
+                    if (i == 0 || isLetter(phrase.charAt(i-1))){
+                        if (sb.length() == 0) continue;
+                        words.add(sb.toString());
+                        sb = new StringBuilder();
+                    }
+                    sb.append(at);
                 }
             }
         }
         return words;
+    }
+
+    private static boolean isLetter(char c){
+        return Character.isLetter(c) || Character.UnicodeBlock.of(c).equals(Character.UnicodeBlock.CYRILLIC);
+    }
+
+    private static boolean notOfVowels(String text){
+        for (int i = 0; i < text.length(); i++)
+            if (!VOWELS.contains(text.substring(i,i+1))) return true;
+        return false;
     }
 
     /** Class representing tags map. Each value of map can be only Set&lt;String&gt;, including empty list. <br>

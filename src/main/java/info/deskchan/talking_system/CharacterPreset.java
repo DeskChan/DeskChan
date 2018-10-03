@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core.Path;
 import info.deskchan.core_utils.TextOperations;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,8 +15,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -59,7 +58,7 @@ public class CharacterPreset {
 	public TextOperations.TagsMap<String, Set<String>> tags;
 
 	/** Phrases list. **/
-	public PhrasesList phrases;
+	public PhrasesPackList phrases;
 
 	/** New preset with standard info. **/
 	public CharacterPreset() {
@@ -102,13 +101,13 @@ public class CharacterPreset {
 			character.setFromJSON(json.getJSONObject("character"));
 
 		if (json.has("phrases")){
-			phrases = new PhrasesList(character);
+			phrases = new PhrasesPackList(character);
 			List<String> quotesFiles = listFromJSON(json, "phrases");
 			if (quotesFiles.size() > 0){
 				phrases.set(quotesFiles);
 			}
 		} else {
-			phrases = PhrasesList.getDefault(character);
+			phrases = PhrasesPackList.getDefault(character);
 		}
 		phrases.reload();
 
@@ -131,7 +130,7 @@ public class CharacterPreset {
 		character = getDefaultCharacterController();
 		emotionState = getDefaultEmotionsController();
 		name = Main.getString("default_name");
-		phrases = PhrasesList.getDefault(character);
+		phrases = PhrasesPackList.getDefault(character);
 		tags = new TextOperations.TagsMap<>();
 		tags.putFromText("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
 	}
@@ -163,7 +162,7 @@ public class CharacterPreset {
 			preset_tags.put(key, tags.getAsString(key));
 		json.put("tags", preset_tags);
 
-		json.put("phrases", phrases.toList(PhrasesPack.PackType.USER, PhrasesPack.PackType.DATABASE));
+		json.put("phrases", phrases.toPacksList(PhrasesPack.PackType.USER, PhrasesPack.PackType.INTENT_DATABASE));
 		JSONObject preset = new JSONObject();
 		preset.put("preset", json);
 		return preset;
@@ -176,7 +175,7 @@ public class CharacterPreset {
 		for(int i = 0; i < CharacterFeatures.getFeatureCount(); i++)
 			map.put(CharacterFeatures.getFeatureName(i), character.getValue(i));
 
-		map.put("phrases", phrases.toList(PhrasesPack.PackType.USER, PhrasesPack.PackType.DATABASE));
+		map.put("phrases", phrases.toPacksList(PhrasesPack.PackType.USER, PhrasesPack.PackType.INTENT_DATABASE));
 		map.put("tags", tags);
 		map.put("emotion", emotionState.getCurrentEmotionName());
 		return map;
@@ -225,7 +224,7 @@ public class CharacterPreset {
 
 	public static CharacterPreset getFromFile(Path path) {
 		try {
-			String str = new String(Files.readAllBytes(path));
+			String str = new String(path.readAllBytes());
 			return new CharacterPreset(XML.toJSONObject(str).getJSONObject("preset"));
 		} catch (Exception e) {
 			Main.log(e);
@@ -243,7 +242,7 @@ public class CharacterPreset {
 			t.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
 			t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 			t.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
-			OutputStreamWriter stream = new OutputStreamWriter(new FileOutputStream(path.resolve(name + ".preset").toFile()), "UTF-8");
+			OutputStreamWriter stream = new OutputStreamWriter(new FileOutputStream(path.resolve(name + ".preset")), "UTF-8");
 			t.transform(new DOMSource(doc), new StreamResult(stream));
 		} catch(Exception ex){
 			Main.log(ex);
@@ -254,7 +253,7 @@ public class CharacterPreset {
 	public static CharacterPreset getFromFileUnsafe(File path) {
 		try {
 			if (!path.isAbsolute())
-				path = Main.getPluginProxy().getAssetsDirPath().resolve("presets").resolve(path.getName()).toFile();
+				path = Main.getPluginProxy().getAssetsDirPath().resolve("presets").resolve(path.getName());
 			BufferedReader in = new BufferedReader(
 					new InputStreamReader(new FileInputStream(path), "UTF-8")
 			);

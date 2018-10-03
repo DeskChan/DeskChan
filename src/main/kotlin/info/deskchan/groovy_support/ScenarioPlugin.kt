@@ -38,7 +38,7 @@ class ScenarioPlugin : Plugin {
          *           giveOwnership:Any - is set, scenario will run with sender as owner
          *           msgData:Any - pass any additional data to scenario
          * Returns: None */
-        pluginProxy.addMessageListener("scenario:run-scenario", MessageListener { sender, tag, dat ->
+        pluginProxy.addMessageListener("scenario:run-scenario", MessageListener { sender, _, dat ->
             var path: String? = null
             var owner: String = pluginProxy.getId()
             var data: Any? = null
@@ -98,7 +98,7 @@ class ScenarioPlugin : Plugin {
             put("controls", list)
         })
 
-        pluginProxy.addMessageListener("scenario:selected", MessageListener{ sender, tag, data ->
+        pluginProxy.addMessageListener("scenario:selected", MessageListener{ _, _, data ->
             selected = data.toString()
         })
 

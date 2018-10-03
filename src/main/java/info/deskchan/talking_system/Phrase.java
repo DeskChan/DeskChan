@@ -297,7 +297,7 @@ public class Phrase {
 		return (new Date().getTime() - last_usage.getTime() > timeout * 1000);
 	}
 
-	public boolean intentEquals(String match){
+	public boolean hasIntent(String match){
 		if (intentType == null)  return match.equals(DEFAULT_INTENT);
 		return intentType.contains(match);
 	}

@@ -1376,9 +1376,9 @@ class OptionsDialog extends TemplateBox {
 
 		public void delete(CommandItem item){
 			ListView<CommandBox> list = commands.get(item.event).getList();
-			list.getItems().removeIf(commandBox -> commandBox.item == item);
 			if (selected.getValue().item == item)
 				selected.setValue(null);
+			list.getItems().removeIf(commandBox -> commandBox.item == item);
 		}
 
 

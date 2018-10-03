@@ -18,7 +18,7 @@ public interface CharacterController {
 
     /** Move feature state by index. **/
     void moveValue(int index, float values);
-    
+
     /** Move feature state by name. **/
     void moveValue(String featureName, float values);
 
@@ -33,4 +33,12 @@ public interface CharacterController {
     JSONObject toJSON();
 
     String getDefaultSpriteType();
+
+    static float[] asArray(CharacterController controller){
+        float[] ar = new float[CharacterRange.getFeatureCount()];
+        for (int i = 0; i < CharacterRange.getFeatureCount(); i++){
+            ar[i] = controller.getValue(i);
+        }
+        return ar;
+    }
 }

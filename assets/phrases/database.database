@@ -41,5 +41,57 @@
             <intent>STOP_DIALOG, BYE</intent>
             <sprite>SERIOUS</sprite>
         </phrase>
+        <phrase>
+            <text>Подключение к сети восстановлено</text>
+            <intent>NETWORK_OK</intent>
+        </phrase>
+        <phrase>
+            <text>Подключение к сети отсутствует</text>
+            <intent>NO_NETWORK</intent>
+        </phrase>
+        <phrase>
+            <text>Интернет пропал</text>
+            <intent>NO_NETWORK</intent>
+        </phrase>
+        <phrase>
+            <text>Интернет появился!</text>
+            <intent>NETWORK_OK</intent>
+        </phrase>
+        <phrase>
+            <text>Давай обсудим</text>
+            <intent>SET_TOPIC</intent>
+        </phrase>
+        <phrase>
+            <text>Что ты думаешь о?</text>
+            <intent>SET_TOPIC</intent>
+        </phrase>
+        <phrase>
+            <text>Как насчёт обсудить</text>
+            <intent>SET_TOPIC</intent>
+        </phrase>
+        <phrase>
+            <text>О чём ты?</text>
+            <intent>WHAT_QUESTION</intent>
+        </phrase>
+        <phrase>
+            <text>Что?</text>
+            <intent>WHAT_QUESTION</intent>
+        </phrase>
+        <phrase>
+            <text>Скучала по тебе</text>
+            <intent>MISS_YOU</intent>
+        </phrase>
+        <phrase>
+            <text>Да</text>
+            <intent>YES</intent>
+        </phrase>
+        <phrase>
+            <text>Нет</text>
+            <intent>NO, REFUSE</intent>
+        </phrase>
+        <phrase>
+            <text>А у тебя как дела?</text>
+            <intent>WHAT_YOUR_STATE</intent>
+        </phrase>
     </ru>
 </phrases>

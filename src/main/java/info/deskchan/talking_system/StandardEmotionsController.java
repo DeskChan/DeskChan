@@ -104,6 +104,13 @@ public class StandardEmotionsController implements EmotionsController{
 		}
 		Main.log("No emotion by name: " + emotionName);
 	}
+
+	public List<String> getEmotionsList(){
+		List<String> res = new ArrayList<>();
+		for (Emotion e : emotions)
+			res.add(e.name);
+		return res;
+	}
 	
 	void generate() {
 		if (currentEmotion != null){

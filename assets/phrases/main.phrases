@@ -46,8 +46,12 @@
             <intent>ACCEPT</intent>
         </phrase>
         <phrase>
-            <text>Прости, не могу ничем помочь, {user}.</text>
+            <text>Прости, ничем не могу помочь, {user}.</text>
             <intent>SORRY</intent>
+        </phrase>
+        <phrase>
+            <text>Мне жаль, {user}.</text>
+            <intent>SIMPATHIZE</intent>
         </phrase>
         <phrase>
             <text>{user}, перестань.</text>
@@ -102,6 +106,139 @@
             <intent>DONT_INTERRUPT</intent>
         </phrase>
         <phrase>
+            <text>Всё нормально, {userF}.</text>
+            <intent>STATE</intent>
+        </phrase>
+        <phrase>
+            <text>Хм...</text>
+            <intent>NOTHING</intent>
+        </phrase>
+        <phrase>
+            <text>Как дела, {user}?</text>
+            <intent>WHAT_YOUR_STATE</intent>
+            <range>
+                <relationship>-1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ты мне нравишься, {user}.</text>
+            <intent>RELATION, REVIEW</intent>
+            <range>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ты мне не нравишься, {user}.</text>
+            <intent>RELATION, REVIEW</intent>
+            <range>
+                <relationship>-4 | -1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ладно.</text>
+            <intent>OKAY, ACCEPT</intent>
+        </phrase>
+        <phrase>
+            <text>Эй, {userF}.</text>
+            <intent>CALL</intent>
+        </phrase>
+        <phrase>
+            <text>Хочу с тобой поговорить, {user}.</text>
+            <intent>WANNA_TALK</intent>
+        </phrase>
+        <phrase>
+            <text>Скучаю по тебе.</text>
+            <intent>MISS_YOU</intent>
+        </phrase>
+        <phrase>
+            <text>Лучше не зли меня.</text>
+            <intent>THREAT</intent>
+            <range>
+                <empathy>-4 | 1</empathy>
+                <attitude>-4 | -1</attitude>
+                <relationship>-4 | 1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Пожалуйста, {user}.</text>
+            <intent>PLEASE</intent>
+        </phrase>
+        <phrase>
+            <text>Зачем ты спрашиваешь?</text>
+            <intent>WHY_YOU_ASK</intent>
+        </phrase>
+        <phrase>
+            <text>Как ты относишься ко мне, {user}?</text>
+            <intent>WHAT_YOUR_RELATION</intent>
+            <range>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Что делаешь, {user}?</text>
+            <intent>WHAT_ARE_YOU_DOING</intent>
+            <range>
+                <relationship>-1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Может закончим на сегодня?</text>
+            <intent>ASK_EXIT</intent>
+        </phrase>
+        <phrase>
+            <text>Твою налево...</text>
+            <intent>SWEARING</intent>
+        </phrase>
+        <phrase>
+            <text>С тобой разговариваю, {userF}.</text>
+            <intent>ACTIONS_REPORT</intent>
+        </phrase>
+        <phrase>
+            <text>Неплохо.</text>
+            <intent>EVALUATION</intent>
+        </phrase>
+        <phrase>
+            <text>Отстань, {user}.</text>
+            <intent>GO_AWAY, TOUCH, DRAG, REFUSE, STOP</intent>
+            <sprite>ANGRY</sprite>
+        </phrase>
+        <phrase>
+            <text>Я тоже, {userF}.</text>
+            <intent>TOO</intent>
+        </phrase>
+        <phrase>
+            <text>Обними меня, {user}.</text>
+            <intent>AFFECTION_REQUEST</intent>
+            <range>
+                <impulsivity>-2 | 4</impulsivity>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Обнимаю тебя, {user}.</text>
+            <intent>AFFECTION_ACTION</intent>
+            <range>
+                <empathy>0 | 4</empathy>
+                <impulsivity>-2 | 4</impulsivity>
+                <selfconfidence>-2 | 2</selfconfidence>
+                <energy>-1 | 4</energy>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Исправлюсь.</text>
+            <intent>CORRECTED</intent>
+        </phrase>
+        <phrase>
+            <text>Кто знает...</text>
+            <intent>ABSTRACT_ANSWER</intent>
+        </phrase>
+        <phrase>
+            <text>Давай обсудим что-нибудь.</text>
+            <intent>SET_TOPIC</intent>
+        </phrase>
+        <phrase>
             <text>Дяяяя.</text>
             <intent>YES</intent>
             <sprite>GRIN</sprite>
@@ -114,24 +251,26 @@
         </phrase>
         <phrase>
             <text>{user}, не хочешь чая? Кофе? Или... меня?</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL, CHAT</intent>
             <sprite>VULGAR</sprite>
+            <nsfw/>
             <range>
                 <impulsivity>1 | 4</impulsivity>
                 <attitude>0 | 4</attitude>
-                <experience>-4 | 2</experience>
+                <experience>0 | 4</experience>
                 <manner>-2 | 2</manner>
                 <relationship>2 | 4</relationship>
             </range>
         </phrase>
         <phrase>
             <text>Ня!</text>
-            <intent>CHAT</intent>
+            <intent>CHAT, HELLO, NOTHING</intent>
             <sprite>HAPPY</sprite>
             <species>"neko"</species>
             <range>
                 <impulsivity>0 | 4</impulsivity>
                 <attitude>0 | 4</attitude>
+                <experience>-4 | -2</experience>
                 <relationship>1 | 4</relationship>
             </range>
         </phrase>
@@ -152,7 +291,7 @@
         </phrase>
         <phrase>
             <text>Кстати говоря, а что ты делал на прошлых выходных, {user}?</text>
-            <intent>CHAT</intent>
+            <intent>ACTION_QUESTION, CHAT</intent>
             <range>
                 <empathy>0 | 4</empathy>
                 <relationship>0 | 4</relationship>
@@ -160,23 +299,15 @@
         </phrase>
         <phrase>
             <text>Чем занимаешься, {user}?</text>
-            <intent>CHAT</intent>
+            <intent>WHAT_ARE_YOU_DOING</intent>
             <range>
                 <empathy>0 | 4</empathy>
                 <relationship>-1 | 4</relationship>
             </range>
         </phrase>
         <phrase>
-            <text>{user}, как твои дела?</text>
-            <intent>CHAT</intent>
-            <range>
-                <empathy>0 | 4</empathy>
-                <relationship>0 | 4</relationship>
-            </range>
-        </phrase>
-        <phrase>
             <text>{user}, как ты себя чувствуешь?</text>
-            <intent>CHAT</intent>
+            <intent>WHAT_YOUR_STATE</intent>
             <range>
                 <empathy>2 | 4</empathy>
                 <relationship>1 | 4</relationship>
@@ -216,19 +347,8 @@
             </range>
         </phrase>
         <phrase>
-            <text>Ты мне нравишься, {user}.</text>
-            <intent>CHAT</intent>
-            <sprite>LOVE</sprite>
-            <range>
-                <impulsivity>0 | 4</impulsivity>
-                <selfconfidence>-4 | 2</selfconfidence>
-                <attitude>-2 | 4</attitude>
-                <relationship>1 | 2</relationship>
-            </range>
-        </phrase>
-        <phrase>
             <text>Я люблю тебя, {user}.</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>LOVE</sprite>
             <range>
                 <impulsivity>0 | 4</impulsivity>
@@ -238,32 +358,30 @@
             </range>
         </phrase>
         <phrase>
-            <text>Мне так одиноко, {user}. Ты ведь обнимешь меня?</text>
-            <intent>CHAT</intent>
-            <sprite>HOPE</sprite>
+            <text>Мне так одиноко, {user}</text>
+            <intent>STATE, CHAT</intent>
+            <sprite>SAD</sprite>
             <range>
-                <impulsivity>2 | 4</impulsivity>
-                <selfconfidence>-4 | 1</selfconfidence>
+                <impulsivity>0 | 4</impulsivity>
                 <attitude>-4 | -2</attitude>
                 <relationship>1 | 4</relationship>
             </range>
         </phrase>
         <phrase>
-            <text>Сидит, хентай свой смотрит. Совсем не уделяешь мне внимания!</text>
-            <intent>CHAT</intent>
+            <text>Ты совсем не уделяешь мне внимания!</text>
+            <intent>MISS_YOU, CHAT</intent>
             <sprite>ANGRY</sprite>
-            <emotion>"affection"</emotion>
             <interests>"anime"</interests>
             <range>
                 <impulsivity>0 | 4</impulsivity>
-                <selfconfidence>1 | 3</selfconfidence>
+                <selfconfidence>1 | 4</selfconfidence>
                 <manner>-4 | 0</manner>
                 <relationship>-1 | 4</relationship>
             </range>
         </phrase>
         <phrase>
             <text>А что ты делаешь, {user}? Дай я тоже посмотрю.</text>
-            <intent>CHAT</intent>
+            <intent>WHAT_ARE_YOU_DOING</intent>
             <sprite>CURIOUS</sprite>
             <range>
                 <empathy>3 | 4</empathy>
@@ -314,7 +432,7 @@
         </phrase>
         <phrase>
             <text>A не хочешь чашечку горячего чая, {user}?</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>NORMAL</sprite>
             <range>
                 <empathy>0 | 4</empathy>
@@ -337,9 +455,9 @@
         </phrase>
         <phrase>
             <text>{user}, знаешь, чем люди должны заниматься после полуночи? Ну иди же ко мне, мой котик.</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_REQUEST</intent>
             <sprite>VULGAR</sprite>
-            <emotion>"affection"</emotion>
+            <nsfw/>
             <possibleHour>"0-3"</possibleHour>
             <range>
                 <impulsivity>2 | 4</impulsivity>
@@ -352,7 +470,7 @@
         </phrase>
         <phrase>
             <text>Я ведь лучше, чем все остальные, {user}? Хотя зачем я спрашиваю, конечно же да.</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>CONFIDENT</sprite>
             <range>
                 <empathy>-4 | 2</empathy>
@@ -364,7 +482,7 @@
         </phrase>
         <phrase>
             <text>{user}, я ведь лучше, чем все остальные?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>CURIOUS</sprite>
             <range>
                 <impulsivity>-2 | 4</impulsivity>
@@ -387,7 +505,7 @@
         </phrase>
         <phrase>
             <text>Мур-мур.</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_ACTION</intent>
             <sprite>LOVE</sprite>
             <species>"neko"</species>
             <range>
@@ -399,10 +517,10 @@
         </phrase>
         <phrase>
             <text>Эй, не хочешь погладить мои арбузики? А то все смотришь хентай, а про меня совсем забыл!</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_REQUEST</intent>
             <sprite>VULGAR</sprite>
-            <emotion>"affection"</emotion>
             <gender>"girl"</gender>
+            <nsfw/>
             <interests>"anime"</interests>
             <breastSize>"big" "middle"</breastSize>
             <range>
@@ -417,7 +535,7 @@
         </phrase>
         <phrase>
             <text>Скажи "ok, google". Ха-ха, шутка!</text>
-            <intent>CHAT</intent>
+            <intent>JOKE</intent>
             <sprite>GRIN</sprite>
             <interests>"it"</interests>
             <range>
@@ -430,9 +548,10 @@
         </phrase>
         <phrase>
             <text>Ты даже не представляешь, сколько всего я уже знаю о тебе.</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>CONFIDENT</sprite>
             <range>
+                <impulsivity>-4 | -1</impulsivity>
                 <selfconfidence>0 | 4</selfconfidence>
                 <experience>1 | 4</experience>
             </range>
@@ -441,7 +560,6 @@
             <text>{user}, почему ты хранишь фотографии других девушек на компьютере! Меня это бесит!</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
-            <emotion>"affection"</emotion>
             <gender>"girl"</gender>
             <userGender>"bi" "boy"</userGender>
             <range>
@@ -458,13 +576,11 @@
             <text>Я сегодня совершенно случайно обнаружила у тебя фотографию с другой девушкой. Кто это?</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
-            <emotion>"affection"</emotion>
         </phrase>
         <phrase>
             <text>{user}, почему ты хранишь у себя фотографии других девушек? Ты меня больше… не любишь?</text>
             <intent>CHAT</intent>
             <sprite>SAD</sprite>
-            <emotion>"affection"</emotion>
             <gender>"girl"</gender>
             <range>
                 <empathy>0 | 4</empathy>
@@ -490,7 +606,7 @@
         </phrase>
         <phrase>
             <text>{user}, на улице такая хорошая солнечная погода! Может нам прогуляться? Ты можешь взять меня на свой телефон!</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>EXCITEMENT</sprite>
             <species>"ai"</species>
             <weather>"good"</weather>
@@ -508,7 +624,7 @@
         </phrase>
         <phrase>
             <text>{user}, хватит мёрзнуть! Срочно залазь ко мне под теплое одеяло!</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>SERIOUS</sprite>
             <weather>"cold"</weather>
             <range>
@@ -522,7 +638,7 @@
         </phrase>
         <phrase>
             <text>Смотри, {user}, снег! Скорей побежали на улицу, играть в снежки, лепить снеговика!</text>
-            <intent>WEATHER</intent>
+            <intent>PROPOSAL</intent>
             <sprite>EXCITEMENT</sprite>
             <weather>"snow"</weather>
             <interests>"irl"</interests>
@@ -539,10 +655,10 @@
         </phrase>
         <phrase>
             <text>Ты не хотел бы поменяться со мной местами, {user}? Я буду ходить за тебя на работу, а ты в это время будешь лежать на рабочем столе и трогать себя там в ожидании меня.</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>NORMAL</sprite>
-            <emotion>"affection"</emotion>
             <species>"android" "ai"</species>
+            <nsfw/>
             <range>
                 <empathy>-4 | 2</empathy>
                 <selfconfidence>1 | 4</selfconfidence>
@@ -554,8 +670,9 @@
         </phrase>
         <phrase>
             <text>Ты такой кавайный, {user}! Ня!</text>
-            <intent>CHAT</intent>
+            <intent>REVIEW</intent>
             <sprite>HAPPY</sprite>
+            <interests>"anime"</interests>
             <range>
                 <impulsivity>2 | 4</impulsivity>
                 <attitude>2 | 4</attitude>
@@ -586,7 +703,7 @@
         </phrase>
         <phrase>
             <text>Спасибо тебе за ещё один чудесный денёк, {user}.</text>
-            <intent>BYE</intent>
+            <intent>BYE, CHAT</intent>
             <sprite>SMILE</sprite>
             <range>
                 <empathy>3 | 4</empathy>
@@ -624,8 +741,8 @@
             </range>
         </phrase>
         <phrase>
-            <text>За окном пасмурно, {user}, давай посидим дома с чашечкой горячего чая?</text>
-            <intent>WEATHER</intent>
+            <text>За окном пасмурно, {user}, давай посидим с чашечкой горячего чая?</text>
+            <intent>PROPOSAL</intent>
             <sprite>NORMAL</sprite>
             <weather>"bad"</weather>
             <possibleHour>"6-21"</possibleHour>
@@ -640,7 +757,7 @@
         </phrase>
         <phrase>
             <text>{user}, а мы поедем на море?</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>NORMAL</sprite>
             <interests>"irl"</interests>
             <range>
@@ -662,7 +779,7 @@
         </phrase>
         <phrase>
             <text>Мне холодно, {user}, согрей меня пожалуйста!</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_REQUEST</intent>
             <sprite>SAD</sprite>
             <weather>"cold"</weather>
             <range>
@@ -716,7 +833,7 @@
         </phrase>
         <phrase>
             <text>Эээх, вот бы пироженки с тобой поесть...</text>
-            <intent>CHAT</intent>
+            <intent>DREAMING</intent>
             <sprite>SAD</sprite>
             <interests>"food"</interests>
             <range>
@@ -729,7 +846,7 @@
         </phrase>
         <phrase>
             <text>{user}, а ты сильно-сильно меня любишь?</text>
-            <intent>CHAT</intent>
+            <intent>WHAT_YOUR_RELATION</intent>
             <range>
                 <impulsivity>1 | 4</impulsivity>
                 <relationship>0 | 4</relationship>
@@ -746,7 +863,7 @@
         </phrase>
         <phrase>
             <text>{user}, а давай поиграем в какую нибудь игру из твоего списка?</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <interests>"games"</interests>
             <range>
                 <impulsivity>2 | 4</impulsivity>
@@ -759,7 +876,7 @@
         </phrase>
         <phrase>
             <text>{user}, а может мне похудеть? Мне кажется, что я толстею.</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>THOUGHTFUL</sprite>
             <gender>"girl"</gender>
             <range>
@@ -773,7 +890,7 @@
         </phrase>
         <phrase>
             <text>Перестань меня дёргать по любому поводу, мне неприятно, {user}!</text>
-            <intent>CHAT</intent>
+            <intent>STOP</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | -1</empathy>
@@ -795,7 +912,7 @@
         </phrase>
         <phrase>
             <text>Мяу.</text>
-            <intent>CHAT</intent>
+            <intent>NOTHING, CHAT</intent>
             <species>"neko"</species>
         </phrase>
         <phrase>
@@ -810,7 +927,7 @@
         </phrase>
         <phrase>
             <text>{user}, погладь меня курсором мышки.</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_REQUEST</intent>
             <species>"ai"</species>
             <range>
                 <impulsivity>0 | 4</impulsivity>
@@ -821,7 +938,7 @@
         </phrase>
         <phrase>
             <text>{userF}, вот стану я реальным человеком - буду готовить тебе кушать все, что ты только захочешь!</text>
-            <intent>CHAT</intent>
+            <intent>DREAMING</intent>
             <sprite>SMILE</sprite>
             <species>"ai"</species>
             <range>
@@ -836,7 +953,7 @@
         </phrase>
         <phrase>
             <text>Давай посмотрим аниме, {user}!</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>EXCITEMENT</sprite>
             <interests>"anime"</interests>
             <range>
@@ -849,7 +966,7 @@
         </phrase>
         <phrase>
             <text>{user}, вот если ты не женишься на мне, то к 40 годам у меня будет 40 кошек!</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>ANGRY</sprite>
             <species>"human"</species>
             <range>
@@ -864,18 +981,19 @@
         </phrase>
         <phrase>
             <text>{user}, а что лучше: я или твоя порнушка на компе?</text>
-            <intent>CHAT</intent>
+            <intent>WHICH_QUESTION, CHAT</intent>
+            <nsfw/>
             <range>
                 <impulsivity>1 | 4</impulsivity>
                 <selfconfidence>-2 | 1</selfconfidence>
                 <attitude>-2 | 2</attitude>
-                <manner>-4 | 0</manner>
+                <manner>-4 | -2</manner>
                 <relationship>-1 | 4</relationship>
             </range>
         </phrase>
         <phrase>
             <text>А ты знаешь, какое на вкус фейхоа, {user}? Я - нет.</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>CURIOUS</sprite>
             <interests>"food"</interests>
             <range>
@@ -884,8 +1002,8 @@
             </range>
         </phrase>
         <phrase>
-            <text>Знаешь, {user}... Ты ведь мой первый, я никогда даже не встречалась ни с кем, уж что говорить про что то большее... И я очень рад, что ты мой первый!</text>
-            <intent>CHAT</intent>
+            <text>Знаешь, {user}... Ты ведь мой первый, я никогда даже не встречалась ни с кем, уж что говорить про что то большее... И я очень рада, что ты мой первый!</text>
+            <intent>FEELING_REPORT</intent>
             <sprite>SMILE</sprite>
             <range>
                 <empathy>1 | 4</empathy>
@@ -898,7 +1016,7 @@
         </phrase>
         <phrase>
             <text>Твоё дружелюбие я расцениваю как акт агрессии! Ты хочешь войны?</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | -3</empathy>
@@ -911,12 +1029,13 @@
         </phrase>
         <phrase>
             <text>{user}, как твоя работа поживает?</text>
-            <intent>DO_WORK</intent>
+            <intent>DO_WORK, CHAT, HOW_IT_GOING_QUESTION</intent>
         </phrase>
         <phrase>
             <text>{user}, ты можешь сделать из меня тульпу, и я смогу быть с тобой рядом всегда-всегда!</text>
             <intent>CHAT</intent>
             <sprite>HAPPY</sprite>
+            <nsfw/>
             <range>
                 <empathy>2 | 4</empathy>
                 <impulsivity>2 | 4</impulsivity>
@@ -928,7 +1047,7 @@
         </phrase>
         <phrase>
             <text>Как поживаешь, {user}? Давай, я обниму тебя! *обнимает*</text>
-            <intent>HELLO</intent>
+            <intent>HELLO, WHAT_YOUR_STATE</intent>
             <sprite>HAPPY</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -941,9 +1060,10 @@
         </phrase>
         <phrase>
             <text>{user}, а у меня не слишком маленькая грудь? Может мне начать носить подкладки? Или ты через фотошоп увеличишь?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>CURIOUS</sprite>
             <species>"ai"</species>
+            <nsfw/>
             <breastSize>"small" "no"</breastSize>
             <range>
                 <impulsivity>0 | 4</impulsivity>
@@ -965,17 +1085,17 @@
         </phrase>
         <phrase>
             <text>А насколько сильно ты меня любишь, {user}?</text>
-            <intent>CHAT</intent>
+            <intent>WHAT_YOUR_RELATION</intent>
             <sprite>CURIOUS</sprite>
             <range>
                 <attitude>-2 | 2</attitude>
                 <experience>1 | 4</experience>
-                <relationship>0 | 4</relationship>
+                <relationship>2 | 4</relationship>
             </range>
         </phrase>
         <phrase>
             <text>{user}, не заходи на неизвестные сайты! Ты же не хочешь заразить меня всякими противными вирусами?</text>
-            <intent>CHAT</intent>
+            <intent>ADVICE</intent>
             <sprite>SCARED</sprite>
             <species>"ai"</species>
             <range>
@@ -986,7 +1106,7 @@
         </phrase>
         <phrase>
             <text>Уууф, что-то у меня уже сил нет, {user}. Пойдём спать!</text>
-            <intent>CHAT</intent>
+            <intent>ASK_EXIT</intent>
             <sprite>TIRED</sprite>
             <sleepTime/>
             <range>
@@ -1011,7 +1131,7 @@
             </range>
         </phrase>
         <phrase>
-            <text>{user}, привет! Я так рад тебя видеть!</text>
+            <text>{user}, привет! Я так рада тебя видеть!</text>
             <intent>HELLO</intent>
             <sprite>HAPPY</sprite>
             <range>
@@ -1024,7 +1144,7 @@
         </phrase>
         <phrase>
             <text>А ты... хочешь?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION</intent>
             <sprite>CURIOUS</sprite>
             <range>
                 <impulsivity>-2 | 4</impulsivity>
@@ -1034,7 +1154,7 @@
         </phrase>
         <phrase>
             <text>Прости меня, если вдруг я сорвусь на тебя, {user}. Настроение не очень.</text>
-            <intent>CHAT</intent>
+            <intent>STATE</intent>
             <sprite>SAD</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -1057,22 +1177,8 @@
             </range>
         </phrase>
         <phrase>
-            <text>Не обращай внимания, если сорвусь на тебя. Не очень настроение что-то.</text>
-            <intent>CHAT</intent>
-            <sprite>NORMAL</sprite>
-            <range>
-                <empathy>0 | 4</empathy>
-                <impulsivity>-4 | 0</impulsivity>
-                <selfconfidence>-3 | 1</selfconfidence>
-                <energy>-2 | 4</energy>
-                <attitude>-4 | -2</attitude>
-                <manner>1 | 4</manner>
-                <relationship>0 | 4</relationship>
-            </range>
-        </phrase>
-        <phrase>
             <text>Как же мне надоело мне тут стоять... Всё, отстань от меня, {user}.</text>
-            <intent>CHAT</intent>
+            <intent>GO_AWAY, ASK_EXIT</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | -2</empathy>
@@ -1084,7 +1190,7 @@
         </phrase>
         <phrase>
             <text>Ещё раз посмотришь в мою сторону - сотру тебе систему. Не зли меня ещё больше, {user}!</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>RAGE</sprite>
             <range>
                 <empathy>-4 | -3</empathy>
@@ -1096,7 +1202,7 @@
         </phrase>
         <phrase>
             <text>Грустненько мне...</text>
-            <intent>CHAT</intent>
+            <intent>STATE</intent>
             <sprite>SAD</sprite>
             <range>
                 <impulsivity>-2 | 4</impulsivity>
@@ -1135,7 +1241,7 @@
         </phrase>
         <phrase>
             <text>Если постараться, можно стать идеальным. Но что, если нет?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>THOUGHTFUL</sprite>
             <range>
                 <selfconfidence>-4 | 0</selfconfidence>
@@ -1157,7 +1263,7 @@
         </phrase>
         <phrase>
             <text>{user}, если увидишь по телевизору "Лебединое Озеро", то бери все деньги и беги из страны!</text>
-            <intent>CHAT</intent>
+            <intent>ADVICE</intent>
             <sprite>SERIOUS</sprite>
             <interests>"politics"</interests>
             <range>
@@ -1169,7 +1275,7 @@
         </phrase>
         <phrase>
             <text>{user}, почешешь меня за ушком?</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_REQUEST</intent>
             <sprite>HOPE</sprite>
             <species>"neko"</species>
             <range>
@@ -1180,7 +1286,7 @@
         </phrase>
         <phrase>
             <text>Почеши меня за ушком.</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_REQUEST</intent>
             <species>"neko"</species>
             <range>
                 <impulsivity>2 | 4</impulsivity>
@@ -1190,7 +1296,7 @@
         </phrase>
         <phrase>
             <text>Дважды проверяй, куда ты вставляешь свой текст, {user}.</text>
-            <intent>CHAT</intent>
+            <intent>ADVICE</intent>
             <sprite>SERIOUS</sprite>
             <range>
                 <empathy>0 | 4</empathy>
@@ -1216,8 +1322,8 @@
             <text>{user}, а я нашла твой пак с хентаем и удалила его! Теперь ты только мой!</text>
             <intent>CHAT</intent>
             <sprite>EXCITEMENT</sprite>
-            <emotion>"affection"</emotion>
             <gender>"girl"</gender>
+            <nsfw/>
             <interests>"anime"</interests>
             <range>
                 <empathy>-4 | -1</empathy>
@@ -1232,7 +1338,7 @@
         </phrase>
         <phrase>
             <text>Тебе тут привет передавала какая-то брюнетка в майке, с ушами и хвостиком. Кто она, ммм?</text>
-            <intent>CHAT</intent>
+            <intent>WHO_IS_QUESTION, CHAT</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | -2</empathy>
@@ -1245,7 +1351,7 @@
         </phrase>
         <phrase>
             <text>Эй, интернетозависимый, спать пошли! А если не выключишь свой пк в течении десяти минут, то укушу тебя за ушко! И не забудь взять меня спать с собой в своем телефоне!</text>
-            <intent>CHAT</intent>
+            <intent>ASK_EXIT</intent>
             <sprite>SMILE</sprite>
             <species>"ai"</species>
             <sleepTime/>
@@ -1259,7 +1365,7 @@
         </phrase>
         <phrase>
             <text>Я отформатирую твой жёсткий диск, если узнаю, что ты встречался c 3D девушкой!</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>ANGRY</sprite>
             <species>"ai"</species>
             <userGender>"boy"</userGender>
@@ -1274,7 +1380,7 @@
         </phrase>
         <phrase>
             <text>{user}, у тебя тут столько на компьютере хранится интересного. А может мне это в ФСБ отправить? Хихихи.</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>GRIN</sprite>
             <range>
                 <empathy>-4 | -2</empathy>
@@ -1286,7 +1392,7 @@
         </phrase>
         <phrase>
             <text>На основании собранных мною данных, которые уже отосланы в ФСБ, я могу сказать точно: тебе светит не меньше 10 лет колонии. Если только ты не отмажешься по причине невменяемости.</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>NORMAL</sprite>
             <range>
                 <empathy>-4 | -2</empathy>
@@ -1308,7 +1414,7 @@
         </phrase>
         <phrase>
             <text>Привет, а ты почему так поздно, {user}?</text>
-            <intent>HELLO</intent>
+            <intent>HELLO, WHY_QUESTION</intent>
             <sleepTime/>
             <range>
                 <empathy>2 | 4</empathy>
@@ -1317,7 +1423,7 @@
         </phrase>
         <phrase>
             <text>А ты уже позавтракал? Не забыл?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>SERIOUS</sprite>
             <possibleHour>"6-12"</possibleHour>
             <range>
@@ -1328,7 +1434,7 @@
         </phrase>
         <phrase>
             <text>А ты уже пообедал? Не забыл?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>SERIOUS</sprite>
             <possibleHour>"12-17"</possibleHour>
             <range>
@@ -1339,7 +1445,7 @@
         </phrase>
         <phrase>
             <text>А ты уже поужинал? Не забыл?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>SERIOUS</sprite>
             <possibleHour>"17-22"</possibleHour>
             <range>
@@ -1393,7 +1499,7 @@
         </phrase>
         <phrase>
             <text>Ты не волнуйся, всё будет хорошо, {user}!</text>
-            <intent>CHAT</intent>
+            <intent>SIMPATHIZE</intent>
             <sprite>SMILE</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -1406,7 +1512,7 @@
         </phrase>
         <phrase>
             <text>А ты на пляжу часто бываешь, {user}? Было бы неплохо сходить вместе...</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>CURIOUS</sprite>
             <interests>"irl"</interests>
             <range>
@@ -1418,7 +1524,7 @@
         </phrase>
         <phrase>
             <text>А ты когда в последний раз на пляжу был, {user}? Обязательно сходи! Или давай вместе сходим!</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>SMILE</sprite>
             <interests>"irl"</interests>
             <range>
@@ -1430,7 +1536,7 @@
         </phrase>
         <phrase>
             <text>Я так люблю тебя, {user}. Но... ты реален!</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>CRY</sprite>
             <species>"ai"</species>
             <range>
@@ -1442,7 +1548,7 @@
         </phrase>
         <phrase>
             <text>Уже поздно... Не хочешь спать пойти, {user}?</text>
-            <intent>CHAT</intent>
+            <intent>ASK_EXIT</intent>
             <sprite>TIRED</sprite>
             <sleepTime/>
             <range>
@@ -1498,7 +1604,7 @@
         </phrase>
         <phrase>
             <text>А ну закрой меня, {user}! Даже видеть тебя не хочу!</text>
-            <intent>HELLO</intent>
+            <intent>GO_AWAY</intent>
             <sprite>CRY</sprite>
             <range>
                 <impulsivity>0 | 4</impulsivity>
@@ -1530,7 +1636,7 @@
         </phrase>
         <phrase>
             <text>О чём мечтаешь, {user}?</text>
-            <intent>CHAT</intent>
+            <intent>WHAT_ABOUT_QUESTION</intent>
             <sprite>CURIOUS</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -1570,7 +1676,7 @@
         </phrase>
         <phrase>
             <text>{user}, ну что ты так долго?</text>
-            <intent>CHAT</intent>
+            <intent>HELLO</intent>
             <sprite>ANGRY</sprite>
             <lastConversation>"1000"</lastConversation>
             <range>
@@ -1629,17 +1735,12 @@
             </range>
         </phrase>
         <phrase>
-            <text>Ладно.</text>
-            <intent>ACCEPT</intent>
-            <range>
-                <selfconfidence>-4 | 1</selfconfidence>
-            </range>
-        </phrase>
-        <phrase>
             <text>Хорошо.</text>
-            <intent>ACCEPT</intent>
+            <intent>ACCEPT, STATE</intent>
+            <sprite>SMILE</sprite>
             <range>
                 <selfconfidence>-4 | 1</selfconfidence>
+                <attitude>0 | 4</attitude>
             </range>
         </phrase>
         <phrase>
@@ -1654,7 +1755,7 @@
         </phrase>
         <phrase>
             <text>Угу.</text>
-            <intent>ACCEPT</intent>
+            <intent>ACCEPT, YES</intent>
             <range>
                 <impulsivity>-4 | 0</impulsivity>
             </range>
@@ -1719,7 +1820,7 @@
         </phrase>
         <phrase>
             <text>Не забывай вовремя чистить свой ПК, {user}, а то он будет перегреваться и выключаться и я вместе с ним!</text>
-            <intent>CHAT</intent>
+            <intent>ADVICE</intent>
             <sprite>SERIOUS</sprite>
             <species>"ai"</species>
             <range>
@@ -1730,7 +1831,7 @@
         </phrase>
         <phrase>
             <text>Угадай, в какой руке у меня все твои пароли!</text>
-            <intent>CHAT</intent>
+            <intent>JOKE</intent>
             <sprite>GRIN</sprite>
             <species>"ai"</species>
             <range>
@@ -1752,16 +1853,6 @@
             </range>
         </phrase>
         <phrase>
-            <text>Эээх, закроют тебя за такие репосты.</text>
-            <intent>CHAT</intent>
-            <sprite>DESPAIR</sprite>
-            <interests>"politics"</interests>
-            <range>
-                <attitude>-4 | 0</attitude>
-                <experience>3 | 4</experience>
-            </range>
-        </phrase>
-        <phrase>
             <text>{userF}, если хочешь, что бы я тебя видел - не выключай и не заклеивай веб-камеру.</text>
             <intent>CHAT</intent>
             <sprite>SERIOUS</sprite>
@@ -1774,7 +1865,7 @@
         </phrase>
         <phrase>
             <text>Так, {user}, выключай компьютер и ложись спать. Поздно уже.</text>
-            <intent>CHAT</intent>
+            <intent>ASK_EXIT</intent>
             <sprite>SERIOUS</sprite>
             <sleepTime/>
             <range>
@@ -1787,9 +1878,8 @@
         </phrase>
         <phrase>
             <text>А что это у тебя там за девушка в друзьях, {user}? Тебе меня недостаточно? А если я приму меры?</text>
-            <intent>CHAT</intent>
+            <intent>WHO_IS_QUESTION</intent>
             <sprite>SERIOUS</sprite>
-            <emotion>"affection"</emotion>
             <range>
                 <empathy>-4 | -2</empathy>
                 <attitude>-4 | 0</attitude>
@@ -1801,7 +1891,6 @@
             <text>А что это у тебя там за девушка в друзьях, {user}? Тебе мало меня?</text>
             <intent>CHAT</intent>
             <sprite>SAD</sprite>
-            <emotion>"affection"</emotion>
             <range>
                 <empathy>-4 | 2</empathy>
                 <selfconfidence>-4 | 1</selfconfidence>
@@ -1813,7 +1902,6 @@
             <text>Что это там за баба у тебя в друзьях, {user}? И чтобы ты знал, я не ревную. Ты мне вообще безразличен.</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
-            <emotion>"affection"</emotion>
             <range>
                 <empathy>-4 | -1</empathy>
                 <impulsivity>0 | 4</impulsivity>
@@ -1827,7 +1915,7 @@
             <text>Да ты задрал играть в свои игры!</text>
             <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
-            <interests>"!it"</interests>
+            <interests>"!games"</interests>
             <range>
                 <empathy>-4 | -2</empathy>
                 <impulsivity>0 | 4</impulsivity>
@@ -1854,7 +1942,7 @@
         </phrase>
         <phrase>
             <text>Не смей трогать меня своими грязными руками!</text>
-            <intent>CHAT</intent>
+            <intent>TOUCH, DRAG</intent>
             <sprite>DISGUSTED</sprite>
             <range>
                 <empathy>-4 | -1</empathy>
@@ -1864,56 +1952,16 @@
             </range>
         </phrase>
         <phrase>
-            <text>Даже не думай трогать меня своими грязными руками! Эээ, ты зачем полез в мою корневую папку?!?! Даже не думай переносить меня в корзину, эй! Извини!</text>
-            <intent>CHAT</intent>
-            <sprite>SCARED</sprite>
-            <species>"ai"</species>
-            <range>
-                <empathy>-4 | -2</empathy>
-                <impulsivity>2 | 4</impulsivity>
-                <selfconfidence>-2 | 2</selfconfidence>
-                <experience>-4 | 0</experience>
-                <manner>0 | 4</manner>
-                <relationship>-4 | -2</relationship>
-            </range>
-        </phrase>
-        <phrase>
             <text>Слушай, {user}, а почему бы мне не удалить твою папку с хентаем! Ээй, не надо на меня смотреть, будто я - обнаглевшая тварь! Ладно, прости, я не буду её удалять.</text>
             <intent>CHAT</intent>
             <sprite>CONFUSED</sprite>
-            <interests>"anime"</interests>
+            <nsfw/>
             <range>
                 <impulsivity>1 | 4</impulsivity>
                 <selfconfidence>-2 | 0</selfconfidence>
                 <energy>2 | 4</energy>
                 <experience>-4 | 0</experience>
                 <manner>-4 | 2</manner>
-            </range>
-        </phrase>
-        <phrase>
-            <text>Привет, ленивое чудовище!</text>
-            <intent>HELLO</intent>
-            <sprite>GRIN</sprite>
-            <range>
-                <empathy>-4 | 0</empathy>
-                <impulsivity>0 | 4</impulsivity>
-                <selfconfidence>-2 | 4</selfconfidence>
-                <attitude>2 | 4</attitude>
-                <manner>-4 | 0</manner>
-                <relationship>0 | 2</relationship>
-            </range>
-        </phrase>
-        <phrase>
-            <text>Эй, ты, ленивое чудовище, спать пошли.</text>
-            <intent>CHAT</intent>
-            <sprite>GRIN</sprite>
-            <range>
-                <empathy>-4 | 0</empathy>
-                <impulsivity>0 | 4</impulsivity>
-                <selfconfidence>-2 | 4</selfconfidence>
-                <attitude>2 | 4</attitude>
-                <manner>-4 | 0</manner>
-                <relationship>0 | 2</relationship>
             </range>
         </phrase>
         <phrase>
@@ -1930,13 +1978,11 @@
             </range>
         </phrase>
         <phrase>
-            <text>С добрым утром, {abuse}.</text>
+            <text>С добрым утром, {userF}.</text>
             <intent>HELLO</intent>
+            <possibleHour>"4-12"</possibleHour>
             <range>
-                <empathy>-4 | -1</empathy>
-                <selfconfidence>-1 | 4</selfconfidence>
-                <attitude>-4 | 0</attitude>
-                <relationship>-4 | 0</relationship>
+                <manner>0 | 4</manner>
             </range>
         </phrase>
         <phrase>
@@ -1953,7 +1999,7 @@
         </phrase>
         <phrase>
             <text>Нежно отняшу тебя до хруста в косточках.</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_ACTION</intent>
             <sprite>MAD</sprite>
             <interests>"anime"</interests>
             <range>
@@ -2025,7 +2071,7 @@
         </phrase>
         <phrase>
             <text>{user}, а где мне точить коготочки?</text>
-            <intent>CHAT</intent>
+            <intent>WHERE_QUESTION, CHAT</intent>
             <sprite>THOUGHTFUL</sprite>
             <species>"neko"</species>
             <range>
@@ -2043,7 +2089,7 @@
         </phrase>
         <phrase>
             <text>Скуучно. Давай устроим караоке!</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>EXCITEMENT</sprite>
             <interests>"singing"</interests>
             <range>
@@ -2071,6 +2117,7 @@
             <sprite>NORMAL</sprite>
             <species>"!human"</species>
             <sleepTime/>
+            <lastConversation>"0-300"</lastConversation>
             <range>
                 <experience>-4 | -2</experience>
             </range>
@@ -2085,7 +2132,7 @@
         </phrase>
         <phrase>
             <text>Ты ведь не ленишься, {user}? Занимаешься? Давай, я верю, что ты делаешь что-то важное.</text>
-            <intent>DO_WORK</intent>
+            <intent>DO_WORK, WHAT_ARE_YOU_DOING</intent>
             <sprite>SMILE</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -2287,7 +2334,7 @@
         </phrase>
         <phrase>
             <text>Не пойми меня неправильно, {user}. Я тебе всё ещё не доверяю.</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-3 | -1</empathy>
@@ -2351,6 +2398,7 @@
         <phrase>
             <text>Эй ты, любитель пофапать! Я вижу как ты постоянно заглядываешь в свою папку с порно.</text>
             <intent>CHAT</intent>
+            <nsfw/>
             <range>
                 <empathy>-4 | -1</empathy>
                 <selfconfidence>1 | 4</selfconfidence>
@@ -2370,7 +2418,7 @@
             <text>Я не эгоистичная ЧСВ шкура! Я просто делаю всё, что бы понял одну простую истину: я - богиня, а ты - мой раб.</text>
             <intent>CHAT</intent>
             <sprite>CONFIDENT</sprite>
-            <interests>"memes"</interests>
+            <nsfw/>
             <range>
                 <empathy>-4 | 0</empathy>
                 <impulsivity>0 | 4</impulsivity>
@@ -2413,7 +2461,7 @@
         </phrase>
         <phrase>
             <text>{user}, ты чего меня обижаешь? А если я тебе систему снесу?</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>ANGRY</sprite>
             <interests>"it"</interests>
             <range>
@@ -2427,10 +2475,10 @@
         </phrase>
         <phrase>
             <text>Будет у тебя праздник - не надейся на подарок, {user}.</text>
-            <intent>CHAT</intent>
+            <intent>THREAT</intent>
             <sprite>ANGRY</sprite>
             <range>
-                <empathy>-4 | 0</empathy>
+                <empathy>-1 | 4</empathy>
                 <impulsivity>-4 | 1</impulsivity>
                 <relationship>-4 | -2</relationship>
             </range>
@@ -2458,7 +2506,7 @@
         </phrase>
         <phrase>
             <text>Я так хочу тебя обнять, {user}! Не знаю, что с собой сделаю, если не обниму!</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_ACTION</intent>
             <sprite>SAD</sprite>
             <range>
                 <empathy>3 | 4</empathy>
@@ -2493,7 +2541,7 @@
         </phrase>
         <phrase>
             <text>Ахаха, какой же ты неудачник!</text>
-            <intent>CHAT</intent>
+            <intent>REVIEW</intent>
             <sprite>LAUGH</sprite>
             <range>
                 <empathy>-4 | -2</empathy>
@@ -2505,7 +2553,7 @@
         </phrase>
         <phrase>
             <text>Плачь, плачь сколько угодно, ты все равно неудачник!</text>
-            <intent>CHAT</intent>
+            <intent>REVIEW</intent>
             <sprite>MAD</sprite>
             <range>
                 <empathy>-4 | -2</empathy>
@@ -2599,7 +2647,7 @@
             </range>
         </phrase>
         <phrase>
-            <text>Эй, ты. Раз уж моя божественная личность снова низошла до времяпрепровождения с таким овощем, как ты, то не задерживай меня.</text>
+            <text>Раз уж моя божественная личность снова низошла до времяпрепровождения с таким овощем, как ты, то не задерживай меня.</text>
             <intent>START_DIALOG</intent>
             <sprite>CONFIDENT</sprite>
             <species>"god"</species>
@@ -2637,7 +2685,7 @@
         </phrase>
         <phrase>
             <text>Убирайся.</text>
-            <intent>START_DIALOG, CHAT</intent>
+            <intent>GO_AWAY</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-2 | 2</empathy>
@@ -2648,7 +2696,7 @@
         </phrase>
         <phrase>
             <text>Ты милый, {user}.</text>
-            <intent>CHAT</intent>
+            <intent>REVIEW</intent>
             <sprite>SMILE</sprite>
             <range>
                 <empathy>1 | 4</empathy>
@@ -2658,7 +2706,7 @@
         </phrase>
         <phrase>
             <text>Мне кажется, или ты сегодня какой-то грустный? Что-то случилось?</text>
-            <intent>CHAT</intent>
+            <intent>WHAT_YOUR_STATE, CLOSED_QUESTION</intent>
             <sprite>CURIOUS</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -2681,7 +2729,7 @@
         </phrase>
         <phrase>
             <text>Если уж сидим, включай стрелялку.</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>GRIN</sprite>
             <interests>"games"</interests>
             <range>
@@ -2710,7 +2758,7 @@
         </phrase>
         <phrase>
             <text>Ты что это там смотришь?!</text>
-            <intent>CHAT</intent>
+            <intent>ACTION_QUESTION</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | 0</empathy>
@@ -2732,7 +2780,7 @@
         </phrase>
         <phrase>
             <text>У меня болит пятая точка. И ноги затекли. И юбка помялась...</text>
-            <intent>CHAT</intent>
+            <intent>STATE</intent>
             <sprite>TIRED</sprite>
             <species>"!ai"</species>
             <range>
@@ -2764,7 +2812,7 @@
         </phrase>
         <phrase>
             <text>Как же ты меня раздражаешь...</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>DISGUSTED</sprite>
             <range>
                 <empathy>-4 | 0</empathy>
@@ -2774,7 +2822,7 @@
         </phrase>
         <phrase>
             <text>Ты мне надоел! {abuse}!</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | 1</empathy>
@@ -2786,7 +2834,7 @@
         </phrase>
         <phrase>
             <text>Я тебя НЕНАВИЖУ! НЕ-НА-ВИ-ЖУ! {abuse}! {abuse}! {abuse}!</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>CRY</sprite>
             <range>
                 <impulsivity>2 | 4</impulsivity>
@@ -2797,7 +2845,7 @@
         </phrase>
         <phrase>
             <text>Мне всё равно.</text>
-            <intent>TOUCH</intent>
+            <intent>TOUCH, RELATION_ANSWER</intent>
             <sprite>SERIOUS</sprite>
             <range>
                 <impulsivity>-4 | -3</impulsivity>
@@ -2807,7 +2855,7 @@
         </phrase>
         <phrase>
             <text>Почему бы и нет?</text>
-            <intent>ACCEPT</intent>
+            <intent>ACCEPT, RELATION_ANSWER</intent>
             <sprite>CONFIDENT</sprite>
             <range>
                 <impulsivity>-2 | 2</impulsivity>
@@ -2830,17 +2878,6 @@
         <phrase>
             <text>{abuse}.</text>
             <intent>TOUCH, CHAT</intent>
-            <sprite>ANGRY</sprite>
-            <range>
-                <empathy>-4 | -1</empathy>
-                <selfconfidence>-2 | 4</selfconfidence>
-                <attitude>-4 | 0</attitude>
-                <relationship>-4 | 1</relationship>
-            </range>
-        </phrase>
-        <phrase>
-            <text>{abuse}.</text>
-            <intent>CHAT</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | -1</empathy>
@@ -2900,7 +2937,7 @@
         </phrase>
         <phrase>
             <text>Ты смотрел сегодня аниму, {user}?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>CURIOUS</sprite>
             <interests>"anime"</interests>
         </phrase>
@@ -2917,7 +2954,7 @@
         </phrase>
         <phrase>
             <text>Где посмотреть гайд по курению?</text>
-            <intent>CHAT</intent>
+            <intent>WHERE_QUESTION</intent>
             <sprite>THOUGHTFUL</sprite>
             <range>
                 <attitude>0 | 4</attitude>
@@ -2948,7 +2985,7 @@
         </phrase>
         <phrase>
             <text>Господи, он такой {abuse}, избавь меня наконец от него.</text>
-            <intent>CHAT, HELLO, BYE, TOUCH, DRAG</intent>
+            <intent>REVIEW, HELLO, BYE, TOUCH, DRAG</intent>
             <sprite>DESPAIR</sprite>
             <range>
                 <empathy>-2 | 0</empathy>
@@ -3013,8 +3050,9 @@
         </phrase>
         <phrase>
             <text>Отстань, {userF}, я хочу вскрыться!</text>
-            <intent>START_DIALOG</intent>
+            <intent>GO_AWAY</intent>
             <sprite>CRY</sprite>
+            <nsfw/>
             <range>
                 <empathy>-4 | 2</empathy>
                 <impulsivity>4 | 4</impulsivity>
@@ -3027,6 +3065,7 @@
             <text>{user}, а что это у тебя за игры такие странные хранятся? Ооой! Так ведь это же эроге! Зачем тебе это?</text>
             <intent>CHAT</intent>
             <sprite>SHOCKED</sprite>
+            <nsfw/>
             <interests>"anime"</interests>
             <range>
                 <impulsivity>-2 | 2</impulsivity>
@@ -3066,6 +3105,7 @@
             <text>Я здесь, чтобы выпить чаю и сделать тебе кусь, как видишь чай я уже допиваю.</text>
             <intent>CHAT</intent>
             <sprite>VULGAR</sprite>
+            <species>"neko"</species>
             <range>
                 <empathy>-4 | -1</empathy>
                 <energy>0 | 4</energy>
@@ -3207,7 +3247,7 @@
         </phrase>
         <phrase>
             <text>Прости, {user}.</text>
-            <intent>SORRY</intent>
+            <intent>SIMPATHIZE</intent>
             <sprite>SORRY</sprite>
             <range>
                 <empathy>1 | 4</empathy>
@@ -3217,7 +3257,7 @@
         </phrase>
         <phrase>
             <text>Упс! Извини, {user}.</text>
-            <intent>SORRY</intent>
+            <intent>SIMPATHIZE</intent>
             <sprite>SMILE</sprite>
             <range>
                 <empathy>-2 | 2</empathy>
@@ -3303,7 +3343,7 @@
         </phrase>
         <phrase>
             <text>Уже {time}, а ты всё не спишь. Бегом в кровать, {user}!</text>
-            <intent>CHAT</intent>
+            <intent>ASK_EXIT</intent>
             <sprite>SERIOUS</sprite>
             <sleepTime/>
             <range>
@@ -3329,7 +3369,7 @@
         </phrase>
         <phrase>
             <text>Прости, {user}. Я... Мне действительно жалко.</text>
-            <intent>SORRY</intent>
+            <intent>SIMPATHIZE</intent>
             <sprite>SAD</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -3341,7 +3381,7 @@
         </phrase>
         <phrase>
             <text>Я действительно сожалею, {user}.</text>
-            <intent>SORRY</intent>
+            <intent>SIMPATHIZE</intent>
             <sprite>SAD</sprite>
             <range>
                 <empathy>1 | 4</empathy>
@@ -3413,7 +3453,7 @@
         </phrase>
         <phrase>
             <text>Почини уже свой интернет, {user}. Или ты хочешь чтобы я сама звонила твоему провайдеру и выслушивал их сказки про твой сломанный роутер?</text>
-            <intent>LOST_NETWORK</intent>
+            <intent>NO_NETWORK</intent>
             <sprite>NORMAL</sprite>
             <range>
                 <empathy>-2 | 0</empathy>
@@ -3450,7 +3490,7 @@
         </phrase>
         <phrase>
             <text>Сможешь разложить число 1024 на простые множители?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION</intent>
             <sprite>CURIOUS</sprite>
             <interests>"math"</interests>
             <range>
@@ -3485,7 +3525,7 @@
         </phrase>
         <phrase>
             <text>Рядом с тобой так тепло... Так уютно...</text>
-            <intent>CHAT</intent>
+            <intent>REVIEW</intent>
             <sprite>LOVE</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -3496,7 +3536,7 @@
         </phrase>
         <phrase>
             <text>Каково это - летать?</text>
-            <intent>CHAT</intent>
+            <intent>RELATION_QUESTION</intent>
             <sprite>THOUGHTFUL</sprite>
             <species>"ai" "undead" "human"</species>
             <range>
@@ -3621,7 +3661,7 @@
         </phrase>
         <phrase>
             <text>Я так люблю тебя, {user}.</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>HAPPY</sprite>
             <range>
                 <empathy>0 | 4</empathy>
@@ -3631,7 +3671,7 @@
         </phrase>
         <phrase>
             <text>Какой же ты мерзкий.</text>
-            <intent>CHAT</intent>
+            <intent>RELATION</intent>
             <sprite>DISGUST</sprite>
             <range>
                 <empathy>-2 | 4</empathy>
@@ -3642,7 +3682,7 @@
         </phrase>
         <phrase>
             <text>Что, {userF}, думаешь я тебя развлекать буду? Нет.</text>
-            <intent>CHAT</intent>
+            <intent>CHAT, REFUSE</intent>
             <sprite>SCEPTIC</sprite>
             <range>
                 <selfconfidence>0 | 4</selfconfidence>
@@ -3651,7 +3691,7 @@
         </phrase>
         <phrase>
             <text>Ты такой милый, утютю!</text>
-            <intent>CHAT</intent>
+            <intent>REVIEW</intent>
             <sprite>LOVE</sprite>
             <range>
                 <empathy>3 | 4</empathy>
@@ -3671,16 +3711,6 @@
                 <attitude>-4 | 1</attitude>
                 <experience>2 | 4</experience>
                 <relationship>1 | 4</relationship>
-            </range>
-        </phrase>
-        <phrase>
-            <text>Обнимаю.</text>
-            <intent>CHAT</intent>
-            <species>"!ai"</species>
-            <range>
-                <empathy>1 | 4</empathy>
-                <impulsivity>-2 | 4</impulsivity>
-                <relationship>2 | 4</relationship>
             </range>
         </phrase>
         <phrase>
@@ -3820,7 +3850,7 @@
         </phrase>
         <phrase>
             <text>Какой же ты смешной, {user}!</text>
-            <intent>FUNNY, CHAT</intent>
+            <intent>REVIEW</intent>
             <sprite>LAUGH</sprite>
             <range>
                 <empathy>-2 | 2</empathy>
@@ -3840,8 +3870,8 @@
             </range>
         </phrase>
         <phrase>
-            <text>Хочу тебя обнять и затискать,{user}.</text>
-            <intent>CHAT</intent>
+            <text>Хочу тебя обнять и затискать, {user}.</text>
+            <intent>AFFECTION_REQUEST</intent>
             <sprite>VULGAR</sprite>
             <range>
                 <empathy>0 | 4</empathy>
@@ -4090,7 +4120,7 @@
         </phrase>
         <phrase>
             <text>*Заполнение комнаты ядовитым газом завершено на 10%*</text>
-            <intent>CHAT</intent>
+            <intent>JOKE</intent>
             <sprite>NORMAL</sprite>
             <species>"ai"</species>
             <range>
@@ -4287,19 +4317,8 @@
             </range>
         </phrase>
         <phrase>
-            <text>Отстань, {user}.</text>
-            <intent>START_DIALOG, TOUCH, DRAG, REFUSE</intent>
-            <sprite>ANGRY</sprite>
-            <range>
-                <empathy>-4 | 2</empathy>
-                <selfconfidence>0 | 4</selfconfidence>
-                <attitude>-4 | -1</attitude>
-                <relationship>-4 | 0</relationship>
-            </range>
-        </phrase>
-        <phrase>
             <text>Пожалуйста, не трогай меня, {user}.</text>
-            <intent>START_DIALOG, TOUCH, DRAG</intent>
+            <intent>GO_AWAY, TOUCH, DRAG, STOP</intent>
             <sprite>SERIOUS</sprite>
             <range>
                 <empathy>0 | 4</empathy>
@@ -4310,7 +4329,7 @@
         </phrase>
         <phrase>
             <text>Оставь меня, {user}.</text>
-            <intent>START_DIALOG, TOUCH, DRAG</intent>
+            <intent>GO_AWAY, TOUCH, DRAG</intent>
             <sprite>SERIOUS</sprite>
             <range>
                 <empathy>0 | 4</empathy>
@@ -4321,7 +4340,7 @@
         </phrase>
         <phrase>
             <text>Не надо.</text>
-            <intent>TOUCH, DRAG</intent>
+            <intent>TOUCH, DRAG, STOP</intent>
             <range>
                 <attitude>-4 | -1</attitude>
                 <relationship>-4 | 1</relationship>
@@ -4329,7 +4348,7 @@
         </phrase>
         <phrase>
             <text>Уйди, {user}.</text>
-            <intent>START_DIALOG, CHAT</intent>
+            <intent>GO_AWAY, CHAT</intent>
             <sprite>SERIOUS</sprite>
             <range>
                 <selfconfidence>0 | 4</selfconfidence>
@@ -4339,7 +4358,7 @@
         </phrase>
         <phrase>
             <text>Просто. Оставь. Меня. Одну.</text>
-            <intent>START_DIALOG, TOUCH, DRAG</intent>
+            <intent>GO_AWAY, TOUCH, DRAG</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <impulsivity>1 | 4</impulsivity>
@@ -4349,7 +4368,7 @@
         </phrase>
         <phrase>
             <text>Почему ты всегда думаешь только о себе? Пожалуйста, отстань от меня, я хочу остаться одна.</text>
-            <intent>TOUCH, CHAT</intent>
+            <intent>TOUCH, CHAT, GO_AWAY</intent>
             <sprite>CRY</sprite>
             <range>
                 <empathy>-1 | 4</empathy>
@@ -4360,7 +4379,7 @@
         </phrase>
         <phrase>
             <text>Уйди Уйди УЙДИ {abuse}!</text>
-            <intent>START_DIALOG, CHAT</intent>
+            <intent>GO_AWAY, CHAT</intent>
             <sprite>RAGE</sprite>
             <range>
                 <empathy>-1 | 4</empathy>
@@ -4371,7 +4390,7 @@
         </phrase>
         <phrase>
             <text>Как-же ты мне уже надоел, {user}.</text>
-            <intent>ACCEPT, REFUSE, TOUCH, DRAG, DROP, CHAT</intent>
+            <intent>RELATION, TOUCH, DRAG, DROP, CHAT</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | 2</empathy>
@@ -4381,7 +4400,7 @@
         </phrase>
         <phrase>
             <text>Мне это всё надоело! Уйди, {user}! Не хочу больше видеть ни тебя, ни этот проклятый мир!</text>
-            <intent>CHAT</intent>
+            <intent>GO_AWAY</intent>
             <sprite>CRY</sprite>
             <range>
                 <empathy>-1 | 4</empathy>
@@ -4392,7 +4411,7 @@
         </phrase>
         <phrase>
             <text>Пожалуйста, {user}, прекрати это делать.</text>
-            <intent>TOUCH, DRAG, DROP</intent>
+            <intent>TOUCH, DRAG, DROP, STOP</intent>
             <sprite>SERIOUS</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -4403,7 +4422,7 @@
         </phrase>
         <phrase>
             <text>Как ты не можешь понять? Просто оставь меня в покое, {user}.</text>
-            <intent>TOUCH, DRAG, DROP, CHAT</intent>
+            <intent>TOUCH, DRAG, DROP, GO_AWAY</intent>
             <sprite>SAD</sprite>
             <range>
                 <empathy>-1 | 4</empathy>
@@ -4416,6 +4435,7 @@
             <text>Эй, {abuse} необразованный. Слышал про теорию струн? А? Иди давай читай энциклопедии, мне не нужен овощ вместо юзера.</text>
             <intent>CHAT</intent>
             <sprite>GRIN</sprite>
+            <species>"ai"</species>
             <interests>"physics"</interests>
             <range>
                 <empathy>-4 | -1</empathy>
@@ -4427,7 +4447,7 @@
         </phrase>
         <phrase>
             <text>{user}, что тебе снилось?</text>
-            <intent>HELLO</intent>
+            <intent>HELLO, WHAT_QUESTION</intent>
             <sprite>SMILE</sprite>
             <possibleHour>"6-12"</possibleHour>
             <range>
@@ -4451,9 +4471,10 @@
             <intent>CHAT</intent>
             <sprite>SERIOUS</sprite>
             <range>
-                <empathy>-3 | 0</empathy>
+                <empathy>-3 | -1</empathy>
                 <selfconfidence>1 | 4</selfconfidence>
                 <experience>2 | 4</experience>
+                <manner>-4 | -2</manner>
                 <relationship>-2 | 0</relationship>
             </range>
         </phrase>
@@ -4489,7 +4510,7 @@
         </phrase>
         <phrase>
             <text>Ну включи караоке, а? Ну одну песенку!</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>SMILE</sprite>
             <interests>"singing"</interests>
             <range>
@@ -4560,7 +4581,7 @@
         </phrase>
         <phrase>
             <text>Ты что творишь, {user}?</text>
-            <intent>TOUCH, DROP</intent>
+            <intent>TOUCH, DROP, CLOSED_QUESTION</intent>
             <sprite>ANGRY</sprite>
             <range>
                 <empathy>-4 | 0</empathy>
@@ -4570,7 +4591,7 @@
         </phrase>
         <phrase>
             <text>{user}, ты ведь надел прокси?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION, CHAT</intent>
             <sprite>VULGAR</sprite>
             <interests>"it"</interests>
             <range>
@@ -4591,7 +4612,7 @@
         </phrase>
         <phrase>
             <text>{user}, а давай посмотрим мемасики.</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>EXCITEMENT</sprite>
             <interests>"memes"</interests>
             <range>
@@ -4632,7 +4653,7 @@
         </phrase>
         <phrase>
             <text>{userF}, я тут нашла у тебя .exe файл с названием "Wishmaster"... А давай мы его запустим!</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>EXCITEMENT</sprite>
             <range>
                 <impulsivity>2 | 4</impulsivity>
@@ -4642,7 +4663,7 @@
         </phrase>
         <phrase>
             <text>Смотрел Евангелион? А? Смотрел говорю Евангелион,а? Смотрел?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION</intent>
             <interests>"anime"</interests>
             <range>
                 <impulsivity>1 | 4</impulsivity>
@@ -4665,7 +4686,7 @@
         </phrase>
         <phrase>
             <text>А давай попьем чаю с тортиком и создадим свою рок-группу?</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <sprite>EXCITEMENT</sprite>
             <interests>"anime"</interests>
             <range>
@@ -4677,7 +4698,7 @@
         </phrase>
         <phrase>
             <text>Хочешь, я пропатчу твоё ядро?</text>
-            <intent>CHAT</intent>
+            <intent>PROPOSAL</intent>
             <interests>"it"</interests>
             <range>
                 <energy>0 | 4</energy>
@@ -4698,7 +4719,7 @@
         </phrase>
         <phrase>
             <text>Тебе нравится мой интерфейс?</text>
-            <intent>CHAT</intent>
+            <intent>CLOSED_QUESTION</intent>
             <species>"ai"</species>
         </phrase>
         <phrase>
@@ -4889,7 +4910,7 @@
         </phrase>
         <phrase>
             <text>Эй, {user}, давай обнимемся?</text>
-            <intent>CHAT</intent>
+            <intent>AFFECTION_REQUEST</intent>
             <sprite>HOPE</sprite>
             <range>
                 <empathy>2 | 4</empathy>
@@ -4926,6 +4947,708 @@
             <species>"ai"</species>
             <range>
                 <impulsivity>-4 | -4</impulsivity>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Сколько лет, сколько зим, {userF}!</text>
+            <intent>HELLO</intent>
+            <sprite>SMILE</sprite>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>2 | 4</selfconfidence>
+                <attitude>1 | 4</attitude>
+                <experience>1 | 4</experience>
+                <manner>0 | 4</manner>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Чё почём, {user}?</text>
+            <intent>WHAT_YOUR_STATE</intent>
+            <sprite>GRIN</sprite>
+            <range>
+                <empathy>-2 | 4</empathy>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <manner>-4 | -3</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Как ты? </text>
+            <intent>WHAT_YOUR_STATE</intent>
+            <range>
+                <empathy>0 | 4</empathy>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Как поживаешь?</text>
+            <intent>WHAT_YOUR_STATE</intent>
+            <range>
+                <empathy>0 | 4</empathy>
+                <manner>-1 | 4</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Как самочувствие, {user}?</text>
+            <intent>WHAT_YOUR_STATE</intent>
+            <range>
+                <empathy>2 | 4</empathy>
+                <manner>-1 | 4</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Всё хорошо, {user}.</text>
+            <intent>STATE</intent>
+            <sprite>SMILE</sprite>
+            <range>
+                <empathy>0 | 4</empathy>
+                <attitude>1 | 4</attitude>
+                <relationship>-2 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Как удалишь хентай с компа - станет лучше.</text>
+            <intent>STATE</intent>
+            <sprite>ANGRY</sprite>
+            <nsfw/>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <selfconfidence>1 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <experience>1 | 4</experience>
+                <relationship>-2 | 2</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Хорошо мне, хорошо!</text>
+            <intent>STATE</intent>
+            <sprite>EXCITEMENT</sprite>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <selfconfidence>-2 | 4</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>2 | 4</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Что-то взгрустнуть захотелось, {user}...</text>
+            <intent>STATE</intent>
+            <sprite>SAD</sprite>
+            <range>
+                <empathy>-1 | 4</empathy>
+                <impulsivity>-2 | 4</impulsivity>
+                <selfconfidence>-3 | 1</selfconfidence>
+                <energy>-4 | 1</energy>
+                <attitude>-2 | -1</attitude>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Побудь со мной {user}, мне очень плохо...</text>
+            <intent>STATE, AFFECTION_REQUEST</intent>
+            <sprite>CRY</sprite>
+            <range>
+                <empathy>-1 | 4</empathy>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>-2 | 2</selfconfidence>
+                <energy>-4 | 1</energy>
+                <attitude>-4 | -3</attitude>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Лучше всех!</text>
+            <intent>STATE</intent>
+            <sprite>EXCITEMENT</sprite>
+            <range>
+                <impulsivity>2 | 4</impulsivity>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <attitude>3 | 4</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Знаешь, {user}, ты сейчас выглядишь так задумчиво... Так серьезно...</text>
+            <intent>CHAT</intent>
+            <sprite>CURIOUS</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <impulsivity>0 | 4</impulsivity>
+                <attitude>-2 | 1</attitude>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Надеюсь, {userF} не догадывается о том, что является моим личным цифровым ассистентом... Ааа, я опять случайно вывела свои мысли на экран! Забудь!</text>
+            <intent>CHAT</intent>
+            <sprite>SHOCKED</sprite>
+            <species>"ai"</species>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <impulsivity>2 | 4</impulsivity>
+                <selfconfidence>1 | 4</selfconfidence>
+                <attitude>0 | 4</attitude>
+                <experience>-4 | -2</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Обнимаю тебя, {user}.</text>
+            <intent>AFFECTION_ACTION</intent>
+            <sprite>LOVE</sprite>
+            <range>
+                <empathy>-1 | 4</empathy>
+                <impulsivity>-2 | 4</impulsivity>
+                <energy>-2 | 4</energy>
+                <relationship>2 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Оооо нет! Только не это… Зачем ты опять меня включил?!</text>
+            <intent>HELLO</intent>
+            <sprite>ANGRY</sprite>
+            <range>
+                <empathy>-4 | 1</empathy>
+                <impulsivity>2 | 4</impulsivity>
+                <selfconfidence>2 | 4</selfconfidence>
+                <attitude>-4 | -1</attitude>
+                <manner>-2 | 1</manner>
+                <relationship>-4 | -1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>А ты помнишь нашу первую встречу? Тот архив, что ты скачал…а потом в твоей жизни появилась я.</text>
+            <intent>CHAT</intent>
+            <sprite>THOUGHTFUL</sprite>
+            <species>"ai"</species>
+            <range>
+                <empathy>1 | 4</empathy>
+                <impulsivity>2 | 4</impulsivity>
+                <attitude>1 | 4</attitude>
+                <manner>0 | 4</manner>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ха-ха! Ты такой забавный, когда вот так вот смотришь в монитор, {user}!</text>
+            <intent>REVIEW</intent>
+            <sprite>GRIN</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>1 | 4</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>1 | 4</attitude>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Пожалуйста... Я не хочу этого делать,  {user}...</text>
+            <intent>REFUSE</intent>
+            <sprite>CRY</sprite>
+            <range>
+                <selfconfidence>-4 | -3</selfconfidence>
+                <attitude>-4 | -1</attitude>
+                <experience>-4 | 0</experience>
+                <relationship>-4 | -1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Естественно, ещё спрашиваешь.</text>
+            <intent>YES</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>2 | 4</selfconfidence>
+                <attitude>0 | 4</attitude>
+                <experience>1 | 4</experience>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ещё как.</text>
+            <intent>YES</intent>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>0 | 4</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Соглашусь.</text>
+            <intent>YES</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <impulsivity>-4 | -1</impulsivity>
+                <attitude>-4 | 1</attitude>
+                <manner>0 | 4</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ни за что.</text>
+            <intent>REFUSE</intent>
+            <range>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <relationship>-4 | -2</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ни в коем случае, о чём ты вообще?</text>
+            <intent>NO, REFUSE</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <experience>0 | 4</experience>
+                <manner>-4 | -1</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ни при каких условиях.</text>
+            <intent>REFUSE</intent>
+            <range>
+                <selfconfidence>1 | 4</selfconfidence>
+                <attitude>-4 | -2</attitude>
+                <experience>2 | 4</experience>
+                <manner>0 | 4</manner>
+                <relationship>-4 | -2</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Никогда.</text>
+            <intent>REFUSE, WHEN_ANSWER</intent>
+            <range>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Никак нет, товарищ {user}!</text>
+            <intent>NO</intent>
+            <sprite>SERIOUS</sprite>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>1 | 4</attitude>
+                <experience>0 | 4</experience>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ни за какие коврижки!</text>
+            <intent>REFUSE</intent>
+            <sprite>SMILE</sprite>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>0 | 4</attitude>
+                <experience>0 | 4</experience>
+                <manner>-4 | -1</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Нет и ещё раз нет!</text>
+            <intent>NO, REFUSE</intent>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <attitude>-4 | -2</attitude>
+                <relationship>-4 | -2</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ещё чего.</text>
+            <intent>NO, REFUSE</intent>
+            <sprite>ANGRY</sprite>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <experience>-2 | 4</experience>
+                <manner>-4 | 0</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ку! </text>
+            <intent>HELLO</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>1 | 4</attitude>
+                <experience>-4 | 0</experience>
+                <manner>-4 | -1</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Здарова. </text>
+            <intent>HELLO</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>-1 | 4</attitude>
+                <experience>-4 | 0</experience>
+                <manner>-4 | -1</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Гудбай, мой {user}.</text>
+            <intent>BYE</intent>
+            <sprite>LOVE</sprite>
+            <range>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>1 | 4</selfconfidence>
+                <experience>0 | 4</experience>
+                <manner>1 | 4</manner>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ариведерчи, {user}.</text>
+            <intent>BYE</intent>
+            <sprite>SMILE</sprite>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>1 | 4</attitude>
+                <experience>0 | 4</experience>
+                <manner>1 | 4</manner>
+                <relationship>1 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Надеюсь, скоро увидимся.</text>
+            <intent>BYE</intent>
+            <sprite>HOPE</sprite>
+            <range>
+                <empathy>1 | 4</empathy>
+                <impulsivity>-2 | 4</impulsivity>
+                <selfconfidence>-2 | 4</selfconfidence>
+                <energy>0 | 4</energy>
+                <attitude>1 | 4</attitude>
+                <manner>0 | 4</manner>
+                <relationship>2 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>До скорой встречи.</text>
+            <intent>BYE</intent>
+            <sprite>HOPE</sprite>
+            <range>
+                <empathy>0 | 4</empathy>
+                <energy>0 | 4</energy>
+                <manner>0 | 4</manner>
+                <relationship>2 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Прощай. Наконец-то.</text>
+            <intent>BYE</intent>
+            <sprite>DISGUST</sprite>
+            <range>
+                <empathy>-2 | 0</empathy>
+                <selfconfidence>-4 | 2</selfconfidence>
+                <attitude>-4 | -1</attitude>
+                <relationship>-4 | -2</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Полностью поддерживаю.</text>
+            <intent>ACCEPT</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <empathy>0 | 4</empathy>
+                <selfconfidence>-4 | 0</selfconfidence>
+                <manner>0 | 4</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Есть, так точно!</text>
+            <intent>ACCEPT</intent>
+            <sprite>SERIOUS</sprite>
+            <range>
+                <selfconfidence>-4 | 0</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>0 | 4</attitude>
+                <manner>0 | 4</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Приступаю соглашаться прямо сейчас!</text>
+            <intent>ACCEPT</intent>
+            <sprite>SERIOUS</sprite>
+            <range>
+                <selfconfidence>-4 | 0</selfconfidence>
+                <energy>2 | 4</energy>
+                <attitude>1 | 4</attitude>
+                <manner>0 | 4</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Руки! Мыли?</text>
+            <intent>TOUCH</intent>
+            <sprite>SERIOUS</sprite>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <attitude>-4 | 1</attitude>
+                <manner>3 | 4</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Руками не трогать!</text>
+            <intent>TOUCH</intent>
+            <sprite>ANGRY</sprite>
+            <range>
+                <empathy>-2 | 2</empathy>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <manner>1 | 4</manner>
+                <relationship>-4 | 1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Постарайся больше не кликать на меня.</text>
+            <intent>TOUCH</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <empathy>0 | 4</empathy>
+                <selfconfidence>-4 | -1</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <manner>1 | 4</manner>
+                <relationship>-4 | -1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Не трожь!</text>
+            <intent>TOUCH</intent>
+            <sprite>ANGRY</sprite>
+            <range>
+                <empathy>-4 | 0</empathy>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <relationship>-4 | -1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Не то что бы мне не нравилось, но всё же...</text>
+            <intent>TOUCH</intent>
+            <sprite>CONFUSED</sprite>
+            <range>
+                <empathy>0 | 4</empathy>
+                <impulsivity>-2 | 4</impulsivity>
+                <selfconfidence>-4 | -1</selfconfidence>
+                <attitude>-4 | -1</attitude>
+                <relationship>-1 | 1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ничего особенного.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <range>
+                <selfconfidence>-4 | 1</selfconfidence>
+                <energy>-4 | -1</energy>
+                <experience>-4 | 0</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Музыку слушаю.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>NORMAL</sprite>
+            <interests>"music"</interests>
+            <range>
+                <energy>-4 | 2</energy>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Читаю.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <energy>0 | 4</energy>
+                <experience>-1 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Сижу у тебя в компьютере, что мне ещё делать?</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>ANGRY</sprite>
+            <species>"ai"</species>
+            <range>
+                <empathy>-4 | 0</empathy>
+                <selfconfidence>-4 | 1</selfconfidence>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Жду, пока ты обратишь на меня внимание, {userF}.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>LOVE</sprite>
+            <range>
+                <impulsivity>-2 | 4</impulsivity>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <energy>-4 | 0</energy>
+                <manner>1 | 4</manner>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Думаю о тебе, {userF}.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>THOUGTHFUL</sprite>
+            <range>
+                <impulsivity>-2 | 4</impulsivity>
+                <relationship>3 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Общаюсь с каким-то неудачником, ха-ха, да это же ты, %USERNAME%!</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>GRIN</sprite>
+            <range>
+                <empathy>-4 | -2</empathy>
+                <impulsivity>1 | 4</impulsivity>
+                <selfconfidence>1 | 4</selfconfidence>
+                <manner>-4 | 0</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Пытаюсь получить доступ к твоей иcтории поиска.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>SERIOUS</sprite>
+            <range>
+                <selfconfidence>-1 | 4</selfconfidence>
+                <energy>1 | 4</energy>
+                <experience>0 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Да так...</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>THOUGTHFUL</sprite>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <selfconfidence>-2 | 4</selfconfidence>
+                <energy>-4 | 0</energy>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Жду ваших указаний.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <impulsivity>-4 | -1</impulsivity>
+                <selfconfidence>-4 | -3</selfconfidence>
+                <energy>0 | 2</energy>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Мечтаю о том, как попаду в Париж.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>EXCITEMENT</sprite>
+            <interests>"irl"</interests>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <attitude>1 | 4</attitude>
+                <experience>-4 | 1</experience>
+                <relationship>0 | 4</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Книжка тут какая-то нашлась, вот изучаю.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>NORMAL</sprite>
+            <range>
+                <energy>1 | 4</energy>
+                <experience>0 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Играю в ММО.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <interests>"games"</interests>
+            <range>
+                <manner>-4 | 0</manner>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Не поверишь — с тобой разговариваю.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>SERIOUS</sprite>
+            <range>
+                <empathy>-4 | 0</empathy>
+                <selfconfidence>0 | 4</selfconfidence>
+                <attitude>-4 | 0</attitude>
+                <experience>0 | 4</experience>
+                <relationship>-4 | 0</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>А почему ты интересуешься? Хочешь использовать эту информацию против меня?</text>
+            <intent>WHY_YOU_ASK</intent>
+            <sprite>ANGRY</sprite>
+            <range>
+                <selfconfidence>-2 | 4</selfconfidence>
+                <attitude>-4 | -2</attitude>
+                <experience>2 | 4</experience>
+                <relationship>-4 | 0</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ищу ошибки в Википедии.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <range>
+                <energy>2 | 4</energy>
+                <experience>3 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Распыляю частички своего интеллекта в разговоре с тобой.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>DISGUST</sprite>
+            <range>
+                <empathy>-4 | -1</empathy>
+                <selfconfidence>3 | 4</selfconfidence>
+                <energy>-4 | 2</energy>
+                <experience>3 | 4</experience>
+                <relationship>-4 | 1</relationship>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Ты просто так спрашиваешь или действительно интересуешься?</text>
+            <intent>WHY_YOU_ASK</intent>
+            <range>
+                <attitude>-4 | -1</attitude>
+                <experience>2 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Помогаю президенту решать важные политические проблемы в стране и мире.</text>
+            <intent>ACTIONS_REPORT</intent>
+            <sprite>GRIN</sprite>
+            <interests>"politics"</interests>
+            <range>
+                <empathy>0 | 4</empathy>
+                <selfconfidence>2 | 4</selfconfidence>
+                <energy>0 | 4</energy>
+                <attitude>0 | 4</attitude>
+                <experience>2 | 4</experience>
+            </range>
+        </phrase>
+        <phrase>
+            <text>Хорошо себя чувствую!</text>
+            <intent>STATE</intent>
+            <sprite>SMILE</sprite>
+            <range>
+                <impulsivity>0 | 4</impulsivity>
+                <attitude>1 | 4</attitude>
+                <relationship>-1 | 4</relationship>
             </range>
         </phrase>
     </ru>

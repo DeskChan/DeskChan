@@ -2,6 +2,7 @@ package info.deskchan.talking_system;
 
 import org.json.JSONObject;
 
+import java.util.List;
 import java.util.Map;
 
 public interface EmotionsController {
@@ -29,5 +30,7 @@ public interface EmotionsController {
 	void setFromJSON(JSONObject json);
 
 	JSONObject toJSON();
+
+	List<String> getEmotionsList();
 
 }
