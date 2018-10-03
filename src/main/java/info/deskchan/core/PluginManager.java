@@ -1,6 +1,5 @@
 package info.deskchan.core;
 
-import info.deskchan.talking_system.Main;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.*;
@@ -112,6 +111,7 @@ public class PluginManager {
 		if (plugins.containsKey(id)) {
 			throw new Throwable("Cannot load plugin \"" + id + "\": plugin with such name already exist");
 		}
+
 		if (blacklistedPlugins.contains(id)) {
 			return false;
 		}
@@ -497,6 +497,7 @@ public class PluginManager {
 
 	/** Remove plugin from blacklist. You need to load it manually if you want it to be loaded. **/
 	public void removePluginFromBlacklist(String name) {
+		Debug.printTraceBack();
 		blacklistedPlugins.remove(name);
 		savePluginsBlacklist();
 	}
@@ -508,13 +509,11 @@ public class PluginManager {
 
 		try {
 			for (String line : blacklist.readAllLines()) {
-				if (line.length() > 0) {
-					continue;
-				}
-				blacklistedPlugins.add(line);
+				if (line.trim().length() > 0)
+					blacklistedPlugins.add(line);
 			}
 		} catch (Exception e){
-			Main.log(e);
+			log(e);
 		}
 	}
 
