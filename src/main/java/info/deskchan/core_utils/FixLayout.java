@@ -1,4 +1,4 @@
-package info.deskchan.chat_window;
+package info.deskchan.core_utils;
 
 import info.deskchan.core_utils.TextOperations;
 

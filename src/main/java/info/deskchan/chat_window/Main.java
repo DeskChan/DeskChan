@@ -1,8 +1,6 @@
 package info.deskchan.chat_window;
 
-import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProperties;
-import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.core.*;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -84,8 +82,6 @@ public class Main implements Plugin {
         return ret;
     }
 
-    private List<String> resend = new ArrayList<>();
-
     @Override
     public boolean initialize(PluginProxyInterface newPluginProxy) {
         pluginProxy = newPluginProxy;
@@ -163,21 +159,11 @@ public class Main implements Plugin {
 
         /* Listening all DeskChan speech to show it in chat. */
         pluginProxy.addMessageListener("DeskChan:just-said", (sender, tag, data) -> {
-            String text;
-            if(data instanceof Map){
-                Map m = (Map) data;
-                if(m.containsKey("text"))
-                    text = (String) m.get("text");
-                else if(m.containsKey("msgData"))
-                    text = (String) m.get("msgData");
-                else text="";
-            } else {
-                text = data.toString();
-            }
+            MessageDataMap map = new MessageDataMap("text", data);
 
             // very small timer to run this func in other thread
             pluginProxy.setTimer(20, (s, d) -> {
-                history.add(new ChatPhrase(text, 0));
+                history.add(new ChatPhrase(map.getString("text"), 0));
 
                 pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>() {{
                     put("id", "chat");
@@ -216,34 +202,9 @@ public class Main implements Plugin {
         });
 
         pluginProxy.addMessageListener("DeskChan:user-said", (sender, tag, data) -> {
-            String value = (String) (data instanceof Map ? ((Map) data).getOrDefault("value", "") : data.toString());
-            history.add(new ChatPhrase(value, 1));
+            MessageDataMap map = new MessageDataMap("value", data);
+            history.add(new ChatPhrase(map.getString("value"), 1));
             setupChat();
-        });
-
-        pluginProxy.setAlternative("DeskChan:user-said", "chat:change-layout-and-resend", 5);
-
-        // if user missed layout, we're trying to fix it and resend user speech again
-        pluginProxy.addMessageListener("chat:change-layout-and-resend", (sender, tag, dat) -> {
-            Map data = (Map) dat;
-            if(properties.getBoolean("fixer", true)){
-                String query = (String) data.get("value");
-                if (resend.contains(query)){
-                    resend.remove(query);
-                } else {
-                    resend.add(query);
-                    String translate = FixLayout.fixRussianEnglish(query);
-                    if (!translate.equals(query)) {
-                        history.add(new ChatPhrase(pluginProxy.getString("wrong-layout") + " " + translate, 2));
-                        Map<String, Object> cl = new HashMap<>(data);
-                        cl.put("value", translate);
-                        pluginProxy.sendMessage("DeskChan:user-said", cl);
-                        return;
-                    }
-                }
-
-            }
-            pluginProxy.sendMessage("DeskChan:user-said#chat:change-layout-and-resend", dat);
         });
 
         /* Saving options changed in options window.
