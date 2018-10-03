@@ -89,8 +89,10 @@ class Path : File {
         }
     }
 
+    @Throws(IOException::class)
     fun readAllLines(): List<String> = newBufferedReader().readLines()
 
+    @Throws(IOException::class)
     fun readAllBytes(): ByteArray = FileInputStream(this).readBytes()
 
 }

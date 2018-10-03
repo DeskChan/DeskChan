@@ -1,5 +1,6 @@
 package info.deskchan.core;
 
+import info.deskchan.talking_system.Main;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.*;
@@ -502,11 +503,18 @@ public class PluginManager {
 
 	/** Load blacklist from file. **/
 	private void loadPluginsBlacklist() {
-		for (String line : getPluginDataDirPath("core").resolve("blacklisted-plugins.txt").readAllLines()){
-			if (line.length() > 0) {
-				continue;
+		Path blacklist = getPluginDataDirPath("core").resolve("blacklisted-plugins.txt");
+		if (!blacklist.exists()) return;
+
+		try {
+			for (String line : blacklist.readAllLines()) {
+				if (line.length() > 0) {
+					continue;
+				}
+				blacklistedPlugins.add(line);
 			}
-			blacklistedPlugins.add(line);
+		} catch (Exception e){
+			Main.log(e);
 		}
 	}
 
