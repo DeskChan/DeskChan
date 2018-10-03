@@ -62,6 +62,7 @@ interface PluginOptionsControlItem {
 			case "TextField":
 
 				// hideText: boolean
+				// editable: boolean
 				// enterTag: String -> MessageListener
 				// onFocusLostTag: String -> MessageListener
 				// onChangeTag: String -> MessageListener
@@ -311,6 +312,7 @@ interface PluginOptionsControlItem {
 		public void init(Map<String, Object> options, Object value) {
 			Boolean isPasswordField = (Boolean) options.getOrDefault("hideText", false);
 			textField = (isPasswordField) ? new PasswordField() : new TextField();
+			textField.setEditable((Boolean) options.getOrDefault("editable", true));
 
 			String enterTag  = (String) options.get("enterTag");
 			String focusTag  = (String) options.get("onFocusLostTag");
@@ -716,9 +718,7 @@ interface PluginOptionsControlItem {
 				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
 					property.setValue(getValue().toString());
 					App.showWaitingAlert(() -> {
-						Main.getPluginProxy().sendMessage(msgTag, new HashMap<String, Object>() {{
-							put("value", getValue());
-						}});
+						Main.getPluginProxy().sendMessage(msgTag,getValue());
 					});
 				});
 			}

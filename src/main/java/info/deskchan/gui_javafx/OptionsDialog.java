@@ -1,9 +1,6 @@
 package info.deskchan.gui_javafx;
 
-import info.deskchan.core.CommandsProxy;
-import info.deskchan.core.CoreInfo;
-import info.deskchan.core.PluginConfig;
-import info.deskchan.core.PluginManager;
+import info.deskchan.core.*;
 import info.deskchan.core_utils.Browser;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import javafx.application.Platform;
@@ -32,7 +29,6 @@ import javafx.util.converter.DefaultStringConverter;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
 class OptionsDialog extends TemplateBox {
@@ -713,12 +709,11 @@ class OptionsDialog extends TemplateBox {
 		button.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
 			chooser.setTitle(Main.getString("load_plugin"));
-			chooser.setInitialDirectory(PluginManager.getPluginsDirPath().toFile());
+			chooser.setInitialDirectory(PluginManager.getPluginsDirPath());
 			File file = chooser.showOpenDialog(OptionsDialog.this.getDialogPane().getScene().getWindow());
 			if (file != null) {
-				Path path = file.toPath();
 				try {
-					PluginManager.getInstance().loadPluginByPath(path);
+					PluginManager.getInstance().loadPluginByPath(new Path(file));
 				} catch (Throwable e) {
 					Main.log(e);
 				}

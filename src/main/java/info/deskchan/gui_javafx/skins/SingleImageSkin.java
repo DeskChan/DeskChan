@@ -1,31 +1,28 @@
 package info.deskchan.gui_javafx.skins;
 
+import info.deskchan.core.Path;
 import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Properties;
 
 class SingleImageSkin implements Skin {
 	
-	private final File path;
+	private final Path path;
 	private final Path propertiesPath;
 	private final Properties properties = new Properties();
 	
 	SingleImageSkin(Path path) {
-		this.path = path.toFile();
+		this.path = path;
 		propertiesPath = Main.getPluginProxy().getDataDirPath().resolve(
 				"skin_" + getName() + ".properties"
 		);
 		try {
-			properties.load(Files.newBufferedReader(propertiesPath));
+			properties.load((propertiesPath.newBufferedReader()));
 		} catch (Throwable e) {
 			try {
-				properties.load(Files.newBufferedReader(
-						path.resolveSibling(path.getFileName().toString() + ".properties")
-				));
+				properties.load(path.resolveSibling(path.getName() + ".properties").newBufferedReader());
 			} catch (Throwable e2) {
 				// Do nothing
 			}
@@ -34,7 +31,7 @@ class SingleImageSkin implements Skin {
 	
 	@Override
 	public String getName() {
-		return Skin.getSkinsPath().relativize(path.toPath()).toString();
+		return Skin.getSkinsPath().relativize(path);
 	}
 	
 	@Override
@@ -67,7 +64,7 @@ class SingleImageSkin implements Skin {
 				return;
 			}
 			properties.setProperty(key, value);
-			properties.store(Files.newBufferedWriter(propertiesPath), "Skin properties");
+			properties.store(propertiesPath.newBufferedWriter(), "Skin properties");
 		} catch (Throwable e) {
 			Main.log(e);
 		}
@@ -85,7 +82,7 @@ class SingleImageSkin implements Skin {
 		
 		@Override
 		public boolean matchByPath(Path path) {
-			return Files.isReadable(path) && path.getFileName().toString().endsWith(".png");
+			return path.canRead() && path.getName().endsWith(".png");
 		}
 		
 		@Override

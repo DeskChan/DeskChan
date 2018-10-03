@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx;
 
 import info.deskchan.core.MessageDataMap;
 import info.deskchan.core.MessageListener;
+import info.deskchan.core.Path;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.gui_javafx.panes.Balloon;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
@@ -9,6 +10,7 @@ import info.deskchan.gui_javafx.panes.ControllableSprite;
 import info.deskchan.gui_javafx.panes.UserBalloon;
 import info.deskchan.gui_javafx.panes.sprite_drawers.AnimatedSprite;
 import info.deskchan.gui_javafx.skins.Skin;
+import info.deskchan.gui_javafx.panes.Character;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -31,12 +33,9 @@ import javafx.util.Duration;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,7 +49,7 @@ public class App extends Application {
 	
 	private static App instance = null;
 
-	private info.deskchan.gui_javafx.panes.Character character;
+	protected info.deskchan.gui_javafx.panes.Character character;
 	private List<DelayNotifier> delayNotifiers = new LinkedList<>();
 
 	static float getTime(long start){
@@ -62,7 +61,7 @@ public class App extends Application {
 		instance = this;
 		long start = System.currentTimeMillis();
 
-		character = new info.deskchan.gui_javafx.panes.Character("main", Skin.load(Main.getProperties().getString("skin.name")));
+		character = new Character("main", Skin.load(new Path(Main.getProperties().getString("skin.name"))));
 		Main.log("character initialized, " + getTime(start));
 		// Hacking javafx Application class to hide app from programs panel
 		HackJavaFX.process();
@@ -238,7 +237,7 @@ public class App extends Application {
         * Returns: None */
 		pluginProxy.addMessageListener("gui:change-skin", (sender, tag, data) -> {
 			Main.runLater(() -> {
-				character.setSkin(Skin.load(data != null ? data.toString() : null));
+				character.setSkin(Skin.load(data != null ? new Path(data.toString()) : null));
 			});
 		});
 
@@ -704,8 +703,8 @@ public class App extends Application {
 			try {
 				MessageDataMap map = new MessageDataMap(data);
 				if (map.containsKey("skin")) {
-					File path = map.getFile("skin");
-					character.setSkin(Skin.load(path.toPath()));
+					Path path = map.getFile("skin");
+					character.setSkin(Skin.load(path));
 
 				} else if (map.containsKey("character-pos")){
 				    String[] pos = map.getString("character-pos").split(":");
@@ -763,7 +762,7 @@ public class App extends Application {
 		/* Open folder containing log file.  */
 		pluginProxy.addMessageListener("gui:open-log-file", (sender, tag, data) -> {
 			try {
-				Desktop.getDesktop().open(Main.getPluginProxy().getDataDirPath().getParent().toFile());
+				Desktop.getDesktop().open(Main.getPluginProxy().getDataDirPath().getParentPath());
 			} catch (Exception e){
 				showThrowable(e);
 			}
@@ -784,9 +783,9 @@ public class App extends Application {
 
 				String initialDirectory = (String) m.getOrDefault("initialDirectory", null);
 				if (initialDirectory != null) {
-					Path initialDirectoryPath = Paths.get(initialDirectory);
-					if (Files.isDirectory(initialDirectoryPath)) {
-						chooser.setInitialDirectory(initialDirectoryPath.toFile());
+					Path initialDirectoryPath = new Path(initialDirectory);
+					if (initialDirectoryPath.isDirectory()) {
+						chooser.setInitialDirectory(initialDirectoryPath);
 					}
 				}
 
@@ -1145,15 +1144,17 @@ public class App extends Application {
 
 	/** Load all fonts from 'assets/fonts'. **/
 	private void loadFonts() {
-		try (DirectoryStream<Path> directoryStream =
-					 Files.newDirectoryStream(Main.getPluginProxy().getAssetsDirPath().resolve("fonts"))) {
-			for (Path fontPath : directoryStream) {
-				if (fontPath.getFileName().toString().endsWith(".ttf")) {
-					Font.loadFont(Files.newInputStream(fontPath), 10);
+		File[] fonts = Main.getPluginProxy().getAssetsDirPath().resolve("fonts").listFiles();
+		if (fonts != null) {
+			try {
+				for (File fontPath : fonts) {
+					if (fontPath.getName().endsWith(".ttf")) {
+						Font.loadFont(new FileInputStream(fontPath), 10);
+					}
 				}
+			} catch (IOException e) {
+				Main.log(e);
 			}
-		} catch (IOException e) {
-			Main.log(e);
 		}
 		LocalFont.setDefaultFont(Main.getProperties().getString("interface.font"));
 		CharacterBalloon.setDefaultFont(Main.getProperties().getString("balloon.font"));

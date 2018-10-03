@@ -394,20 +394,38 @@ public class ControlsPanel {
 	}
 
 	void updateControlsPane(List<Map<String, Object>> update) {
-		if (namedControls == null) return;
-		for (Map<String, Object> control : update) {
-			String id = (String) control.get("id");
-			if(id == null) continue;
+		if (namedControls == null){
+			for (Map<String, Object> controlInfo : controls) {
+				if (controlInfo.containsKey("elements")) {
+					for (Map element : (List<Map>) controlInfo.get("elements")) {
+						for (Map<String, Object> control : update) {
+							if (control.get("id").equals(element.get("id"))){
+								element.putAll(control);
+							}
+						}
+					}
+				}
+				for (Map<String, Object> control : update) {
+					if (control.get("id").equals(controlInfo.get("id"))) {
+						controlInfo.putAll(control);
+					}
+				}
+			}
+		} else {
+			for (Map<String, Object> control : update) {
+				String id = (String) control.get("id");
+				if (id == null) continue;
 
-			PluginOptionsControlItem item = namedControls.get(id);
-			if (item == null) continue;
+				PluginOptionsControlItem item = namedControls.get(id);
+				if (item == null) continue;
 
-			Object value = control.get("value");
-			if (value != null) namedControls.get(id).setValue(value);
+				Object value = control.get("value");
+				if (value != null) namedControls.get(id).setValue(value);
 
-			Boolean disabled = App.getBoolean(control.get("disabled"), null);
-			if(disabled != null)
-				namedControls.get(id).getNode().setDisable(disabled);
+				Boolean disabled = App.getBoolean(control.get("disabled"), null);
+				if (disabled != null)
+					namedControls.get(id).getNode().setDisable(disabled);
+			}
 		}
 	}
 

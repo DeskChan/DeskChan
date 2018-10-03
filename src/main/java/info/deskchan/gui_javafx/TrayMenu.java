@@ -11,6 +11,7 @@ import java.util.ConcurrentModificationException;
 public class TrayMenu extends Menu{
 
     private volatile SystemTray trayRef = null;
+    private volatile dorkbox.systemTray.Menu trayMenu = null;
     
     public TrayMenu(){
         super();
@@ -22,13 +23,14 @@ public class TrayMenu extends Menu{
             systemTray.setImage(App.ICON_URL);
             systemTray.setStatus(App.NAME);
             trayRef = systemTray;
+            trayMenu = trayRef.getMenu();
         }
     }
 
     @Override
     public synchronized void update(){
-        if(trayRef != null && (trayRef.getMenu() instanceof dorkbox.systemTray.ui.swing._SwingTray ||
-           trayRef.getMenu() instanceof dorkbox.systemTray.ui.awt._AwtTray))
+        if(trayMenu != null && (trayMenu instanceof dorkbox.systemTray.ui.swing._SwingTray ||
+                trayMenu instanceof dorkbox.systemTray.ui.awt._AwtTray))
             SwingUtilities.invokeLater(this::updateImpl);
         else Platform.runLater(this::updateImpl);
     }
@@ -36,25 +38,23 @@ public class TrayMenu extends Menu{
     @Override
     protected synchronized void updateImpl(){
 
-        dorkbox.systemTray.Menu menu = trayRef.getMenu();
-
-        menu.clear();
+        trayMenu.clear();
         trayRef.setStatus(App.NAME);
 
-        menu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
-        menu.add(new MenuItem(Main.getString("send-top"), frontMenuItemAction));
+        trayMenu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
+        trayMenu.add(new MenuItem(Main.getString("send-top"), frontMenuItemAction));
 
-        menu.add(new Separator());
+        trayMenu.add(new Separator());
         try {
             for (PluginMenuItem it : menuItems) {
-                menu.add(toDorkBoxItem(it));
+                trayMenu.add(toDorkBoxItem(it));
             }
         } catch (ConcurrentModificationException e) {
             Main.log("Concurrent modification by tray. Write us if it cause you lags.");
             return;
         }
-        menu.add(new Separator());
-        menu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
+        trayMenu.add(new Separator());
+        trayMenu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
 
         super.updateImpl();
     }

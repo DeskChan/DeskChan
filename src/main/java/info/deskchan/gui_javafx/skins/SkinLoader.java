@@ -1,6 +1,7 @@
 package info.deskchan.gui_javafx.skins;
 
-import java.nio.file.Path;
+import info.deskchan.core.Path;
+
 import java.util.ArrayList;
 import java.util.List;
 
