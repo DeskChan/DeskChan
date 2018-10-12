@@ -6,7 +6,12 @@ public class IntentList extends ArrayList<String> implements ICompatible {
 
     public IntentList(){ super(); }
 
-    public IntentList(Collection<String> intents){ super(new HashSet<>(intents)); }
+    public IntentList(Collection<String> intents){
+        super();
+        if (intents != null){
+            addAll(intents);
+        }
+    }
 
     public IntentList(String[] intents){
         super();
@@ -28,6 +33,7 @@ public class IntentList extends ArrayList<String> implements ICompatible {
 
     @Override
     public boolean addAll(Collection<? extends String> c) {
+        if (c == null) return false;
         for (String a : c)
             add(a);
         return true;

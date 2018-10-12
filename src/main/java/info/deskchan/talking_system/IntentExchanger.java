@@ -135,6 +135,7 @@ public class IntentExchanger {
     public static class Reaction implements ICompatible {
         IntentList intents = new IntentList();
         String emotion = null;
+        String originText;
 
         public Reaction(){}
         public Reaction(IntentList intents){
@@ -262,7 +263,7 @@ public class IntentExchanger {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (DialogLine line : this) {
-                if (line.reaction == null) continue;
+                if (line.reaction == null || line.reaction.intents.size() == 0) continue;
                 if (line.isStart){
                     sb.append("################\n");
                 }

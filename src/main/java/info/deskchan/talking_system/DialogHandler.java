@@ -419,7 +419,12 @@ public class DialogHandler {
             if (phrase.intentType != null)
                 s.addAll(phrase.intentType);
         allIntents = new ArrayList<>(s);
-        inputIntentSelected = allIntents.get(0);
+        if (allIntents.size() > 0) {
+            allIntents.sort(Comparator.naturalOrder());
+            inputIntentSelected = allIntents.get(0);
+        } else {
+            inputIntentSelected = "X";
+        }
         outputIntentSelected = inputIntentSelected;
         resetPanel();
 

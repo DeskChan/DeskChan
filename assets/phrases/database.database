@@ -93,5 +93,13 @@
             <text>А у тебя как дела?</text>
             <intent>WHAT_YOUR_STATE</intent>
         </phrase>
+        <phrase>
+            <text>С тобой побеседовать хочу</text>
+            <intent>WANNA_TALK</intent>
+        </phrase>
+        <phrase>
+            <text>Ясно всё с тобой</text>
+            <intent>EVALUATION</intent>
+        </phrase>
     </ru>
 </phrases>

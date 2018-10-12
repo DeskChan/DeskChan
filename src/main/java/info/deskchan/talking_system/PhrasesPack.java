@@ -14,6 +14,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class PhrasesPack {
 
@@ -54,9 +55,13 @@ public class PhrasesPack {
         return packType;
     }
 
+    private String getDefaultLanguageTag(){
+        return Locale.getDefault().toLanguageTag(); // "ru";
+    }
+
     public void load(){
         try {
-            String defaultLanguage = "ru"; //Locale.getDefault().toLanguageTag();
+            String defaultLanguage = Locale.getDefault().toLanguageTag();
 
             phrases.clear();
             DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
@@ -94,7 +99,7 @@ public class PhrasesPack {
     }
 
     public void save(){
-        String defaultLanguage = "ru"; //Locale.getDefault().toLanguageTag();
+        String defaultLanguage = Locale.getDefault().toLanguageTag();
 
         DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
         f.setValidating(false);

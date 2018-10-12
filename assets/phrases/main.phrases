@@ -161,7 +161,7 @@
         </phrase>
         <phrase>
             <text>Пожалуйста, {user}.</text>
-            <intent>PLEASE</intent>
+            <intent>PLEASE, YOU_WELCOME</intent>
         </phrase>
         <phrase>
             <text>Зачем ты спрашиваешь?</text>
