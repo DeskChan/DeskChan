@@ -180,7 +180,7 @@ public class CorePlugin implements Plugin {
 		 * Returns: None  */
 		pluginProxy.addMessageListener("core-events:log", (sender, tag, data) -> {
 			Map mapLog = (Map) data;
-			LoggerLevel level = (LoggerLevel) mapLog.getOrDefault("level",LoggerLevel.INFO);
+			LoggerLevel level = (LoggerLevel) mapLog.getOrDefault("level", LoggerLevel.INFO);
 			PluginManager.log(sender, (String) mapLog.get("message"),level);
 		});
 

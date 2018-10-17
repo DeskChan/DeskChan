@@ -170,8 +170,8 @@ public class Character extends MovablePane {
 
 	private AnimatedSprite.AnimationData newAnimationData(ImageSprite newSprite){
         AnimatedSprite.AnimationData data = new AnimatedSprite.AnimationData();
-        data.next = newSprite;
-        data.smooth = true;
+        data.nextSprite = newSprite;
+        data.setSmooth(true);
         return data;
     }
 	private void updateImage(boolean reloadImage) {

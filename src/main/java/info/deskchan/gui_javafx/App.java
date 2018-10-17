@@ -1,16 +1,14 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.MessageData.GUI.SetSprite;
 import info.deskchan.core.MessageDataMap;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.Path;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.gui_javafx.panes.Balloon;
-import info.deskchan.gui_javafx.panes.CharacterBalloon;
-import info.deskchan.gui_javafx.panes.ControllableSprite;
-import info.deskchan.gui_javafx.panes.UserBalloon;
+import info.deskchan.gui_javafx.panes.*;
+import info.deskchan.gui_javafx.panes.Character;
 import info.deskchan.gui_javafx.panes.sprite_drawers.AnimatedSprite;
 import info.deskchan.gui_javafx.skins.Skin;
-import info.deskchan.gui_javafx.panes.Character;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -159,6 +157,7 @@ public class App extends Application {
 		PluginProxyInterface pluginProxy = Main.getPluginProxy();
 
 		/* Registering single action that will be visible in click menu.
+		* Recommended not to use this message but register event link to gui:menu-action
         * Public message
         * Params: Map
         *           name: String? - text of menu item
@@ -803,8 +802,8 @@ public class App extends Application {
 			Main.runLater(() -> {
 				MessageDataMap map = new MessageDataMap(data);
 				switch (map.getOneOf("type",
-						ControllableSprite.SpriteActionType.values(),
-						ControllableSprite.SpriteActionType.CREATE)){
+						SetSprite.SpriteActionType.values(),
+						SetSprite.SpriteActionType.CREATE)){
 					case CREATE: {
 						ControllableSprite sprite = new ControllableSprite(sender, map.getString("id"), map.getFile("file"));
 

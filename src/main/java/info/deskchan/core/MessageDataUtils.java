@@ -1,9 +1,8 @@
 package info.deskchan.core;
 
-import java.lang.reflect.*;
-import java.util.ArrayList;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class MessageDataUtils {
@@ -16,33 +15,54 @@ public final class MessageDataUtils {
 		if (data == null) {
 			return null;
 		}
-		if (!data.getClass().isAnnotationPresent(MessageData.class)) {
+
+		if (!(data instanceof MessageData)) {
 			return data;
+		}
+
+		int size = data.getClass().getDeclaredFields().length;
+		if (size == 0) return null;
+		if (size == 1) {
+			Field field = data.getClass().getDeclaredFields()[0];
+			Entry entry = extractField(field, data);
+			return entry != null ? entry.value : null;
 		}
 		Map<String, Object> m = new HashMap<>();
 		for (Field field : data.getClass().getDeclaredFields()) {
-			if (!Modifier.isPublic(field.getModifiers())) {
-				continue;
-			}
-			if (Modifier.isStatic(field.getModifiers())) {
-				continue;
-			}
-			if (field.isAnnotationPresent(MessageData.Ignore.class)) {
-				continue;
-			}
-			MessageData.FieldName fieldNameAnnotation = field.getAnnotation(MessageData.FieldName.class);
-			String fieldName = fieldNameAnnotation != null ? fieldNameAnnotation.value() : field.getName();
-			try {
-				m.put(fieldName, serialize(field.get(data)));
-			} catch (IllegalAccessException e) {
-				// Do nothing
-			}
+			Entry entry = extractField(field, data);
+			if (entry != null)
+				m.put(entry.key, entry.value);
 		}
-		m.put(ORIGINAL_INSTANCE_KEY, data);
+		//m.put(ORIGINAL_INSTANCE_KEY, data);
 		return m;
 	}
+
+	private static Entry extractField(Field field, Object owner){
+	    field.setAccessible(true);
+		if (Modifier.isStatic(field.getModifiers())) {
+			return null;
+		}
+		if (field.isAnnotationPresent(MessageData.Ignore.class)) {
+			return null;
+		}
+		MessageData.FieldName fieldNameAnnotation = field.getAnnotation(MessageData.FieldName.class);
+		String fieldName = fieldNameAnnotation != null ? fieldNameAnnotation.value() : field.getName();
+		try {
+			Object fieldValue = field.get(owner);
+			if (fieldValue != null)
+				return new Entry(fieldName, serialize(fieldValue));
+		} catch (Exception e) {
+			//System.out.println(e.getClass().getSimpleName() + " " + e.getMessage());
+		}
+		return null;
+	}
+
+	public static String getTag(MessageData message){
+		MessageData.Tag a = message.getClass().getAnnotation(MessageData.Tag.class);
+		return a != null ? a.value() : null;
+	}
 	
-	public static <T> T deserialize(Map<String, Object> m, Class<T> cls) {
+	/*public static <T> T deserialize(Map<String, Object> m, Class<T> cls) {
 		if (m == null) {
 			return null;
 		}
@@ -72,6 +92,7 @@ public final class MessageDataUtils {
 						String fieldName = fieldNameAnnotation != null ? fieldNameAnnotation.value() : field.getName();
 						if (m.containsKey(fieldName)) {
 							try {
+
 								Class<?> fieldCls = field.getType();
 								Object value = m.get(fieldName);
 								if (fieldCls.isAnnotationPresent(MessageData.class)) {
@@ -107,5 +128,11 @@ public final class MessageDataUtils {
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			return null;
 		}
+	}*/
+
+	private static class Entry {
+		String key;
+		Object value;
+		Entry(String k, Object v){ key = k; value = v; }
 	}
 }

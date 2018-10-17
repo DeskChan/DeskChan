@@ -8,6 +8,11 @@ interface PluginProxyInterface : MessageListener {
     /** Unload plugin from program immediately. This method is usually called from core. **/
     fun unload()
 
+    /** Send message through core.
+     * @param message
+     */
+    fun sendMessage(message: MessageData)
+
     /** Send message at tag through core.
      * @param tag Tag
      * @param data Any data that will be sent with message, can be null
@@ -33,14 +38,14 @@ interface PluginProxyInterface : MessageListener {
     /** Add listener to tag. All messages from everywhere in program will be received by this listener. */
     fun addMessageListener(tag: String, listener: MessageListener)
 
-    /** Add typed listener to tag. All messages from everywhere in program will be received by this listener. */
-    fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
+    ///** Add typed listener to tag. All messages from everywhere in program will be received by this listener. */
+    //fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
 
     /** Remove listener to tag. */
     fun removeMessageListener(tag: String, listener: MessageListener)
 
-    /** Remove typed listener to tag. */
-    fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
+    ///** Remove typed listener to tag. */
+    //fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>)
 
     /** Set alternative */
     fun setAlternative(srcTag: String, dstTag: String, priority:Int)

@@ -192,6 +192,7 @@ task assembleProxyInterface(type: Jar, group: 'desk-chan') {
 		include 'info/deskchan/core/LoggerLevel.class'
 		include 'info/deskchan/core/MessageDataMap.class'
 		include 'info/deskchan/core/MessageDataDeserializationException.class'
+		include 'info/deskchan/MessageData/*'
 	}
 	manifest {
 		attributes 'Main-Class': "info.deskchan.${baseName}.Main", 'Implementation-Version': appVersion

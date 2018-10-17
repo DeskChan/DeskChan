@@ -64,7 +64,7 @@ public class Main implements Plugin {
 		});
 
 		pluginProxy.addMessageListener("core:distribute-resources", (sender, tag, data) -> {
-			ResourceDistributor.distribute(new Path((String) data));
+			ResourceDistributor.distribute(new MessageDataMap("file", data).getFile("file"));
 		});
 
 		pluginProxy.setAlternative("core-utils:notify-after-delay", "core-utils:notify-after-delay-default-impl", 1);

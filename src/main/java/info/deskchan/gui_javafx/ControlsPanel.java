@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.MessageData.GUI.SetPanel;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -24,7 +25,7 @@ public class ControlsPanel {
 
 	static {
 		try {
-			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("panels-id"), "panels-id", PanelType.SUBMENU, new Pane(registeredPanelsListView)).set();
+			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("panels-id"), "panels-id", SetPanel.PanelType.SUBMENU, new Pane(registeredPanelsListView)).set();
 			registeredPanelsListView.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent click) {
@@ -50,9 +51,8 @@ public class ControlsPanel {
 	String owner;
 	TemplateBox parentWindow;
 	boolean predefinedPane = false;
-
-	enum PanelType { TAB, SUBMENU, WINDOW, PANEL, INFO }
-	PanelType type;
+	
+	SetPanel.PanelType type;
 
 	private Map<String, PluginOptionsControlItem> namedControls;
 
@@ -64,7 +64,7 @@ public class ControlsPanel {
 		this.id = id;
 	}
 
-	ControlsPanel(String sender, String name, String id,PanelType type, Pane panel) {
+	ControlsPanel(String sender, String name, String id, SetPanel.PanelType type, Pane panel) {
 		this.name = name;
 		this.owner = sender;
 		this.id = id;
@@ -86,7 +86,7 @@ public class ControlsPanel {
 		);
 	}
 
-	ControlsPanel(String sender, String name, String id, PanelType type, List<Map<String, Object>> controls) {
+	ControlsPanel(String sender, String name, String id, SetPanel.PanelType type, List<Map<String, Object>> controls) {
 		this (
 				sender,
 				name,
@@ -135,16 +135,20 @@ public class ControlsPanel {
 		this.msgClose = msgClose;
 		this.owner = sender;
 
-		if (action == null) return;
-		Platform.runLater(() -> {
-			switch (action.toLowerCase()){
-				case "show":   show();   break;
-				case "hide":   hide();   break;
-				case "set":    set();    break;
-				case "update": update(); break;
-				case "delete": delete(); break;
-			}
-		});
+		try {
+			SetPanel.ActionType actionType = SetPanel.ActionType.valueOf(action.toUpperCase());
+			Platform.runLater(() -> {
+				switch (actionType){
+					case SHOW:   show();   break;
+					case HIDE:   hide();   break;
+					case SET:    set();    break;
+					case UPDATE: update(); break;
+					case DELETE: delete(); break;
+				}
+			});
+		} catch (Exception e){
+			set();
+		}
 
 	}
 
@@ -193,8 +197,7 @@ public class ControlsPanel {
 		}
 		final ControlsPanel currentPanel = _currentPanel;
 		switch (currentPanel.type) {
-			case WINDOW:
-			case INFO: {
+			case WINDOW: {
 				Platform.runLater(() -> ControlsWindow.open(currentPanel));
 			}
 			break;
@@ -213,7 +216,7 @@ public class ControlsPanel {
 		}
 
 		switch (currentPanel.type){
-			case WINDOW: case INFO:{
+			case WINDOW:{
 				Platform.runLater(() -> ControlsWindow.closeCustomWindow(this));
 			} break;
 			case TAB: case SUBMENU: case PANEL:{
@@ -449,7 +452,7 @@ public class ControlsPanel {
 		}
 	}
 
-	static List<ControlsPanel> getPanels(PanelType type){
+	static List<ControlsPanel> getPanels(SetPanel.PanelType type){
 		return getPanels(null, type);
 	}
 
@@ -457,7 +460,7 @@ public class ControlsPanel {
 		return getPanels(owner, null);
 	}
 
-	static List<ControlsPanel> getPanels(String owner, PanelType panelType){
+	static List<ControlsPanel> getPanels(String owner, SetPanel.PanelType panelType){
 
 		List<ControlsPanel> result = new LinkedList<>();
 		for (ControlsPanel panel : registeredPanels.values())
@@ -468,11 +471,11 @@ public class ControlsPanel {
 		return result;
 	}
 
-	private static PanelType getType(String type){
+	private static SetPanel.PanelType getType(String type){
 		try {
-			return PanelType.valueOf(type.toUpperCase());
+			return SetPanel.PanelType.valueOf(type.toUpperCase());
 		} catch (Exception e){
-			throw new RuntimeException("Cannot cast " + type + " to PanelType", e.getCause());
+			throw new RuntimeException("Cannot cast " + type + " to SetPanel.PanelType", e.getCause());
 		}
 	}
 

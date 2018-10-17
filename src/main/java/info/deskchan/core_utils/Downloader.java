@@ -20,7 +20,7 @@ public class Downloader {
         }
         
         pluginProxy.sendMessage("core:add-command", new HashMap<String, Object>() {{
-            put("tag", "core-utils:download");
+            put("tag", "core:download");
             put("info", pluginProxy.getString("downloader.download"));
             put("msgInfo", new HashMap<String, String>() {{
                 put("url", pluginProxy.getString("downloader.downloader.url"));
@@ -37,7 +37,7 @@ public class Downloader {
             }});
         }});
         
-        pluginProxy.addMessageListener("core-utils:download", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("core:download", (sender, tag, data) -> {
             try {
                 Map<String, Object> mapData = (Map) data;
                 String urlString = mapData.get("url").toString();

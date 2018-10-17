@@ -17,7 +17,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
 
     private val loader: ClassLoader = plugin::class.java.classLoader
     private val messageListeners = HashMap<String, MutableSet<MessageListener>>()
-    private val typedListeners = HashMap<TypedMessageListener<*>, MessageListener>()
+    //private val typedListeners = HashMap<TypedMessageListener<*>, MessageListener>()
     private val responseListeners = HashMap<Any, ResponseInfo>()
     private var seq = 0
     private val properties: PluginProperties = PluginProperties(this)
@@ -48,8 +48,15 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
             }
         }
         messageListeners.clear()
-        typedListeners.clear()
+        //typedListeners.clear()
         PluginManager.getInstance().unregisterPlugin(this)
+    }
+
+    override fun sendMessage(message: MessageData) {
+        val tag = MessageDataUtils.getTag(message)
+        tag?: throw ClassCastException("Cannot use " + message.javaClass + " as message because class message tag is unknown. Please, add Tag annotation to class.")
+        val data = MessageDataUtils.serialize(message)
+        PluginManager.getInstance().sendMessage(id, tag, data)
     }
 
     override fun sendMessage(tag: String, data: Any?) {
@@ -92,7 +99,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         PluginManager.getInstance().registerMessageListener(tag, listener)
     }
 
-    override fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
+    /*override fun <T> addTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
         for (method in listener.javaClass.methods) {
             if ((method.name == "handleMessage") && (method.parameterCount == 3)) {
                 val cls = method.parameterTypes.last()
@@ -105,7 +112,7 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
                 break
             }
         }
-    }
+    }*/
 
     override fun removeMessageListener(tag: String, listener: MessageListener) {
         PluginManager.getInstance().unregisterMessageListener(tag, listener)
@@ -118,12 +125,12 @@ class PluginProxy (private val id:String, private val plugin: Plugin, private va
         }
     }
 
-    override fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
+    /*override fun <T> removeTypedMessageListener(tag: String, listener: TypedMessageListener<T>) {
         val l = typedListeners.remove(listener)
         if (l != null) {
             removeMessageListener(tag, l)
         }
-    }
+    }*/
 
     // Alternatives
 
