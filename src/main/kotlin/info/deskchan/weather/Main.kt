@@ -8,6 +8,7 @@ import info.deskchan.core.MessageDataMap
 import info.deskchan.core.MessageListener
 import info.deskchan.core.Plugin
 import info.deskchan.core.PluginProxyInterface
+import java.text.SimpleDateFormat
 import java.util.*
 
 class Main : Plugin {
@@ -21,28 +22,49 @@ class Main : Plugin {
         val properties = pluginProxy.getProperties()
         properties.load()
         properties.putIfHasNot("city", "Nowhere")
+        properties.putIfHasNot("scale-type", "celsius")
 
         pluginProxy.setConfigField("name", getString("plugin.name"))
         pluginProxy.setConfigField("short-description", getString("plugin.short-description"))
         pluginProxy.setConfigField("link", "https://forum.deskchan.info/topic/51/weather")
-        pluginProxy.setConfigField("temp-type", "celsius")
+
 
         server = YahooServer()
+
+        try {
+            properties.assert("weather-now-temp", "weather-now-time", "weather-now-state")
+            val forecast = TimeForecast(
+                    properties.getDateTimeFromStamp("weather-now-time", 0),
+                    Temperature.fromString(properties.getString("weather-now-temp")!!),
+                    properties.getString("weather-now-state")!!
+            )
+            server.loadFromProperties (forecast)
+        } catch (e: Exception){
+            Main.log(e)
+        }
         //server = OpenWeatherServer()
 
-        pluginProxy.addMessageListener("weather:set-city", MessageListener { sender, tag, data ->
-            val city = MessageDataMap("city", data).getString("city")
+        pluginProxy.addMessageListener("weather:set-options", MessageListener { sender, tag, dat ->
+            val data = MessageDataMap(dat)
+
+            val city = data.getString("city")
             if (city == null || city.length < 2) {
                 log(Exception(getString("info.no-city")))
-                return@MessageListener
+            } else {
+                pluginProxy.getProperties().put("city", city)
             }
+
+            val scaleType = data.getString("scale-type")
+            if (scaleType != null){
+                pluginProxy.getProperties().put("scale-type", scaleType)
+            }
+            pluginProxy.getProperties().save()
 
             properties["city"] = city
             object : Thread() {
                 override fun run() {
                     server.drop()
-                    checkLocation()
-                    saveOptions()
+                    pluginProxy.getProperties().save()
                 }
             }.start()
         })
@@ -63,9 +85,9 @@ class Main : Plugin {
             }
 
             val data = MessageDataMap()
-            val date = data.getLong("date")
-            if (date == null) {
-                say["text"] = getString("now") + " " + server.getNow().toString() + ", " + Main.getString("lastUpdate") + ": " + server.getLastUpdate()
+            val calendar = data.getDateTimeFromStamp("date")
+            if (calendar == null) {
+                say["text"] = getString("now") + " " + server.getNow()
             } /*else if (value.equals("all")) {
                 List<String> b = new ArrayList<>(11);
                 b.add(getString("now") + " - " + server.getNow().toString());
@@ -76,13 +98,11 @@ class Main : Plugin {
                 say.put("text", b);
             } */
             else {
-                val calendar = Calendar.getInstance()
                 val now = Calendar.getInstance()
-                calendar.timeInMillis = date
                 if (now.timeInMillis > calendar.timeInMillis && calendar.get(Calendar.DAY_OF_YEAR) != now.get(Calendar.DAY_OF_YEAR)) {
-                    say["text"] = "Я пока не могу сказать, какая погода была в прошлом. И вообще, надо смотреть в будущее."
+                    say["text"] = getString("error.past-date")
                 } else if (Math.abs(now.timeInMillis - calendar.timeInMillis) < 3600000) {
-                    say["text"] = getString("now") + " " + server.getNow().toString() + ", " + Main.getString("lastUpdate") + ": " + server.getLastUpdate()
+                    say["text"] = getString("now") + " " + server.getNow()
                 } else {
                     var days = 0
                     while (calendar.get(Calendar.DAY_OF_YEAR) != Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
@@ -90,9 +110,9 @@ class Main : Plugin {
                         calendar.add(Calendar.DAY_OF_YEAR, -1)
                     }
                     if (days >= server.getDaysLimit()) {
-                        say["text"] = "Ой, прости, этот день будет слишком нескоро. Я не знаю, какая будет погода."
+                        say["text"] = getString("error.too-distant-date")
                     } else {
-                        say["text"] = server.getByDay(days).toString() + ", " + Main.getString("lastUpdate") + ": " + server.getLastUpdate()
+                        say["text"] = server.getByDay(days).toString()
                     }
                 }
             }
@@ -130,13 +150,22 @@ class Main : Plugin {
         return true
     }
 
-    internal fun checkLocation() {
+    fun checkLocation() {
         val ret = server.checkLocation()
         updateOptionsTab(ret ?: getString("error"))
     }
 
-    internal fun setupOptionsTab() {
+    fun setupOptionsTab() {
+
         val message = SetPanel("options", SetPanel.PanelType.SUBMENU, SetPanel.ActionType.SET,
+                Control(
+                        Control.ControlType.ComboBox,
+                        "scale-type",
+                        scaleTypes.indexOf(pluginProxy.getProperties().getString("scale-type", "celsius")),
+                        getString("scale-type.description"),
+                        null,
+                        mapOf<String, Any>("values" to scaleTypes)
+                ),
                 Control(
                         Control.ControlType.TextField,
                         "city",
@@ -148,14 +177,15 @@ class Main : Plugin {
                         null,
                         getString("info.check")
                 )
+
         )
         message.name = getString("options")
-        message.onSave = "weather:set-city"
+        message.onSave = "weather:set-options"
 
         pluginProxy.sendMessage(message)
     }
 
-    internal fun updateOptionsTab(locationResult: String) {
+    private fun updateOptionsTab(locationResult: String) {
         val message = SetPanel("options", SetPanel.PanelType.SUBMENU, SetPanel.ActionType.UPDATE,
                 Control(
                         Control.ControlType.TextField,
@@ -164,10 +194,6 @@ class Main : Plugin {
                 )
         )
         pluginProxy.sendMessage(message)
-    }
-
-    internal fun saveOptions() {
-        pluginProxy.getProperties().save()
     }
 
     override fun unload() {}
@@ -184,7 +210,7 @@ class Main : Plugin {
 
     companion object {
 
-        private lateinit var pluginProxy: PluginProxyInterface
+        lateinit var pluginProxy: PluginProxyInterface
 
         val city: String?
             get() = pluginProxy.getProperties().getString("city")
@@ -202,5 +228,21 @@ class Main : Plugin {
         fun getString(text: String): String {
             return pluginProxy.getString(text)
         }
+
+        private val timeFormatter = SimpleDateFormat("HH:mm")
+        fun formatTime(time: Long) {
+            val c = Calendar.getInstance()
+            c.timeInMillis = time
+            timeFormatter.format(c)
+        }
+
+        fun saveCurrentWeather(forecast: TimeForecast){
+            pluginProxy.getProperties().put("weather-now-temp", forecast.temp)
+            pluginProxy.getProperties().put("weather-now-time", forecast.time.timeInMillis)
+            pluginProxy.getProperties().put("weather-now-state", forecast.weather)
+            pluginProxy.getProperties().save()
+        }
+
+        private val scaleTypes = listOf("celsius", "fahrenheit")
     }
 }

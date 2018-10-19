@@ -4,16 +4,19 @@ import org.json.JSONObject
 import java.io.InputStreamReader
 import java.net.URL
 import java.net.URLEncoder
-import java.text.SimpleDateFormat
 import java.util.*
 
 class YahooServer : WeatherServer {
-    protected var state = ConnectionState.NO
+    private var state = ConnectionState.NO
 
     private var now: TimeForecast? = null
+        set(value){
+            field = value
+            if (value != null) Main.saveCurrentWeather(value)
+        }
     private var forecasts = arrayOfNulls<DayForecast>(DAYS_LIMIT)
 
-    private var lastUpdate: Date? = null
+    private var lastUpdate: Calendar? = null
 
     private val query: JSONObject
         @Throws(Exception::class)
@@ -48,18 +51,27 @@ class YahooServer : WeatherServer {
         return DAYS_LIMIT
     }
 
-    protected enum class ConnectionState {
+    private enum class ConnectionState {
         NO, CONNECTING, ERROR
     }
 
     override fun getByDay(day: Int): DayForecast? {
         update()
-        return forecasts[day]
+        if (day >= 0 && day < forecasts.size)
+            return forecasts[day]
+        return null
     }
 
     override fun getNow(): TimeForecast? {
         update()
         return now
+    }
+
+    override fun loadFromProperties(now: TimeForecast) {
+        if (isNearFuture(now.time.timeInMillis)) {
+            this.now = now
+            lastUpdate = now.time
+        }
     }
 
     override fun checkLocation(): String? {
@@ -85,10 +97,7 @@ class YahooServer : WeatherServer {
 
     }
 
-    override fun getLastUpdate(): String {
-        val format = SimpleDateFormat("HH:mm:ss")
-        return format.format(lastUpdate)
-    }
+    override fun getLastUpdate(): Calendar? = lastUpdate?.clone() as Calendar?
 
     override fun drop() {
         lastUpdate = null
@@ -102,8 +111,12 @@ class YahooServer : WeatherServer {
         }.start()
     }
 
+    private fun isNearFuture(update: Long?): Boolean {
+        return update != null && (Date().time - update) / 60000 < 30
+    }
+
     private fun updateImpl() {
-        if (state != ConnectionState.NO || lastUpdate != null && (Date().time - lastUpdate!!.time) / 60000 < 30) return
+        if (state != ConnectionState.NO || isNearFuture(if (lastUpdate != null) lastUpdate!!.timeInMillis else 0)) return
         state = ConnectionState.CONNECTING
 
         Main.log("Trying to connect to weather server")
@@ -145,8 +158,8 @@ class YahooServer : WeatherServer {
                 i++
             }
             json = json.getJSONObject("condition")
-            now = TimeForecast(Temperature.fromFahrenheit(json.getInt("temp")), getWeatherString(json.getInt("code")))
-            lastUpdate = Date()
+            lastUpdate = Calendar.getInstance()
+            now = TimeForecast(lastUpdate!!, Temperature.fromFahrenheit(json.getInt("temp")), getWeatherString(json.getInt("code")))
 
         } catch (e: Exception) {
             state = ConnectionState.ERROR

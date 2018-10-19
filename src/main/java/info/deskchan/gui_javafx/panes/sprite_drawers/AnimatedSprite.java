@@ -45,17 +45,17 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
         public AnimationData(Map<String, Object> dat){
             super();
             MessageDataMap data = new MessageDataMap(dat);
-            setMovingX(data.getFloat("movingX", 0));
-            setMovingY(data.getFloat("movingY", 0));
+            if (dat.containsKey("movingX")) setMovingX(data.getFloat("movingX"));
+            if (dat.containsKey("movingY")) setMovingY(data.getFloat("movingY"));
 
-            setScalingX(data.getFloat("scaleX"));
-            setScalingY(data.getFloat("scaleY"));
+            if (dat.containsKey("scaleX")) setScalingX(data.getFloat("scaleX"));
+            if (dat.containsKey("scaleY")) setScalingY(data.getFloat("scaleY"));
 
-            setRotation(data.getFloat("rotation"));
+            if (dat.containsKey("rotation")) setRotation(data.getFloat("rotation"));
 
-            setSmooth(data.getBoolean("smooth", false));
-            setDelay(data.getLong("delay", 200));
-            setOpacity(data.getFloat("opacity"));
+            if (dat.containsKey("smooth")) setSmooth(data.getBoolean("smooth"));
+            if (dat.containsKey("delay")) setDelay(data.getLong("delay"));
+            if (dat.containsKey("opacity")) setOpacity(data.getFloat("opacity"));
 
             if (data.containsKey("next")) {
                 try {

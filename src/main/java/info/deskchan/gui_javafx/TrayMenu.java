@@ -12,27 +12,48 @@ public class TrayMenu extends Menu{
 
     private volatile SystemTray trayRef = null;
     private volatile dorkbox.systemTray.Menu trayMenu = null;
+
+    private Runnable update = null;
     
     public TrayMenu(){
         super();
         SystemTray systemTray = SystemTray.get();
         if (SystemTray.get() == null) {
             Main.log("Failed to load SystemTray, type dorkbox");
-        } else {
-            systemTray.setTooltip(App.NAME);
-            systemTray.setImage(App.ICON_URL);
-            systemTray.setStatus(App.NAME);
-            trayRef = systemTray;
-            trayMenu = trayRef.getMenu();
+            return;
         }
+
+        systemTray.setTooltip(App.NAME);
+        systemTray.setImage(App.ICON_URL);
+        systemTray.setStatus(App.NAME);
+        trayRef = systemTray;
+        trayMenu = trayRef.getMenu();
+
+        final TrayMenu instance = this;
+        if (trayMenu instanceof dorkbox.systemTray.ui.swing._SwingTray ||
+                trayMenu instanceof dorkbox.systemTray.ui.awt._AwtTray) {
+            update = new Runnable() {
+                @Override
+                public void run() {
+                    SwingUtilities.invokeLater(instance::updateImpl);
+                }
+            };
+        } else {
+            update = new Runnable() {
+                @Override
+                public void run() {
+                    Platform.runLater(instance::updateImpl);
+                }
+            };
+        }
+
     }
 
     @Override
     public synchronized void update(){
-        if(trayMenu != null && (trayMenu instanceof dorkbox.systemTray.ui.swing._SwingTray ||
-                trayMenu instanceof dorkbox.systemTray.ui.awt._AwtTray))
-            SwingUtilities.invokeLater(this::updateImpl);
-        else Platform.runLater(this::updateImpl);
+        if (update != null) {
+            update.run();
+        }
     }
 
     @Override

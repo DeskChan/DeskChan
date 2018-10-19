@@ -48,9 +48,7 @@ public class Menu {
                 menuItems.add(item);
             }
 
-            synchronized (this) {
-                update();
-            }
+            update();
 
         } catch (Exception e){
             Main.log("Error while registering menu actions");

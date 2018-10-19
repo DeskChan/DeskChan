@@ -34,6 +34,8 @@ public class DialogHandler {
         pluginProxy = Main.getPluginProxy();
 
         updateDialogModules();
+        intentExchanger = new IntentExchanger(Main.getCurrentCharacter().character);
+        intentExchanger.next();
 
         pluginProxy.setAlternative("DeskChan:user-said", "talk:classify-text", 50000);
         pluginProxy.setAlternative("DeskChan:user-said", "talk:dialog-receive", 25);
@@ -399,12 +401,13 @@ public class DialogHandler {
     }
 
     public static void updateDialogModules(){
+        if (isSamePacks(Main.getCurrentCharacter().phrases))
+            return;
+
+        lastPhrasesPacksList = Main.getCurrentCharacter().phrases.toPacksList();
         List<Phrase> intentPhrases = Main.getCurrentCharacter().phrases.toPhrasesList();
         List<Phrase> characterPhrases = Main.getCurrentCharacter().phrases.toPhrasesList(PhrasesPack.PackType.USER);
 
-        if (intentExchanger != null)
-            intentExchanger.setNewDialog();
-        intentExchanger = new IntentExchanger(Main.getCurrentCharacter().character);
         /*try {
             characterClassifier = new NeuralCharacterClassifier(Main.getCharacterClassifierModelPath());
         } catch (Exception e){
@@ -427,8 +430,21 @@ public class DialogHandler {
         }
         outputIntentSelected = inputIntentSelected;
         resetPanel();
+    }
 
-        intentExchanger.next();
+    private static List<String> lastPhrasesPacksList = null;
+    private static boolean isSamePacks(PhrasesPackList packs){
+        if (lastPhrasesPacksList == null)
+            return false;
+
+        List<String> newList = packs.toPacksList();
+        if (newList.size() != lastPhrasesPacksList.size())
+            return false;
+        for (String pack : newList){
+            if (!lastPhrasesPacksList.contains(pack))
+                return false;
+        }
+        return true;
     }
 
     private static Set<String> stringToSet(String text){

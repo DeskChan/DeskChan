@@ -2,7 +2,6 @@ package info.deskchan.core
 
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import java.lang.RuntimeException
 import java.util.*
 
@@ -159,6 +158,28 @@ open class MessageDataMap : HashMap<String, Any?>{
             false -> null
         }
     }
+
+    /** Get value as Calendar, with suggestion that value is Long, UNIX timestamp in ms. Returns null otherwise. **/
+    fun getDateTimeFromStamp(key: String) : Calendar? {
+        val value = getLong(key)
+        if (value == null) return null
+
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = value
+        return calendar
+    }
+
+    /** Get value as Calendar, with suggestion that value is Long, UNIX timestamp in ms. Returns default otherwise. **/
+    fun getDateTimeFromStamp(key: String, default: Long) : Calendar {
+        val value = getLong(key)?: default
+
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = value
+        return calendar
+    }
+
+    /** Get value as Calendar, with suggestion that value is Long, UNIX timestamp in ms. Returns default otherwise. **/
+    fun getDateTimeFromStamp(key: String, default: Calendar) : Calendar = getDateTimeFromStamp(key)?: Calendar.getInstance()
 
     /** Get value converted to file or null if no such key found. **/
     fun getFile(key: String) : Path? {

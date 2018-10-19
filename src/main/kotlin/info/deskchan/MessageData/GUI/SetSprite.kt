@@ -50,9 +50,9 @@ class SetSprite : MessageData {
     open class Animation : MessageData {
         var next: Path? = null
         var scalingX: Float? = null
-            get() = field?: 1F
+            get() = field?: 0F
         var scalingY: Float? = null
-            get() = field?: 1F
+            get() = field?: 0F
         var movingX: Float? = null
             get() = field?: 0F
         var movingY: Float? = null
