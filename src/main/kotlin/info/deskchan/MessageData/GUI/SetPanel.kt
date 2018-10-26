@@ -49,7 +49,7 @@ class SetPanel : MessageData {
 
     val id: String
     var name: String? = null
-    var controls: List<Map<String, Any>>
+    var controls: List<Map<String, Any>>?
     var onSave: String? = null
     var onClose: String? = null
 
@@ -70,11 +70,11 @@ class SetPanel : MessageData {
 
     constructor(id: String, vararg controls: Map<String, Any>){
         this.id = id
-        this.controls = controls.toMutableList()
+        this.controls = if (controls.size > 0) controls.toMutableList() else null
     }
     constructor(id: String, panelType: PanelType, actionType: ActionType, vararg controls: Map<String, Any>){
         this.id = id
-        this.controls = controls.toMutableList()
+        this.controls = if (controls.size > 0) controls.toMutableList() else null
         setPanelType(panelType)
         setActionType(actionType)
     }

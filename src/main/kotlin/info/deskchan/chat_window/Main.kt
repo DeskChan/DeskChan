@@ -240,15 +240,14 @@ class Main : Plugin {
                 InlineControls("input-line",
                     Control(
                             Control.ControlType.TextField,
-                            "input",
                             mapOf(
+                                    "id" to "input",
                                     "onChangeTag" to "chat:update-textfield",
                                     "enterTag" to "chat:user-said"
                             )
                     ),
                     Control(
                             Control.ControlType.Button,
-                            "enter",
                             mapOf(
                                     "value" to pluginProxy.getString("send"),
                                     "onChangeTag" to "chat:update-textfield",
@@ -257,7 +256,6 @@ class Main : Plugin {
                     ),
                     Control(
                             Control.ControlType.Button,
-                        "options",
                             mapOf(
                                     "value" to "⚙",
                                     "dstPanel" to pluginProxy.getId() + "-options"
@@ -265,7 +263,6 @@ class Main : Plugin {
                     ),
                     Control(
                             Control.ControlType.Button,
-                            "options",
                             mapOf(
                                     "value" to "?",
                                     "msgTag" to "DeskChan:commands-list"

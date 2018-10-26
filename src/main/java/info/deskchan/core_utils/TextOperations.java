@@ -1,7 +1,5 @@
 package info.deskchan.core_utils;
 
-import java.lang.Character;
-
 import java.util.*;
 
 
@@ -133,9 +131,8 @@ public class TextOperations {
 
     /** Class representing tags map. Each value of map can be only Set&lt;String&gt;, including empty list. <br>
      * You can parse map from string like <br> key1: value1, key2, key3: "value 21" value22 !value23. <br><br>
-     * It will definitely throw an error if you create an instance with type definition other than String, Set. <br>
      * '!' means boolean negation, but '!value' will override 'value'. **/
-    public static class TagsMap<K, V> implements Map<K, V>{
+    public static class TagsMap implements Map<String, Set<String>> {
 
         // null as value means keys without value like "key2"
         private Map<String, Set<String>> tags;
@@ -312,7 +309,7 @@ public class TextOperations {
         }
 
         public boolean match(String argstext) {
-            return match(new TagsMap<>(argstext));
+            return match(new TagsMap(argstext));
         }
 
         public boolean match(Map other) {
@@ -351,23 +348,20 @@ public class TextOperations {
         /* -- Fully implementing interface, don't mind -- */
 
         @Override
-        public void putAll(Map<? extends K, ? extends V> map){
-            for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()){
+        public void putAll(Map<? extends String, ? extends Set<String>> map){
+            for (Map.Entry<? extends String, ? extends Set<String>> entry : map.entrySet()){
                 put(entry.getKey(), entry.getValue());
             }
         }
 
         @Override
-        public V put(K tag, V args) {
-            if (args instanceof Collection)
-                return (V) put(tag.toString(), (Collection) args);
-            else
-                return (V) put(tag.toString(), args.toString());
+        public Set<String> put(String tag, Set<String> args) {
+            return put(tag, new ImprovedSet<>(args));
         }
 
-        @Override public Set<K> keySet() {  return (Set<K>) tags.keySet();  }
+        @Override public Set<String> keySet() {  return tags.keySet();  }
 
-        @Override public Set<HashMap.Entry<K, V>> entrySet() {  return (Set) tags.entrySet();  }
+        @Override public Set<Map.Entry<String, Set<String>>> entrySet() {  return tags.entrySet();  }
 
         @Override public int size(){  return tags.size();  }
 
@@ -381,11 +375,11 @@ public class TextOperations {
 
         @Override public boolean equals(Object other){  return tags.equals(other);  }
 
-        @Override public Collection<V> values() {  return (Collection<V>) tags.values();  }
+        @Override public Collection<Set<String>> values() {  return tags.values();  }
 
-        @Override public V remove(Object item){  return (V) tags.remove(item);  }
+        @Override public Set<String> remove(Object item){  return tags.remove(item);  }
 
-        @Override public V get(Object key){  return (V) tags.get(key);  }
+        @Override public Set<String> get(Object key){  return tags.get(key);  }
 
         @Override public void clear(){  tags.clear();  }
 
@@ -410,25 +404,6 @@ public class TextOperations {
             public boolean add(E item){
                 return add(item.toString());
             }
-        }
-
-        private static void Testing(){
-            TagsMap map = new TagsMap("part: head legs");
-            System.out.println(map);
-            System.out.println(map.match("part: legs"));
-            System.out.println(map.match("part", "head"));
-            System.out.println(map.match("part", "spine"));
-            System.out.println(map.match("part", new ArrayList<String>(){{
-                add("!spine");
-            }}));
-            System.out.println(map.match("part: legs head"));
-            System.out.println(map.match("part"));
-            map = new TagsMap("species: ai, sleepTime");
-            System.out.println(map);
-            System.out.println(map.match("sleepTime"));
-            System.out.println(map.match("dayTime"));
-            System.out.println(map.match("sleepTime, species: !android"));
-            System.out.println(map.match("sleepTime, species: android"));
         }
     }
 }

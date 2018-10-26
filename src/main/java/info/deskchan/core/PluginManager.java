@@ -564,6 +564,7 @@ public class PluginManager {
 		}
 		path = path.resolve("plugins");
 		pluginsDirPath = path;
+		createPath(pluginsDirPath);
 		return pluginsDirPath;
 	}
 
@@ -574,7 +575,7 @@ public class PluginManager {
 		while (!paths.empty()) {
 			File path = paths.pop();
 			File[] files = path.listFiles();
-			if(files==null || files.length==0) continue;
+			if(files == null || files.length == 0) continue;
 			for(File file : files){
 				if(file.isFile()){
 					if(FilenameUtils.getBaseName(file.toString()).equals(name)){
@@ -606,6 +607,7 @@ public class PluginManager {
 			log("Created directory: " + path);
 		}
 		dataDirPath = path;
+		createPath(dataDirPath);
 		return dataDirPath;
 	}
 
@@ -621,6 +623,7 @@ public class PluginManager {
 			log("Created directory: " + path);
 		}
 		assetsDirPath = path;
+		createPath(assetsDirPath);
 		return assetsDirPath;
 	}
 
@@ -665,6 +668,16 @@ public class PluginManager {
 				return null;
 			}
 			return plugins.get(name).getConfig();
+		}
+	}
+
+	private static void createPath(Path path){
+		if (!path.exists()) {
+			try {
+				path.mkdir();
+			} catch (Exception e) {
+				log(e);
+			}
 		}
 	}
 

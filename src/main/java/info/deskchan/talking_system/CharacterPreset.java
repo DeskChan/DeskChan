@@ -55,7 +55,7 @@ public class CharacterPreset {
 	}
 
 	/** Additional character and user features like gender, species, interests. **/
-	public TextOperations.TagsMap<String, Set<String>> tags;
+	public TextOperations.TagsMap tags;
 
 	/** Phrases list. **/
 	public PhrasesPackList phrases;
@@ -131,7 +131,7 @@ public class CharacterPreset {
 		emotionState = getDefaultEmotionsController();
 		name = Main.getString("default_name");
 		phrases = PhrasesPackList.getDefault(character);
-		tags = new TextOperations.TagsMap<>();
+		tags = new TextOperations.TagsMap();
 		tags.putFromText("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
 	}
 

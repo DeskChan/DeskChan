@@ -198,11 +198,11 @@ public class ControlsPanel {
 		final ControlsPanel currentPanel = _currentPanel;
 		switch (currentPanel.type) {
 			case WINDOW: {
-				Platform.runLater(() -> ControlsWindow.open(currentPanel));
+				ControlsWindow.open(currentPanel);
 			}
 			break;
 			default: {
-				Platform.runLater(() -> OptionsDialog.showPanel(currentPanel));
+				OptionsDialog.showPanel(currentPanel);
 			}
 			break;
 		}

@@ -18,7 +18,7 @@ public class Phrase {
 
 	protected int timeout;
 
-	protected TextOperations.TagsMap<String, Set<String>> tags;
+	protected TextOperations.TagsMap tags;
 
 	// Array of { block_name of String, start of Int, end of Int, params.. of String/Integer/Float }
 	protected Object[][] blocks;

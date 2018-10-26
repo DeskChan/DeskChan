@@ -5284,7 +5284,7 @@
         </phrase>
         <phrase>
             <text>Здарова. </text>
-            <intent>HELLO</intent>
+            <intent>HELLO, START_DIALOG</intent>
             <sprite>NORMAL</sprite>
             <range>
                 <impulsivity>1 | 4</impulsivity>

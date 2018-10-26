@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.MessageData.DeskChan.RequestSay;
 import info.deskchan.core.*;
 import info.deskchan.core_utils.TextOperations;
 import info.deskchan.talking_system.intent_exchange.IntentList;
@@ -37,6 +38,8 @@ public class Main implements Plugin {
 
 	/** Chat timer id given by plugin proxy. **/
 	private int timerId = 0;
+
+	private TextOperations.TagsMap pluginsTags = new TextOperations.TagsMap();
 
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
@@ -208,12 +211,9 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:save-preset", (sender, tag, data) -> {
 			try {
 				currentCharacter.saveInFile(getPresetsPath());
-				pluginProxy.sendMessage("gui:show-notification", createMapFromString("text: "+getString("done")));
+				pluginProxy.sendMessage(new RequestSay("DONE"));
 			} catch (Exception e) {
-				Map<String, Object> list = new HashMap<>();
-				list.put("name", getString("error"));
-				list.put("text", "Error while writing file: " + e.getMessage());
-				pluginProxy.sendMessage("gui:show-notification", list);
+				Main.log(e);
 			}
 		});
 
@@ -290,14 +290,29 @@ public class Main implements Plugin {
 			currentCharacter.updatePhrases();
 		});
 
+		/* Set tag to filter phrases
+		* Public message
+		* Params: Map<String, Object>
+		*    tags to add. Any non-string value will be manually converted to string. Set "*" as value to delete tag.
+		* Returns: None */
+		pluginProxy.addMessageListener("talk:set-preset-tags", (sender, tag, data) -> {
+			setPresetTags(new MessageDataMap(data));
+		});
+
 		/* Saying 'Hello' at launch. */
 		pluginProxy.addMessageListener("core-events:loading-complete", (sender, tag, dat) -> {
-			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("intent: HELLO, priority: 20001"));
+			phraseRequest(new HashMap<String, Object>(){{
+				put("intent", "HELLO");
+				put("priority", 20001);
+			}});
 		});
 
 		/* Saying 'Bye' when someone requests quit. */
 		pluginProxy.addMessageListener("core:quit", (sender, tag, data) -> {
-			pluginProxy.sendMessage("DeskChan:request-say", createMapFromString("intent: BYE, priority: 10000"));
+			phraseRequest(new HashMap<String, Object>(){{
+				put("intent", "BYE");
+				put("priority", 20001);
+			}});
 		});
 
 		/* Adding request to say command */
@@ -360,6 +375,18 @@ public class Main implements Plugin {
 		resetTimer();
 
 		return true;
+	}
+
+	public void setPresetTags(MessageDataMap tags){
+		for (String key : tags.keySet()){
+			if (tags.getBoolean(key) != null){
+				pluginsTags.put((tags.getBoolean(key) ? "!" : "") + key);
+			} else if (tags.getString(key).equals("*")){
+				pluginsTags.remove(key);
+			} else {
+				pluginsTags.put(key, tags.getString(key));
+			}
+		}
 	}
 
 	/** Default messages priority. **/
@@ -624,21 +651,8 @@ public class Main implements Plugin {
 		pluginProxy.log(e);
 	}
 
-	public static Path getDataDirPath() {
-		return pluginProxy.getDataDirPath();
-	}
-
 	public static Path getPresetsPath() {
-		Path path = pluginProxy.getAssetsDirPath().resolve("presets/");
-		if (!path.exists()) {
-			try {
-				path.mkdir();
-			} catch (Exception e) {
-				log(e);
-				return pluginProxy.getRootDirPath();
-			}
-		}
-		return path;
+		return pluginProxy.getAssetsDirPath().resolve("presets/");
 	}
 
 	@Override
@@ -665,27 +679,4 @@ public class Main implements Plugin {
 	}
 
 	static PluginProperties getProperties() { return getPluginProxy().getProperties(); }
-
-	static Map createMapFromObject(Object object, String key){
-		Map<String, Object> data;
-		if(object instanceof Map){
-			data = (Map) object;
-		} else {
-			data = new HashMap<>();
-			if(object != null)
-				data.put("intent", object.toString());
-		}
-		return data;
-	}
-
-	static Map createMapFromString(String text){
-		TextOperations.TagsMap<String, Collection> map = new TextOperations.TagsMap<>(text);
-		Map result = new HashMap<>();
-		for (Map.Entry<String, Collection> entry : map.entrySet()){
-			try {
-				result.put(entry.getKey(), entry.getValue().iterator().next());
-			} catch (Exception e){ }
-		}
-		return result;
-	}
 }
