@@ -1,9 +1,8 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.MessageData.Core.SetPersistent;
 import info.deskchan.MessageData.DeskChan.RequestSay;
 import info.deskchan.core.*;
-import info.deskchan.core_utils.TextOperations;
-import info.deskchan.talking_system.intent_exchange.IntentList;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -37,9 +36,9 @@ public class Main implements Plugin {
 	private final static Integer DEFAULT_CHATTING_TIMEOUT = 300000;
 
 	/** Chat timer id given by plugin proxy. **/
-	private int timerId = 0;
+	private int chatTimerId = 0, emotionTimerId = 0;
 
-	private TextOperations.TagsMap pluginsTags = new TextOperations.TagsMap();
+	private TagsMap pluginsTags = new TagsMap();
 
 	@Override
 	public boolean initialize(PluginProxyInterface newPluginProxy) {
@@ -49,6 +48,10 @@ public class Main implements Plugin {
 		getProperties().putIfHasNot("user-phrases", "user-phrases");
 		getProperties().putIfHasNot("quotesAutoSync", true);
 		getProperties().putIfHasNot("messageTimeout", DEFAULT_CHATTING_TIMEOUT);
+		getProperties().putIfHasNot("sleepTimeStart", 22);
+		getProperties().putIfHasNot("sleepTimeEnd", 6);
+
+		pluginsTags.putAll(DefaultTagsListeners.getDefaultTags());
 
 		pluginProxy.setResourceBundle("info/deskchan/talking_system/strings");
 		pluginProxy.setConfigField("short-description", getString("plugin.short-description"));
@@ -56,7 +59,12 @@ public class Main implements Plugin {
 		pluginProxy.setConfigField("name", pluginProxy.getString("plugin-name"));
 
 		// initializing main components
-		currentCharacter = new CharacterPreset(new JSONObject(getProperties().getString("characterPreset", "{}")));
+		try {
+			currentCharacter = new CharacterPreset(new JSONObject(getProperties().getString("characterPreset")));
+		} catch (Exception e){
+			currentCharacter = getDefaultCharacterPreset();
+		}
+
 		getProperties().putIfNotNull("quotesAutoSync", true);
 
 		Thread syncThread = new Thread() {
@@ -192,7 +200,7 @@ public class Main implements Plugin {
         * Technical message
         * Returns: None */
 		pluginProxy.addMessageListener("talk:reset-preset", (sender, tag, data) -> {
-			currentCharacter = new CharacterPreset();
+			currentCharacter = getDefaultCharacterPreset();
 			updateOptionsTab();
 			saveSettings();
 		});
@@ -203,6 +211,8 @@ public class Main implements Plugin {
 		pluginProxy.addMessageListener("talk:get-preset", (sender, tag, data) -> {
 			pluginProxy.sendMessage(sender, currentCharacter.toInformationMap());
 		});
+
+		pluginProxy.sendMessage(new SetPersistent("talk:character-updated"));
 
 		/* Save preset to file by character name
         * Technical message
@@ -263,14 +273,13 @@ public class Main implements Plugin {
 						if (type != null && type.length() > 0) {
 							switch (type){
 								case "#default": {
-									currentCharacter.phrases = PhrasesPackList.getDefault(currentCharacter.character);
+									currentCharacter.phrases = getDefaultPhrases();
 								} break;
 								case "#clear": {
 									currentCharacter.phrases.clear();
 								} break;
 								default: {
 									currentCharacter.phrases.add(type, PhrasesPack.PackType.USER);
-									currentCharacter.updatePhrases();
 								} break;
 							}
 						}
@@ -281,14 +290,6 @@ public class Main implements Plugin {
 					currentCharacter.inform();
 				}
 		);
-
-		/* Reload phrases and check for matching
-		* Public message
-        * Params: None
-        * Returns: None */
-		pluginProxy.addMessageListener("talk:update-phrases", (sender, tag, data) -> {
-			currentCharacter.updatePhrases();
-		});
 
 		/* Set tag to filter phrases
 		* Public message
@@ -347,27 +348,20 @@ public class Main implements Plugin {
 
 		updateOptionsTab();
 
-		// Standard phrases parsers
-		/// OS
-		pluginProxy.addMessageListener("talk:remove-quote", DefaultTagsListeners::parseForTagsRemove);
-		/// Time
-		pluginProxy.addMessageListener("talk:reject-quote", DefaultTagsListeners::parseForTagsReject);
-
-		/// Character preset
-		pluginProxy.addMessageListener("talk:remove-quote", (sender, tag, data) ->
-			DefaultTagsListeners.checkCondition(sender, data, quote -> !currentCharacter.tagsMatch(quote))
-		);
-
-		pluginProxy.addMessageListener("core-events:error", (sender, tag, data) -> {
-			currentCharacter.phrases.requestRandomPhrase("ERROR", null, (quote) -> {
-				Map ret = quote.toMap();
-				ret.put("priority", 5000);
-				pluginProxy.sendMessage("DeskChan:say", ret);
-			});
+		pluginProxy.addMessageListener("core-events:error", (sender, tag, d) -> {
+			Phrase errorMessage = PhraseChooser.get(
+					new IntentList("ERROR"),
+					getCurrentCharacter(),
+					pluginsTags,
+					null
+			);
+			Map data = errorMessage.toMap();
+			data.put("priority", 5000);
+			pluginProxy.sendMessage("DeskChan:say", data);
 		});
 
 		pluginProxy.addMessageListener("recognition:get-words", (sender, tag, data) -> {
-			HashSet<String> set = new HashSet<>();
+			Set<String> set = new HashSet<>();
 			set.add(currentCharacter.name);
 			pluginProxy.sendMessage(sender, set);
 		});
@@ -394,16 +388,30 @@ public class Main implements Plugin {
 
 	/** Request phrase with any data. **/
 	public static void phraseRequest(Map<String, Object> data) {
-		String intent = "CHAT";
-		if (data != null)
-			intent = data.getOrDefault("intent", intent).toString();
+		IntentList intents = null;
+		if (data != null && data.containsKey("intent")){
+			if (data.get("intent") instanceof Collection) {
+				intents = new IntentList((Collection) data.get("intent"));
+				data.remove("intent");
+			} else if (data.get("intent") instanceof String){
+				intents = new IntentList((String) data.get("intent"));
+				data.remove("intent");
+			}
+		}
+		TagsMap tagsMap = null;
+		try {
+			tagsMap = new TagsMap((Map) data.get("tags"));
+			data.remove("tags");
+		} catch (Exception e){ }
 
-		getCurrentCharacter().phrases.requestRandomPhrase( intent, data, phrase -> sendPhrase(phrase, data) );
+		Phrase phrase = PhraseChooser.get(intents, getCurrentCharacter(), instance.pluginsTags, tagsMap);
+		sendPhrase(phrase, data);
 	}
 
 	/** Request phrase with intent. **/
 	public static void phraseRequest(String intent) {
-		getCurrentCharacter().phrases.requestRandomPhrase( intent, phrase -> sendPhrase(phrase, null) );
+		Phrase phrase = PhraseChooser.get(new IntentList(intent), getCurrentCharacter(), instance.pluginsTags, null);
+		sendPhrase(phrase, null);
 	}
 
 	/** Convert phrase to map format and send to DeskChan:say or sender. **/
@@ -430,25 +438,25 @@ public class Main implements Plugin {
 		);
 	}
 
-	List<String> chatIntents = Arrays.asList(
-			"CHAT", "WHAT_YOUR_STATE", "WHAT_ARE_YOU_DOING", "WHAT_YOUR_RELATION", "AFFECTION_REQUEST",
-			"PROPOSAL", "THREAT", "DREAMING", "FEELING_REPORT", "WHAT_YOUR_RELATION",
-			"JOKE", "ASK_EXIT", "RELATION", "AFFECTION_ACTION"	);
+
 
 	void callChatPhrase(){
-		getCurrentCharacter().phrases.requestRandomPhrase(chatIntents, phrase -> {
-			DialogHandler.intentExchanger.addByCharacter(new IntentExchanger.Reaction(new IntentList(phrase.intentType)));
-			sendPhrase(phrase, null);
-		});
+		Phrase phrase = PhraseChooser.get(null, getCurrentCharacter(), instance.pluginsTags, null);
+		sendPhrase(phrase, null);
 	}
 
 	void resetTimer(){
-		pluginProxy.cancelTimer(timerId);
-		timerId = pluginProxy.setTimer(getProperties().getLong("messageTimeout", DEFAULT_CHATTING_TIMEOUT), -1,
+		pluginProxy.cancelTimer(chatTimerId);
+		chatTimerId = pluginProxy.setTimer(getProperties().getLong("messageTimeout", DEFAULT_CHATTING_TIMEOUT), -1,
 				(sender, data) -> {
 					callChatPhrase();
 				}
 		);
+		pluginProxy.cancelTimer(emotionTimerId);
+		emotionTimerId = pluginProxy.setTimer(100000, -1, (sender, data) -> {
+			if (new Random().nextFloat() > 0.8)
+				getCurrentCharacter().emotionState.raiseRandomEmotion();
+		});
 	}
 
 	void updateOptionsTab() {
@@ -580,7 +588,7 @@ public class Main implements Plugin {
 				errorMessage += e.getMessage() + "\n";
 			}
 			try{
-				currentCharacter.setTags(data.getOrDefault("tags", null));
+				currentCharacter.setTags((String) data.getOrDefault("tags", null));
 			} catch(Exception e){
 				errorMessage += e.getMessage() + "\n";
 			}
@@ -603,7 +611,6 @@ public class Main implements Plugin {
 		} else {
 			currentCharacter = CharacterPreset.getFromFileUnsafe(presetFile);
 		}
-		currentCharacter.updatePhrases();
 
 		try {
 			getProperties().put("messageTimeout", (Integer) data.getOrDefault("message_interval", 40) * 1000);
@@ -637,6 +644,30 @@ public class Main implements Plugin {
 	void saveSettings() {
 		getProperties().put("characterPreset", currentCharacter.toJSON().toString());
 		getProperties().save();
+	}
+
+	public static CharacterPreset getDefaultCharacterPreset(){
+		CharacterPreset preset = new CharacterPreset();
+
+		preset.name = Main.getString("default_name");
+
+		preset.phrases = getDefaultPhrases();
+
+		preset.tags.putFromText("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
+		preset.onChange = new Runnable() {
+			@Override public void run() {
+				Main.getPluginProxy().sendMessage("talk:character-updated", getCurrentCharacter().toInformationMap());
+			}
+		};
+		return preset;
+	}
+
+	public static PhrasesPackList getDefaultPhrases(){
+		PhrasesPackList pack = new PhrasesPackList();
+		pack.add("main", PhrasesPack.PackType.USER);
+		pack.add("database", PhrasesPack.PackType.INTENT_DATABASE);
+		pack.add(Main.getProperties().getString("user-phrases"), PhrasesPack.PackType.USER);
+		return pack;
 	}
 
 	public static String getString(String text){

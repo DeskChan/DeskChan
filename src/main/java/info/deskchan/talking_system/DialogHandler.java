@@ -3,7 +3,6 @@ package info.deskchan.talking_system;
 import info.deskchan.core.MessageDataMap;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.talking_system.intent_exchange.IntentList;
 
 import java.util.*;
 
@@ -14,7 +13,7 @@ public class DialogHandler {
 
     static PluginProxyInterface pluginProxy;
 
-    private static List<String> allIntents;
+    private static IntentList allIntents;
 
     private static CharacterRange lastRange;
     private static IntentList lastIntents;
@@ -72,7 +71,7 @@ public class DialogHandler {
                 lastRange = new CharacterRange((Map) map.get("character"));
             }
 
-            inputIntents = setToString(lastIntents);
+            inputIntents = lastIntents.toString();
 
             CharacterPreset currentCharacter = Main.getCurrentCharacter();
 
@@ -83,7 +82,7 @@ public class DialogHandler {
             );
             IntentExchanger.DialogLine answer = intentExchanger.next(lastRequest);
 
-            outputIntents = setToString(answer.reaction.intents);
+            outputIntents = answer.reaction.intents.toString();
 
             outputEmotion = answer.reaction.emotion;
             if (answer.reaction.emotion != null)
@@ -130,9 +129,9 @@ public class DialogHandler {
         });
 
         pluginProxy.addMessageListener("talk-debug:input-intents-clicked", (sender, tag, data) -> {
-            Set<String> in = stringToSet(inputIntents);
+            IntentList in = new IntentList(inputIntents);
             in.add(inputIntentSelected);
-            inputIntents = setToString(in);
+            inputIntents = in.toString();
             setInputInForm();
         });
 
@@ -140,7 +139,7 @@ public class DialogHandler {
             PhrasesPack pack = Main.getCurrentCharacter().phrases.getUserDatabasePack();
             Phrase newPhrase = new Phrase(phraseText);
             newPhrase.character = lastRange;
-            newPhrase.intentType = new LinkedList<>(stringToSet(inputIntents));
+            newPhrase.setIntents(new IntentList(inputIntents));
             lastRequest.reaction.intents = new IntentList(newPhrase.intentType);
             pack.add(newPhrase);
             pack.save();
@@ -157,9 +156,9 @@ public class DialogHandler {
         });
 
         pluginProxy.addMessageListener("talk-debug:output-intents-clicked", (sender, tag, data) -> {
-            Set<String> in = stringToSet(outputIntents);
+            IntentList in = new IntentList(outputIntents);
             in.add(outputIntentSelected);
-            outputIntents = setToString(in);
+            outputIntents = in.toString();
             setOutputInForm();
         });
 
@@ -176,10 +175,10 @@ public class DialogHandler {
 
 
         pluginProxy.addMessageListener("talk-debug:save-output", (sender, tag, data) -> {
-            Set<String> output = stringToSet(outputIntents);
+            IntentList output = new IntentList(outputIntents);
             intentExchanger.deleteUntil(lastAnswer,
                 new IntentExchanger.Reaction(
-                        new IntentList(output), outputEmotion
+                        output, outputEmotion
                 )
             );
 
@@ -417,11 +416,11 @@ public class DialogHandler {
         characterClassifier = new NaiveCharacterClassifier(characterPhrases);
         intentClassifier = new IntentClassifier(intentPhrases);
 
-        Set<String> s = new HashSet<>();
+        allIntents = new IntentList();
         for (Phrase phrase : intentPhrases)
             if (phrase.intentType != null)
-                s.addAll(phrase.intentType);
-        allIntents = new ArrayList<>(s);
+                allIntents.addAll(phrase.intentType);
+
         if (allIntents.size() > 0) {
             allIntents.sort(Comparator.naturalOrder());
             inputIntentSelected = allIntents.get(0);
@@ -445,26 +444,5 @@ public class DialogHandler {
                 return false;
         }
         return true;
-    }
-
-    private static Set<String> stringToSet(String text){
-        Set<String> in = new HashSet<>();
-        text = text.trim();
-        if (text.length() == 0) return in;
-        for (String a : text.split(","))
-            in.add(a.trim());
-        return in;
-    }
-
-    private static String setToString(Collection<String> in){
-        StringBuilder sb = new StringBuilder();
-        Iterator<String> it = in.iterator();
-        if (it.hasNext()){
-            sb.append(it.next());
-            while (it.hasNext()){
-                sb.append(", "+it.next());
-            }
-        }
-        return sb.toString();
     }
 }

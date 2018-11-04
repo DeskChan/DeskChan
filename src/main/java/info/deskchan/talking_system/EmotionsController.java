@@ -11,11 +11,13 @@ public interface EmotionsController {
 
 	void reset();
 
+	void raiseRandomEmotion();
+
 	void raiseEmotion(String emotionName);
 
 	void raiseEmotion(String emotionName, int value);
 
-	boolean tagsMatch(Map<String,Object> tags);
+	boolean phraseMatches(Phrase phrase);
 
 	CharacterController construct(CharacterController target);
 

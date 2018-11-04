@@ -10,6 +10,7 @@ sendMessage("core:add-command", [ tag: pluginName+':random-number' ])
 sendMessage("core:add-command", [ tag: pluginName+':dice' ])
 sendMessage("core:add-command", [ tag: pluginName+':date' ])
 sendMessage("core:add-command", [ tag: pluginName+':time' ])
+sendMessage("core:add-command", [ tag: pluginName+':roulette' ])
 
 ball_list = ['Бесспорно', 'Предрешено', 'Никаких сомнений', 'Определённо да', 'Можешь быть уверен в этом',
     'Мне кажется — «да»', 'Вероятнее всего', 'Хорошие перспективы', 'Знаки говорят — «да»', 'Да',
@@ -48,7 +49,7 @@ addMessageListener(pluginName+':magic-ball', { sender, tag, dat ->
     Map data = (Map) dat
     def text = data.get("msgData")
     if(text == null || text.size() == 0){
-        sendMessage('DeskChan:say', 'Но ты же ничего не спросил!')
+        sendMessage('DeskChan:request-say', 'Но ты же ничего не спросил!')
         return
     }
     ar = text
@@ -182,6 +183,13 @@ addMessageListener(pluginName+':time', { sender, tag, dat ->
     }
 })
 
+addMessageListener(pluginName+':roulette', { sender, tag, dat ->
+    if (new Random().nextInt(6) == 0){
+        sendMessage("DeskChan:say", "Упс. Ты мёртв.")
+    } else {
+        sendMessage("DeskChan:say", "На этот раз тебе повезло. На этот раз.")
+    }
+})
 // здесь мы связываем команду и событие
 sendMessage("core:set-event-link", [
         eventName: 'speech:get',
@@ -212,4 +220,9 @@ sendMessage("core:set-event-link", [
         eventName: 'speech:get',
         commandName: pluginName+':time',
         rule: '(сколько|какое) (время|времени) {time:DateTime}'
+])
+sendMessage("core:set-event-link", [
+        eventName: 'speech:get',
+        commandName: pluginName+':roulette',
+        rule: 'рулетка'
 ])

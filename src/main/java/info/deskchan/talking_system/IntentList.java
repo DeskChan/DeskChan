@@ -1,6 +1,10 @@
-package info.deskchan.talking_system.intent_exchange;
+package info.deskchan.talking_system;
+
+import info.deskchan.talking_system.intent_exchange.ICompatible;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class IntentList extends ArrayList<String> implements ICompatible {
 
@@ -13,13 +17,20 @@ public class IntentList extends ArrayList<String> implements ICompatible {
         }
     }
 
-    public IntentList(String[] intents){
+    public IntentList(String... intents){
         super();
         for (String item : intents) add(item);
     }
 
+    public IntentList(String text){
+        this(text.split("[\\s,]+"));
+    }
+
     @Override
     public boolean add(String element) {
+        element = format(element);
+        if (element.length() == 0)
+            return false;
         if (!contains(element))
             return super.add(element);
         return false;
@@ -27,8 +38,10 @@ public class IntentList extends ArrayList<String> implements ICompatible {
 
     @Override
     public void add(int index, String element) {
-        if (!contains(element))
-            super.add(index, element);
+        element = format(element);
+        if (element.length() == 0)
+            return;
+        super.add(index, element);
     }
 
     @Override
@@ -37,6 +50,15 @@ public class IntentList extends ArrayList<String> implements ICompatible {
         for (String a : c)
             add(a);
         return true;
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        return super.contains(format(o.toString()));
+    }
+
+    private String format(String a){
+        return a.trim().toUpperCase();
     }
 
     @Override
@@ -52,5 +74,18 @@ public class IntentList extends ArrayList<String> implements ICompatible {
                 sum += 1;
         }
         return sum / size();
+    }
+
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        Iterator<String> it = iterator();
+        if (it.hasNext()){
+            sb.append(it.next());
+            while (it.hasNext()){
+                sb.append(", "+it.next());
+            }
+        }
+        return sb.toString();
     }
 }

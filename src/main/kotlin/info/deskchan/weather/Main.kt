@@ -39,9 +39,7 @@ class Main : Plugin {
                     properties.getString("weather-now-state")!!
             )
             server.loadFromProperties (forecast)
-        } catch (e: Exception){
-            Main.log(e)
-        }
+        } catch (e: Exception){}
         //server = OpenWeatherServer()
 
         pluginProxy.addMessageListener("weather:set-options", MessageListener { sender, tag, dat ->

@@ -30,6 +30,7 @@ public class CharacterPreset {
 		try {
 			return (CharacterController) defaultCharacterController.newInstance();
 		} catch (Exception e){
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -44,18 +45,18 @@ public class CharacterPreset {
 			controller.setUpdater(new EmotionsController.UpdateHandler() {
 				@Override
 				public void onUpdate() {
-					updatePhrases();
 					inform();
 				}
 			});
 			return controller;
 		} catch (Exception e){
+			e.printStackTrace();
 			return null;
 		}
 	}
 
 	/** Additional character and user features like gender, species, interests. **/
-	public TextOperations.TagsMap tags;
+	public TagsMap tags;
 
 	/** Phrases list. **/
 	public PhrasesPackList phrases;
@@ -78,12 +79,12 @@ public class CharacterPreset {
 	}
 
 	/** Set preset tags from its string representation. **/
-	public void setTags(Object text){
-		if (text instanceof String)
-			tags = new TextOperations.TagsMap((String) text);
-		else if (text instanceof Map)
-			tags = new TextOperations.TagsMap((Map) text);
-		else throw new ClassCastException("Cannot cast "+text.getClass().getSimpleName() + " to TagsMap");
+	public void setTags(String text) {
+		tags = new TagsMap(text);
+	}
+
+	public void setTags(Map newTags) {
+		tags = new TagsMap(newTags);
 	}
 
 	/** Set preset from JSON. **/
@@ -100,14 +101,12 @@ public class CharacterPreset {
 		if (json.has("character"))
 			character.setFromJSON(json.getJSONObject("character"));
 
+		phrases = new PhrasesPackList();
 		if (json.has("phrases")){
-			phrases = new PhrasesPackList(character);
 			List<String> quotesFiles = listFromJSON(json, "phrases");
 			if (quotesFiles.size() > 0){
 				phrases.set(quotesFiles);
 			}
-		} else {
-			phrases = PhrasesPackList.getDefault(character);
 		}
 		phrases.reload();
 
@@ -116,7 +115,7 @@ public class CharacterPreset {
             emotionState.setFromJSON(json.getJSONObject("emotions"));
         } catch (Exception e){ }
 
-		tags = new TextOperations.TagsMap();
+		tags = new TagsMap();
 		if (json.has("tags")) {
 			json = json.getJSONObject("tags");
 			for (HashMap.Entry<String, Object> obj : json.toMap().entrySet()) {
@@ -129,26 +128,9 @@ public class CharacterPreset {
 	public void setDefault() {
 		character = getDefaultCharacterController();
 		emotionState = getDefaultEmotionsController();
-		name = Main.getString("default_name");
-		phrases = PhrasesPackList.getDefault(character);
-		tags = new TextOperations.TagsMap();
-		tags.putFromText("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
-	}
-
-	/** Update phrases with preset info. **/
-	public void updatePhrases(){
-		phrases.update(emotionState.construct(character));
-	}
-
-	/** Check default tags. **/
-	private static final String[] defaultTags = new String[]{ "gender" , "species" , "interests" , "breastSize" , "userGender" };
-	public boolean tagsMatch(Map<String,Object> phrase){
-		for (String tag : defaultTags)
-			if (phrase.containsKey(tag) && !tags.match(tag, phrase.get(tag).toString())) return false;
-
-		if (!emotionState.tagsMatch(phrase)) return false;
-
-		return true;
+		name = "DeskChan";
+		phrases = new PhrasesPackList();
+		tags = new TagsMap();
 	}
 
 	public JSONObject toJSON() {
@@ -181,8 +163,9 @@ public class CharacterPreset {
 		return map;
 	}
 
-	public void inform(){
-		Main.getPluginProxy().sendMessage("talk:character-updated", toInformationMap());
+	public Runnable onChange = null;
+	protected void inform(){
+		if (onChange != null) onChange.run();
 	}
 
 	private String getRandomItem(Collection<String> collection){
@@ -308,4 +291,23 @@ public class CharacterPreset {
 		return characterImage;
 	}
 
+	@Override
+	public int hashCode() {
+		int hash = name.hashCode();
+
+		CharacterController cc = emotionState.construct(character);
+		for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++)
+			hash += cc.getValue(i) * (5 + i);
+
+		hash += emotionState.getCurrentEmotionName() != null ? emotionState.getCurrentEmotionName().hashCode() : 0;
+
+		hash += tags.dataHashCode();
+
+		hash += phrases.hashCode();
+		for (PhrasesPack pack : phrases) {
+			hash += pack.hashCode();
+		}
+
+		return hash;
+	}
 }

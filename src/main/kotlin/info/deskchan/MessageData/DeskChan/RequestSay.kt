@@ -5,11 +5,12 @@ import info.deskchan.core.MessageData
 /**
  * Say phrase by the character with specific intent
  *
- * If response is requested, phrase will be sended as response. Phrase will be sent to DeskChan:say otherwise.
+ * If response is requested, phrase will be sent as response. Phrase will be sent to DeskChan:say otherwise.
  *
  * @property intent Intent for phrase. If provided more than one, as much phrases as intents count will be generated.
  * @property characterImage Emotion sprite name for character to use when saying phrase. Sprite will be selected by character system if no name provided.
  * @property priority Priority for message
+ * @property tags Tags to filter phrase
  */
 @MessageData.Tag("DeskChan:request-say")
 @MessageData.RequiresResponse
@@ -35,6 +36,8 @@ class RequestSay : MessageData {
         set(value){
             priority = java.lang.Long.max(value?: 0L, 0L)
         }
+
+    var tags: Map<String, String>? = null
 
     constructor(intent: String){
         this.intent = intent

@@ -1,7 +1,5 @@
 package info.deskchan.talking_system;
 
-
-import info.deskchan.core_utils.TextOperations;
 import org.json.JSONArray;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -16,15 +14,13 @@ public class Phrase {
 
 	protected String phraseText;
 
-	protected int timeout;
-
-	protected TextOperations.TagsMap tags;
+	protected TagsMap tags;
 
 	// Array of { block_name of String, start of Int, end of Int, params.. of String/Integer/Float }
 	protected Object[][] blocks;
 
 	// null means default intent
-	protected List<String> intentType;
+	protected IntentList intentType;
 
 	protected String spriteType;
 
@@ -32,23 +28,19 @@ public class Phrase {
 	protected static final String DEFAULT_SPRITE = "AUTO";
 
 	public Phrase(String text) {
+		this(text, null);
+	}
+
+	public Phrase(String text, IntentList intents) {
 		phraseText = text.replace("\n", "");
-		intentType = null;
+		intentType = intents;
 		character = new CharacterRange();
 		spriteType = DEFAULT_SPRITE;
-		timeout = 0;
 		tags = null;
 		setBlocks();
 	}
 
-	public void setIntentType(String text){
-		if (text == null || text.length() == 0) return;
-
-		List<String> intents = new ArrayList<>();
-		for(String intent : text.replace("\n", "").split(",")) {
-			intent = intent.trim().toUpperCase();
-			if (intent.length() > 0) intents.add(intent);
-		}
+	public void setIntents(IntentList intents){
 		if (intents.size() != 0 && !(intents.size() == 1 && intents.get(0).equals(DEFAULT_INTENT)))
 			intentType = intents;
 		else
@@ -75,22 +67,17 @@ public class Phrase {
 		Phrase phrase = new Phrase(p);
 		
 		try {
-			phrase.setIntentType(findInNode(list, "purpose").getTextContent());
+			phrase.setIntents(new IntentList(findInNode(list, "purpose").getTextContent()));
 		} catch (Exception e) { }
 
 		try {
-			phrase.setIntentType(findInNode(list, "intent").getTextContent());
+			phrase.setIntents(new IntentList(findInNode(list, "intent").getTextContent()));
 		} catch (Exception e) { }
 		
 		try {
 			phrase.setSpriteType(findInNode(list, "sprite").getTextContent());
 		} catch (Exception e) {
 			phrase.spriteType = DEFAULT_SPRITE;
-		}
-		try {
-			phrase.timeout = Integer.valueOf(findInNode(list, "timeout").getTextContent());
-		} catch (Exception e) {
-			phrase.timeout = 0;
 		}
 
 		try {
@@ -117,12 +104,12 @@ public class Phrase {
 
 
 	public void setTag(String tag,String text){
-		if(tags == null) tags = new TextOperations.TagsMap();
+		if(tags == null) tags = new TagsMap();
 		tags.put(tag, text);
 	}
 
 	public void setTags(String text){
-		if(tags == null) tags = new TextOperations.TagsMap();
+		if(tags == null) tags = new TagsMap();
 		tags.putFromText(text);
 	}
 
@@ -130,7 +117,7 @@ public class Phrase {
 		return tags != null ? tags.get(name) : null;
 	}
 
-	public TextOperations.TagsMap getTags(){
+	public TagsMap getTags(){
 		return tags;
 	}
 
@@ -230,7 +217,7 @@ public class Phrase {
 						phrase.setSpriteType(array.getString(k));
 					break;
 					case 2:
-						phrase.setIntentType(array.getString(k));
+						phrase.setIntents(new IntentList(array.getString(k)));
 					break;
 					case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10: {
 						Range range = new Range(array.getString(k));
@@ -254,8 +241,6 @@ public class Phrase {
 		Node mainNode = doc.createElement("phrase");
 		try {
 			appendTo(doc, mainNode, "text", phraseText);
-			if (timeout > 0)
-				appendTo(doc, mainNode, "timeout", String.valueOf(timeout));
 
 			appendTo(doc, mainNode, "intent", getIntentsAsString());
 			if (!spriteType.equals(DEFAULT_SPRITE))
@@ -275,27 +260,6 @@ public class Phrase {
 		}
 		return mainNode;
 	}
-	
-	public boolean matchToCharacter(CharacterController target) {
-		for (int i = 0, l = CharacterFeatures.getFeatureCount(); i < l; i++)
-			if (!character.range[i].match(target.getValue(i)))
-				return false;
-
-		return true;
-	}
-
-	private Date last_usage;
-	
-	public void updateLastUsage() {
-		last_usage = new Date();
-	}
-	
-	public boolean noTimeout() {
-		if (last_usage == null || timeout<=0) {
-			return true;
-		}
-		return (new Date().getTime() - last_usage.getTime() > timeout * 1000);
-	}
 
 	public boolean hasIntent(String match){
 		if (intentType == null)  return match.equals(DEFAULT_INTENT);
@@ -310,11 +274,19 @@ public class Phrase {
 		return null;
 	}
 
-	public HashMap<String, Object> toMap() {
-		HashMap<String, Object> map = new HashMap<>();
+	/** Get timeout in seconds. */
+	public int getTimeout(){
+		try {
+			Set<String> values = tags.get("timeout");
+			return Integer.getInteger(values.iterator().next());
+		} catch (Exception e){
+			return 0;
+		}
+	}
+
+	public Map<String, Object> toMap() {
+		Map<String, Object> map = new HashMap<>();
 		map.put("text", phraseText);
-		if (timeout != 0)
-			map.put("timeout", timeout);
 
 		map.put("characterImage", spriteType);
 		map.put("intent", getIntents());
@@ -332,9 +304,6 @@ public class Phrase {
 		StringBuilder s = new StringBuilder("{" + phraseText + "} / intent: " + getIntentsAsString() + " / Range: { " + character.toString() + " }");
 		if (!spriteType.equals(DEFAULT_SPRITE)) {
 			s.append(" / SpriteType: " + spriteType);
-		}
-		if (timeout > 0) {
-			s.append(" / Timeout: " + timeout);
 		}
 		if(tags != null)
 			for(String tag : tags.keySet()) {

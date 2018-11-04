@@ -28,6 +28,8 @@ public interface CharacterController {
     /** Clone controller. **/
     CharacterController copy();
 
+    boolean phraseMatches(Phrase phrase);
+
     void setFromJSON(JSONObject jsonObject);
 
     JSONObject toJSON();

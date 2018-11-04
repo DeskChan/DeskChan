@@ -3,6 +3,7 @@ package info.deskchan.talking_system;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.Set;
 
 /** This class stores diapasons of features. **/
 public class StandardCharacterController extends CharacterFeatures implements CharacterController {
@@ -149,6 +150,14 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 
 		int index = getFeatureIndex(featureName);
 		return (int) ( value[index][2] > 0 ? Math.floor(value[index][2]) : Math.ceil(value[index][2]) );
+	}
+
+	public boolean phraseMatches(Phrase phrase){
+		for (int i = 0, l = CharacterFeatures.getFeatureCount(); i < l; i++)
+			if (!phrase.character.range[i].match(getValue(i)))
+				return false;
+
+		return true;
 	}
 
 	public CharacterController mix(CharacterController other, float percent) {

@@ -16,17 +16,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class PhrasesPack {
+public class PhrasesPack extends ArrayList<Phrase>{
 
     public enum PackType { USER, PLUGIN, INTENT_DATABASE }
 
     protected PackType packType;
     protected File packFile;
     protected String packName;
-    protected List<Phrase> phrases = new ArrayList<>();
     protected boolean loaded;
+    private int hash = hashCode();
+
+    public PhrasesPack(PackType packType) {
+        super();
+        this.packType = packType;
+        loaded = true;
+    }
 
     public PhrasesPack(String file, PackType packType) {
+        super();
         packName = file;
         packFile = new File(file);
         this.packType = packType;
@@ -60,10 +67,11 @@ public class PhrasesPack {
     }
 
     public void load(){
+        hash += 1;
         try {
             String defaultLanguage = Locale.getDefault().toLanguageTag();
 
-            phrases.clear();
+            clear();
             DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
             f.setValidating(false);
 
@@ -137,7 +145,7 @@ public class PhrasesPack {
         while (phrasesNode.getChildNodes().getLength() > 0)
             phrasesNode.removeChild(phrasesNode.getFirstChild());
 
-        for (Phrase phrase : getPhrases())
+        for (Phrase phrase : this)
             phrasesNode.appendChild(phrase.toXMLNode(doc));
 
         try {
@@ -152,16 +160,10 @@ public class PhrasesPack {
         }
     }
 
-    public void add(Phrase quote) {
-        if (quote != null) phrases.add(quote);
-    }
-
-    public int size(){
-        return phrases.size();
-    }
-
-    public Phrase get(int i){
-        return phrases.get(i);
+    @Override
+    public boolean add(Phrase phrase) {
+        if (phrase == null) return false;
+        return super.add(phrase);
     }
 
     public String getFile(){ return packFile.toString(); }
@@ -173,12 +175,15 @@ public class PhrasesPack {
     public String toString(){ return "[" + packName + " - " + packFile.toString() + "]" +
             (loaded ? "" : " -- " + Main.getString("error") + " -- "); }
 
-    public List<Phrase> getPhrases(){ return phrases; }
-
     @Override
     public boolean equals(Object other){
         if (other.getClass() != this.getClass()) return false;
         return packFile.equals(((PhrasesPack) other).packFile);
+    }
+
+    @Override
+    public int hashCode() {
+        return hash;
     }
 
     public void printPhrasesLack(String intent){
@@ -194,8 +199,8 @@ public class PhrasesPack {
         for(int i = 0; i < minimumsCount; i++){
             characters[i] = CharacterPreset.getDefaultCharacterController();
             matchingPhrasesCounts[i] = 0;
-            for(Phrase phrase : phrases)
-                if(phrase.matchToCharacter(characters[i])) matchingPhrasesCounts[i]++;
+            for(Phrase phrase : this)
+                if (characters[i].phraseMatches(phrase)) matchingPhrasesCounts[i]++;
         }
 
         // iterating over other points to find minimum
@@ -231,8 +236,8 @@ public class PhrasesPack {
 
             // counting matching phrases
             int matchingPhrasesCount = 0;
-            for (Phrase phrase : phrases)
-                if (phrase.hasIntent(intent) && phrase.matchToCharacter(current)) matchingPhrasesCount++;
+            for (Phrase phrase : this)
+                if (phrase.hasIntent(intent) && current.phraseMatches(phrase)) matchingPhrasesCount++;
 
             // if count of some's minimum is more than to current, replacing it
             for (int k = 0; k < minimumsCount; k++)

@@ -24,6 +24,8 @@ public class PluginManager {
 	private String[] args;
 	private static OutputStream logStream = null;
 
+	private final Map<String, Object> persistentMessages = new HashMap<>();
+
 	private static boolean debugBuild = false;
     private static String[] debugBuildFolders = { "build", "out" };
 
@@ -97,12 +99,13 @@ public class PluginManager {
 	/* Plugin initialization and unloading */
 
 	/** Plugin initialization. Use other methods of this class if you haven't all needed components
+	 * You will not receive any information about if plugin has been loaded successfully.
 	 *
 	 * @param id Plugin name
 	 * @param plugin Plugin object
 	 * @param config Config (you can parse it from file, create by yourself or pass null)
 	 * @return Is initialization has started successfully.
-	 * You will not recieve any information about if plugin has loaded to program.
+	 *
 	 * @throws Throwable Plugin with such name already exist
 	 */
 	public boolean initializePlugin(String id, Plugin plugin, PluginConfig config) throws Throwable {
@@ -205,6 +208,10 @@ public class PluginManager {
 		}
 	}
 
+	void setPersistentMessage(String message){
+		persistentMessages.putIfAbsent(message, null);
+	}
+
 	/**  Get listeners count. **/
 	int getMessageListenersCount(String tag) {
 		Set<MessageListener> listeners = messageListeners.get(tag);
@@ -216,14 +223,18 @@ public class PluginManager {
 
 	/**
 	 * Send message to tag. <br>
-	 * You cannot call this method by yourself to not falsify messages from other plugins
+	 * You cannot call this method directly to not falsify messages from other plugins
 	 * @param sender Name of plugin that sends message
 	 * @param tag Tag of message
 	 * @param data Additional data that will be sent with query, can be null
 	 */
 	void sendMessage(String sender, String tag, Object data) {
 		Object serializedData = MessageDataUtils.serialize(data);
-		
+
+		if (persistentMessages.containsKey(tag)){
+			persistentMessages.put(tag, serializedData);
+		}
+
 		Set<MessageListener> listeners = getMessageListeners(tag);
 		if (listeners == null || listeners.size() == 0)
 			return;
