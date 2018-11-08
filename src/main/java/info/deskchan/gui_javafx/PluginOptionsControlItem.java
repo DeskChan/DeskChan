@@ -530,7 +530,7 @@ interface PluginOptionsControlItem {
 			if (options.containsKey("msgTag")){
 				String msgTag = options.getString("msgTag");
 				slider.valueProperty().addListener((obs, oldValue, newValue) -> {
-					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, newValue));
+					App.showWaitingAlert(() -> Main.getPluginProxy().sendMessage(msgTag, newValue.doubleValue()));
 				});
 			}
 
@@ -621,7 +621,7 @@ interface PluginOptionsControlItem {
 				comboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
 					property.setValue(getValue().toString());
 					App.showWaitingAlert(() -> {
-						Main.getPluginProxy().sendMessage(msgTag,getValue());
+						Main.getPluginProxy().sendMessage(msgTag, getValue());
 					});
 				});
 			}

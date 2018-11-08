@@ -5,40 +5,22 @@ import java.util.*;
 
 public class TextOperations {
     private final static char[][] simplify = {{'ъ', 'й'}, {'ь', 'й'}, {'ы', 'и'}, {'ё', 'е'}};
-    private final static String VOWELS = "уеъыаоэяиью";
+    private final static String VOWELS = "уеъыаоэяиьюй";
+    private final static List<String> negations = Arrays.asList("не", "not");
 
-    public static ArrayList<String> simplifyWords(String[] words) {
-        ArrayList<String> w = new ArrayList<>();
-        String cw;
-        for (int i = 0; i < words.length; i++) {
-            cw = simplifyWord(words[i]);
-            if (cw.equals("не") && i < words.length - 1) {
-                String cw2 = simplifyWord(words[i + 1]);
-                if (!cw2.equals("не")) {
-                    w.add(cw + cw2);
-                    i++;
-                    continue;
-                }
-            }
-            w.add(cw);
-        }
-        return w;
+    public static List<String> simplifyWords(String[] words) {
+        return simplifyWords(Arrays.asList(words));
     }
 
-    public static ArrayList<String> simplifyWords(ArrayList<String> words) {
-        ArrayList<String> w = new ArrayList<>();
-        String cw;
+    public static List<String> simplifyWords(List<String> words) {
+        List<String> w = new ArrayList<>();
         for (int i = 0; i < words.size(); i++) {
-            cw = simplifyWord(words.get(i));
-            if (cw.equals("не") && i < words.size() - 1) {
-                String cw2 = simplifyWord(words.get(i + 1));
-                if (!cw2.equals("не")) {
-                    w.add(cw + cw2);
-                    i++;
-                    continue;
-                }
+            if (negations.contains(words.get(i)) && i < words.size() - 1 && !negations.contains(words.get(i + 1))) {
+                w.add(words.get(i) + simplifyWord(words.get(i + 1)));
+                i++;
+            } else {
+                w.add(simplifyWord(words.get(i)));
             }
-            w.add(cw);
         }
         return w;
     }
@@ -66,24 +48,24 @@ public class TextOperations {
 
     private enum WordExtractionMode { WORDS_NO_CHANGE, WORDS_LOWER, WORDS_UPPER, IMPORTANT_PARTS_LOWER }
 
-    public static ArrayList<String> extractWords(String phrase) {
+    public static List<String> extractWords(String phrase) {
         return extractWordsImpl(phrase, WordExtractionMode.WORDS_NO_CHANGE);
     }
 
-    public static ArrayList<String> extractWordsLower(String phrase) {
+    public static List<String> extractWordsLower(String phrase) {
         return extractWordsImpl(phrase, WordExtractionMode.WORDS_LOWER);
     }
 
-    public static ArrayList<String> extractWordsUpper(String phrase) {
+    public static List<String> extractWordsUpper(String phrase) {
         return extractWordsImpl(phrase, WordExtractionMode.WORDS_UPPER);
     }
 
-    public static ArrayList<String> extractSpeechParts(String phrase) {
+    public static List<String> extractSpeechParts(String phrase) {
         return extractWordsImpl(phrase, WordExtractionMode.IMPORTANT_PARTS_LOWER);
     }
 
-    private static ArrayList<String> extractWordsImpl(String phrase, WordExtractionMode mode) {
-        ArrayList<String> words = new ArrayList<>();
+    private static List<String> extractWordsImpl(String phrase, WordExtractionMode mode) {
+        List<String> words = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i <= phrase.length(); i++) {
             char at = i<phrase.length() ? phrase.charAt(i) : '\0';
@@ -127,5 +109,16 @@ public class TextOperations {
         for (int i = 0; i < text.length(); i++)
             if (!VOWELS.contains(text.substring(i,i+1))) return true;
         return false;
+    }
+
+    public static List<String> defaultWordsExtraction(String text){
+        text = text.replaceAll("[\\{\\}]+", "");
+        return simplifyWords(extractSpeechParts(text));
+    }
+
+    public static boolean phraseSimpleMatch(Collection<String> phrase, Collection<String> pattern){
+        for (String p : pattern)
+            if (!phrase.contains(p)) return false;
+        return true;
     }
 }
