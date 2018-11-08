@@ -4,28 +4,29 @@ open class Control : HashMap<String, Any> {
 
     protected constructor()
 
-    constructor(type: ControlType) : this(type, null, null, null, null)
+    constructor(type: ControlType) : this(type, null, null)
 
-    constructor(type: ControlType, id: String) : this(type, id, null, null, null)
+    constructor(type: ControlType, data: Map<String, Any>) : this(type, null, null, data)
 
-    constructor(type: ControlType, id: String?, value: Any) : this(type, id, value, null, null)
+    constructor(type: ControlType, id: String) : this(type, id, null)
 
-    constructor(type: ControlType, id: String?, value: Any?, label: String) : this(type, id, value, label, null)
-
-    constructor(type: ControlType, id: String?, value: Any?, label: String?, hint: String?){
+    constructor(type: ControlType, id: String?, value: Any?){
         setType(type)
         setId(id)
         setValue(value)
-        setLabel(label)
-        setHint(hint)
     }
 
-    constructor(type: ControlType, data: Map<String, Any>) : this(type){
+    constructor(type: ControlType, id: String, value: Any?, data: Map<String, Any>) : this(type, id, value){
         data.forEach { t, u -> if (u != null) put(t,u) }
     }
 
-    constructor(type: ControlType, id: String, value: Any?, label: String?, hint: String?, data: Map<String, Any>) : this(type, id, value, label, hint){
-        data.forEach { t, u -> if (u != null) put(t,u) }
+    constructor(type: ControlType, id: String?, value: Any?, vararg data: Any?) : this(type, id, null) {
+        var i = 0
+        while (i < data.size) {
+            if (data[i+1] != null)
+                put(data[i].toString(), data[i + 1]!!)
+            i += 2
+        }
     }
 
     fun getId() = get("id").toString()
@@ -65,9 +66,9 @@ open class Control : HashMap<String, Any> {
          * - value: String
          * - hideText: boolean
          * - editable: boolean
-         * - enterTag: String -> MessageListener
-         * - onFocusLostTag: String -> MessageListener
-         * - onChangeTag: String -> MessageListener */
+         * - enterTag: String -> MessageListener (String)
+         * - onFocusLostTag: String -> MessageListener (String)
+         * - onChangeTag: String -> MessageListener (String) */
         TextField,
 
         /** Spinner (or IntSpinner)
@@ -75,7 +76,7 @@ open class Control : HashMap<String, Any> {
          * - min: int
          * - max: int
          * - step: int
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (Int) */
         IntSpinner,
         Spinner,
 
@@ -84,7 +85,7 @@ open class Control : HashMap<String, Any> {
          * - min: float
          * - max: float
          * - step: float
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (Double) */
         FloatSpinner,
 
         /** Slider
@@ -92,19 +93,19 @@ open class Control : HashMap<String, Any> {
          * - min: float
          * - max: float
          * - step: double
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (Double) */
         Slider,
 
         /** CheckBox
          * - value: boolean - Is checked
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (Boolean) */
         CheckBox,
 
         /** ComboBox
          * - value: int
          * - values: List of String
          * - valuesNames: List of String
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (String) */
         ComboBox,
 
         /** ListBox
@@ -115,14 +116,14 @@ open class Control : HashMap<String, Any> {
 
         /** Button
          * - value: String - Button text
-         * - msgTag: String -> MessageListener
+         * - msgTag: String -> MessageListener (msdData)
          * - msgData: Any
          * - dstPanel: String */
         Button,
 
         /** FileField
          * - value: String - File name
-         * - msgTag: String -> MessageListener
+         * - msgTag: String -> MessageListener (String)
          * - initialDirectory: String -> File
          * - filters: List of
          *     * extensions: List of String
@@ -131,20 +132,20 @@ open class Control : HashMap<String, Any> {
 
         /** DirectoryField
          * - value: String - Directory name
-         * - msgTag: String -> MessageListener
+         * - msgTag: String -> MessageListener (String)
          * - initialDirectory: String -> File */
         DirectoryField,
 
         /** DatePicker
          * - value: String - Date in format specified. Format by default: ISO_LOCAL_DATE
-         * - msgTag: String -> MessageListener
+         * - msgTag: String -> MessageListener (String)
          * - format: String -> DateTimeFormatter */
         DatePicker,
 
         /** FilesManager
          * - value: List of String - Files selected
          * - multiple: Boolean
-         * - onChange: String -> MessageListener */
+         * - onChange: String -> MessageListener (String or String[]) */
         FilesManager,
 
         /** AssetsManager
@@ -153,12 +154,15 @@ open class Control : HashMap<String, Any> {
          * - folder: String
          * - acceptedExtensions: List of String
          * - moreURL: String -> URL
-         * - onChange: String -> MessageListener */
+         * - onChange: String -> MessageListener (String or String[]) */
         AssetsManager,
 
         /** TextArea
          * - value: String - Text
-         * - rowCount: int */
+         * - rowCount: int
+         * - enterTag: String -> MessageListener (String)
+         * - onFocusLostTag: String -> MessageListener (String)
+         * - onChangeTag: String -> MessageListener (String) */
         TextArea,
 
         /** CustomizableTextArea
@@ -172,12 +176,12 @@ open class Control : HashMap<String, Any> {
 
         /** ColorPicker
          * - value: String -> javafx.scene.paint.Color
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (String) */
         ColorPicker,
 
         /** FontPicker
          * - value: String -> "Font Family, Size"
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (String) */
         FontPicker,
 
         /** Separator */
@@ -185,7 +189,7 @@ open class Control : HashMap<String, Any> {
 
         /** Hyperlink
          * - value: String -> URL
-         * - msgTag: String -> MessageListener */
+         * - msgTag: String -> MessageListener (null) */
         Hyperlink
     }
 }

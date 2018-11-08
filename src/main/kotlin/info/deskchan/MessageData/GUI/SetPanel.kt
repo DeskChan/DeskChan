@@ -72,11 +72,43 @@ class SetPanel : MessageData {
         this.id = id
         this.controls = if (controls.size > 0) controls.toMutableList() else null
     }
+    constructor(id: String, controls: Collection<Map<String, Any>>){
+        this.id = id
+        this.controls = if (controls.size > 0) controls.toMutableList() else null
+    }
+
     constructor(id: String, panelType: PanelType, actionType: ActionType, vararg controls: Map<String, Any>){
         this.id = id
         this.controls = if (controls.size > 0) controls.toMutableList() else null
         setPanelType(panelType)
         setActionType(actionType)
+    }
+    constructor(id: String, panelType: PanelType, actionType: ActionType, controls: Collection<Map<String, Any>>){
+        this.id = id
+        this.controls = if (controls.size > 0) controls.toMutableList() else null
+        setPanelType(panelType)
+        setActionType(actionType)
+    }
+
+    constructor(id: String, panelType: PanelType, actionType: ActionType, name: String?, onClose: String?, onSave: String?,
+                vararg controls: Map<String, Any>){
+        this.id = id
+        this.controls = if (controls.size > 0) controls.toMutableList() else null
+        setPanelType(panelType)
+        setActionType(actionType)
+        this.name = name
+        this.onClose = onClose
+        this.onSave = onSave
+    }
+    constructor(id: String, panelType: PanelType, actionType: ActionType, name: String?, onClose: String?, onSave: String?,
+                controls: Collection<Map<String, Any>>){
+        this.id = id
+        this.controls = if (controls.size > 0) controls.toMutableList() else null
+        setPanelType(panelType)
+        setActionType(actionType)
+        this.name = name
+        this.onClose = onClose
+        this.onSave = onSave
     }
 
 }
