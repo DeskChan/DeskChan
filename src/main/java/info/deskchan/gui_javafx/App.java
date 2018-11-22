@@ -19,12 +19,16 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.media.AudioClip;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.*;
 import javafx.stage.Window;
 import javafx.util.Duration;
@@ -131,7 +135,12 @@ public class App extends Application {
 	public static void showNotification(String name, String text){
 		Main.runLater(() -> {
 			TemplateBox dialog = new TemplateBox("notification", name);
-			dialog.setContentText(text);
+			TextArea content = new TextArea();
+			content.setText(text);
+			content.setEditable(false);
+			content.setMaxHeight(OverlayStage.getDesktopSize().getHeight() * 0.5);
+			content.setId("notification-text");
+			dialog.getDialogPane().setContent(content);
 			dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
 			dialog.show();
 			dialog.requestFocus();
