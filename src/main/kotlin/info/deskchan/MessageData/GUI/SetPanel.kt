@@ -49,7 +49,7 @@ class SetPanel : MessageData {
 
     val id: String
     var name: String? = null
-    var controls: List<Map<String, Any>>?
+    var controls: MutableList<Map<String, Any>>?
     var onSave: String? = null
     var onClose: String? = null
 
