@@ -1,13 +1,22 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.MessageData.DeskChan.ShowTechnical;
+import info.deskchan.MessageData.GUI.Control;
+import info.deskchan.MessageData.GUI.InlineControls;
+import info.deskchan.MessageData.GUI.SetPanel;
 import info.deskchan.core.MessageDataMap;
 import info.deskchan.core.MessageListener;
 import info.deskchan.core.PluginProxyInterface;
+import info.deskchan.core_utils.TextOperations;
+import info.deskchan.talking_system.speech_exchange.*;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DialogHandler {
-    static IntentExchanger intentExchanger;
+
+    static SpeechExchanger speechExchanger;
     static CharacterClassifier characterClassifier;
     static IntentClassifier intentClassifier;
 
@@ -18,30 +27,34 @@ public class DialogHandler {
     private static CharacterRange lastRange;
     private static IntentList lastIntents;
 
-    private static String phraseText = "";
+    private static String inputPhraseText = "";
     private static String inputIntents = "";
     private static String inputIntentSelected = "";
-    private static String outputIntents = "";
+    private static String output = "";
     private static String outputIntentSelected = "";
+    private static String inputEmotion = null;
     private static String outputEmotion = null;
     private static List<String> emotionsList = null;
-    private static IntentExchanger.DialogLine lastRequest = null;
-    private static IntentExchanger.DialogLine lastAnswer = null;
+    private static DialogLine lastRequest = null;
+    private static DialogLine lastResponse = null;
+    
+    private static List<String> bannedIntents = Arrays.asList("SET_TOPIC", "WHAT_YOUR_OPINION", "QUESTION");
 
     public static void initialize(){
 
         pluginProxy = Main.getPluginProxy();
 
         updateDialogModules();
-        intentExchanger = new IntentExchanger(Main.getCurrentCharacter().character);
-        intentExchanger.next();
+        speechExchanger = new SpeechExchanger(Main.getCurrentCharacter().character);
+        speechExchanger.loadLogs(Main.getDialogLogsDirPath());
+        Main.log("Intent exchanger loading completed");
 
         pluginProxy.setAlternative("DeskChan:user-said", "talk:classify-text", 50000);
         pluginProxy.setAlternative("DeskChan:user-said", "talk:dialog-receive", 25);
 
         pluginProxy.addMessageListener("talk:classify-text", (sender, tag, data) -> {
             MessageDataMap map = new MessageDataMap("value", data);
-            List<String> intents = intentClassifier.classify(map.getString("value"));
+            IntentList intents = intentClassifier.classify(map.getString("value"));
             lastRange = characterClassifier.getCharacterForPhrase(map.getString("value"));
             lastIntents = new IntentList(intents);
             map.put("intent", intents);
@@ -58,7 +71,7 @@ public class DialogHandler {
 
             MessageDataMap map = new MessageDataMap(data);
 
-            phraseText = map.getString("value");
+            inputPhraseText = TextOperations.prettifyText(map.getString("value"));
             if (!map.containsKey("intent")) {
                 lastIntents = new IntentList(intentClassifier.classify(map.getString("value")));
             } else {
@@ -72,115 +85,160 @@ public class DialogHandler {
             }
 
             inputIntents = lastIntents.toString();
+            if (lastIntents.size() > 0){
+                lastRequest = new DialogLine(
+                        new Reaction(lastIntents, inputEmotion),
+                        lastRange.toCentersArray(),
+                        DialogLine.Author.USER
+                );
+            } else {
+                lastRequest = new DialogLine(
+                        new Reaction(inputPhraseText, inputEmotion),
+                        lastRange.toCentersArray(),
+                        DialogLine.Author.USER
+                );
+            }
 
-            CharacterPreset currentCharacter = Main.getCurrentCharacter();
+            DialogLine answer = speechExchanger.next(lastRequest);
 
-            lastRequest = new IntentExchanger.DialogLine(
-                    new IntentExchanger.Reaction(lastIntents, currentCharacter.emotionState.getCurrentEmotionName()),
-                    lastRange.toCentersArray(),
-                    false
-            );
-            IntentExchanger.DialogLine answer = intentExchanger.next(lastRequest);
+            outputEmotion = answer.getReaction().getEmotion();
+            if (outputEmotion != null)
+                Main.getCurrentCharacter().emotionState.raiseEmotion(outputEmotion);
 
-            outputIntents = answer.reaction.intents.toString();
+            if (answer.getReaction().getExchangeData() instanceof PhraseData){
+                PhraseData phrase = (PhraseData) answer.getReaction().getExchangeData();
+                output = phrase.toString();
+            } else if (answer.getReaction().getExchangeData() instanceof IntentsData){
+                IntentList list = (IntentList) answer.getReaction().getExchangeData();
+                list.removeAll(bannedIntents);
+                if (list.size() == 0){
+                    list.add("NOTHING");
+                }
+                for (String intent : list)
+                    Main.phraseRequest(intent);
+                output = list.toString();
+            } else {
+                throw new RuntimeException("There is a bug in dialog handler.");
+            }
 
-            outputEmotion = answer.reaction.emotion;
-            if (answer.reaction.emotion != null)
-                currentCharacter.emotionState.raiseEmotion(answer.reaction.emotion);
-
-
-            for (String intent : answer.reaction.intents)
-                Main.phraseRequest(intent);
-
-            lastAnswer = answer;
+            lastResponse = answer;
+            inputEmotion = null;
 
             setInputInForm();
             setOutputInForm();
             Main.getInstance().resetTimer();
         });
 
-        pluginProxy.addMessageListener("talk-debug:classify-text", (sender, tag, data) -> {
-            MessageDataMap map = new MessageDataMap("value", data);
-            map.put("intent", intentClassifier.classify(map.getString("value")));
-            map.put("character", characterClassifier.getCharacterForPhrase(map.getString("value")).toMap());
-
-            setInputInForm();
-
-            pluginProxy.callNextAlternative(sender, "DeskChan:user-said", "talk:classify-text", map);
+        pluginProxy.addMessageListener("dialog-debug:input-text-changed", (sender, tag, data) -> {
+            inputPhraseText = (String) data;
         });
-
-        pluginProxy.addMessageListener("talk-debug:phrase-text-changed", (sender, tag, data) -> {
-            phraseText = (String) data;
-        });
-
 
         for (int i = 0; i < CharacterRange.getFeatureCount(); i++){
             String feature = CharacterRange.getFeatureName(i);
-            pluginProxy.addMessageListener("talk-debug:set-input-character-"+feature+"-start", inputCharacterChanged);
-            pluginProxy.addMessageListener("talk-debug:set-input-character-"+feature+"-end",   inputCharacterChanged);
+            pluginProxy.addMessageListener("dialog-debug:set-input-character-"+feature+"-start", inputCharacterChanged);
+            pluginProxy.addMessageListener("dialog-debug:set-input-character-"+feature+"-end",   inputCharacterChanged);
         }
 
-        pluginProxy.addMessageListener("talk-debug:input-intents-changed", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("dialog-debug:input-exchangeData-changed", (sender, tag, data) -> {
             inputIntents = (String) data;
         });
 
-        pluginProxy.addMessageListener("talk-debug:input-intents-selected", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("dialog-debug:input-exchangeData-selected", (sender, tag, data) -> {
             inputIntentSelected = (String) data;
         });
 
-        pluginProxy.addMessageListener("talk-debug:input-intents-clicked", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("dialog-debug:input-exchangeData-clicked", (sender, tag, data) -> {
             IntentList in = new IntentList(inputIntents);
             in.add(inputIntentSelected);
             inputIntents = in.toString();
             setInputInForm();
         });
 
-        pluginProxy.addMessageListener("talk-debug:save-input", (sender, tag, data) -> {
-            PhrasesPack pack = Main.getCurrentCharacter().phrases.getUserDatabasePack();
-            Phrase newPhrase = new Phrase(phraseText);
-            newPhrase.character = lastRange;
-            newPhrase.setIntents(new IntentList(inputIntents));
-            lastRequest.reaction.intents = new IntentList(newPhrase.intentType);
-            pack.add(newPhrase);
-            pack.save();
-            intentClassifier.add(newPhrase);
-            characterClassifier.add(newPhrase);
+        pluginProxy.addMessageListener("dialog-debug:save-input", (sender, tag, data) -> {
+            if (inputIntents.trim().length() > 0){
+                Phrase newPhrase = new Phrase(inputPhraseText);
+                newPhrase.character = lastRange;
+                newPhrase.setIntents(new IntentList(inputIntents));
+
+                lastRequest.setReaction(new Reaction(
+                        newPhrase.intentType,
+                        inputEmotion
+                ));
+
+                PhrasesPack pack = Main.getCurrentCharacter().phrases.getUserDatabasePack();
+                pack.add(newPhrase);
+                pack.save();
+
+                intentClassifier.add(newPhrase);
+                characterClassifier.add(newPhrase);
+            } else {
+                lastRequest.setReaction(new Reaction(
+                        inputPhraseText,
+                        inputEmotion
+                ));
+            }
         });
 
-        pluginProxy.addMessageListener("talk-debug:output-intents-changed", (sender, tag, data) -> {
-            outputIntents = (String) data;
+        pluginProxy.addMessageListener("dialog-debug:output-exchangeData-changed", (sender, tag, data) -> {
+            output = (String) data;
         });
 
-        pluginProxy.addMessageListener("talk-debug:output-intents-selected", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("dialog-debug:output-exchangeData-selected", (sender, tag, data) -> {
             outputIntentSelected = (String) data;
         });
 
-        pluginProxy.addMessageListener("talk-debug:output-intents-clicked", (sender, tag, data) -> {
-            IntentList in = new IntentList(outputIntents);
+        pluginProxy.addMessageListener("dialog-debug:output-exchangeData-clicked", (sender, tag, data) -> {
+            IntentList in = new IntentList(output);
             in.add(outputIntentSelected);
-            outputIntents = in.toString();
+            output = in.toString();
             setOutputInForm();
         });
 
-        pluginProxy.addMessageListener("talk-debug:output-emotion-changed", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("dialog-debug:input-emotion-changed", (sender, tag, data) -> {
+            inputEmotion = (String) data;
+        });
+
+        pluginProxy.addMessageListener("dialog-debug:output-emotion-changed", (sender, tag, data) -> {
             outputEmotion = (String) data;
         });
 
-        pluginProxy.addMessageListener("talk-debug:show-history", (sender, tag, data) -> {
-            pluginProxy.sendMessage("DeskChan:show-technical", new HashMap<String, Object>(){{
-                put("name", Main.getString("dialog-debug.history"));
-                put("text", intentExchanger.getHistory());
-            }});
+        pluginProxy.addMessageListener("dialog-debug:apply-output-emotion", (sender, tag, data) -> {
+            lastResponse.setReaction(new Reaction(lastResponse.getReaction().getExchangeData(), outputEmotion));
+        });
+
+        pluginProxy.addMessageListener("dialog-debug:show-history", (sender, tag, data) -> {
+            String history = speechExchanger.getHistory();
+            if (history.length() == 0)
+                history = Main.getString("empty");
+            pluginProxy.sendMessage(new ShowTechnical(
+                    history,
+                    Main.getString("dialog-debug.history")
+            ));
+        });
+
+        pluginProxy.addMessageListener("dialog-debug:output-type-changed", (sender, tag, data) -> {
+            boolean disabled = !data.equals("intents");
+            pluginProxy.sendMessage(new SetPanel(
+                    "dialog-debug",
+                    SetPanel.PanelType.PANEL,
+                    SetPanel.ActionType.UPDATE,
+                    new Control(
+                            Control.ControlType.ComboBox,
+                            "output-intent-list", null,
+                            "disabled", disabled
+                    ),
+                    new Control(
+                            Control.ControlType.Button,
+                            "output-intent-add-button", null,
+                            "disabled", disabled
+                    )
+            ));
         });
 
 
-        pluginProxy.addMessageListener("talk-debug:save-output", (sender, tag, data) -> {
-            IntentList output = new IntentList(outputIntents);
-            intentExchanger.deleteUntil(lastAnswer,
-                new IntentExchanger.Reaction(
-                        output, outputEmotion
-                )
-            );
+        pluginProxy.addMessageListener("dialog-debug:save-output", (sender, tag, data) -> {
+            IntentList output = new IntentList(DialogHandler.output);
+            speechExchanger.deleteUntil(lastResponse, new Reaction(output, outputEmotion));
 
             Main.phraseRequest("CORRECTED");
 
@@ -188,8 +246,8 @@ public class DialogHandler {
                 Main.phraseRequest(intent);
         });
 
-        pluginProxy.addMessageListener("talk-debug:save-dialog-log", (sender, tag, data) -> {
-            intentExchanger.saveCurrentDialog();
+        pluginProxy.addMessageListener("dialog-debug:save-dialog-log", (sender, tag, data) -> {
+            speechExchanger.saveCurrentDialog(Main.getDialogLogsDirPath().resolve("log-" + new Date().getTime() + ".txt"));
         });
 
     }
@@ -209,194 +267,217 @@ public class DialogHandler {
         }
     };
     public static void resetPanel(){
-        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>(){{
-            put("type", "panel");
-            put("action", "set");
-            put("id", "dialog-debug");
-            put("name", Main.getString("dialog-debug"));
+        emotionsList = Main.getCurrentCharacter().emotionState.getEmotionsList(); emotionsList.add(0, "");
 
-            List<Map<String, Object>> list = new LinkedList<>();
-            put("controls", list);
+        List<Control> controls = new LinkedList<>();
+        controls.addAll(Arrays.asList(
+                new Control(
+                        Control.ControlType.Button, null,
+                        Main.getString("dialog-debug.show-history"),
+                        "msgTag", "dialog-debug:show-history"
+                ),
+                new Control(
+                        Control.ControlType.TextField,
+                        "phraseText",
+                        null,
+                        "onChangeTag", "dialog-debug:input-text-changed"
+                ),
+                new Control(
+                        Control.ControlType.Label, null,
+                        Main.getString("dialog-debug.phrase-character-diapason")
+                )
+        ));
+        for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
+            String feature = CharacterFeatures.getFeatureName(i);
+            InlineControls row = new InlineControls();
+            row.add(new Control(
+                    Control.ControlType.Spinner,
+                    "input-character-"+feature+"-start",
+                    0,
+                    "min", -CharacterFeatures.BORDER,
+                    "max",  CharacterFeatures.BORDER,
+                    "step", 1,
+                    "msgTag", "dialog-debug:set-input-character-"+feature+"-start"
+            ));
+            row.add(new Control(
+                    Control.ControlType.Spinner,
+                    "input-character-"+feature+"-end",
+                    0,
+                    "min", -CharacterFeatures.BORDER,
+                    "max",  CharacterFeatures.BORDER,
+                    "step", 1,
+                    "msgTag", "dialog-debug:set-input-character-"+feature+"-end"
+            ));
+            row.setLabel(Main.getString(CharacterFeatures.getFeatureName(i)));
+            row.setHint(Main.getString("help."+ CharacterFeatures.getFeatureName(i)));
+            controls.add(row);
+        }
+        controls.addAll(Arrays.asList(
+                new Control(
+                        Control.ControlType.Label, null,
+                        Main.getString("dialog-debug.phrase-intents")
+                ),
+                new InlineControls(
+                        new Control(
+                                Control.ControlType.TextField,
+                                "input-exchangeData-text",
+                                null,
+                                "onChangeTag", "dialog-debug:input-exchangeData-changed"
+                        ),
+                        new Control(
+                                Control.ControlType.ComboBox,
+                                "input-intent-list",
+                                null,
+                                "values", allIntents,
+                                "msgTag", "dialog-debug:input-exchangeData-selected"
+                        ),
+                        new Control(
+                                Control.ControlType.Button,
+                                "input-intent-add-button",
+                                Main.getString("add"),
+                                "msgTag", "dialog-debug:input-exchangeData-clicked"
+                        )
+                ),
+                new Control(
+                        Control.ControlType.Button,
+                        null,
+                        Main.getString("save"),
+                        "msgTag", "dialog-debug:save-input"
+                ),
 
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Button");
-                put("value", Main.getString("dialog-debug.show-history"));
-                put("msgTag", "talk-debug:show-history");
-            }});
+                new Control(Control.ControlType.Separator),
+                new Control(
+                        Control.ControlType.Label, null,
+                        Main.getString("dialog-debug.answer-options")
+                ),
+                new Control(
+                        Control.ControlType.ComboBox,
+                        "output-type",
+                        null,
+                        "label", Main.getString("dialog-debug.output-type"),
+                        "values", Arrays.asList("intents", "phrase"),
+                        "valuesNames", Arrays.asList(Main.getString("intents"), Main.getString("phrase")),
+                        "msgTag", "dialog-debug:output-type-changed"
+                ),
+                new InlineControls(
+                        new Control(
+                                Control.ControlType.TextField,
+                                "output-exchangeData-text",
+                                null,
+                                "onChangeTag", "dialog-debug:output-exchangeData-changed"
+                        ),
+                        new Control(
+                                Control.ControlType.ComboBox,
+                                "output-intent-list",
+                                null,
+                                "values", allIntents,
+                                "msgTag", "dialog-debug:output-exchangeData-selected"
+                        ),
+                        new Control(
+                                Control.ControlType.Button,
+                                "output-intent-add-button",
+                                Main.getString("add"),
+                                "msgTag", "dialog-debug:output-exchangeData-clicked"
+                        )
+                ),
 
-            list.add(new HashMap<String, Object>() {{
-                put("type", "TextField");
-                put("value", "");
-                put("id", "phraseText");
-                put("onChangeTag", "talk-debug:phrase-text-changed");
-            }});
+                new Control(
+                        Control.ControlType.Button,
+                        null,
+                        Main.getString("save"),
+                        "msgTag", "dialog-debug:save-output"
+                ),
 
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Label");
-                put("value", Main.getString("dialog-debug.phrase-character-diapason"));
-            }});
-            for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
-                String feature = CharacterFeatures.getFeatureName(i);
-                List<Map> row = new ArrayList<>();
-                Map<String, Object> ch = new HashMap<>();
-                ch.put("id", "input-character-"+feature+"-start");
-                ch.put("value", 0);
-                ch.put("type", "Spinner");
-                ch.put("min", -CharacterFeatures.BORDER);
-                ch.put("max",  CharacterFeatures.BORDER);
-                ch.put("step", 1);
-                ch.put("msgTag", "talk-debug:set-input-character-"+feature+"-start");
-                row.add(ch);
-                ch = new HashMap<>(ch);
-                ch.put("id", "input-character-"+feature+"-end");
-                ch.put("msgTag", "talk-debug:set-input-character-"+feature+"-end");
-                row.add(ch);
-                ch = new HashMap<>();
-                ch.put("elements", row);
-                ch.put("label", Main.getString(CharacterFeatures.getFeatureName(i)));
-                ch.put("hint", Main.getString("help."+ CharacterFeatures.getFeatureName(i)));
-                list.add(ch);
-            }
-
-
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Label");
-                put("value", Main.getString("dialog-debug.phrase-intents"));
-            }});
-            Map intentsControl = new HashMap<String, Object>();
-            intentsControl.put("elements", new ArrayList<Map>(){{
-                add(new HashMap<String, Object>() {{
-                    put("id", "input-intents-text");
-                    put("type", "TextField");
-                    put("onChangeTag", "talk-debug:input-intents-changed");
-                }});
-                add(new HashMap<String, Object>() {{
-                    put("type", "ComboBox");
-                    put("values", allIntents);
-                    put("msgTag", "talk-debug:input-intents-selected");
-                }});
-                add(new HashMap<String, Object>() {{
-                    put("type", "Button");
-                    put("value", Main.getString("add"));
-                    put("msgTag", "talk-debug:input-intents-clicked");
-                }});
-            }});
-            list.add(intentsControl);
-
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Button");
-                put("value", Main.getString("save"));
-                put("msgTag", "talk-debug:save-input");
-            }});
-
-
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Separator");
-            }});
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Label");
-                put("value", Main.getString("dialog-debug.answer-intents"));
-            }});
-            intentsControl = new HashMap<String, Object>();
-            intentsControl.put("elements", new ArrayList<Map>(){{
-                add(new HashMap<String, Object>() {{
-                    put("id", "output-intents-text");
-                    put("type", "TextField");
-                    put("onChangeTag", "talk-debug:output-intents-changed");
-                }});
-                add(new HashMap<String, Object>() {{
-                    put("type", "ComboBox");
-                    put("values", allIntents);
-                    put("msgTag", "talk-debug:output-intents-selected");
-                }});
-                add(new HashMap<String, Object>() {{
-                    put("type", "Button");
-                    put("value", Main.getString("add"));
-                    put("msgTag", "talk-debug:output-intents-clicked");
-                }});
-            }});
-            list.add(intentsControl);
-
-
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Separator");
-            }});
-
-            emotionsList = Main.getCurrentCharacter().emotionState.getEmotionsList(); emotionsList.add(0, "");
-            list.add(new HashMap<String, Object>() {{
-                put("id", "emotion-trigger");
-                put("type", "ComboBox");
-                put("label", Main.getString("dialog-debug.emotion-triggers"));
-                put("values", emotionsList);
-                put("msgTag", "talk-debug:output-emotion-changed");
-            }});
-
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Button");
-                put("value", Main.getString("save"));
-                put("msgTag", "talk-debug:save-output");
-            }});
-
-            list.add(new HashMap<String, Object>() {{
-                put("type", "Button");
-                put("value", Main.getString("dialog-debug.save-dialog"));
-                put("msgTag", "talk-debug:save-dialog-log");
-            }});
-
-        }});
+                new Control(Control.ControlType.Separator),
+                new InlineControls(
+                        "input-emotion-trigger-line",
+                        Main.getString("dialog-debug.input-emotion-triggers"),
+                        Main.getString("dialog-debug.input-emotion-hint"),
+                        new Control(
+                                Control.ControlType.ComboBox,
+                                "input-emotion-trigger",
+                                null,
+                                "values", emotionsList,
+                                "msgTag", "dialog-debug:input-emotion-changed"
+                        ),
+                        new Control(
+                                Control.ControlType.Button, null,
+                                Main.getString("choose"),
+                                "msgTag", "dialog-debug:apply-input-emotion"
+                        )
+                ),
+                new InlineControls(
+                        "output-emotion-trigger-line",
+                        Main.getString("dialog-debug.output-emotion-triggers"),
+                        Main.getString("dialog-debug.output-emotion-hint"),
+                        new Control(
+                                Control.ControlType.ComboBox,
+                                "output-emotion-trigger",
+                                null,
+                                "values", emotionsList,
+                                "msgTag", "dialog-debug:output-emotion-changed"
+                        ),
+                        new Control(
+                                Control.ControlType.Button, null,
+                                Main.getString("choose"),
+                                "msgTag", "dialog-debug:apply-output-emotion"
+                        )
+                ),
+                new Control(Control.ControlType.Separator),
+                new Control(
+                        Control.ControlType.Button,
+                        null,
+                        Main.getString("dialog-debug.save-dialog"),
+                        "msgTag", "dialog-debug:save-dialog-log"
+                )
+        ));
+        pluginProxy.sendMessage(new SetPanel(
+                "dialog-debug",
+                SetPanel.PanelType.PANEL,
+                SetPanel.ActionType.SET,
+                Main.getString("dialog-debug"),
+                null,
+                null,
+                controls
+        ));
     }
 
     public static void setInputInForm(){
-        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>(){{
-            put("action", "update");
-            put("id", "dialog-debug");
+        SetPanel update = new SetPanel(
+                "dialog-debug",
+                SetPanel.PanelType.PANEL,
+                SetPanel.ActionType.UPDATE,
 
-            List<Map<String, Object>> list = new LinkedList<>();
-            put("controls", list);
-
-            list.add(new HashMap<String, Object>() {{
-                put("value", phraseText);
-                put("id", "phraseText");
-            }});
-            for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
-                String feature = CharacterFeatures.getFeatureName(i);
-                Map<String, Object> ch = new HashMap<>();
-                ch.put("id", "input-character-"+feature+"-start");
-                ch.put("value", lastRange.range[i].start);
-                list.add(ch);
-                ch = new HashMap<>(ch);
-                ch.put("id", "input-character-"+feature+"-end");
-                ch.put("value", lastRange.range[i].end);
-                list.add(ch);
-            }
-
-            list.add(new HashMap<String, Object>() {{
-                put("id", "input-intents-text");
-                put("value", inputIntents);
-            }});
-        }});
+                new Control(Control.ControlType.TextField, "phraseText", inputPhraseText),
+                new Control(Control.ControlType.TextField, "input-exchangeData-text", inputIntents)
+        );
+        for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
+            String feature = CharacterFeatures.getFeatureName(i);
+            update.getControls().add(new Control(
+                    Control.ControlType.TextField,
+                    "input-character-"+feature+"-start",
+                    lastRange != null ? lastRange.range[i].start : 0
+            ));
+            update.getControls().add(new Control(
+                    Control.ControlType.TextField,
+                    "input-character-"+feature+"-end",
+                    lastRange != null ? lastRange.range[i].end : 0
+            ));
+        }
+        pluginProxy.sendMessage(update);
     }
 
     public static void setOutputInForm(){
-        pluginProxy.sendMessage("gui:set-panel", new HashMap<String, Object>(){{
-            put("action", "update");
-            put("id", "dialog-debug");
+        SetPanel update = new SetPanel(
+                "dialog-debug",
+                SetPanel.PanelType.PANEL,
+                SetPanel.ActionType.UPDATE,
 
-            List<Map<String, Object>> list = new LinkedList<>();
-            put("controls", list);
-
-
-            list.add(new HashMap<String, Object>() {{
-                put("id", "output-intents-text");
-                put("value", outputIntents);
-            }});
-
-            emotionsList = Main.getCurrentCharacter().emotionState.getEmotionsList(); emotionsList.add(0, "");
-            list.add(new HashMap<String, Object>() {{
-                put("id", "emotion-trigger");
-                put("value", outputEmotion != null ? emotionsList.indexOf(outputEmotion) : 0);
-            }});
-        }});
+                new Control(Control.ControlType.ComboBox, "input-emotion-trigger",
+                        outputEmotion != null ? emotionsList.indexOf(outputEmotion) : 0),
+                new Control(Control.ControlType.TextField, "output-exchangeData-text", output)
+        );
+        pluginProxy.sendMessage(update);
     }
 
     public static void updateDialogModules(){
@@ -445,4 +526,5 @@ public class DialogHandler {
         }
         return true;
     }
+
 }

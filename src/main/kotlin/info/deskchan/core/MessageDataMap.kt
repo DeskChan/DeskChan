@@ -23,6 +23,14 @@ open class MessageDataMap : HashMap<String, Any?>{
         }
     }
 
+    constructor(vararg data: Any?){
+        var i = 0
+        while (i+1 < data.size) {
+            put(data[i].toString(), data[i + 1])
+            i += 2
+        }
+    }
+
     /** Get value converted to string if (value != null && !value.isEmpty()), else returns null. **/
     fun getString(key:String) : String? {
         val value = get(key)?.toString()
@@ -88,7 +96,7 @@ open class MessageDataMap : HashMap<String, Any?>{
             else if (obj == null)
                 return null
             else {
-                val bool:String = obj.toString().toLowerCase()
+                val bool:String = obj.toString().toLowerCase().trim()
                 return bool == "true" || bool == "1"
             }
         } catch (e: Exception){  }
@@ -221,7 +229,7 @@ open class MessageDataMap : HashMap<String, Any?>{
         }
 
     override fun putAll(m: Map<out String, *>) {
-        m.forEach{ k, v -> put(k.toString(), v)}
+        (m as Map<*,*>).forEach{ k, v -> put(k.toString(), v)}
     }
 
     /** Put value if there is no such key in properties and value is not null. **/

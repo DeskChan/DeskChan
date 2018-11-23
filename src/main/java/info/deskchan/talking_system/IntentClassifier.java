@@ -19,7 +19,7 @@ public class IntentClassifier {
     }
 
     public void add(Phrase phrase){
-        List<String> words = getWordsFromPhrase(phrase.getPhraseText());
+        List<String> words = TextOperations.defaultWordsExtraction(phrase.getPhraseText());
 
         for (String intent : phrase.getIntents()) {
             boolean found = false;
@@ -38,14 +38,9 @@ public class IntentClassifier {
         }
     }
 
-    protected List<String> getWordsFromPhrase(String text){
-        text = text.replace("\\{[^\\{\\}]+\\}", "");
-        return TextOperations.simplifyWords(TextOperations.extractSpeechParts(text));
-    }
-
     protected Map<String, Float> getProbabilities(String phrase) {
         if (phrase == null) return null;
-        return getProbabilities(getWordsFromPhrase(phrase));
+        return getProbabilities(TextOperations.defaultWordsExtraction(phrase));
     }
 
     protected Map<String, Float> getProbabilities(List<String> text){
@@ -63,11 +58,11 @@ public class IntentClassifier {
         return probabilities;
     }
 
-    public List<String> classify(String phrase){
-        if (phrase == null) return new LinkedList<>();
+    public IntentList classify(String phrase){
+        IntentList result = new IntentList();
+        if (phrase == null) return result;
 
         Map<String, Float> probabilities = getProbabilities(phrase);
-        List<String> result = new ArrayList<>();
 
         LinkedList<Map.Entry<String, Float>> probabilitiesList = new LinkedList<>(probabilities.entrySet());
         probabilitiesList.sort(new Comparator<Map.Entry<String, Float>>() {
@@ -110,7 +105,7 @@ public class IntentClassifier {
         for (int _i = 0; _i < MAX_ROUND; _i++) {
             incorrectAnswers.clear();
             for (Phrase phrase : phrases) {
-                List<String> words = getWordsFromPhrase(phrase.phraseText);
+                List<String> words = TextOperations.defaultWordsExtraction(phrase.phraseText);
                 for (Map.Entry<String, Float> res : getProbabilities(words).entrySet()) {
                     if (correctIntents.contains(res.getKey())) continue;
 
@@ -145,42 +140,43 @@ public class IntentClassifier {
 //        }
         System.out.println("Adapting completed");
     }
+
+    private static class IntentClass {
+
+        protected String name;
+        protected Map<String, Float> words;
+
+        public IntentClass(String name) {
+            words = new HashMap<>();
+            this.name = name;
+        }
+
+        public void apply(String word, float value){
+            value += words.getOrDefault(word, 0F);
+            if (value < 0) return;
+            words.put(word, value);
+        }
+
+        public float getCount(String word) {
+            return words.getOrDefault(word, 0F);
+            //return Math.max(words.getOrDefault(word, 0F), 0F);
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void add(List<String> newWords) {
+            if (name.equals("MISS_YOU")){
+                this.name = this.name;
+            }
+            float koef = 1.0F / newWords.size();
+            for (String word : newWords) {
+                Float count = words.getOrDefault(word, 0F);
+                words.put(word, count + koef);
+            }
+        }
+
+    }
 }
 
-class IntentClass {
-
-    protected String name;
-    protected Map<String, Float> words;
-
-    public IntentClass(String name) {
-        words = new HashMap<>();
-        this.name = name;
-    }
-
-    public void apply(String word, float value){
-        value += words.getOrDefault(word, 0F);
-        if (value < 0) return;
-        words.put(word, value);
-    }
-
-    public float getCount(String word) {
-        return words.getOrDefault(word, 0F);
-        //return Math.max(words.getOrDefault(word, 0F), 0F);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void add(List<String> newWords) {
-        if (name.equals("MISS_YOU")){
-            this.name = this.name;
-        }
-        float koef = 1.0F / newWords.size();
-        for (String word : newWords) {
-            Float count = words.getOrDefault(word, 0F);
-            words.put(word, count + koef);
-        }
-    }
-
-}

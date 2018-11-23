@@ -20,9 +20,9 @@ open class Control : HashMap<String, Any> {
         data.forEach { t, u -> if (u != null) put(t,u) }
     }
 
-    constructor(type: ControlType, id: String?, value: Any?, vararg data: Any?) : this(type, id, null) {
+    constructor(type: ControlType, id: String?, value: Any?, vararg data: Any?) : this(type, id, value) {
         var i = 0
-        while (i < data.size) {
+        while (i+1 < data.size) {
             if (data[i+1] != null)
                 put(data[i].toString(), data[i + 1]!!)
             i += 2
@@ -32,26 +32,48 @@ open class Control : HashMap<String, Any> {
     fun getId() = get("id").toString()
     fun setId(value: String?){
         if (value != null) put("id", value)
+        else remove("id")
     }
 
     fun getValue() = get("value")
     fun setValue(value: Any?){
         if (value != null) put("value", value)
+        else remove("value")
     }
 
     fun getLabel() = get("label").toString()
     fun setLabel(value: String?){
         if (value != null) put("label", value)
+        else remove("label")
     }
 
     fun getHint() = get("hint").toString()
     fun setHint(value: String?){
         if (value != null) put("hint", value)
+        else remove("hint")
     }
 
     fun getType() = if (containsKey("type")) ControlType.valueOf(get("type").toString()) else null
     fun setType(value: ControlType?){
         put("type", value.toString())
+    }
+
+    fun getWidth() = get("width")?.toString()?.toFloat()
+    fun setWidth(value: Float?){
+        if (value != null) put("width", value)
+        else remove("width")
+    }
+
+    fun getHeight() = get("height")?.toString()?.toFloat()
+    fun setHeight(value: Float?){
+        if (value != null) put("height", value)
+        else remove("height")
+    }
+
+    fun getDisabled() = get("disabled")?.toString()?.toBoolean()
+    fun setDisabled(value: Boolean?){
+        if (value != null) put("disabled", value)
+        else remove("disabled")
     }
 
     enum class ControlType {

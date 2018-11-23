@@ -57,7 +57,7 @@ class Range {
 	}
 
 	public float getCenter(){
-		return (end + start) / 2;
+		return (end + start) / 2.0F;
 	}
 	public float getRadius(){
 		return (end - start) / 2.0F;

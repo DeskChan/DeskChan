@@ -20,8 +20,7 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 
 	public StandardCharacterController(float[] values) {
 		this();
-		for (int i = 0; i < getFeatureCount() && i < values.length; i++)
-			setValue(i, values[i]);
+		setValues(values);
 	}
 
 	private static final int[][] POSITIONS = {
@@ -92,6 +91,11 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 		for (int j = 0; j < positions.length; j++)
 			setValue(index, positions[j], values[j]);
 
+	}
+
+	public void setValues(float[] values){
+		for (int i = 0; i < getFeatureCount() && i < values.length; i++)
+			setValue(i, values[i]);
 	}
 
 	public void setValue(int index, float val) {

@@ -1,12 +1,8 @@
 package info.deskchan.talking_system;
 
-import info.deskchan.talking_system.intent_exchange.ICompatible;
-
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class IntentList extends ArrayList<String> implements ICompatible {
+public class IntentList extends ArrayList<String> {
 
     public IntentList(){ super(); }
 
@@ -28,6 +24,7 @@ public class IntentList extends ArrayList<String> implements ICompatible {
 
     @Override
     public boolean add(String element) {
+        if (element == null) return false;
         element = format(element);
         if (element.length() == 0)
             return false;
@@ -38,6 +35,10 @@ public class IntentList extends ArrayList<String> implements ICompatible {
 
     @Override
     public void add(int index, String element) {
+        if (element == null){
+            remove(index);
+            return;
+        }
         element = format(element);
         if (element.length() == 0)
             return;
@@ -62,18 +63,19 @@ public class IntentList extends ArrayList<String> implements ICompatible {
     }
 
     @Override
-    public double checkCompatibility(ICompatible other) {
-        if (!(other instanceof IntentList))
-            return 0;
-
-        if (size() == 0) return 1;
-
-        float sum = 0;
-        for (String item : this){
-            if (((IntentList) other).contains(item))
-                sum += 1;
+    public boolean equals(Object other){
+        if (other == null) return false;
+        if (other instanceof Collection){
+            Collection<Object> compare = (Collection<Object>) other;
+            if (compare.size() != size()) return false;
+            for (Object c : compare){
+                if (c == null || !contains(c.toString())) return false;
+            }
+            return true;
+        } else if (other instanceof String){
+            return equals(new IntentList(other.toString()));
         }
-        return sum / size();
+        return false;
     }
 
     @Override

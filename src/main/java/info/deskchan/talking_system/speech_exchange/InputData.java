@@ -1,6 +1,5 @@
-package info.deskchan.talking_system.intent_exchange;
+package info.deskchan.talking_system.speech_exchange;
 
-import info.deskchan.talking_system.CharacterController;
 import info.deskchan.talking_system.CharacterRange;
 
 import java.util.List;
@@ -11,6 +10,8 @@ public class InputData<T extends ICompatible>{
     // last means latest
     public T[] history = null;
     public T input;
+
+    public InputData(){}
 
     public InputData(InputData<T> copy){
         this.coords = copy.coords;
@@ -32,6 +33,7 @@ public class InputData<T extends ICompatible>{
 
     // if other is compatible with this
     public float checkCompatible(InputData<T> other){
+        if (input == null) return (other.input == null ? 1 : 0);
         float sum = 0;
         sum += input.checkCompatibility(other.input) * INPUT_WEIGHT;
 
@@ -51,6 +53,16 @@ public class InputData<T extends ICompatible>{
         return sum;
     }
 
+    public void setCoords(float[]... coords){
+        int fl = CharacterRange.getFeatureCount();
+        this.coords = new float[coords.length * fl];
+
+        for (int i = 0; i < coords.length; i++){
+            for (int j = 0; j < fl; j++){
+                this.coords[i*fl + j] = coords[i][j];
+            }
+        }
+    }
     public void setCoords(List<float[]>... coords){
         float[] single = new float[CharacterRange.getFeatureCount()];
         this.coords = new float[coords.length * single.length];
@@ -77,9 +89,9 @@ public class InputData<T extends ICompatible>{
         sb.append("Vector: {" + coords[0]);
         for (int i = 1; i < coords.length; i++)
             sb.append(", " + coords[i]);
-        sb.append(" / Input: [0]="+input.toString()+"\n");
+        sb.append("} / Input: [0]="+input+"\n");
         for (int i = 0; i < history.length; i++)
-            sb.append("[" + (i+1) + "]=" + history[i].toString()+"\n");
+            sb.append("[" + (i+1) + "]=" + history[i]+"\n");
         return sb.toString();
     }
 }

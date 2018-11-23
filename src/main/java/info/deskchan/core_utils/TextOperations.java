@@ -1,6 +1,8 @@
 package info.deskchan.core_utils;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class TextOperations {
@@ -120,5 +122,24 @@ public class TextOperations {
         for (String p : pattern)
             if (!phrase.contains(p)) return false;
         return true;
+    }
+
+    private static Pattern prettifyPattern = Pattern.compile("([\\wА-яё][\\wА-яё\\s]+)([!?.]*)");
+    public static String prettifyText(String input){
+        StringBuilder out = new StringBuilder();
+        Matcher matcher = prettifyPattern.matcher(input);
+        while (matcher.find()){
+            String text = matcher.group(1).trim();
+            text = text.replaceAll("\\s+", " ");
+            out.append(Character.toUpperCase(text.charAt(0)));
+            out.append(text.substring(1));
+
+            String end = matcher.group(2);
+            if (end.length() == 0)
+                end = ".";
+            out.append(end);
+            out.append(" ");
+        }
+        return out.toString().trim();
     }
 }

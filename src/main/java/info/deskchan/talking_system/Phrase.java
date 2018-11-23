@@ -195,7 +195,7 @@ public class Phrase {
 	}
 
 
-	protected void appendTo(Document doc, Node target, String name, String text) {
+	private void appendTo(Document doc, Node target, String name, String text) {
 		Node n = doc.createElement(name);
 		n.setTextContent(text);
 		target.appendChild(n);
@@ -266,7 +266,7 @@ public class Phrase {
 		return intentType.contains(match);
 	}
 
-	protected static Node findInNode(NodeList list, String name) {
+	private static Node findInNode(NodeList list, String name) {
 		for (int i = 0; i < list.getLength(); i++)
 			if (list.item(i).getNodeName().equals(name))
 				return list.item(i);
@@ -321,8 +321,9 @@ public class Phrase {
 			return DEFAULT_INTENT;
 
 		StringBuilder sb = new StringBuilder();
-		for(String intent : intentType)
-			sb.append(intent + ", ");
+		for(String intent : intentType) {
+			sb.append(intent); sb.append(", ");
+		}
 		sb.setLength(sb.length() - 2);
 		return sb.toString();
 	}
@@ -330,4 +331,5 @@ public class Phrase {
 	public String getPhraseText(){
 		return phraseText;
 	}
+
 }

@@ -1,5 +1,6 @@
 package info.deskchan.core_utils;
 
+import info.deskchan.talking_system.DialogHandler;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,5 +64,13 @@ public class TextOperationsTest {
         Assert.assertEquals(r.get(4), "тв");
         Assert.assertEquals(r.get(5), "дел");
         Assert.assertEquals(r.get(6), "?");
+    }
+
+    @Test
+    public void test4(){
+        String input = "  привет! Как твои дела?у меня   всё хорошо.   Действительно хорошо... Верь       ";
+        String output = "Привет! Как твои дела? У меня всё хорошо. Действительно хорошо... Верь.";
+
+        Assert.assertEquals(TextOperations.prettifyText(input), output);
     }
 }

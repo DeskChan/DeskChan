@@ -1,4 +1,4 @@
-package info.deskchan.talking_system.intent_exchange;
+package info.deskchan.talking_system.speech_exchange;
 
 public interface ICompatible {
 

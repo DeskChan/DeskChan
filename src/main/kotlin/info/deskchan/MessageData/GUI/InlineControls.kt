@@ -31,7 +31,7 @@ class InlineControls : Control {
     }
 
     fun add(controls: Map<String, Any?>){
-        var list = get("elements") as MutableList<Map<String, Any?>>
+        var list = get("elements") as MutableList<Map<String, Any?>>?
         if (list == null){
             list = mutableListOf<Map<String, Any?>>()
             put("elements", list)
@@ -40,7 +40,7 @@ class InlineControls : Control {
     }
 
     fun addAll(vararg controls: Map<String, Any?>){
-        var list = get("elements") as MutableList<Map<String, Any?>>
+        var list = get("elements") as MutableList<Map<String, Any?>>?
         if (list == null){
             list = mutableListOf<Map<String, Any?>>()
             put("elements", list)

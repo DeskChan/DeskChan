@@ -2,7 +2,9 @@ package info.deskchan.core;
 
 import info.deskchan.MessageData.Core.AddCommand;
 import info.deskchan.MessageData.Core.Quit;
+import info.deskchan.MessageData.GUI.Control;
 import info.deskchan.MessageData.GUI.ShowCharacter;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -13,13 +15,22 @@ public class MessageDataUtilsSerializeTest {
     @Test
     public void test0() {
 
-        Map<MessageData, Object> tests = new HashMap<>();
+        Map<Object, Object> tests = new HashMap<>();
         tests.put(
             new AddCommand ("1", "2"),
             new HashMap<String, Object>(){{
                 put("tag", "1");
                 put("info", "2");
             }}
+        );
+
+        tests.put(
+                new Control(Control.ControlType.Button, "text", "text", "label", "lab"),
+                new HashMap<String, Object>(){{
+                    put("type", "Button");
+                    put("id", "text");
+                    put("label", "lab");
+                }}
         );
 
         tests.put(
@@ -32,13 +43,19 @@ public class MessageDataUtilsSerializeTest {
                 5L
         );
 
-        for (Map.Entry<MessageData, Object> test : tests.entrySet()){
-            assert testEntry(test.getKey(), test.getValue());
+        for (Map.Entry<Object, Object> test : tests.entrySet()){
+            try {
+                assert testEntry(MessageDataUtils.serialize(test.getKey()), test.getValue());
+            } catch (Error e){
+                System.out.println("Actual: " + test.getKey());
+                System.out.println("Expected: " + test.getKey());
+                e.printStackTrace();
+                Assert.fail();
+            }
         }
     }
 
-    private boolean testEntry(MessageData data, Object compare){
-        Object result = MessageDataUtils.serialize(data);
+    private boolean testEntry(Object result, Object compare){
 
         if (result == null && compare == null) return true;
         if (result instanceof Map && compare instanceof Map){
@@ -58,4 +75,5 @@ public class MessageDataUtilsSerializeTest {
 
         return false;
     }
+
 }

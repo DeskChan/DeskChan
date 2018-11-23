@@ -1,4 +1,4 @@
-package info.deskchan.talking_system.intent_exchange;
+package info.deskchan.talking_system.speech_exchange;
 
 import info.deskchan.talking_system.CharacterRange;
 
@@ -12,6 +12,7 @@ public class CharacterSpace<T extends ICompatible, K> {
     private int coordsSize;
 
     public CharacterSpace(int dimensions){
+        String a;
         if (dimensions <= 0) throw new IndexOutOfBoundsException();
         this.dimensions = dimensions;
         this.coordsSize = dimensions * CharacterRange.getFeatureCount();
