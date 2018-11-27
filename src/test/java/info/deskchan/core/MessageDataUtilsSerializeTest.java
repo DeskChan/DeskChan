@@ -25,10 +25,11 @@ public class MessageDataUtilsSerializeTest {
         );
 
         tests.put(
-                new Control(Control.ControlType.Button, "text", "text", "label", "lab"),
+                new Control(Control.ControlType.Button, "id", "text", "label", "lab"),
                 new HashMap<String, Object>(){{
                     put("type", "Button");
-                    put("id", "text");
+                    put("id", "id");
+                    put("value", "text");
                     put("label", "lab");
                 }}
         );
@@ -48,8 +49,7 @@ public class MessageDataUtilsSerializeTest {
                 assert testEntry(MessageDataUtils.serialize(test.getKey()), test.getValue());
             } catch (Error e){
                 System.out.println("Actual: " + test.getKey());
-                System.out.println("Expected: " + test.getKey());
-                e.printStackTrace();
+                System.out.println("Expected: " + test.getValue());
                 Assert.fail();
             }
         }

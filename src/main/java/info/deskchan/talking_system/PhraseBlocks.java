@@ -4,7 +4,6 @@ import info.deskchan.core_utils.TextOperations;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class PhraseBlocks {
@@ -43,6 +42,14 @@ public class PhraseBlocks {
             }
         }
         return input;
+    }
+
+    public boolean contains(String name){
+        for (BlockData data : blocks){
+            if (data.name.equals(name))
+                return true;
+        }
+        return false;
     }
 
     static class BlockData {

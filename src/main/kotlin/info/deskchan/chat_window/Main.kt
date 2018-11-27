@@ -314,48 +314,41 @@ class Main : Plugin {
                         Control.ControlType.Spinner,
                         "length",
                         properties.getInteger("length"),
-                        pluginProxy.getString("log-length"),
-                        null,
-                        mapOf(
-                             "min" to 1,
-                             "max" to 20000
-                        )
+                        "label", pluginProxy.getString("log-length"),
+                        "min", 1,
+                        "max", 20000
                 ),
                 Control(
                         Control.ControlType.ColorPicker,
                         "user-color",
                         properties.getString("user-color"),
-                        pluginProxy.getString("user-color"),
-                        null,
-                        mapOf( "msgTag" to "chat:set-user-color")
+                        "label", pluginProxy.getString("user-color"),
+                        "msgTag", "chat:set-user-color"
                 ),
                 Control(
                         Control.ControlType.ColorPicker,
                         "deskchan-color",
                         properties.getString("deskchan-color"),
-                        pluginProxy.getString("deskchan-color"),
-                        null,
-                        mapOf( "msgTag" to "chat:set-deskchan-color")
+                        "label", pluginProxy.getString("deskchan-color"),
+                        "msgTag", "chat:set-deskchan-color"
                 ),
                 Control(
                         Control.ControlType.FontPicker,
                         "user-font",
                         properties.getString("user-font"),
-                        pluginProxy.getString("user-font")
+                        "label", pluginProxy.getString("user-font")
                 ),
                 Control(
                         Control.ControlType.FontPicker,
                         "deskchan-font",
                         properties.getString("deskchan-font"),
-                        pluginProxy.getString("deskchan-font")
+                        "label", pluginProxy.getString("deskchan-font")
                 ),
                 Control(
                         Control.ControlType.Button,
                         "clear",
                         pluginProxy.getString("clear"),
-                        null,
-                        null,
-                        mapOf("msgTag" to "chat:clear")
+                        "msgTag", "chat:clear"
                 )
         )
         registerPanel.name = pluginProxy.getString("options")

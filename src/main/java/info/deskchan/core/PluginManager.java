@@ -44,6 +44,7 @@ public class PluginManager {
 	private static Path dataDirPath = null;
 	private static Path rootDirPath = null;
 	private static Path assetsDirPath = null;
+	private static Path resourcesPath = null;
 
 	/* Singleton */
 	
@@ -562,6 +563,16 @@ public class PluginManager {
 			debugBuild = corePath.isDirectory();
 		}
 		return corePath;
+	}
+
+	public static Path getResourcesPath(){
+		if (resourcesPath == null) {
+		    if (getCorePath().toString().contains("build"))
+		        resourcesPath = getRootDirPath().resolve("build").resolve("resources").resolve("main");
+		    else
+		        resourcesPath = getRootDirPath().resolve("out").resolve("production").resolve("resources");
+		}
+		return resourcesPath;
 	}
 
 	/** Get 'plugins' folder path. **/

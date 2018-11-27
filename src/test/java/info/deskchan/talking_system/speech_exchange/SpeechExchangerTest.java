@@ -1,6 +1,7 @@
 package info.deskchan.talking_system.speech_exchange;
 
 import info.deskchan.core.Path;
+import info.deskchan.core.PluginManager;
 import info.deskchan.talking_system.CharacterController;
 import info.deskchan.talking_system.IntentList;
 import info.deskchan.talking_system.StandardCharacterController;
@@ -14,8 +15,11 @@ public class SpeechExchangerTest {
         CharacterController character = new StandardCharacterController();
         DialogLog log = null;
         try {
-            Path file = new Path(getClass().getResource(".").toURI());
-            file = new Path(file.toString().replace("classes", "resources")).resolve("DefaultDialog.log");
+            Path file = PluginManager.getResourcesPath()
+                    .resolve("info")
+                    .resolve("deskchan")
+                    .resolve("talking_system")
+                    .resolve("TestDialog.log");
             log = new DialogLog(file);
         } catch (Exception e) {
             e.printStackTrace();
@@ -122,8 +126,10 @@ public class SpeechExchangerTest {
         CharacterController character = new StandardCharacterController();
         SpeechExchanger exchanger = new SpeechExchanger(character);
         try {
-            Path file = new Path(getClass().getResource(".").toURI());
-            file = new Path(file.toString().replace("classes", "resources"));
+            Path file = PluginManager.getResourcesPath()
+                    .resolve("info")
+                    .resolve("deskchan")
+                    .resolve("talking_system");
             exchanger.loadLogs(file);
         } catch (Exception e){
             e.printStackTrace();

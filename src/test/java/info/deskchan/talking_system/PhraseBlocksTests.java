@@ -24,24 +24,24 @@ public class PhraseBlocksTests {
 
         Assert.assertEquals(3, blocks.getBlocks().size());
 
-        Assert.assertTrue(blocks.getBlocks().containsKey("test"));
-        PhraseBlocks.BlockData data = blocks.getBlocks().get("test");
+        Assert.assertTrue(blocks.contains("test"));
+        PhraseBlocks.BlockData data = blocks.getBlocks().get(0);
         Assert.assertEquals("test", data.name);
         Assert.assertNull(data.args);
         Assert.assertEquals(0, data.start);
         Assert.assertEquals(6, data.end);
         Assert.assertEquals("{test}", data.toString());
 
-        Assert.assertTrue(blocks.getBlocks().containsKey("test1"));
-        data = blocks.getBlocks().get("test1");
+        Assert.assertTrue(blocks.contains("test1"));
+        data = blocks.getBlocks().get(1);
         Assert.assertEquals("test1", data.name);
         Assert.assertNull(data.args);
         Assert.assertEquals(12, data.start);
         Assert.assertEquals(21, data.end);
         Assert.assertEquals("{test1}", data.toString());
 
-        Assert.assertTrue(blocks.getBlocks().containsKey("test2"));
-        data = blocks.getBlocks().get("test2");
+        Assert.assertTrue(blocks.contains("test2"));
+        data = blocks.getBlocks().get(2);
         Assert.assertEquals("test2", data.name);
         Assert.assertNotNull(data.args);
         Assert.assertEquals(1, data.args.length);
@@ -55,8 +55,8 @@ public class PhraseBlocksTests {
 
         Assert.assertEquals(2, blocks.getBlocks().size());
 
-        Assert.assertTrue(blocks.getBlocks().containsKey("test3"));
-        data = blocks.getBlocks().get("test3");
+        Assert.assertTrue(blocks.contains("test3"));
+        data = blocks.getBlocks().get(0);
         Assert.assertEquals("test3", data.name);
         Assert.assertNotNull(data.args);
         Assert.assertEquals(3, data.args.length);
@@ -67,8 +67,8 @@ public class PhraseBlocksTests {
         Assert.assertEquals(27, data.end);
         Assert.assertEquals("{test3(te,2,et)}", data.toString());
 
-        Assert.assertTrue(blocks.getBlocks().containsKey("test4"));
-        data = blocks.getBlocks().get("test4");
+        Assert.assertTrue(blocks.contains("test4"));
+        data = blocks.getBlocks().get(1);
         Assert.assertEquals("test4", data.name);
         Assert.assertNull(data.args);
         Assert.assertEquals(33, data.start);
