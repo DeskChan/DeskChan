@@ -47,7 +47,7 @@ class RequestSay : MessageData {
         this.characterImage = characterImage
     }
 
-    constructor(text: String, characterImage: Say.Sprite) : this(text) {
+    constructor(intent: String, characterImage: Say.Sprite) : this(intent) {
         this.characterImage = characterImage.toString()
     }
 

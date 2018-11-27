@@ -168,43 +168,6 @@ public class CharacterPreset {
 		if (onChange != null) onChange.run();
 	}
 
-	private String getRandomItem(Collection<String> collection){
-		int count = new Random().nextInt(collection.size());
-		Iterator<String> it = collection.iterator();
-		for(;count >0; count--) it.next();
-		return it.next();
-	}
-	public String replaceTags(String phrase) {
-		String ret = phrase;
-		if (name != null) {
-			ret = ret.replaceAll("\\{name\\}", name);
-		} else {
-			ret = ret.replaceAll("\\{name\\}", Main.getString("default_name"));
-		}
-
-		Collection<String> list = tags.get("usernames");
-		if (list != null && list.size() > 0) {
-			String item = getRandomItem(list);
-			ret = ret.replaceAll("\\{user\\}", item);
-			ret = ret.replaceAll("\\{userF\\}", item);
-		} else {
-			ret = ret.replaceAll("\\{user\\}", Main.getString("default_username"));
-			ret = ret.replaceAll("\\{userF\\}", Main.getString("default_username"));
-		}
-
-		list = tags.get("abuses");
-		if (list != null && list.size() > 0) {
-			ret = ret.replaceAll("\\{abuse\\}", getRandomItem(list));
-		} else ret = ret.replaceAll("\\{abuse\\}",Main.getString("default_abuse"));
-
-		ret = ret.replaceAll("\\{time\\}", new SimpleDateFormat("HH:mm").format(new Date()));
-		ret = ret.replaceAll("\\{date\\}", new SimpleDateFormat("d LLLL").format(new Date()));
-		ret = ret.replaceAll("\\{year\\}", new SimpleDateFormat("YYYY").format(new Date()));
-		ret = ret.replaceAll("\\{weekday\\}", new SimpleDateFormat("EEEE").format(new Date()));
-
-		return ret;
-	}
-
 	public static CharacterPreset getFromFile(Path path) {
 		try {
 			String str = new String(path.readAllBytes());

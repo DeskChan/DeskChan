@@ -16,8 +16,7 @@ public class Phrase {
 
 	protected TagsMap tags;
 
-	// Array of { block_name of String, start of Int, end of Int, params.. of String/Integer/Float }
-	protected Object[][] blocks;
+	protected PhraseBlocks blocks;
 
 	// null means default intent
 	protected IntentList intentType;
@@ -37,7 +36,7 @@ public class Phrase {
 		character = new CharacterRange();
 		spriteType = DEFAULT_SPRITE;
 		tags = null;
-		setBlocks();
+		blocks = new PhraseBlocks(phraseText);
 	}
 
 	public void setIntents(IntentList intents){
@@ -120,80 +119,6 @@ public class Phrase {
 	public TagsMap getTags(){
 		return tags;
 	}
-
-
-	static class Block {
-		int start, end;
-		String text;
-		Block(String t, int s, int e){ text = t; start = s; end = e; }
-		List<Object> toList(){
-			List<Object> list = new ArrayList<>();
-			String[] parts = text.split(",");
-			list.add(parts[0]); list.add(new Integer(start)); list.add(new Integer(end));
-			for (int i=1; i<parts.length; i++) list.add(parts[i]);
-			return list;
-		}
-	}
-	protected void setBlocks(){
-		String input = phraseText;
-
-		ArrayList<Block> stringBlocks = new ArrayList<> ();
-
-		for (int i=0, s=0, state=1; i<input.length(); i++) {
-			if (state == 1 && input.charAt(i) == '{') {
-				state = 2;
-				s = i;
-			} else if (state == 2 && input.charAt(i) == '}') {
-				state = 1;
-				stringBlocks.add(new Block(input.substring(s+1, i), s, i+1));
-			}
-		}
-
-		ArrayList<List<Object>> tempBlocks = new ArrayList<> ();
-		for (int i=0; i<stringBlocks.size(); i++){
-			String block = stringBlocks.get(i).text;
-			if(block.trim().length() == 0) continue;
-
-			if (!block.contains("(")) {
-				tempBlocks.add(stringBlocks.get(i).toList());
-				continue;
-			}
-
-			for (int j=0; j<block.length(); j++) {
-				if (block.charAt(j) == '(') {
-					block = block.substring(0, j) + "," + block.substring(j+1);
-				} else if (block.charAt(j) == ')' || block.charAt(j) == '"') {
-					block = block.substring(0, j) + block.substring(j+1);
-					j--;
-				}
-			}
-
-			stringBlocks.get(i).text = block;
-			tempBlocks.add(stringBlocks.get(i).toList());
-		}
-
-		blocks = new Object[tempBlocks.size()][];
-		for (int i=0; i<tempBlocks.size(); i++){
-			List<Object> block = new ArrayList<>();
-			for (Object _item : tempBlocks.get(i)){
-				String item = _item.toString().trim();
-				try {
-					block.add(Integer.parseInt(item));
-				} catch (Exception e) {
-					//System.out.println(item + " " + e.getClass().getSimpleName() + " " + e.getMessage());
-					try {
-						block.add(Float.parseFloat(item));
-					} catch (Exception er) {
-						//System.out.println(item + " " + er.getClass().getSimpleName() + " " + er.getMessage());
-						block.add(item);
-					}
-				}
-			}
-
-			blocks[i] = block.toArray(new Object[block.size()]);
-		}
-	}
-
 
 	private void appendTo(Document doc, Node target, String name, String text) {
 		Node n = doc.createElement(name);
@@ -290,13 +215,18 @@ public class Phrase {
 
 		map.put("characterImage", spriteType);
 		map.put("intent", getIntents());
-		map.put("hash", this.hashCode());
-		map.put("blocks", blocks);
 
 		if(tags != null)
 			for(Map.Entry<String, Set<String>> tag : tags.entrySet()) {
 				map.put(tag.getKey(), tag.getValue());
 			}
+		return map;
+	}
+
+	public Map<String, Object> toPreparedPhrase() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("text", blocks.replace(phraseText));
+		map.put("characterImage", spriteType);
 		return map;
 	}
 

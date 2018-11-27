@@ -145,6 +145,16 @@ public class TagsMap implements Map<String, Set<String>> {
         return tags.get(tag).toString();
     }
 
+    public String getRandom(String tag){
+        Set<String> set = get(tag);
+        if (set == null || set.size() == 0)
+            return null;
+        Iterator<String> it = set.iterator();
+        for (int i = 0, l = new Random().nextInt(set.size()); i < l; i++)
+            it.next();
+        return it.next();
+    }
+
     private static boolean containsPositive(Collection<String> items){
         if (items == null) return false;
         for (String item : items)

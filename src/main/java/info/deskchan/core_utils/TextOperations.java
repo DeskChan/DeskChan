@@ -8,7 +8,8 @@ import java.util.regex.Pattern;
 public class TextOperations {
     private final static char[][] simplify = {{'ъ', 'й'}, {'ь', 'й'}, {'ы', 'и'}, {'ё', 'е'}};
     private final static String VOWELS = "уеъыаоэяиьюй";
-    private final static List<String> negations = Arrays.asList("не", "not");
+    private final static List<String> NEGATIONS = Arrays.asList("не", "not");
+    private static final String MARKS = ".!?";
 
     public static List<String> simplifyWords(String[] words) {
         return simplifyWords(Arrays.asList(words));
@@ -17,7 +18,7 @@ public class TextOperations {
     public static List<String> simplifyWords(List<String> words) {
         List<String> w = new ArrayList<>();
         for (int i = 0; i < words.size(); i++) {
-            if (negations.contains(words.get(i)) && i < words.size() - 1 && !negations.contains(words.get(i + 1))) {
+            if (NEGATIONS.contains(words.get(i)) && i < words.size() - 1 && !NEGATIONS.contains(words.get(i + 1))) {
                 w.add(words.get(i) + simplifyWord(words.get(i + 1)));
                 i++;
             } else {
@@ -70,7 +71,7 @@ public class TextOperations {
         List<String> words = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i <= phrase.length(); i++) {
-            char at = i<phrase.length() ? phrase.charAt(i) : '\0';
+            Character at = i<phrase.length() ? phrase.charAt(i) : '\0';
             if (i == phrase.length() || at == ' ' || at == '\n') {
                 if (sb.length() == 0) continue;
 
@@ -90,7 +91,7 @@ public class TextOperations {
                         break;
                 }
             } else if (mode == WordExtractionMode.IMPORTANT_PARTS_LOWER){
-                if (at == '?' || at == '!' || at == '.'){
+                if (MARKS.contains(at.toString())){
                     if (i == 0 || isLetter(phrase.charAt(i-1))){
                         if (sb.length() == 0) continue;
                         words.add(sb.toString());
@@ -141,5 +142,42 @@ public class TextOperations {
             out.append(" ");
         }
         return out.toString().trim();
+    }
+
+    public static List<List<String>> splitSentence(String text){
+        text = text.trim();
+        if (!MARKS.contains(Character.toString(text.charAt(text.length() - 1))))
+            text += '.';
+        text += " ";
+
+        StringBuilder sentencePart = new StringBuilder();
+        List<String> sentence = new LinkedList<>();
+        List<List<String>> sentences = new LinkedList<>();
+
+        Character last = 0;
+        for (int i = 0; i < text.length(); i++) {
+            Character c = text.charAt(i);
+            if(c == ',' || c == ';') {
+                sentence.add(sentencePart.toString().trim());
+                sentence.add(c.toString());
+                sentencePart = new StringBuilder();
+                last = c;
+                continue;
+            } else if(MARKS.contains(c.toString())) {
+                if (!MARKS.contains(last.toString())){
+                    sentence.add(sentencePart.toString().trim());
+                    sentencePart = new StringBuilder();
+                }
+            } else if (MARKS.contains(last.toString())){
+                sentence.add(sentencePart.toString().trim());
+                sentencePart = new StringBuilder();
+                sentences.add(sentence);
+                sentence = new LinkedList<>();
+                last = 0;
+            }
+            sentencePart.append(c);
+            last = c;
+        }
+        return sentences;
     }
 }

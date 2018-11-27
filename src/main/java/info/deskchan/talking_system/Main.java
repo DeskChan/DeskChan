@@ -59,6 +59,8 @@ public class Main implements Plugin {
 		pluginProxy.setConfigField("name", pluginProxy.getString("plugin-name"));
 
 		// initializing main components
+
+        PhraseBlocks.initialize();
 		try {
 			currentCharacter = new CharacterPreset(new JSONObject(getProperties().getString("characterPreset")));
 		} catch (Exception e){
@@ -93,7 +95,6 @@ public class Main implements Plugin {
 
 		/* Building DeskChan:request-say chain. */
 		pluginProxy.setAlternative("DeskChan:request-say", "talk:request-say", 10000);
-		pluginProxy.setAlternative("DeskChan:request-say", "talk:replace-by-preset-fields", 9990);
 		pluginProxy.setAlternative("DeskChan:request-say", "talk:send-phrase", 100);
 
 		/* Request a phrase with certain intent. If answer is not requested, automatically send it to DeskChan:say.
@@ -114,17 +115,6 @@ public class Main implements Plugin {
 
 				phraseRequest(data);
 			}
-		});
-
-		/* Replacing fields in brackets to values set in preset
-        * Technical message */
-		pluginProxy.addMessageListener("talk:replace-by-preset-fields", (sender, tag, dat) -> {
-			Map data = (Map) dat;
-
-			data.replace("text", currentCharacter.replaceTags((String) data.get("text")));
-
-
-			pluginProxy.callNextAlternative(sender, "DeskChan:request-say", "talk:replace-by-preset-fields", data);
 		});
 
 		/* End of alternatives chain, sending phrase.
@@ -355,7 +345,7 @@ public class Main implements Plugin {
 					pluginsTags,
 					null
 			);
-			Map data = errorMessage.toMap();
+			Map data = errorMessage.toPreparedPhrase();
 			data.put("priority", 5000);
 			pluginProxy.sendMessage("DeskChan:say", data);
 		});
@@ -416,7 +406,7 @@ public class Main implements Plugin {
 
 	/** Convert phrase to map format and send to DeskChan:say or sender. **/
 	static void sendPhrase(Phrase phrase, Map<String, Object> data){
-		Map<String, Object> ret = phrase != null ? phrase.toMap() : new HashMap<>();
+		Map<String, Object> ret = phrase != null ? phrase.toPreparedPhrase() : new HashMap<>();
 
 		if (ret.getOrDefault("characterImage", "AUTO").equals("AUTO")) {
 			String characterImage = getCurrentCharacter().getDefaultSpriteType();

@@ -73,4 +73,38 @@ public class TextOperationsTest {
 
         Assert.assertEquals(TextOperations.prettifyText(input), output);
     }
+
+    @Test
+    public void test5(){
+        String input = "  привет, юзер! Как твои дела; нормально?у меня   всё хорошо."
+         + "    Действительно ,на самом деле, хорошо... Верь       ";
+
+        List<List<String>> output = TextOperations.splitSentence(input);
+        Assert.assertEquals(5, output.size());
+
+        Assert.assertEquals(4, output.get(0).size());
+        List<String> expected = Arrays.asList("привет", ",", "юзер", "!");
+        for (int i = 0; i < 4; i++)
+            Assert.assertEquals(expected.get(i), output.get(0).get(i));
+
+        Assert.assertEquals(4, output.get(1).size());
+        expected = Arrays.asList("Как твои дела", ";", "нормально", "?");
+        for (int i = 0; i < 4; i++)
+            Assert.assertEquals(expected.get(i), output.get(1).get(i));
+
+        Assert.assertEquals(2, output.get(2).size());
+        expected = Arrays.asList("у меня   всё хорошо", ".");
+        for (int i = 0; i < 2; i++)
+            Assert.assertEquals(expected.get(i), output.get(2).get(i));
+
+        Assert.assertEquals(6, output.get(3).size());
+        expected = Arrays.asList("Действительно", ",", "на самом деле", ",", "хорошо", "...");
+        for (int i = 0; i < 6; i++)
+            Assert.assertEquals(expected.get(i), output.get(3).get(i));
+
+        Assert.assertEquals(2, output.get(4).size());
+        expected = Arrays.asList("Верь", ".");
+        for (int i = 0; i < 2; i++)
+            Assert.assertEquals(expected.get(i), output.get(4).get(i));
+    }
 }
