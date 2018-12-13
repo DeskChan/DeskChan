@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx.panes.sprite_drawers;
 
+import info.deskchan.MessageData.GUI.SetSprite;
 import info.deskchan.core.MessageDataMap;
 import info.deskchan.gui_javafx.Main;
 import info.deskchan.gui_javafx.panes.MovablePane;
@@ -32,36 +33,33 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
         getChildren().add(mainSprite);
     }
 
-    public static class AnimationData {
-        public Sprite next = null;
-        public Float scalingX = null;
-        public Float scalingY = null;
-        public float movingX = 0F;
-        public float movingY = 0F;
-        public float movingZ = 0F;
-        public Float rotation = null;
-        public boolean smooth = false;
-        public Float opacity = null;
-        public long delay = 200;
+    public static class AnimationData extends SetSprite.Animation {
+
+        public Sprite nextSprite = null;
         protected float changeSpriteOpacity = 0;
-        public AnimationData(){}
+
+        public AnimationData(){
+            super();
+        }
+
         public AnimationData(Map<String, Object> dat){
+            super();
             MessageDataMap data = new MessageDataMap(dat);
-            movingX = data.getFloat("movingX", 0);
-            movingY = data.getFloat("movingY", 0);
+            if (dat.containsKey("movingX")) setMovingX(data.getFloat("movingX"));
+            if (dat.containsKey("movingY")) setMovingY(data.getFloat("movingY"));
 
-            scalingX = data.getFloat("scaleX");
-            scalingY = data.getFloat("scaleY");
+            if (dat.containsKey("scaleX")) setScalingX(data.getFloat("scaleX"));
+            if (dat.containsKey("scaleY")) setScalingY(data.getFloat("scaleY"));
 
-            rotation = data.getFloat("rotation");
+            if (dat.containsKey("rotation")) setRotation(data.getFloat("rotation"));
 
-            smooth = data.getBoolean("smooth", smooth);
-            delay = data.getLong("delay", delay);
-            opacity = data.getFloat("opacity");
+            if (dat.containsKey("smooth")) setSmooth(data.getBoolean("smooth"));
+            if (dat.containsKey("delay")) setDelay(data.getLong("delay"));
+            if (dat.containsKey("opacity")) setOpacity(data.getFloat("opacity"));
 
             if (data.containsKey("next")) {
                 try {
-                    next = Sprite.getSpriteFromFile(data.getFile("next"));
+                    nextSprite = Sprite.getSpriteFromFile(data.getFile("next"));
                 } catch (Exception e) {
                     Main.log(e);
                 }
@@ -108,25 +106,22 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
             return;
         }
 
-        currentAnimation.delay -= TIMELINE_DELAY;
-        if (currentAnimation.smooth || currentAnimation.delay < 0){
+        currentAnimation.setDelay(currentAnimation.getDelay() - TIMELINE_DELAY);
+        if (currentAnimation.getSmooth() || currentAnimation.getDelay() < 0){
             mainSprite.setOpacity(mainSprite.getOpacity() + currentAnimation.changeSpriteOpacity * 1.5);
             if (swappingSprite != null){
                 swappingSprite.setOpacity(swappingSprite.getOpacity() - currentAnimation.changeSpriteOpacity);
             }
-            if (currentAnimation.opacity != null)
-                setOpacity(getOpacity() + currentAnimation.opacity);
-            setLayoutX(getLayoutX() + currentAnimation.movingX);
-            setLayoutY(getLayoutY() + currentAnimation.movingY);
-            if (currentAnimation.rotation != null)
-                setRotate(getRotate() + currentAnimation.rotation);
-            if (currentAnimation.scalingX != null)
-                setScaleX(getScaleX() + currentAnimation.scalingX);
-            if (currentAnimation.scalingY != null)
-                setScaleY(getScaleY() + currentAnimation.scalingY);
+            if (currentAnimation.getOpacity() != null)
+                setOpacity(getOpacity() + currentAnimation.getOpacity());
+            setLayoutX(getLayoutX() + currentAnimation.getMovingX());
+            setLayoutY(getLayoutY() + currentAnimation.getMovingY());
+            setRotate(getRotate() + currentAnimation.getRotation());
+            setScaleX(getScaleX() + currentAnimation.getScalingX());
+            setScaleY(getScaleY() + currentAnimation.getScalingY());
 
         }
-        if (currentAnimation.delay < 0) {
+        if (currentAnimation.getDelay() < 0) {
             currentAnimation = null;
             notify(onSpriteHandlers);
         }
@@ -141,19 +136,19 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
         if (swappingSprite != null)
             getChildren().remove(swappingSprite);
         swappingSprite = null;
-        if (currentAnimation.smooth){
-            float mul = (float) TIMELINE_DELAY / currentAnimation.delay;
-            currentAnimation.movingX *= mul;
-            currentAnimation.movingY *= mul;
-            currentAnimation.movingZ *= mul;
-            if (currentAnimation.scalingX != null) currentAnimation.scalingX *= mul;
-            if (currentAnimation.scalingY != null) currentAnimation.scalingY *= mul;
-            if (currentAnimation.rotation != null) currentAnimation.rotation *= mul;
-            if (currentAnimation.opacity != null) currentAnimation.opacity *= mul;
+        if (currentAnimation.getSmooth()){
+            float mul = (float) TIMELINE_DELAY / currentAnimation.getDelay();
+            currentAnimation.setMovingX(currentAnimation.getMovingX() * mul);
+            currentAnimation.setMovingY(currentAnimation.getMovingY() * mul);
+            //currentAnimation.setMovingZ(currentAnimation.getMovingZ() * mul);
+            currentAnimation.setScalingX(currentAnimation.getScalingX() * mul);
+            currentAnimation.setScalingY(currentAnimation.getScalingY() * mul);
+            currentAnimation.setRotation(currentAnimation.getRotation() * mul);
+            currentAnimation.setOpacity(currentAnimation.getOpacity() * mul);
         }
-        if (currentAnimation.next != null){
+        if (currentAnimation.nextSprite != null){
             swappingSprite = mainSprite;
-            mainSprite = currentAnimation.next;
+            mainSprite = currentAnimation.nextSprite;
             getChildren().add(mainSprite);
             mainSprite.setOpacity(0);
 
@@ -162,8 +157,8 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
                 mainSprite.setFitHeight(swappingSprite.getFitHeight());
                 mainSprite.setFitWidth(swappingSprite.getFitWidth());
             }
-            if (currentAnimation.smooth)
-                currentAnimation.changeSpriteOpacity = (float) TIMELINE_DELAY / currentAnimation.delay;
+            if (currentAnimation.getSmooth())
+                currentAnimation.changeSpriteOpacity = (float) TIMELINE_DELAY / currentAnimation.getDelay();
             else
                 currentAnimation.changeSpriteOpacity = 1F;
         }
@@ -175,7 +170,7 @@ public class AnimatedSprite extends MovablePane implements EventHandler<ActionEv
     }
 
     public double getOriginHeight(){
-        return mainSprite != null ?   mainSprite.getOriginHeight() : 0;
+        return mainSprite != null ? mainSprite.getOriginHeight() : 0;
     }
 
     public double getFitWidth(){

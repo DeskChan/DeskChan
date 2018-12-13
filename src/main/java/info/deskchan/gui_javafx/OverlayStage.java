@@ -18,7 +18,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -121,7 +120,7 @@ public abstract class OverlayStage extends Stage {
 		if(mode == currentMode) return;
 		try {
 			OverlayStage nextInstance = (OverlayStage) instances.get(mode).newInstance();
-			List<Pair<Pane, Point2D>> nodesOnScreen = new LinkedList<>();
+			List<Pair<MovablePane, Point2D>> nodesOnScreen = new LinkedList<>();
 			if(instance != null) {
 				for(Node node : instance.root.getChildren()){
 					try {
@@ -141,9 +140,9 @@ public abstract class OverlayStage extends Stage {
 				}
 			});
 			nextInstance.showStage();
-			for (Pair<Pane, Point2D> pane : nodesOnScreen){
-				nextInstance.root.getChildren().add(pane.getKey());
-				pane.getKey().relocate(pane.getValue().getX(), pane.getValue().getY());
+			nextInstance.showSprite(App.getInstance().character);
+			for (Pair<MovablePane, Point2D> pane : nodesOnScreen){
+				nextInstance.showSprite(pane.getKey());
 			}
 		} catch (Exception e){
 			Main.log(e);
@@ -343,7 +342,7 @@ class FrontNormalStage extends NormalStage {
 	}
 }
 
-class HideStage extends OverlayStage {
+class HideStage extends NormalStage {
 	HideStage(){
 		super();
 		close();
@@ -353,12 +352,6 @@ class HideStage extends OverlayStage {
 	public boolean isCharacterVisible(){
 		return false;
 	}
-	@Override
-	public void showSprite(MovablePane pane){ }
-	@Override
-	public void hideSprite(MovablePane pane){ }
-	@Override
-	public void hideAllSprites(){ }
 }
 
 class ShowIfMessageStage extends TopStage {

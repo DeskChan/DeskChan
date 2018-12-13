@@ -47,7 +47,7 @@ public class FilesManagerDialog extends TemplateBox{
             try {
                 Platform.runLater(() -> {
                     FileChooser chooser = new FileChooser();
-                    chooser.setInitialDirectory(Main.getPluginProxy().getRootDirPath().toFile());
+                    chooser.setInitialDirectory(Main.getPluginProxy().getRootDirPath());
                     File newFile = chooser.showOpenDialog(getDialogPane().getScene().getWindow());
                     if (newFile != null)
                         filesList.getItems().add(newFile.toString());

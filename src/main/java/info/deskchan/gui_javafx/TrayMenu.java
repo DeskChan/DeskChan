@@ -11,50 +11,71 @@ import java.util.ConcurrentModificationException;
 public class TrayMenu extends Menu{
 
     private volatile SystemTray trayRef = null;
+    private volatile dorkbox.systemTray.Menu trayMenu = null;
+
+    private Runnable update = null;
     
     public TrayMenu(){
         super();
         SystemTray systemTray = SystemTray.get();
         if (SystemTray.get() == null) {
             Main.log("Failed to load SystemTray, type dorkbox");
-        } else {
-            systemTray.setTooltip(App.NAME);
-            systemTray.setImage(App.ICON_URL);
-            systemTray.setStatus(App.NAME);
-            trayRef = systemTray;
+            return;
         }
+
+        systemTray.setTooltip(App.NAME);
+        systemTray.setImage(App.ICON_URL);
+        systemTray.setStatus(App.NAME);
+        trayRef = systemTray;
+        trayMenu = trayRef.getMenu();
+
+        final TrayMenu instance = this;
+        if (trayMenu instanceof dorkbox.systemTray.ui.swing._SwingTray ||
+                trayMenu instanceof dorkbox.systemTray.ui.awt._AwtTray) {
+            update = new Runnable() {
+                @Override
+                public void run() {
+                    SwingUtilities.invokeLater(instance::updateImpl);
+                }
+            };
+        } else {
+            update = new Runnable() {
+                @Override
+                public void run() {
+                    Platform.runLater(instance::updateImpl);
+                }
+            };
+        }
+
     }
 
     @Override
     public synchronized void update(){
-        if(trayRef != null && (trayRef.getMenu() instanceof dorkbox.systemTray.ui.swing._SwingTray ||
-           trayRef.getMenu() instanceof dorkbox.systemTray.ui.awt._AwtTray))
-            SwingUtilities.invokeLater(this::updateImpl);
-        else Platform.runLater(this::updateImpl);
+        if (update != null) {
+            update.run();
+        }
     }
 
     @Override
     protected synchronized void updateImpl(){
 
-        dorkbox.systemTray.Menu menu = trayRef.getMenu();
-
-        menu.clear();
+        trayMenu.clear();
         trayRef.setStatus(App.NAME);
 
-        menu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
-        menu.add(new MenuItem(Main.getString("send-top"), frontMenuItemAction));
+        trayMenu.add(new MenuItem(Main.getString("options"), optionsMenuItemAction));
+        trayMenu.add(new MenuItem(Main.getString("send-top"), frontMenuItemAction));
 
-        menu.add(new Separator());
+        trayMenu.add(new Separator());
         try {
             for (PluginMenuItem it : menuItems) {
-                menu.add(toDorkBoxItem(it));
+                trayMenu.add(toDorkBoxItem(it));
             }
         } catch (ConcurrentModificationException e) {
             Main.log("Concurrent modification by tray. Write us if it cause you lags.");
             return;
         }
-        menu.add(new Separator());
-        menu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
+        trayMenu.add(new Separator());
+        trayMenu.add(new MenuItem(Main.getString("quit"), quitMenuItemAction));
 
         super.updateImpl();
     }

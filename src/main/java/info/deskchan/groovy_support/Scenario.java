@@ -2,11 +2,11 @@ package info.deskchan.groovy_support;
 
 import groovy.lang.Closure;
 import groovy.lang.Script;
+import info.deskchan.core.Path;
 import info.deskchan.core.PluginProperties;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core.ResponseListener;
 
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;

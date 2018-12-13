@@ -1,5 +1,6 @@
 package info.deskchan.speech_command_system;
 
+import info.deskchan.MessageData.Speech.ArgumentType;
 import info.deskchan.core_utils.LimitHashMap;
 
 import java.util.*;
@@ -207,9 +208,8 @@ public class RegularRule{
         public String toPrettyString(){ return levels.get(0).toPrettyString(); };
     }
 
-    protected ArrayList<Argument> arguments=new ArrayList<>();
+    protected ArrayList<Argument> arguments = new ArrayList<>();
 
-    private enum ArgumentType { Text , Word , List , Integer , Number , Date , Time , DateTime , RelativeDateTime }
     protected static class Argument extends PhraseLevel{
         public String name;
         public ArgumentType type;

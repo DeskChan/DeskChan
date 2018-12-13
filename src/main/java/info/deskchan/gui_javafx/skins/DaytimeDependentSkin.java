@@ -1,16 +1,12 @@
 package info.deskchan.gui_javafx.skins;
 
+import info.deskchan.core.Path;
 import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 class DaytimeDependentSkin implements Skin {
@@ -21,19 +17,18 @@ class DaytimeDependentSkin implements Skin {
     private Map<Daytime, Path> paths = new HashMap<>();
 
     DaytimeDependentSkin(Path path) {
-        File[] dirs = path.toFile().listFiles();
+        Set<Path> dirs = path.files();
         if (dirs == null) {
             throw new RuntimeException("Invalid daytime dependent image set. The directory is empty!");
         }
-        Arrays.stream(dirs)
-              .forEach(file -> {
+        dirs.forEach(file -> {
                   Daytime daytime;
                   try {
                       daytime = Daytime.fromString(FilenameUtils.removeExtension(file.getName()));
                   } catch (Daytime.InvalidDatetimeException e) {
                       return;
                   }
-                  paths.put(daytime, file.toPath());
+                  paths.put(daytime, file);
               });
 
         update();
@@ -54,11 +49,11 @@ class DaytimeDependentSkin implements Skin {
             default:
                 path = oneOf(Daytime.DAY);
         }
-        skin = Files.isDirectory(path) ? new ImageSetSkin(path) : new SingleImageSkin(path);
+        skin = path.isDirectory() ? new ImageSetSkin(path) : new SingleImageSkin(path);
 
         Map<String, Object> m = new HashMap<>();
         m.put("delay", UPDATE_PERIOD);
-        Main.getInstance().getPluginProxy().sendMessage("core-utils:notify-after-delay", m, (sender, data) -> update());
+        Main.getPluginProxy().sendMessage("core-utils:notify-after-delay", m, (sender, data) -> update());
     }
 
     private Path oneOf(Daytime... keys) {
@@ -161,10 +156,10 @@ class DaytimeDependentSkin implements Skin {
 
         @Override
         public boolean matchByPath(Path path) {
-            if (!Files.isDirectory(path)) {
+            if (!path.isDirectory()) {
                 return false;
             }
-            File[] children = path.toFile().listFiles();
+            File[] children = path.listFiles();
             return children != null && Arrays.stream(children).anyMatch(file -> FilenameUtils.removeExtension(file.getName()).equals("day"));
         }
 

@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.MessageData.GUI.SetPanel;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -24,7 +25,7 @@ public class ControlsPanel {
 
 	static {
 		try {
-			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("panels-id"), "panels-id", PanelType.SUBMENU, new Pane(registeredPanelsListView)).set();
+			new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("panels-id"), "panels-id", SetPanel.PanelType.SUBMENU, new Pane(registeredPanelsListView)).set();
 			registeredPanelsListView.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent click) {
@@ -50,9 +51,8 @@ public class ControlsPanel {
 	String owner;
 	TemplateBox parentWindow;
 	boolean predefinedPane = false;
-
-	enum PanelType { TAB, SUBMENU, WINDOW, PANEL, INFO }
-	PanelType type;
+	
+	SetPanel.PanelType type;
 
 	private Map<String, PluginOptionsControlItem> namedControls;
 
@@ -64,7 +64,7 @@ public class ControlsPanel {
 		this.id = id;
 	}
 
-	ControlsPanel(String sender, String name, String id,PanelType type, Pane panel) {
+	ControlsPanel(String sender, String name, String id, SetPanel.PanelType type, Pane panel) {
 		this.name = name;
 		this.owner = sender;
 		this.id = id;
@@ -86,7 +86,7 @@ public class ControlsPanel {
 		);
 	}
 
-	ControlsPanel(String sender, String name, String id, PanelType type, List<Map<String, Object>> controls) {
+	ControlsPanel(String sender, String name, String id, SetPanel.PanelType type, List<Map<String, Object>> controls) {
 		this (
 				sender,
 				name,
@@ -135,16 +135,20 @@ public class ControlsPanel {
 		this.msgClose = msgClose;
 		this.owner = sender;
 
-		if (action == null) return;
-		Platform.runLater(() -> {
-			switch (action.toLowerCase()){
-				case "show":   show();   break;
-				case "hide":   hide();   break;
-				case "set":    set();    break;
-				case "update": update(); break;
-				case "delete": delete(); break;
-			}
-		});
+		try {
+			SetPanel.ActionType actionType = SetPanel.ActionType.valueOf(action.toUpperCase());
+			Platform.runLater(() -> {
+				switch (actionType){
+					case SHOW:   show();   break;
+					case HIDE:   hide();   break;
+					case SET:    set();    break;
+					case UPDATE: update(); break;
+					case DELETE: delete(); break;
+				}
+			});
+		} catch (Exception e){
+			set();
+		}
 
 	}
 
@@ -193,13 +197,12 @@ public class ControlsPanel {
 		}
 		final ControlsPanel currentPanel = _currentPanel;
 		switch (currentPanel.type) {
-			case WINDOW:
-			case INFO: {
-				Platform.runLater(() -> ControlsWindow.open(currentPanel));
+			case WINDOW: {
+				ControlsWindow.open(currentPanel);
 			}
 			break;
 			default: {
-				Platform.runLater(() -> OptionsDialog.showPanel(currentPanel));
+				OptionsDialog.showPanel(currentPanel);
 			}
 			break;
 		}
@@ -213,7 +216,7 @@ public class ControlsPanel {
 		}
 
 		switch (currentPanel.type){
-			case WINDOW: case INFO:{
+			case WINDOW:{
 				Platform.runLater(() -> ControlsWindow.closeCustomWindow(this));
 			} break;
 			case TAB: case SUBMENU: case PANEL:{
@@ -394,20 +397,38 @@ public class ControlsPanel {
 	}
 
 	void updateControlsPane(List<Map<String, Object>> update) {
-		if (namedControls == null) return;
-		for (Map<String, Object> control : update) {
-			String id = (String) control.get("id");
-			if(id == null) continue;
+		if (namedControls == null){
+			for (Map<String, Object> controlInfo : controls) {
+				if (controlInfo.containsKey("elements")) {
+					for (Map element : (List<Map>) controlInfo.get("elements")) {
+						for (Map<String, Object> control : update) {
+							if (control.get("id").equals(element.get("id"))){
+								element.putAll(control);
+							}
+						}
+					}
+				}
+				for (Map<String, Object> control : update) {
+					if (control.get("id").equals(controlInfo.get("id"))) {
+						controlInfo.putAll(control);
+					}
+				}
+			}
+		} else {
+			for (Map<String, Object> control : update) {
+				String id = (String) control.get("id");
+				if (id == null) continue;
 
-			PluginOptionsControlItem item = namedControls.get(id);
-			if (item == null) continue;
+				PluginOptionsControlItem item = namedControls.get(id);
+				if (item == null) continue;
 
-			Object value = control.get("value");
-			if (value != null) namedControls.get(id).setValue(value);
+				Object value = control.get("value");
+				if (value != null) namedControls.get(id).setValue(value);
 
-			Boolean disabled = App.getBoolean(control.get("disabled"), null);
-			if(disabled != null)
-				namedControls.get(id).getNode().setDisable(disabled);
+				Boolean disabled = App.getBoolean(control.get("disabled"), null);
+				if (disabled != null)
+					namedControls.get(id).getNode().setDisable(disabled);
+			}
 		}
 	}
 
@@ -431,7 +452,7 @@ public class ControlsPanel {
 		}
 	}
 
-	static List<ControlsPanel> getPanels(PanelType type){
+	static List<ControlsPanel> getPanels(SetPanel.PanelType type){
 		return getPanels(null, type);
 	}
 
@@ -439,7 +460,7 @@ public class ControlsPanel {
 		return getPanels(owner, null);
 	}
 
-	static List<ControlsPanel> getPanels(String owner, PanelType panelType){
+	static List<ControlsPanel> getPanels(String owner, SetPanel.PanelType panelType){
 
 		List<ControlsPanel> result = new LinkedList<>();
 		for (ControlsPanel panel : registeredPanels.values())
@@ -450,11 +471,11 @@ public class ControlsPanel {
 		return result;
 	}
 
-	private static PanelType getType(String type){
+	private static SetPanel.PanelType getType(String type){
 		try {
-			return PanelType.valueOf(type.toUpperCase());
+			return SetPanel.PanelType.valueOf(type.toUpperCase());
 		} catch (Exception e){
-			throw new RuntimeException("Cannot cast " + type + " to PanelType", e.getCause());
+			throw new RuntimeException("Cannot cast " + type + " to SetPanel.PanelType", e.getCause());
 		}
 	}
 

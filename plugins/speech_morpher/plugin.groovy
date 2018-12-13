@@ -65,7 +65,7 @@ class Module {
 }
 modules = new ArrayList<Module>()
 
-File dir = getAssetsDirPath().resolve("speech_morphers").toFile()
+File dir = getAssetsDirPath().resolve("speech_morphers")
 dir.listFiles().each {
     try {
         modules.add(new Module(it, this))
@@ -111,7 +111,6 @@ properties.load()
 setupMenu()
 
 addMessageListener(getId() + ":save-options", {sender, tag, data ->
-    println(data)
     for (def entry : data.entrySet()) {
         properties.put(entry.key, pluginValues[entry.value])
     }

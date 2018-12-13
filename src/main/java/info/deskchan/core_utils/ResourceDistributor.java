@@ -1,17 +1,17 @@
 package info.deskchan.core_utils;
 
+import info.deskchan.core.Path;
+
 import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ResourceDistributor {
-    public static void distribute(String resList){
-        List<String> resources;
-        try{
-            resources=Files.readAllLines(Paths.get(resList),  StandardCharsets.UTF_8);
+    public static void distribute(Path resList){
+        List<String> resources = new LinkedList<>();
+        try {
+            resources = resList.readAllLines();
         } catch (Exception e){
             Main.log(new FileNotFoundException("Cannot find file specified for resource distribution"));
             return;

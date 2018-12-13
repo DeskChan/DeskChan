@@ -1,0 +1,22 @@
+1 -1 1 2 -3 -1 2 2
+~HELLO
+0 -1 2 1 1 1 -4 1
+~HELLO
+1 -1 1 2 -3 -1 2 2
+~WHAT_ARE_YOU_DOING
+0 -1 2 1 1 1 -4 1
+~ACTIONS_REPORT
+1 -1 1 2 -3 -1 2 2
+!happiness
+~OKAY, EVALUATION
+0 -1 2 1 1 1 -4 1
+>Не скучай
+1 -1 1 2 -3 -1 2 2
+>Не буду
+
+#####
+
+0 0 1 1 0 0 0 0
+~HELLO
+-3 1 0 0 0 0 0 -2
+~GO_AWAY

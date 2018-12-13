@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core_utils.TextOperations;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -58,10 +59,6 @@ public class StandardEmotionsController implements EmotionsController{
 	StandardEmotionsController() {
 		normalize();
 		reset();
-		Main.getPluginProxy().setTimer(100000, -1, (sender, data) -> {
-			if (new Random().nextFloat() > 0.8)
-				generate();
-		});
 	}
 
 	private UpdateHandler onUpdate = null;
@@ -104,8 +101,8 @@ public class StandardEmotionsController implements EmotionsController{
 		}
 		Main.log("No emotion by name: " + emotionName);
 	}
-	
-	void generate() {
+
+	public void raiseRandomEmotion(){
 		if (currentEmotion != null){
 			currentEmotion.strength += new Random().nextInt(2) - 1;
 			if (currentEmotion.strength <= 0){
@@ -127,20 +124,22 @@ public class StandardEmotionsController implements EmotionsController{
 		}
 	}
 
-	public boolean tagsMatch(Map<String, Object> tags){
-		for(Map.Entry<String, Object> entry : tags.entrySet()){
-			if(!entry.getKey().equals("emotion")) continue;
+	public List<String> getEmotionsList(){
+		List<String> res = new ArrayList<>();
+		for (Emotion e : emotions)
+			res.add(e.name);
+		return res;
+	}
 
-			Collection<String> suitableEmotions = (Collection) entry.getValue();
-			if (suitableEmotions == null || suitableEmotions.size() == 0) continue;
-			
-			if(currentEmotion == null) return false;
-			for(String suitableEmotion : suitableEmotions)
-				if(currentEmotion.name.equals(suitableEmotion)) return true;
-			
-			return false;
+	public boolean phraseMatches(Phrase phrase){
+		Set<String> allowedEmotions = phrase.getTag("emotion");
+		if (allowedEmotions == null || allowedEmotions.size() == 0){
+			return true;
 		}
-		return true;
+		if (currentEmotion != null){
+			return allowedEmotions.contains(currentEmotion.name);
+		}
+		return false;
 	}
 
 	public CharacterController construct(CharacterController target) {

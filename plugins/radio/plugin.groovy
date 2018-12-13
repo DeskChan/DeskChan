@@ -2,7 +2,7 @@ import java.nio.charset.StandardCharsets
 
 setResourceBundle("resources")
 
-def dir = getPluginDirPath().resolve("radio").toFile()
+def dir = getPluginDirPath().resolve("radio")
 
 class Radio{
     String name

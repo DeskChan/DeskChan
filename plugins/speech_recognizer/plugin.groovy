@@ -9,7 +9,7 @@ sendMessage("core:set-event-link", [
         msgData: 3
 ])
 
-path = getDataDirPath().resolve("voice.wav")
+waveFile = getDataDirPath().resolve("voice.wav")
 microphone = new ImprovedMicrophone(16000, 16, true)
 listening = false
 addMessageListener("recognition:start-listening", { sender, tag, data ->
@@ -20,7 +20,7 @@ addMessageListener("recognition:start-listening", { sender, tag, data ->
             priority: 10000 ]
     )
 
-    microphone.startRecording(path)
+    microphone.startRecording(waveFile)
     listening = true
     setTimer(
             (int) (data != null && data.toString().length() > 0 ? Float.parseFloat(data.toString()) : 5) * 1000,
@@ -44,7 +44,6 @@ void handleTimer(sender, data){
     httpConn.setRequestProperty("Authorization", "Bearer " + wit_access_token);
     httpConn.setRequestProperty("Content-Type", "audio/wav");
 
-    File waveFile = path.toFile();
     httpConn.getOutputStream() << waveFile.getBytes()
 
     // checks server's status code first

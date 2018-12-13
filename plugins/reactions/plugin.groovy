@@ -43,7 +43,7 @@ class Module {
 
 modules = new ArrayList<Module>()
 
-File dir = getAssetsDirPath().resolve("reactions").toFile()
+File dir = getAssetsDirPath().resolve("reactions")
 dir.listFiles().each {
     try {
         modules.add(new Module(it, this))

@@ -2,12 +2,8 @@ package info.deskchan.jar_loader
 
 import info.deskchan.core.*
 import java.io.File
+import java.io.FilenameFilter
 import java.net.URLClassLoader
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 
@@ -26,20 +22,30 @@ class Main : Plugin, PluginLoader {
     override fun unload() = PluginManager.getInstance().unregisterPluginLoader(this)
 
     override fun matchPath(path: Path) = when {
-        Files.isDirectory(path) -> path.toFile().listFiles { _, name -> name.endsWith(".jar") }.isNotEmpty()
-        Files.isRegularFile(path) -> path.fileName.toString().endsWith(".jar")
+        path.isDirectory() -> path.files (FilenameFilter { _, name -> name.endsWith(".jar") }).isNotEmpty()
+        path.isFile -> path.endsWith(".jar")
         else -> false
     }
 
     override fun loadByPath(path: Path) {
         val jars = when {
-            Files.isDirectory(path) -> scanDirectory(path)
+            path.isDirectory() -> {
+                val list = mutableListOf<File>()
+                path.listFiles().forEach {
+                    if (!it.isFile) return@forEach
+                    var correctedPath = it as File
+                    if (!it.toString().endsWith(".jar"))
+                        correctedPath = path.resolveSibling(it.toString() + ".jar")
+                    list.add(correctedPath)
+                }
+                list
+            }
             else -> {
-                var correctedPath = path
+                var correctedPath = path as File
                 if (!path.toString().endsWith(".jar"))
                     correctedPath = path.resolveSibling(path.toString() + ".jar")
 
-                listOf(correctedPath.toFile())
+                listOf(correctedPath)
             }
         }
         val urls = jars.map { it.toURI().toURL() }.toTypedArray()
@@ -88,12 +94,6 @@ class Main : Plugin, PluginLoader {
         PluginManager.getInstance().initializePlugin(id, plugin, config)
     }
 
-    private fun scanDirectory(path: Path): List<File> {
-        val jars = mutableListOf<File>()
-        Files.walkFileTree(path, JarFinder(jars, this::log))
-        return jars
-    }
-
     fun Attributes.groupValues(attribute: String): Set<String> {
         val value = this.getValue(attribute)
         if (value != null) {
@@ -130,22 +130,6 @@ class Main : Plugin, PluginLoader {
     fun log(obj: Any) = when (obj) {
         is Throwable -> pluginProxy.log(obj)
         else -> pluginProxy.log(obj.toString())
-    }
-
-
-    private class JarFinder(val jars: MutableList<File>, val logger: (Any) -> Unit) : SimpleFileVisitor<Path>() {
-
-        override fun visitFile(path: Path?, attributes: BasicFileAttributes?): FileVisitResult {
-            if (path != null && attributes != null) {
-                if (attributes.isRegularFile && path.toString().endsWith(".jar")) {
-                    jars.add(path.toFile())
-                }
-            } else {
-                logger("Couldn't load file \"${path?.fileName.toString()}\"!")
-            }
-            return FileVisitResult.CONTINUE
-        }
-
     }
 
 }

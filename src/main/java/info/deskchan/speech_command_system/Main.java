@@ -150,12 +150,6 @@ public class Main implements Plugin {
             pluginProxy.sendMessage(sender, Parsers.getWords());
         });
 
-        try {
-            RegularRule.getArgument("Date","20 июля");
-        } catch (Exception e){
-            pluginProxy.log(e);
-        }
-
         log("loading completed");
         return true;
     }
@@ -218,7 +212,8 @@ public class Main implements Plugin {
             command.result = command.rule.parse(text, words);
             if(debugBuild)
                System.out.println(command.tag + " " + command.rule.getRule() + " " + command.result + " " + command.better(best));
-            if(command.better(best))
+            if (command.result.matchPercentage >= 0.7f)
+            if (command.better(best))
                 best = command;
         }
 

@@ -521,3 +521,8 @@
 #user-balloon HBox {
     -fx-spacing: 1em;
 }
+
+#notification-text, #notification-text .content {
+    -fx-background-color: rgba(0,0,0,0);
+    -fx-text-fill: white;
+}

@@ -2,7 +2,6 @@ package info.deskchan.core
 
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import java.lang.RuntimeException
 import java.util.*
 
@@ -21,6 +20,14 @@ open class MessageDataMap : HashMap<String, Any?>{
             is Map<*,*> -> putAll(data as Map<String, Any?>)
             null -> return
             else -> put(key, data)
+        }
+    }
+
+    constructor(vararg data: Any?){
+        var i = 0
+        while (i+1 < data.size) {
+            put(data[i].toString(), data[i + 1])
+            i += 2
         }
     }
 
@@ -89,7 +96,7 @@ open class MessageDataMap : HashMap<String, Any?>{
             else if (obj == null)
                 return null
             else {
-                val bool:String = obj.toString().toLowerCase()
+                val bool:String = obj.toString().toLowerCase().trim()
                 return bool == "true" || bool == "1"
             }
         } catch (e: Exception){  }
@@ -160,17 +167,39 @@ open class MessageDataMap : HashMap<String, Any?>{
         }
     }
 
+    /** Get value as Calendar, with suggestion that value is Long, UNIX timestamp in ms. Returns null otherwise. **/
+    fun getDateTimeFromStamp(key: String) : Calendar? {
+        val value = getLong(key)
+        if (value == null) return null
+
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = value
+        return calendar
+    }
+
+    /** Get value as Calendar, with suggestion that value is Long, UNIX timestamp in ms. Returns default otherwise. **/
+    fun getDateTimeFromStamp(key: String, default: Long) : Calendar {
+        val value = getLong(key)?: default
+
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = value
+        return calendar
+    }
+
+    /** Get value as Calendar, with suggestion that value is Long, UNIX timestamp in ms. Returns default otherwise. **/
+    fun getDateTimeFromStamp(key: String, default: Calendar) : Calendar = getDateTimeFromStamp(key)?: Calendar.getInstance()
+
     /** Get value converted to file or null if no such key found. **/
-    fun getFile(key: String) : File? {
+    fun getFile(key: String) : Path? {
         if (get(key) == null) return null
         try {
-            return File(get(key).toString())
+            return Path(get(key).toString())
         } catch (e: Exception){ }
         return null
     }
 
     /** Get value converted to file or default if no such key found. **/
-    fun getFile(key: String, default: String) : File = getFile(key) ?: File(default)
+    fun getFile(key: String, default: String) : Path = getFile(key) ?: Path(default)
 
     /** Get one of values given if (value.toString().toLowerCase() == it.toString().toLowerCase()), else returns null **/
     fun<T: Any> getOneOf(key: String, values: Iterable<T>) : T? {
@@ -200,7 +229,7 @@ open class MessageDataMap : HashMap<String, Any?>{
         }
 
     override fun putAll(m: Map<out String, *>) {
-        m.forEach{ k, v -> put(k.toString(), v)}
+        (m as Map<*,*>).forEach{ k, v -> put(k.toString(), v)}
     }
 
     /** Put value if there is no such key in properties and value is not null. **/

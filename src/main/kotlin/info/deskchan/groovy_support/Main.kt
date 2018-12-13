@@ -4,9 +4,6 @@ import groovy.lang.GroovyShell
 import info.deskchan.core.*
 import org.codehaus.groovy.control.CompilerConfiguration
 
-import java.nio.file.Files
-import java.nio.file.Path
-
 class Main : Plugin, PluginLoader {
 
     override fun initialize(pluginProxy: PluginProxyInterface): Boolean {
@@ -27,10 +24,10 @@ class Main : Plugin, PluginLoader {
     }
 
     override fun matchPath(path: Path): Boolean {
-        return if (Files.isDirectory(path)) {
-            Files.isReadable(path.resolve("plugin.groovy"))
+        return if (path.isDirectory()) {
+            path.resolve("plugin.groovy").canRead()
         } else {
-            path.fileName.toString().endsWith(".groovy")
+            path.name.toString().endsWith(".groovy")
         }
     }
 
@@ -38,14 +35,14 @@ class Main : Plugin, PluginLoader {
     override fun loadByPath(path: Path) {
         var path = path
         var id: String
-        if (Files.isDirectory(path)) {
-            id = path.fileName.toString()
+        if (path.isDirectory()) {
+            id = path.name
             path = path.resolve("plugin.groovy")
         } else {
-            if (path.fileName.toString() == "plugin.groovy")
-                id = path.parent.fileName.toString()
+            if (path.name == "plugin.groovy")
+                id = path.getParentPath()!!.name.toString()
             else {
-                id = path.fileName.toString()
+                id = path.name.toString()
                 id = id.substring(0, id.length - 7)
             }
         }
@@ -55,12 +52,12 @@ class Main : Plugin, PluginLoader {
         compilerConfiguration.scriptBaseClass = "info.deskchan.groovy_support.GroovyPlugin"
         compilerConfiguration.setClasspath(path.parent.toString())
         val groovyShell = GroovyShell(compilerConfiguration)
-        val script = groovyShell.parse(path.toFile())
+        val script = groovyShell.parse(path)
         val plugin = script as GroovyPlugin
-        plugin.pluginDirPath = path.parent
+        plugin.pluginDirPath = path.getParentPath()
         val config = PluginConfig("Groovy")
-        path = path.parent.resolve("manifest.json")
-        config.appendFromJson(path.toFile())
+        path = path.getParentPath()!!.resolve("manifest.json")
+        config.appendFromJson(path)
         PluginManager.getInstance().initializePlugin(id, plugin, config)
     }
 }
