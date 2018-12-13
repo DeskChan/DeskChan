@@ -1,5 +1,6 @@
 package info.deskchan.gui_javafx;
 
+import info.deskchan.core.Path;
 import info.deskchan.gui_javafx.skins.Skin;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -9,9 +10,6 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,7 +22,7 @@ class AssetsManagerDialog extends FilesManagerDialog {
 		FileItem(String init){ super(init); }
 		@Override
 		public String toString(){
-			if (getAbsolutePath().startsWith(folder.toFile().getAbsolutePath()))
+			if (getAbsolutePath().startsWith(folder.getAbsolutePath()))
 				return getAbsolutePath().substring(filesFolderStrLength);
 			return getAbsolutePath();
 		}
@@ -56,11 +54,11 @@ class AssetsManagerDialog extends FilesManagerDialog {
 		folder = Main.getPluginProxy().getAssetsDirPath().resolve(assetsType);
 		bottom.getChildren().add(
 				new PluginOptionsControlItem.HyperlinkItem(
-						folder.toAbsolutePath().toString(),
+						folder.getAbsolutePath(),
 						Main.getString("open-folder")).getNode()
 		);
 
-		filesFolderStrLength = folder.toAbsolutePath().toString().length() + 1;
+		filesFolderStrLength = folder.getAbsolutePath().length() + 1;
 
 		ObservableList<String> newFiles = FXCollections.observableArrayList();
 		for (String file : filesList.getItems())
@@ -75,7 +73,7 @@ class AssetsManagerDialog extends FilesManagerDialog {
 		List<String> list = new LinkedList<>();
 		for(String file : filesList.getSelectionModel().getSelectedItems())
 			if (file != null)
-				list.add(folder.resolve(file).toAbsolutePath().toString());
+				list.add(folder.resolve(file).getAbsolutePath());
 		return list;
 	}
 
@@ -95,7 +93,7 @@ class AssetsManagerDialog extends FilesManagerDialog {
 			bottom.getChildren().clear();
 			bottom.getChildren().add(
 					new PluginOptionsControlItem.HyperlinkItem(
-							folder.toAbsolutePath().toString(),
+							folder.getAbsolutePath(),
 							Main.getString("open-folder")).getNode()
 			);
 		} else {
@@ -131,28 +129,26 @@ class AssetsManagerDialog extends FilesManagerDialog {
 	
 	private List<String> getFilesList(Path path) {
 		List<String> list = new ArrayList<>();
-		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
-			for (Path skinPath : directoryStream) {
-				if (Files.isDirectory(skinPath)) {
-					list.addAll(getFilesList(skinPath));
-					continue;
-				}
-				String name = skinPath.toString();
-				if (!name.endsWith(".config") && (acceptableExtensions == null || acceptableExtensions.size() == 0)){
-					list.add(name);
-					continue;
-				}
-				if (acceptableExtensions != null)
+
+		for (Path skinPath : path.files()) {
+			if (skinPath.isDirectory()) {
+				list.addAll(getFilesList(skinPath));
+				continue;
+			}
+			String name = skinPath.toString();
+			if (!name.endsWith(".config") && (acceptableExtensions == null || acceptableExtensions.size() == 0)){
+				list.add(name);
+				continue;
+			}
+			if (acceptableExtensions != null)
 				for (String ext : acceptableExtensions){
-					if (name.endsWith(ext)) {
-						list.add(name);
-						break;
-					}
+				if (name.endsWith(ext)) {
+					list.add(name);
+					break;
 				}
 			}
-		} catch (IOException e) {
-			Main.log(e);
 		}
+
 		return list;
 	}
 	

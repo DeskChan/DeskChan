@@ -27,7 +27,8 @@ import java.util.LinkedList;
 
 class TemplateBox extends Dialog<Void> {
 
-	public static LinkedList<TemplateBox> openedDialogs = new LinkedList<>();
+	private static LinkedList<TemplateBox> openedDialogs = new LinkedList<>();
+
 	private LinkedList<EventHandler<DialogEvent>> handlers = new LinkedList<>();
 	private StageStyle stageStyle = null;
 	Point2D dragDelta = new Point2D(0, 0);
@@ -61,7 +62,7 @@ class TemplateBox extends Dialog<Void> {
 			Platform.runLater(() -> close());
 		});*/
 
-		Stage stage = (Stage) getDialogPane().getScene().getWindow();
+		Stage stage = getStage();
 		stage.setAlwaysOnTop(checkForceOnTop());
 		stage.getIcons().add(new Image(App.ICON_URL.toString()));
 		getDialogPane().getButtonTypes().add(new ButtonType(Main.getString("close"), ButtonBar.ButtonData.CANCEL_CLOSE));
@@ -101,6 +102,10 @@ class TemplateBox extends Dialog<Void> {
 
 	public void addOnCloseRequest(EventHandler<DialogEvent> handler){
 		handlers.add(handler);
+	}
+
+	public Stage getStage(){
+		return (Stage) getDialogPane().getScene().getWindow();
 	}
 
 	protected void applyStyle() {

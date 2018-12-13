@@ -34,6 +34,9 @@ public class UserSpeechRequest {
            ppi.sendMessage(toSend.sender, data);
         });
 
+        // If some plugin requested user speech
+        // We show window with list of what plugin expect to receive
+        // Or else we're doing standard behavior
         ppi.addMessageListener("core:commands-list-in-request", (sender, tag, data) -> {
             if(requests.size() == 0) {
                 ppi.callNextAlternative(sender, "DeskChan:commands-list", "core:commands-list-in-request", data);
@@ -64,7 +67,7 @@ public class UserSpeechRequest {
     }
 
     private String sender;
-    private Object commandsList;
+    private Object commandsList = null;
     private UserSpeechRequest(String sender, Object data){
         this.sender = sender;
         commandsList = data;

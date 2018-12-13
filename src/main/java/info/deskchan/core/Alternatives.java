@@ -2,7 +2,17 @@ package info.deskchan.core;
 
 import java.util.*;
 
-public class Alternatives{
+/**
+ * This class handles all alternatives from all plugins.
+ * Alternatives - our special implementation of hooking pattern.
+ * You can register queue of functions and name it by tag, like 'DeskChan:say'.
+ * Any plugin can interfere by adding its own function inside queue.
+ *
+ * Any function added inside queue needs to have its own tag and priority.
+ *
+ * Don't use this class outside core plugin, use messages instead.
+ */
+public class Alternatives {
     
     protected static final Map<String, List<AlternativeInfo>> alternatives = new HashMap<>();
 
@@ -118,7 +128,10 @@ public class Alternatives{
         Iterator<AlternativeInfo> iterator = list.iterator();
         if (currentAlternative != null){
             do {
-                if (!iterator.hasNext()) return;
+                if (!iterator.hasNext()){
+                    PluginManager.log("Warning: tag \"" + currentAlternative + "\" is not subscribed to \"" + tag + "\"");
+                    return;
+                }
                 AlternativeInfo nextInfo = iterator.next();
                 if (nextInfo.tag.equals(currentAlternative)) break;
             } while (true);

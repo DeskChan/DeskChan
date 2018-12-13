@@ -201,19 +201,14 @@ class OpenCommand{
         instance.addMessageListener(pluginName+':run', { sender, tag, dat ->
             if(dat == null) return
 
-            String line = ""
-            if (dat instanceof Map)
-                line = dat.getOrDefault("msgData", "").toString()
-            else
-                line = dat.toString()
-            line.execute()
+            new MessageDataMap("msgData", dat).getString("msgData").execute()
             instance.sendMessage("DeskChan:say", "Запущено")
         })
 
         instance.addMessageListener(pluginName+':run-with-report', { sender, tag, dat ->
             if(dat==null) return
-            String line = ((Map)dat).get("msgData").toString()
-            instance.sendMessage("DeskChan:say","Запущено, ожидаем")
+            String line = new MessageDataMap("msgData", dat).getString("msgData")
+            instance.sendMessage("DeskChan:say", "Запущено, ожидаем")
             Process process = line.execute()
             Thread.start {
                 process.waitFor()
@@ -269,7 +264,6 @@ class OpenCommand{
         entries.add(new LinkEntry("https://twitch.tv", LinkEntry.Types.WEBLINK, ['твич', 'twitch']))
         entries.add(new LinkEntry("https://pikabu.ru", LinkEntry.Types.WEBLINK, ['пикабу', 'pikabu']))
         entries.add(new LinkEntry("https://instagram.com", LinkEntry.Types.WEBLINK, ['инстаграмм', 'instagram']))
-        entries.add(new LinkEntry("https://online.sberbank.ru", LinkEntry.Types.WEBLINK, ['сбербанк', 'сбер', 'sberbank']))
         entries.add(new LinkEntry("https://paypal.com", LinkEntry.Types.WEBLINK, ['пэйпал', 'paypal']))
 
         def file = new File(filename)

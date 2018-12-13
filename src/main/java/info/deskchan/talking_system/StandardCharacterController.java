@@ -3,6 +3,7 @@ package info.deskchan.talking_system;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.Set;
 
 /** This class stores diapasons of features. **/
 public class StandardCharacterController extends CharacterFeatures implements CharacterController {
@@ -19,8 +20,7 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 
 	public StandardCharacterController(float[] values) {
 		this();
-		for (int i = 0; i < getFeatureCount() && i < values.length; i++)
-			setValue(i, values[i]);
+		setValues(values);
 	}
 
 	private static final int[][] POSITIONS = {
@@ -93,6 +93,11 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 
 	}
 
+	public void setValues(float[] values){
+		for (int i = 0; i < getFeatureCount() && i < values.length; i++)
+			setValue(i, values[i]);
+	}
+
 	public void setValue(int index, float val) {
 		setValue(index, 2, val);
 	}
@@ -132,7 +137,6 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 	}
 
 	public void moveValue(int index, float val) {
-		System.out.println(getFeatureName(index) + " " + val + " " + value[index]);
 		if (val > 0){
 			float nv = value[index][2] + val * value[index][4];
 			System.out.println(nv);
@@ -142,7 +146,6 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 			System.out.println(nv);
 			value[index][2] = Math.max(nv, value[index][1]);
 		}
-		System.out.println(value[index][2]);
 	}
 
 
@@ -151,6 +154,14 @@ public class StandardCharacterController extends CharacterFeatures implements Ch
 
 		int index = getFeatureIndex(featureName);
 		return (int) ( value[index][2] > 0 ? Math.floor(value[index][2]) : Math.ceil(value[index][2]) );
+	}
+
+	public boolean phraseMatches(Phrase phrase){
+		for (int i = 0, l = CharacterFeatures.getFeatureCount(); i < l; i++)
+			if (!phrase.character.range[i].match(getValue(i)))
+				return false;
+
+		return true;
 	}
 
 	public CharacterController mix(CharacterController other, float percent) {

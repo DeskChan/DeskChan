@@ -1,9 +1,7 @@
 package info.deskchan.gui_javafx;
 
-import info.deskchan.core.CommandsProxy;
-import info.deskchan.core.CoreInfo;
-import info.deskchan.core.PluginConfig;
-import info.deskchan.core.PluginManager;
+import info.deskchan.MessageData.GUI.SetPanel;
+import info.deskchan.core.*;
 import info.deskchan.core_utils.Browser;
 import info.deskchan.gui_javafx.panes.CharacterBalloon;
 import javafx.application.Platform;
@@ -32,7 +30,6 @@ import javafx.util.converter.DefaultStringConverter;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
 class OptionsDialog extends TemplateBox {
@@ -97,7 +94,7 @@ class OptionsDialog extends TemplateBox {
 		tabListView.getSelectionModel().selectedIndexProperty().addListener(
 				(observableValue, oldValue, newValue) -> {
 					String selected = tabListView.getItems().get(newValue.intValue());
-					for (ControlsPanel tab : ControlsPanel.getPanels(ControlsPanel.PanelType.TAB)){
+					for (ControlsPanel tab : ControlsPanel.getPanels(SetPanel.PanelType.TAB)){
 						if (tab.name.equals(selected)) {
 							tab.show();
 							return;
@@ -266,7 +263,7 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("load_character_config"));
 			put("onChange","core:distribute-resources");
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", ControlsPanel.PanelType.TAB, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("appearance"), "appearance", SetPanel.PanelType.TAB, list).set();
 
 		characterOptions();
 		balloonOptions();
@@ -312,7 +309,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-skin-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("skin.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("skin"), "skin", SetPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Balloon' options submenu. **/
@@ -432,7 +429,7 @@ class OptionsDialog extends TemplateBox {
 			put("msgTag","gui:set-balloon-shadow-opacity");
 			put("value",  Main.getProperties().getInteger("balloon.shadow-opacity", 100));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), "balloon", ControlsPanel.PanelType.PANEL, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("balloon"), "balloon", SetPanel.PanelType.PANEL, list).set();
 	}
 
 	/** Creating 'Balloon' options submenu. **/
@@ -479,7 +476,7 @@ class OptionsDialog extends TemplateBox {
 			put("label",  Main.getString("open_log"));
 			put("value",  Main.getString("open"));
 		}});
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("general_options"), "general", ControlsPanel.PanelType.TAB, list).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("general_options"), "general", SetPanel.PanelType.TAB, list).set();
 
 		/// alternatives
 		BorderPane alternativesTab = new BorderPane();
@@ -500,7 +497,7 @@ class OptionsDialog extends TemplateBox {
 			alternativesTable.getColumns().add(column);
 		}
 		alternativesTable.setShowRoot(false);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), "alternatives", ControlsPanel.PanelType.PANEL, alternativesTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("alternatives"), "alternatives", SetPanel.PanelType.PANEL, alternativesTab).set();
 
 		/// debug
 		BorderPane debugTab = new BorderPane();
@@ -530,7 +527,7 @@ class OptionsDialog extends TemplateBox {
 		HBox buttons = new HBox(button, reloadButton);
 		buttons.setId("controls-bottom-buttons");
 		debugTab.setBottom(buttons);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", ControlsPanel.PanelType.PANEL, debugTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("debug"), "debug", SetPanel.PanelType.PANEL, debugTab).set();
 
 	}
 
@@ -645,7 +642,7 @@ class OptionsDialog extends TemplateBox {
 		commandTab.setBottom(buttons);
 		buttons.setId("controls-bottom-buttons");
 
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", ControlsPanel.PanelType.TAB, commandTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("commands"), "commands", SetPanel.PanelType.TAB, commandTab).set();
 	}
 
 
@@ -713,12 +710,11 @@ class OptionsDialog extends TemplateBox {
 		button.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
 			chooser.setTitle(Main.getString("load_plugin"));
-			chooser.setInitialDirectory(PluginManager.getPluginsDirPath().toFile());
+			chooser.setInitialDirectory(PluginManager.getPluginsDirPath());
 			File file = chooser.showOpenDialog(OptionsDialog.this.getDialogPane().getScene().getWindow());
 			if (file != null) {
-				Path path = file.toPath();
 				try {
-					PluginManager.getInstance().loadPluginByPath(path);
+					PluginManager.getInstance().loadPluginByPath(new Path(file));
 				} catch (Throwable e) {
 					Main.log(e);
 				}
@@ -734,9 +730,9 @@ class OptionsDialog extends TemplateBox {
 
 
 		pluginsTab.setBottom(hbox);
-		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), "plugins", ControlsPanel.PanelType.TAB, pluginsTab).set();
+		new ControlsPanel(Main.getPluginProxy().getId(), Main.getString("plugins"), "plugins", SetPanel.PanelType.TAB, pluginsTab).set();
 
-		List<ControlsPanel> tabs = ControlsPanel.getPanels(ControlsPanel.PanelType.TAB);
+		List<ControlsPanel> tabs = ControlsPanel.getPanels(SetPanel.PanelType.TAB);
 		/// Creating top tabs from registered tabs list
 		for (ControlsPanel tab : tabs)
 			registerTab(tab);
@@ -1008,7 +1004,7 @@ class OptionsDialog extends TemplateBox {
 
 		/** Update all submenus content. **/
 		void updateOptionsSubMenu(){
-			List<ControlsPanel> list = ControlsPanel.getPanels(id, ControlsPanel.PanelType.SUBMENU);
+			List<ControlsPanel> list = ControlsPanel.getPanels(id, SetPanel.PanelType.SUBMENU);
 			vbox.getChildren().clear();
 			vbox.getChildren().add(hbox);
 			if(list == null) return;
@@ -1381,9 +1377,9 @@ class OptionsDialog extends TemplateBox {
 
 		public void delete(CommandItem item){
 			ListView<CommandBox> list = commands.get(item.event).getList();
-			list.getItems().removeIf(commandBox -> commandBox.item == item);
 			if (selected.getValue().item == item)
 				selected.setValue(null);
+			list.getItems().removeIf(commandBox -> commandBox.item == item);
 		}
 
 

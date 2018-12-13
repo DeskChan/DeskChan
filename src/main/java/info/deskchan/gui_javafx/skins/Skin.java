@@ -1,14 +1,12 @@
 package info.deskchan.gui_javafx.skins;
 
+import info.deskchan.core.Path;
 import info.deskchan.core.PluginManager;
 import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,14 +27,10 @@ public interface Skin {
 	
 	static Path getSkinsPath() {
 		Path path = PluginManager.getAssetsDirPath().resolve("skins");
-		if (!Files.isDirectory(path)) {
-			path = PluginManager.getPluginsDirPath().getParent().resolve("assets").resolve("skins");
+		if (!path.isDirectory()) {
+			path = PluginManager.getPluginsDirPath().getParentPath().resolve("assets").resolve("skins");
 		}
-		return path.toAbsolutePath();
-	}
-	
-	static Path getSkinPath(String name) {
-		return getSkinsPath().resolve(name);
+		return new Path(path.getAbsoluteFile());
 	}
 	
 	static Skin load(Path path) {
@@ -51,46 +45,26 @@ public interface Skin {
 		return null;
 	}
 	
-	static Skin load(String name) {
-		if (name == null) {
-			return null;
-		}
-		synchronized (skinLoaders) {
-			for (SkinLoader loader : skinLoaders) {
-				Skin skin = loader.loadByName(name);
-				if (skin != null) {
-					return skin;
-				}
-			}
-		}
-		return load(getSkinPath(name));
-	}
-	
 	static List<String> getSkinList(Path path) {
 		List<String> list = new ArrayList<>();
-		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
-			for (Path skinPath : directoryStream) {
-				if (Files.isDirectory(skinPath) &&
-						skinPath.getFileName().toString().endsWith(".pack")) {
-					list.addAll(getSkinList(skinPath));
-					continue;
-				}
-				synchronized (skinLoaders) {
-					for (SkinLoader loader : skinLoaders) {
-						if (loader.matchByPath(skinPath)) {
-							list.add(skinPath.toString());
-							break;
-						}
-					}
-				}
+		for (Path skinPath : path.files()) {
+			if (skinPath.isDirectory() && skinPath.getName().endsWith(".pack")) {
+				list.addAll(getSkinList(skinPath));
+				continue;
 			}
 			synchronized (skinLoaders) {
 				for (SkinLoader loader : skinLoaders) {
-					list.addAll(loader.getNames());
+					if (loader.matchByPath(skinPath)) {
+						list.add(skinPath.toString());
+						break;
+					}
 				}
 			}
-		} catch (IOException e) {
-			Main.log(e);
+		}
+		synchronized (skinLoaders) {
+			for (SkinLoader loader : skinLoaders) {
+				list.addAll(loader.getNames());
+			}
 		}
 		return list;
 	}

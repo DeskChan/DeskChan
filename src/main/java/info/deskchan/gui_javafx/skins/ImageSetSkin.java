@@ -1,13 +1,11 @@
 package info.deskchan.gui_javafx.skins;
 
+import info.deskchan.core.Path;
 import info.deskchan.gui_javafx.Main;
 import javafx.geometry.Point2D;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -31,16 +29,16 @@ class ImageSetSkin implements Skin {
 	
 	ImageSetSkin(Path path) {
 		this.path = path;
-		skinName = Skin.getSkinsPath().relativize(path).toString();
+		skinName = Skin.getSkinsPath().relativize(path);
 
 		propertiesPath = Main.getPluginProxy().getDataDirPath().resolve(
 				"skin_" + skinName + ".properties"
 		);
 		try {
-			properties.load(Files.newBufferedReader(propertiesPath));
+			properties.load(propertiesPath.newBufferedReader());
 		} catch (Throwable e) {
 			try {
-				properties.load(Files.newBufferedReader(path.resolve("properties.txt")));
+				properties.load(path.resolve("properties.txt").newBufferedReader());
 			} catch (Throwable e2) {
 				// Do nothing
 			}
@@ -53,23 +51,17 @@ class ImageSetSkin implements Skin {
 	}
 
 	private List<File> getImageArray(String name) {
-		List<File> l = images.getOrDefault(name, null);
+		List<File> l = images.get(name);
 		if (l != null) {
 			return l;
 		}
 		l = new ArrayList<>();
 		Path imagePath = path.resolve(name);
-		if (Files.isDirectory(imagePath)) {
-			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(imagePath)) {
-				for (Path imgPath : directoryStream) {
-					l.add(imgPath.toFile());
-				}
-			} catch (IOException e) {
-				Main.getPluginProxy().log(e);
-			}
+		if (imagePath.isDirectory()) {
+			l.addAll(imagePath.files());
 		} else {
-			File[] files = path.toFile().listFiles();
-			if (files == null) return l;
+			Set<Path> files = path.files();
+			if (files.size() == 0) return l;
 
 			for (File file : files){
 				String fileName = file.getName(); int index = fileName.indexOf('.');
@@ -138,9 +130,9 @@ class ImageSetSkin implements Skin {
 				return;
 			}
 			properties.setProperty(key, value);
-			if (!propertiesPath.toFile().exists())
-				propertiesPath.toFile().createNewFile();
-			properties.store(Files.newBufferedWriter(propertiesPath), "Skin properties");
+			if (!propertiesPath.exists())
+				propertiesPath.createNewFile();
+			properties.store(propertiesPath.newBufferedWriter(), "Skin properties");
 		} catch (Throwable e) {
 			Main.log(e);
 		}
@@ -151,15 +143,15 @@ class ImageSetSkin implements Skin {
 		/*String name = Skin.getSkinsPath().relativize(path).toString();
 		name=name.replace(".pack","");
 		return name.substring(0, name.length() - 10) + " [IMAGE SET]";*/
-		return path.toFile().getAbsolutePath();
+		return path.getAbsolutePath();
 	}
 	
 	static class Loader implements SkinLoader {
 		
 		@Override
 		public boolean matchByPath(Path path) {
-			return Files.isDirectory(path) &&
-					path.getFileName().toString().endsWith(".image_set");
+			return path.isDirectory() &&
+					path.getName().endsWith(".image_set");
 		}
 		
 		@Override

@@ -3,7 +3,6 @@ package info.deskchan.external_loader
 import info.deskchan.core.*
 import org.apache.commons.lang3.SystemUtils
 import java.io.File
-import java.nio.file.Path
 
 
 class Main : Plugin, PluginLoader {
@@ -43,7 +42,7 @@ class Main : Plugin, PluginLoader {
 
     //override fun matchPath(file: File):Boolean {
     override fun matchPath(path: Path):Boolean {
-        val file = path.toFile()
+        val file = path
         val files = when {
             file.isDirectory -> file.listFiles().map{ it.name.toString() }
             file.isFile -> listOf(file.name)
@@ -60,7 +59,7 @@ class Main : Plugin, PluginLoader {
 
     //override fun loadByPath(file: File) {
     override fun loadByPath(path: Path) {
-        val file = path.toFile()
+        val file = path
         when {
             file.isDirectory -> file.listFiles()
             else -> listOf(file).toTypedArray()
@@ -81,7 +80,7 @@ class Main : Plugin, PluginLoader {
         if (type == null) return
 
         val config = PluginConfig(supportedPlugins[type.toString()].toString())
-        val manifestPath = file.parentFile.toPath().resolve( "manifest.json").toFile()
+        val manifestPath = file.parentFile.resolve( "manifest.json")
         if (manifestPath.exists()) config.appendFromJson(manifestPath)
 
         val plugin = ExternalPlugin(file)

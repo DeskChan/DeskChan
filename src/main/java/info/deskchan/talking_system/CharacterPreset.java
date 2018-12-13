@@ -1,5 +1,6 @@
 package info.deskchan.talking_system;
 
+import info.deskchan.core.Path;
 import info.deskchan.core_utils.TextOperations;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,8 +15,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -31,6 +30,7 @@ public class CharacterPreset {
 		try {
 			return (CharacterController) defaultCharacterController.newInstance();
 		} catch (Exception e){
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -45,21 +45,21 @@ public class CharacterPreset {
 			controller.setUpdater(new EmotionsController.UpdateHandler() {
 				@Override
 				public void onUpdate() {
-					updatePhrases();
 					inform();
 				}
 			});
 			return controller;
 		} catch (Exception e){
+			e.printStackTrace();
 			return null;
 		}
 	}
 
 	/** Additional character and user features like gender, species, interests. **/
-	public TextOperations.TagsMap<String, Set<String>> tags;
+	public TagsMap tags;
 
 	/** Phrases list. **/
-	public PhrasesList phrases;
+	public PhrasesPackList phrases;
 
 	/** New preset with standard info. **/
 	public CharacterPreset() {
@@ -79,12 +79,12 @@ public class CharacterPreset {
 	}
 
 	/** Set preset tags from its string representation. **/
-	public void setTags(Object text){
-		if (text instanceof String)
-			tags = new TextOperations.TagsMap((String) text);
-		else if (text instanceof Map)
-			tags = new TextOperations.TagsMap((Map) text);
-		else throw new ClassCastException("Cannot cast "+text.getClass().getSimpleName() + " to TagsMap");
+	public void setTags(String text) {
+		tags = new TagsMap(text);
+	}
+
+	public void setTags(Map newTags) {
+		tags = new TagsMap(newTags);
 	}
 
 	/** Set preset from JSON. **/
@@ -101,14 +101,12 @@ public class CharacterPreset {
 		if (json.has("character"))
 			character.setFromJSON(json.getJSONObject("character"));
 
+		phrases = new PhrasesPackList();
 		if (json.has("phrases")){
-			phrases = new PhrasesList(character);
 			List<String> quotesFiles = listFromJSON(json, "phrases");
 			if (quotesFiles.size() > 0){
 				phrases.set(quotesFiles);
 			}
-		} else {
-			phrases = PhrasesList.getDefault(character);
 		}
 		phrases.reload();
 
@@ -117,7 +115,7 @@ public class CharacterPreset {
             emotionState.setFromJSON(json.getJSONObject("emotions"));
         } catch (Exception e){ }
 
-		tags = new TextOperations.TagsMap();
+		tags = new TagsMap();
 		if (json.has("tags")) {
 			json = json.getJSONObject("tags");
 			for (HashMap.Entry<String, Object> obj : json.toMap().entrySet()) {
@@ -130,26 +128,9 @@ public class CharacterPreset {
 	public void setDefault() {
 		character = getDefaultCharacterController();
 		emotionState = getDefaultEmotionsController();
-		name = Main.getString("default_name");
-		phrases = PhrasesList.getDefault(character);
-		tags = new TextOperations.TagsMap<>();
-		tags.putFromText("gender: girl, userGender: boy, breastSize: small, species: ai, interests: anime, abuses: бака дурак извращенец");
-	}
-
-	/** Update phrases with preset info. **/
-	public void updatePhrases(){
-		phrases.update(emotionState.construct(character));
-	}
-
-	/** Check default tags. **/
-	private static final String[] defaultTags = new String[]{ "gender" , "species" , "interests" , "breastSize" , "userGender" };
-	public boolean tagsMatch(Map<String,Object> phrase){
-		for (String tag : defaultTags)
-			if (phrase.containsKey(tag) && !tags.match(tag, phrase.get(tag).toString())) return false;
-
-		if (!emotionState.tagsMatch(phrase)) return false;
-
-		return true;
+		name = "DeskChan";
+		phrases = new PhrasesPackList();
+		tags = new TagsMap();
 	}
 
 	public JSONObject toJSON() {
@@ -163,7 +144,7 @@ public class CharacterPreset {
 			preset_tags.put(key, tags.getAsString(key));
 		json.put("tags", preset_tags);
 
-		json.put("phrases", phrases.toList(PhrasesPack.PackType.USER, PhrasesPack.PackType.DATABASE));
+		json.put("phrases", phrases.toPacksList(PhrasesPack.PackType.USER, PhrasesPack.PackType.INTENT_DATABASE));
 		JSONObject preset = new JSONObject();
 		preset.put("preset", json);
 		return preset;
@@ -176,56 +157,20 @@ public class CharacterPreset {
 		for(int i = 0; i < CharacterFeatures.getFeatureCount(); i++)
 			map.put(CharacterFeatures.getFeatureName(i), character.getValue(i));
 
-		map.put("phrases", phrases.toList(PhrasesPack.PackType.USER, PhrasesPack.PackType.DATABASE));
+		map.put("phrases", phrases.toPacksList(PhrasesPack.PackType.USER, PhrasesPack.PackType.INTENT_DATABASE));
 		map.put("tags", tags);
 		map.put("emotion", emotionState.getCurrentEmotionName());
 		return map;
 	}
 
-	public void inform(){
-		Main.getPluginProxy().sendMessage("talk:character-updated", toInformationMap());
-	}
-
-	private String getRandomItem(Collection<String> collection){
-		int count = new Random().nextInt(collection.size());
-		Iterator<String> it = collection.iterator();
-		for(;count >0; count--) it.next();
-		return it.next();
-	}
-	public String replaceTags(String phrase) {
-		String ret = phrase;
-		if (name != null) {
-			ret = ret.replaceAll("\\{name\\}", name);
-		} else {
-			ret = ret.replaceAll("\\{name\\}", Main.getString("default_name"));
-		}
-
-		Collection<String> list = tags.get("usernames");
-		if (list != null && list.size() > 0) {
-			String item = getRandomItem(list);
-			ret = ret.replaceAll("\\{user\\}", item);
-			ret = ret.replaceAll("\\{userF\\}", item);
-		} else {
-			ret = ret.replaceAll("\\{user\\}", Main.getString("default_username"));
-			ret = ret.replaceAll("\\{userF\\}", Main.getString("default_username"));
-		}
-
-		list = tags.get("abuses");
-		if (list != null && list.size() > 0) {
-			ret = ret.replaceAll("\\{abuse\\}", getRandomItem(list));
-		} else ret = ret.replaceAll("\\{abuse\\}",Main.getString("default_abuse"));
-
-		ret = ret.replaceAll("\\{time\\}", new SimpleDateFormat("HH:mm").format(new Date()));
-		ret = ret.replaceAll("\\{date\\}", new SimpleDateFormat("d LLLL").format(new Date()));
-		ret = ret.replaceAll("\\{year\\}", new SimpleDateFormat("YYYY").format(new Date()));
-		ret = ret.replaceAll("\\{weekday\\}", new SimpleDateFormat("EEEE").format(new Date()));
-
-		return ret;
+	public Runnable onChange = null;
+	protected void inform(){
+		if (onChange != null) onChange.run();
 	}
 
 	public static CharacterPreset getFromFile(Path path) {
 		try {
-			String str = new String(Files.readAllBytes(path));
+			String str = new String(path.readAllBytes());
 			return new CharacterPreset(XML.toJSONObject(str).getJSONObject("preset"));
 		} catch (Exception e) {
 			Main.log(e);
@@ -243,7 +188,7 @@ public class CharacterPreset {
 			t.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
 			t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 			t.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
-			OutputStreamWriter stream = new OutputStreamWriter(new FileOutputStream(path.resolve(name + ".preset").toFile()), "UTF-8");
+			OutputStreamWriter stream = new OutputStreamWriter(new FileOutputStream(path.resolve(name + ".preset")), "UTF-8");
 			t.transform(new DOMSource(doc), new StreamResult(stream));
 		} catch(Exception ex){
 			Main.log(ex);
@@ -254,7 +199,7 @@ public class CharacterPreset {
 	public static CharacterPreset getFromFileUnsafe(File path) {
 		try {
 			if (!path.isAbsolute())
-				path = Main.getPluginProxy().getAssetsDirPath().resolve("presets").resolve(path.getName()).toFile();
+				path = Main.getPluginProxy().getAssetsDirPath().resolve("presets").resolve(path.getName());
 			BufferedReader in = new BufferedReader(
 					new InputStreamReader(new FileInputStream(path), "UTF-8")
 			);
@@ -309,4 +254,23 @@ public class CharacterPreset {
 		return characterImage;
 	}
 
+	@Override
+	public int hashCode() {
+		int hash = name.hashCode();
+
+		CharacterController cc = emotionState.construct(character);
+		for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++)
+			hash += cc.getValue(i) * (5 + i);
+
+		hash += emotionState.getCurrentEmotionName() != null ? emotionState.getCurrentEmotionName().hashCode() : 0;
+
+		hash += tags.dataHashCode();
+
+		hash += phrases.hashCode();
+		for (PhrasesPack pack : phrases) {
+			hash += pack.hashCode();
+		}
+
+		return hash;
+	}
 }

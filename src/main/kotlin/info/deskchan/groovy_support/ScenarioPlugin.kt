@@ -3,9 +3,6 @@ package info.deskchan.groovy_support
 import groovy.lang.GroovyShell
 import info.deskchan.core.*
 import org.codehaus.groovy.control.CompilerConfiguration
-import java.io.File
-import java.nio.charset.Charset
-import java.nio.file.Files
 import java.util.*
 
 class ScenarioPlugin : Plugin {
@@ -38,7 +35,7 @@ class ScenarioPlugin : Plugin {
          *           giveOwnership:Any - is set, scenario will run with sender as owner
          *           msgData:Any - pass any additional data to scenario
          * Returns: None */
-        pluginProxy.addMessageListener("scenario:run-scenario", MessageListener { sender, tag, dat ->
+        pluginProxy.addMessageListener("scenario:run-scenario", MessageListener { sender, _, dat ->
             var path: String? = null
             var owner: String = pluginProxy.getId()
             var data: Any? = null
@@ -90,7 +87,7 @@ class ScenarioPlugin : Plugin {
                 put("id", "stop")
                 put("type", "Button")
                 put("value", pluginProxy.getString("stop"))
-                put("msgTag", "scenario:stop")
+                put("msgTag", "scenario:stop-scenario")
             })
             list.add(HashMap<String, Any>().apply {
                 put("elements", blist)
@@ -98,7 +95,7 @@ class ScenarioPlugin : Plugin {
             put("controls", list)
         })
 
-        pluginProxy.addMessageListener("scenario:selected", MessageListener{ sender, tag, data ->
+        pluginProxy.addMessageListener("scenario:selected", MessageListener{ _, _, data ->
             selected = data.toString()
         })
 
@@ -106,7 +103,7 @@ class ScenarioPlugin : Plugin {
          * Public message
          * Params: None
          * Returns: None  */
-        pluginProxy.addMessageListener("scenario:stop", MessageListener { sender, tag, dat ->
+        pluginProxy.addMessageListener("scenario:stop-scenario", MessageListener { sender, tag, dat ->
             stopScenario()
         })
 
@@ -190,14 +187,14 @@ class ScenarioPlugin : Plugin {
             val compilerConfiguration = CompilerConfiguration()
             compilerConfiguration.sourceEncoding = "UTF-8"
             compilerConfiguration.scriptBaseClass = "info.deskchan.groovy_support.Scenario"
-            var path = File(pathString)
+            var path = Path(pathString)
             if (!path.isAbsolute)
-                path = pluginProxy.assetsDirPath.resolve("scenarios").resolve(pathString).toFile()
+                path = pluginProxy.assetsDirPath.resolve("scenarios").resolve(pathString)
             compilerConfiguration.setClasspath(path.parent.toString())
             val groovyShell = GroovyShell(compilerConfiguration)
-            var scriptLines: MutableList<String>?
+            val scriptLines: MutableList<String>?
             try {
-                scriptLines = Files.readAllLines(path.toPath(), Charset.forName("UTF-8"))
+                scriptLines = path.readAllLines().toMutableList()
             } catch (e: Exception) {
                 pluginProxy.log(e)
                 return null

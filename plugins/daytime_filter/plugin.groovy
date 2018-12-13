@@ -1,8 +1,7 @@
-import java.nio.file.Files
 
 filename = getDataDirPath().resolve('config')
 boolean isEnabled(){
-    return Files.exists(filename)
+    return filename.exists()
 }
 void setEnabled(boolean value){
     if(value){

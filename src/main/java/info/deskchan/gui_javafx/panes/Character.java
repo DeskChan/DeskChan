@@ -135,7 +135,7 @@ public class Character extends MovablePane {
 
 	public void setSkin(Skin skin) {
 		if (skin == null) {
-			skin = Skin.load(DEFAULT_SKIN_NAME);
+			skin = Skin.load(Main.getPluginProxy().getAssetsDirPath().resolve("skins").resolve(DEFAULT_SKIN_NAME));
 			if (skin == null){
 				App.showNotification(Main.getString("error"), Main.getString("error.no-image"));
 				Main.getInstance().quit();
@@ -170,8 +170,8 @@ public class Character extends MovablePane {
 
 	private AnimatedSprite.AnimationData newAnimationData(ImageSprite newSprite){
         AnimatedSprite.AnimationData data = new AnimatedSprite.AnimationData();
-        data.next = newSprite;
-        data.smooth = true;
+        data.nextSprite = newSprite;
+        data.setSmooth(true);
         return data;
     }
 	private void updateImage(boolean reloadImage) {
@@ -188,6 +188,7 @@ public class Character extends MovablePane {
 			}
 		} catch (Exception e){
 			Main.log(e);
+			return;
 		}
 		if(image == null){
 			setSkin(null);
@@ -326,7 +327,7 @@ public class Character extends MovablePane {
 			Iterator<MessageInfo> i = messageQueue.iterator();
 			while (i.hasNext()) {
 				MessageInfo s = i.next();
-				if(s != messageInfo && s.skippable && s.priority <= messageInfo.priority){
+				if(s != messageInfo && s.skippable && s.priority < messageInfo.priority){
 				    s.notifySender();
 				    i.remove();
                 }
@@ -588,7 +589,7 @@ public class Character extends MovablePane {
 		public void notifySender(){
             if (notifyTo != null) {
 				Main.getPluginProxy().sendMessage("DeskChan:just-said", new HashMap(){{
-					put("msgData", fullText);
+					put("text", fullText);
 				}});
 				if (notifyTo instanceof String)
                 	Main.getPluginProxy().sendMessage((String) notifyTo, null);

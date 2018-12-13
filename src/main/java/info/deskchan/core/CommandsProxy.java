@@ -4,11 +4,31 @@ import info.deskchan.gui_javafx.Main;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.*;
 
-public class CommandsProxy{
+/**
+ * This class handles all events and commands.
+ *
+ * Event-command system is our own implementation of events handling system.
+ * But it is simple enough to use with GUI.
+ *
+ * Events needs to be registered first, then they needs to be raised by their owners.
+ * Command is a listener of event. They also can be registered and manually linked to event by user or plugin.
+ * Then event owner receives information about linked commands.
+ * Event owner can call commands as he needs, when he needs, in every order he need.
+ *
+ * Event-command links also have
+ *  - Rule - special string in format specified by event owner, so event owner can decide, if command needs to be called
+ *  - Message Data - any-type data that command needs to receive when it called. Event owner should send it manually to command with command call
+ *
+ * Don't use this class outside core plugin, use messages instead.
+ */
+public class CommandsProxy {
+
     public static class Link{
+
         public final String rule;
         public final Object msgData;
 
@@ -41,11 +61,13 @@ public class CommandsProxy{
 
     /** All events registered in program with all information about them. **/
     private static MatrixMap<String, String, Object> events   = new MatrixMap<>();
+
     /** All commands registered in program with all information about them. **/
     private static MatrixMap<String, String, Object> commands = new MatrixMap<>();
 
     /** All command links used by program (including added by user and excluding deleted by user). **/
     private static LinkContainer commandLinks = new LinkContainer();
+
     /** All command links registered by plugins by default. **/
     private static LinkContainer defaultCommandLinks = new LinkContainer();
 
@@ -80,7 +102,7 @@ public class CommandsProxy{
      * All links that using this command will be deactivated but not removed. **/
     private static void removeCommand(String sender, String tag){
         if (tag == null) {
-            PluginManager.log("No name specified for command to remove, recieved null");
+            PluginManager.log("No name specified for command to remove, received null");
             return;
         }
         Map<String, Object> command = commands.get(tag);
@@ -200,18 +222,18 @@ public class CommandsProxy{
      * @param eventName Event name
      * @return List of links, where every element contains command <b>tag</b>,
      * <b>rule</b> if link have rule and <b>message</b> if link contains message. **/
-    public static ArrayList<HashMap<String, Object>> getCommandsMatch(String eventName){
-        ArrayList < HashMap <String, Object> > ar = new ArrayList<>();
+    public static List<Map<String, Object>> getCommandsMatch(String eventName){
+        List < Map <String, Object> > ar = new ArrayList<>();
         if(eventName == null) {
             PluginManager.log("No event name specified for matching command list");
             return ar;
         }
 
-        Map<String, ArrayList<Link>> map = commandLinks.get(eventName);
+        Map<String, List<Link>> map = commandLinks.get(eventName);
         if(map == null)
             return ar;
 
-        for(Map.Entry<String, ArrayList<Link>> entry : map.entrySet()) {
+        for(Map.Entry<String, List<Link>> entry : map.entrySet()) {
             Map command = commands.get(entry.getKey());
             if (command == null) continue;
 
@@ -237,7 +259,7 @@ public class CommandsProxy{
     }
 
     /** Get list of all event names. **/
-    public static ArrayList<String> getEventsList(){
+    public static List<String> getEventsList(){
         return new ArrayList<>(events.map.keySet());
     }
 
@@ -247,7 +269,7 @@ public class CommandsProxy{
     }
 
     /** Get list of all links. **/
-    public static ArrayList<Map<String,Object>> getLinksList(){
+    public static List<Map<String,Object>> getLinksList(){
         return commandLinks.getLinksList();
     }
 
@@ -362,23 +384,22 @@ public class CommandsProxy{
         });
     }
 
-    private static final File file = PluginManager.getDataDirPath().resolve("core").resolve("links").toFile();
+    private static final Path file = PluginManager.getDataDirPath().resolve("core").resolve("links");
 
     /** Save current links configuration to file **/
     public static void save(){
-        OutputStreamWriter writer;
+        BufferedWriter writer;
         try {
-           writer=new OutputStreamWriter(new FileOutputStream(file.toString()), "UTF-8");
+           writer = file.newBufferedWriter();
         } catch(Exception e){
             PluginManager.log("Error while locate space for command links file");
             return;
         }
         LinkContainer toSave = commandLinks.clone();
         toSave.substract(defaultCommandLinks);
-        BufferedWriter out=new BufferedWriter(writer);
         try {
-            out.write(toSave.toJSONArray().toString(2));
-            out.flush();
+            writer.write(toSave.toJSONArray().toString(2));
+            writer.flush();
             PluginManager.log("Links successfully saved");
         } catch (Exception e){
             PluginManager.log("Error while writing command links file");
@@ -387,17 +408,16 @@ public class CommandsProxy{
 
     /** Load links configuration from file **/
     public static void load(){
-        InputStreamReader reader;
+        BufferedReader reader;
         try {
-            reader=new InputStreamReader(new FileInputStream(file.toString()), "UTF-8");
+            reader = file.newBufferedReader();
         } catch(Exception e){
             PluginManager.log("Links file is not found, using default links");
             return;
         }
-        BufferedReader out=new BufferedReader(reader);
         try {
             StringBuilder b = new StringBuilder();
-            out.lines().forEach(b::append);
+            reader.lines().forEach(b::append);
             JSONArray array = new JSONArray(b.toString());
             for(Object obj : array) {
                 if(!(obj instanceof JSONArray)) continue;
@@ -517,14 +537,14 @@ public class CommandsProxy{
 
     private static class LinkContainer{
         // < event, command, links >
-        private MatrixMap<String, String, ArrayList<Link>> array = new MatrixMap<>();
+        private MatrixMap<String, String, List<Link>> array = new MatrixMap<>();
 
-        public ArrayList<Link> getLinks(String targetName, String commandName){
+        public List<Link> getLinks(String targetName, String commandName){
             return array.get(targetName, commandName);
         }
 
         public void add(String eventName, String commandName, Link link){
-            ArrayList<Link> links = array.get(eventName, commandName);
+            List<Link> links = array.get(eventName, commandName);
             if(links == null) {
                 array.put(eventName, commandName, links = new ArrayList<>());
                 links.add(link);
@@ -542,7 +562,7 @@ public class CommandsProxy{
 
         public void remove(String eventName, String commandName, String rule){
             try {
-                for(Map.Entry<String, ArrayList<Link>> entry : array.get(eventName).entrySet()){
+                for(Map.Entry<String, List<Link>> entry : array.get(eventName).entrySet()){
                     Iterator<Link> it = entry.getValue().iterator();
                     while(it.hasNext()) {
                         Link link = it.next();
@@ -558,18 +578,18 @@ public class CommandsProxy{
         }
 
         public void substract(LinkContainer other){
-            for (MatrixMap<String, String, ArrayList<Link>>.Entry<String, String, ArrayList<Link>> entry : other.entrySet()){
+            for (MatrixMap<String, String, List<Link>>.Entry<String, String, List<Link>> entry : other.entrySet()){
                 for (Link link : entry.value) {
                     remove(entry.key1, entry.key2, link.rule);
                 }
             }
         }
 
-        public Map<String, ArrayList<Link>> get(String eventName){
+        public Map<String, List<Link>> get(String eventName){
             return array.get(eventName);
         }
 
-        public Set< MatrixMap<String, String, ArrayList<Link>>.Entry<String, String, ArrayList<Link>> > entrySet(){
+        public Set< MatrixMap<String, String, List<Link>>.Entry<String, String, List<Link>> > entrySet(){
             return array.entrySet();
         }
 
@@ -579,7 +599,7 @@ public class CommandsProxy{
         public JSONArray toJSONArray(){
             JSONArray array = new JSONArray();
             for(MatrixMap.Entry entry : entrySet()) {
-                for(Link link : (ArrayList<Link>) entry.value) {
+                for(Link link : (List<Link>) entry.value) {
                     JSONArray ar = new JSONArray();
                     ar.put(entry.key1);
                     ar.put(entry.key2);
@@ -592,11 +612,11 @@ public class CommandsProxy{
             }
             return array;
         }
-        public ArrayList<Map<String,Object>> getLinksList(){
-            ArrayList< Map<String,Object> > list=new ArrayList<>();
+        public List<Map<String,Object>> getLinksList(){
+            List< Map<String,Object> > list = new ArrayList<>();
             for(MatrixMap.Entry entry : entrySet()) {
-                for(Link link : (ArrayList<Link>) entry.value) {
-                    HashMap<String, Object> map = new HashMap<>();
+                for(Link link : (List<Link>) entry.value) {
+                    Map<String, Object> map = new HashMap<>();
                     map.put("event", entry.key1);
                     map.put("command", entry.key2);
                     map.put("rule", link.rule);

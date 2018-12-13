@@ -2,7 +2,6 @@ package info.deskchan.groovy_support
 
 import groovy.lang.Script
 import info.deskchan.core.*
-import java.nio.file.Path
 import java.util.*
 
 abstract class GroovyPlugin : Script(), Plugin {

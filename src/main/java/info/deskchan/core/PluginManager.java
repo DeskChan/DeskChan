@@ -4,10 +4,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.*;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class PluginManager {
@@ -28,6 +24,8 @@ public class PluginManager {
 	private String[] args;
 	private static OutputStream logStream = null;
 
+	private final Map<String, Object> persistentMessages = new HashMap<>();
+
 	private static boolean debugBuild = false;
     private static String[] debugBuildFolders = { "build", "out" };
 
@@ -46,6 +44,7 @@ public class PluginManager {
 	private static Path dataDirPath = null;
 	private static Path rootDirPath = null;
 	private static Path assetsDirPath = null;
+	private static Path resourcesPath = null;
 
 	/* Singleton */
 	
@@ -61,8 +60,8 @@ public class PluginManager {
 		this.args = args;
 		Path logFile = getDataDirPath().resolve("DeskChan.log");
 		try {
-			logFile.toFile().createNewFile();
-			logStream = Files.newOutputStream(logFile);
+			logFile.createNewFile();
+			logStream = new FileOutputStream(logFile);
 		} catch (IOException e) {
 			log(e);
 		}
@@ -87,28 +86,36 @@ public class PluginManager {
 	}
 
 	Set<String> getNamesOfLoadedPlugins() {
-		return plugins.keySet();
+		synchronized (plugins) {
+			return plugins.keySet();
+		}
 	}
 
 	public PluginProxyInterface getPlugin(String name){
-		return plugins.get(name);
+		synchronized (plugins) {
+			return plugins.get(name);
+		}
 	}
 
 	/* Plugin initialization and unloading */
 
 	/** Plugin initialization. Use other methods of this class if you haven't all needed components
+	 * You will not receive any information about if plugin has been loaded successfully.
 	 *
 	 * @param id Plugin name
 	 * @param plugin Plugin object
 	 * @param config Config (you can parse it from file, create by yourself or pass null)
 	 * @return Is initialization has started successfully.
-	 * You will not recieve any information about if plugin has loaded to program.
+	 *
 	 * @throws Throwable Plugin with such name already exist
 	 */
 	public boolean initializePlugin(String id, Plugin plugin, PluginConfig config) throws Throwable {
+		synchronized (plugins){
+
 		if (plugins.containsKey(id)) {
 			throw new Throwable("Cannot load plugin \"" + id + "\": plugin with such name already exist");
 		}
+
 		if (blacklistedPlugins.contains(id)) {
 			return false;
 		}
@@ -135,7 +142,7 @@ public class PluginManager {
 			return true;
 		}
 		return false;
-	}
+	}}
 
 	/** Plugin initialization. Plugin will be marked as inner plugin with default configuration. <br>
 	 * Other functional equals {@link #initializePlugin(String, Plugin, PluginConfig) this method}
@@ -151,7 +158,9 @@ public class PluginManager {
 
 	/**  Plugin will be unregistered from memory. **/
 	void unregisterPlugin(String id) {
-		plugins.remove(id);
+		synchronized (plugins) {
+			plugins.remove(id);
+		}
 		log("Unregistered plugin: " + id);
 		sendMessage("core", "core-events:plugin-unload", id);
 	}
@@ -160,12 +169,14 @@ public class PluginManager {
 	 * @return Is plugin has existed and has been unloaded successfully
 	 */
 	public boolean unloadPlugin(String name) {
-		PluginProxy plugin = plugins.get(name);
-		if (plugin != null) {
-			plugin.unload();
-			return true;
+		synchronized (plugins) {
+			PluginProxy plugin = plugins.get(name);
+			if (plugin != null) {
+				plugin.unload();
+				return true;
+			}
+			return false;
 		}
-		return false;
 	}
 	
 	/* Message bus */
@@ -178,8 +189,10 @@ public class PluginManager {
 			messageListeners.put(tag, listeners);
 		}
 		if (tag.equals("core-events:plugin-load")) {
-			for (String id : plugins.keySet()) {
-				listener.handleMessage("core", "core-events:plugin-load", id);
+			synchronized (plugins) {
+				for (String id : plugins.keySet()) {
+					listener.handleMessage("core", "core-events:plugin-load", id);
+				}
 			}
 		}
 		listeners.add(listener);
@@ -196,6 +209,10 @@ public class PluginManager {
 		}
 	}
 
+	void setPersistentMessage(String message){
+		persistentMessages.putIfAbsent(message, null);
+	}
+
 	/**  Get listeners count. **/
 	int getMessageListenersCount(String tag) {
 		Set<MessageListener> listeners = messageListeners.get(tag);
@@ -207,19 +224,23 @@ public class PluginManager {
 
 	/**
 	 * Send message to tag. <br>
-	 * You cannot call this method by yourself to not falsify messages from other plugins
+	 * You cannot call this method directly to not falsify messages from other plugins
 	 * @param sender Name of plugin that sends message
 	 * @param tag Tag of message
 	 * @param data Additional data that will be sent with query, can be null
 	 */
 	void sendMessage(String sender, String tag, Object data) {
 		Object serializedData = MessageDataUtils.serialize(data);
-		
+
+		if (persistentMessages.containsKey(tag)){
+			persistentMessages.put(tag, serializedData);
+		}
+
 		Set<MessageListener> listeners = getMessageListeners(tag);
 		if (listeners == null || listeners.size() == 0)
 			return;
 
-		synchronized (listeners) {
+		synchronized (messageListeners) {
 			for (MessageListener listener : listeners) {
 				Debug.TimeTest send = new Debug.TimeTest() {
 					@Override
@@ -294,13 +315,12 @@ public class PluginManager {
 		}
 	}
 
-    private static boolean IsPathEndsWithList(Path path,String[] names){
+    private static boolean IsPathEndsWithList(Path path, String[] names){
 	    for(String name: names){
 	        if (path.endsWith(name))
 	            return true;
         }
-
-                return false;
+		return false;
     }
 
 	/** Load plugin by its class name.
@@ -377,6 +397,8 @@ public class PluginManager {
 	 * @throws Throwable If plugin was found but cannot be loaded
 	 */
 	public boolean loadPluginByName(String name) throws Throwable {
+		synchronized (plugins){
+
 		// 1. Tries to find an already loaded plugin with the same name.
 		if (plugins.containsKey(name)) {
 			return true;
@@ -389,9 +411,9 @@ public class PluginManager {
 
 
 		// 2. If the plugin can be found in the plugins directory, it's loaded.
-		Path path = getDefaultPluginDirPath(name);
+		Path path = new Path(getDefaultPluginDirPath(name));
 
-		if (path.toFile().exists()) {
+		if (path.exists()) {
 			for (PluginLoader loader : loaders) {
 				if (loader.matchPath(path)) {
 					loader.loadByPath(path);
@@ -406,21 +428,19 @@ public class PluginManager {
 		}
 
 		// 4. If any plugin can be found in the plugins directory without respect to their extensions, the first one will be loaded.
-		File[] files = getPluginsDirPath().toFile().listFiles((file, s) -> FilenameUtils.removeExtension(s).equals(name));
-		if (files != null) {
-			if (files.length > 1) {
-				log("Too many plugins with similar names (" + name + ")!");
-			}
-			try {
-				return loadPluginByPath(files[0].toPath());
-			} catch (Exception e){
-				log(e.getMessage());
-			}
+		Set<Path> files = getPluginsDirPath().files((file, s) -> FilenameUtils.removeExtension(s).equals(name));
+		if (files.size() > 1) {
+			log("Too many plugins with similar names (" + name + ")!");
+		}
+		try {
+			return loadPluginByPath(files.iterator().next());
+		} catch (Exception e){
+			log(e.getMessage());
 		}
 
 		// 5. Otherwise, the plugin cannot be loaded by name.
 		return false;
-	}
+	}}
 
 	/** Load plugin by name.
 	 * @param name Plugin name
@@ -439,6 +459,8 @@ public class PluginManager {
 
 	/** Unload all plugins and close immediately. **/
 	void quit() {
+		synchronized (plugins){
+
 		List<PluginProxy> pluginsToUnload = new ArrayList<>();
 		for (Map.Entry<String, PluginProxy> entry : plugins.entrySet()) {
 			if (!entry.getKey().equals("core")) {
@@ -460,11 +482,13 @@ public class PluginManager {
 			logStream = null;
 		}
 		System.exit(0);
-	}
+	}}
 
 	/** Get list of plugins. **/
 	public List<String> getPlugins() {
-		return new ArrayList<>(plugins.keySet());
+		synchronized (plugins) {
+			return new ArrayList<>(plugins.keySet());
+		}
 	}
 
 	/* Plugins blacklist */
@@ -485,35 +509,30 @@ public class PluginManager {
 
 	/** Remove plugin from blacklist. You need to load it manually if you want it to be loaded. **/
 	public void removePluginFromBlacklist(String name) {
+		Debug.printTraceBack();
 		blacklistedPlugins.remove(name);
 		savePluginsBlacklist();
 	}
 
 	/** Load blacklist from file. **/
 	private void loadPluginsBlacklist() {
+		Path blacklist = getPluginDataDirPath("core").resolve("blacklisted-plugins.txt");
+		if (!blacklist.exists()) return;
+
 		try {
-			BufferedReader reader = Files.newBufferedReader(
-					getPluginDataDirPath("core").resolve("blacklisted-plugins.txt"),
-					Charset.forName("UTF-8")
-			);
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (line.length() == 0) {
-					continue;
-				}
-				blacklistedPlugins.add(line);
+			for (String line : blacklist.readAllLines()) {
+				if (line.trim().length() > 0)
+					blacklistedPlugins.add(line);
 			}
-			reader.close();
-		} catch (IOException e) { }
+		} catch (Exception e){
+			log(e);
+		}
 	}
 
 	/** Save blacklist to file. **/
 	private void savePluginsBlacklist() {
 		try {
-			BufferedWriter writer = Files.newBufferedWriter(
-					getPluginDataDirPath("core").resolve("blacklisted-plugins.txt"),
-					Charset.forName("UTF-8")
-			);
+			BufferedWriter writer = getPluginDataDirPath("core").resolve("blacklisted-plugins.txt").newBufferedWriter();
 			for (String id : blacklistedPlugins) {
 				writer.write(id);
 				writer.newLine();
@@ -525,8 +544,10 @@ public class PluginManager {
 	}
 
 	public void saveProperties(){
-		for (Map.Entry<String, PluginProxy> plugin : plugins.entrySet())
-			sendMessage("core", plugin.getKey() + ":save-properties", null);
+		synchronized (plugins) {
+			for (Map.Entry<String, PluginProxy> plugin : plugins.entrySet())
+				sendMessage("core", plugin.getKey() + ":save-properties", null);
+		}
 	}
 	
 	/* Plugins and data directories */
@@ -535,13 +556,23 @@ public class PluginManager {
 	public static Path getCorePath() {
 		if (corePath == null) {
 			try {
-				corePath = Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+				corePath = new Path(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 			} catch (URISyntaxException e) {
-				corePath = Paths.get(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+				corePath = new Path(PluginManager.class.getProtectionDomain().getCodeSource().getLocation().getFile());
 			}
-			debugBuild = Files.isDirectory(corePath);
+			debugBuild = corePath.isDirectory();
 		}
 		return corePath;
+	}
+
+	public static Path getResourcesPath(){
+		if (resourcesPath == null) {
+		    if (getCorePath().toString().contains("build"))
+		        resourcesPath = getRootDirPath().resolve("build").resolve("resources").resolve("main");
+		    else
+		        resourcesPath = getRootDirPath().resolve("out").resolve("production").resolve("resources");
+		}
+		return resourcesPath;
 	}
 
 	/** Get 'plugins' folder path. **/
@@ -554,26 +585,27 @@ public class PluginManager {
 			path = path.resolve("build").resolve("launch4j");
 		}
 		path = path.resolve("plugins");
-		pluginsDirPath = path.normalize();
+		pluginsDirPath = path;
+		createPath(pluginsDirPath);
 		return pluginsDirPath;
 	}
 
 	/** Get 'plugins/%pluginName%' folder path. **/
 	public static Path getDefaultPluginDirPath(String name) {
 		Stack<File> paths = new Stack<>();
-		paths.push(getPluginsDirPath().toFile());
+		paths.push(getPluginsDirPath());
 		while (!paths.empty()) {
 			File path = paths.pop();
 			File[] files = path.listFiles();
-			if(files==null || files.length==0) continue;
+			if(files == null || files.length == 0) continue;
 			for(File file : files){
 				if(file.isFile()){
 					if(FilenameUtils.getBaseName(file.toString()).equals(name)){
-						return Paths.get(FilenameUtils.getFullPath(file.toString()));
+						return new Path(file);
 					}
 				} else if(file.isDirectory()){
 					if(file.getName().equals(name)){
-						return file.toPath();
+						return new Path(file);
 					}
 					paths.push(file);
 				}
@@ -592,11 +624,12 @@ public class PluginManager {
 			path = path.resolve("build");
 		}
 		path = path.resolve("data");
-		if (!Files.isDirectory(path)) {
-			path.toFile().mkdir();
+		if (!path.isDirectory()) {
+			path.mkdir();
 			log("Created directory: " + path);
 		}
-		dataDirPath = path.normalize();
+		dataDirPath = path;
+		createPath(dataDirPath);
 		return dataDirPath;
 	}
 
@@ -607,11 +640,12 @@ public class PluginManager {
 		}
 		Path path = getRootDirPath();
 		path = path.resolve("assets");
-		if (!Files.isDirectory(path)) {
-			path.toFile().mkdir();
+		if (!path.isDirectory()) {
+			path.mkdir();
 			log("Created directory: " + path);
 		}
-		assetsDirPath = path.normalize();
+		assetsDirPath = path;
+		createPath(assetsDirPath);
 		return assetsDirPath;
 	}
 
@@ -626,15 +660,15 @@ public class PluginManager {
 			path = corePath;
 			try {
                 while (!IsPathEndsWithList(path,debugBuildFolders))
-					path = path.getParent();
-				path = path.getParent();
+					path = path.getParentPath();
+				path = path.getParentPath();
 			} catch (Exception e){
 				log("Error while locating root path with path: "+corePath);
 			}
 		} else {
-			path = corePath.getParent().resolve("../");
+			path = corePath.getParentPath().resolve("../");
 		}
-		rootDirPath = path.normalize();
+		rootDirPath = path;
 		return rootDirPath;
 	}
 
@@ -642,8 +676,8 @@ public class PluginManager {
 	public static Path getPluginDataDirPath(String id) {
 		final Path baseDir = getDataDirPath();
 		final Path dataDir = baseDir.resolve(id);
-		if (!Files.isDirectory(dataDir)) {
-			dataDir.toFile().mkdirs();
+		if (!dataDir.isDirectory()) {
+			dataDir.mkdirs();
 			log("Created directory: " + dataDir.toString());
 		}
 		return dataDir;
@@ -651,10 +685,22 @@ public class PluginManager {
 
 	/** Get plugin config by plugin name. **/
 	public PluginConfig getPluginConfig(String name) {
-		if (!plugins.containsKey(name)) {
-			return null;
+		synchronized (plugins) {
+			if (!plugins.containsKey(name)) {
+				return null;
+			}
+			return plugins.get(name).getConfig();
 		}
-		return plugins.get(name).getConfig();
+	}
+
+	private static void createPath(Path path){
+		if (!path.exists()) {
+			try {
+				path.mkdir();
+			} catch (Exception e) {
+				log(e);
+			}
+		}
 	}
 
 	/* Logging */

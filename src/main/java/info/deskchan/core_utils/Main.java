@@ -1,9 +1,6 @@
 package info.deskchan.core_utils;
 
-import info.deskchan.core.CoreInfo;
-import info.deskchan.core.Plugin;
-import info.deskchan.core.PluginProxyInterface;
-import info.deskchan.core.ResponseListener;
+import info.deskchan.core.*;
 
 import java.util.*;
 
@@ -67,7 +64,7 @@ public class Main implements Plugin {
 		});
 
 		pluginProxy.addMessageListener("core:distribute-resources", (sender, tag, data) -> {
-			ResourceDistributor.distribute((String) data);
+			ResourceDistributor.distribute(new MessageDataMap("file", data).getFile("file"));
 		});
 
 		pluginProxy.setAlternative("core-utils:notify-after-delay", "core-utils:notify-after-delay-default-impl", 1);
@@ -86,6 +83,32 @@ public class Main implements Plugin {
 			} catch (Exception e){
 				pluginProxy.log(e);
 			}
+		});
+
+		// if user missed layout, we're trying to fix it and resend user speech again
+		List<String> resend = new ArrayList<>();
+
+		pluginProxy.setAlternative("DeskChan:user-said", "core-utils:change-layout-and-resend", 50);
+
+		pluginProxy.addMessageListener("core-utils:change-layout-and-resend", (sender, tag, dat) -> {
+			Map data = (Map) dat;
+			if(CoreInfo.getCoreProperties().getBoolean("fixer", true)){
+				String query = (String) data.get("value");
+				if (resend.contains(query)){
+					resend.remove(query);
+				} else {
+					resend.add(query);
+					String translate = FixLayout.fixRussianEnglish(query);
+					if (!translate.equals(query)) {
+						Map<String, Object> cl = new HashMap<>(data);
+						cl.put("value", translate);
+						pluginProxy.sendMessage("DeskChan:user-said", cl);
+						return;
+					}
+				}
+
+			}
+			pluginProxy.callNextAlternative(sender, "DeskChan:user-said", "core-utils:change-layout-and-resend", dat);
 		});
         
 		UserSpeechRequest.initialize(pluginProxy);

@@ -1,8 +1,8 @@
 package info.deskchan.core
 
-import java.io.File
+import java.io.FilenameFilter
 
-typealias PluginFiles = Set<File>
+typealias PluginFiles = Set<Path>
 
 
 object LoaderManager {
@@ -15,7 +15,7 @@ object LoaderManager {
     /** Scan plugins directory to runnable plugins. **/
     private fun scanPluginsDir(): PluginFiles {
         val loadedPlugins = PluginManager.getInstance().namesOfLoadedPlugins
-        return pluginsDirPath.toFile().listFiles({ _, name -> !loadedPlugins.contains(name) }).toSet()
+        return pluginsDirPath.files(FilenameFilter { _, name -> !loadedPlugins.contains(name) })
     }
 
     /** Automatically load all plugins from 'plugin' directory. **/
@@ -38,7 +38,7 @@ object LoaderManager {
     /** Iterates over all registered extensions to find loadable plugins. **/
     private fun PluginFiles.loadFilePlugins(): PluginFiles {
         val unloadedPlugins = this.toMutableSet()
-        val extensions = registeredExtensions.toSet()
+        val extensions = registeredExtensions
         extensions.forEach { ext ->
             this.filter { it.extension == ext }.forEach { unloadedPlugins.tryLoadPlugin(it) }
         }
@@ -63,8 +63,8 @@ object LoaderManager {
     }
 
     /** Tries to load plugin that wasn't loaded previously. **/
-    private fun MutableSet<File>.tryLoadPlugin(file: File) {
-        if (PluginManager.getInstance().tryLoadPluginByPath(file.toPath())) {
+    private fun MutableSet<Path>.tryLoadPlugin(file: Path) {
+        if (PluginManager.getInstance().tryLoadPluginByPath(file)) {
             this.remove(file)
         }
     }

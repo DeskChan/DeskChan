@@ -49,6 +49,7 @@ public class Menu {
             }
 
             update();
+
         } catch (Exception e){
             Main.log("Error while registering menu actions");
         }

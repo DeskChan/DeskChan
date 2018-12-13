@@ -11,15 +11,6 @@ import java.util.*;
 
 public class ControllableSprite extends MovablePane {
 
-    public enum SpriteActionType {
-        CREATE,
-        SHOW,
-        HIDE,
-        DELETE,
-        ANIMATE,
-        DROP_ANIMATION
-    }
-
     private static Map<String, ControllableSprite> registeredSprites = new HashMap<>();
 
     final String id;

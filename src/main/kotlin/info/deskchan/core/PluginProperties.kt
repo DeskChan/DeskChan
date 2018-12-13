@@ -1,7 +1,8 @@
 package info.deskchan.core
 
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
-import java.nio.file.Files
 import java.util.*
 
 class PluginProperties(private val proxyInterface: PluginProxyInterface) : MessageDataMap() {
@@ -20,7 +21,7 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : Messa
         val configPath = proxyInterface.dataDirPath.resolve("config.properties")
         val properties = Properties()
         try {
-            val ip = Files.newInputStream(configPath)
+            val ip = FileInputStream(configPath)
             properties.load(ip)
             ip.close()
         } catch (e: Exception) {
@@ -57,7 +58,7 @@ class PluginProperties(private val proxyInterface: PluginProxyInterface) : Messa
             for ((key, value) in this)
                 properties.put(key, value.toString())
 
-            val ip = Files.newOutputStream(configPath)
+            val ip = FileOutputStream(configPath)
             properties.store(ip, proxyInterface.getId() + " config")
             ip.close()
         } catch (e: Exception) {
