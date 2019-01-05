@@ -1,6 +1,13 @@
 language: java
+os:
+  - windows
+  - linux
+  - osx
 jdk:
-   - oraclejdk8
+  - oraclejdk8
+  - oraclejdk9
+  - openjdk8
+  - openjdk9
 sudo: false
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
