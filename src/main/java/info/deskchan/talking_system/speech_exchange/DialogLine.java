@@ -25,6 +25,10 @@ public class DialogLine {
 
     public void setReaction(Reaction reaction){ this.reaction = reaction; }
 
+    public float[] getCharacter(){ return character; }
+
+    public void setCharacter(float[] character){ this.character = character; }
+
     public enum Author {
         CHARACTER, USER;
         public Author next(){
