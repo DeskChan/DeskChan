@@ -24,16 +24,19 @@ public class SpeechExchanger {
 
         for (Path logFile : folder.files()){
             if (logFile.isFile()) {
-                try {
-                    DialogLog log = new DialogLog(logFile);
-                    for (Precedent<IExchangeable, Reaction> row : log.getData()){
-                        space.add(row);
-                    }
-                } catch (Exception e){
-                    e.printStackTrace();
-                    //Main.log(e);
-                }
+                loadLog(logFile);
             }
+        }
+    }
+
+    public void loadLog(Path logFile){
+        try {
+            DialogLog log = new DialogLog(logFile);
+            for (Precedent<IExchangeable, Reaction> row : log.getData()){
+                space.add(row);
+            }
+        } catch (Exception e){
+            Main.log(e);
         }
     }
 
@@ -100,8 +103,9 @@ public class SpeechExchanger {
             sb.append("]\n");
 
             if (line.reaction.emotion != null)
-                sb.append(Main.getString("emotion") + ": " + line.reaction.emotion + "\n");
-            sb.append(Main.getString("answer") + ": " + line.reaction.exchangeData.toString() + "\n");
+                sb.append(Main.getString("emotion") + ": " + Main.getString("emotion." + line.reaction.emotion) + "\n");
+            boolean intents = line.reaction.exchangeData instanceof IntentsData;
+            sb.append(Main.getString("answer") + ": " + (intents ? "[" : "") + line.reaction.exchangeData.toString()  + (intents ? "]" : "") +  "\n");
             sb.append("\n");
         }
         return sb.toString();

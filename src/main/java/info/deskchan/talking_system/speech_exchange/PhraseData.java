@@ -12,7 +12,7 @@ public class PhraseData implements IExchangeable {
     /** Cached words from phrase */
     private final List<String> words;
 
-    PhraseData(String text){
+    public PhraseData(String text){
         this.text = text;
         words = TextOperations.extractWordsLower(text);
     }

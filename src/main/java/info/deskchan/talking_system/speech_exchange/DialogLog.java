@@ -164,6 +164,10 @@ public class DialogLog extends LinkedList<DialogLine> {
 
             if (line.reaction.emotion != null)
                 sb.append(Exchangeable.EMOTION.start + line.reaction.emotion + "\n");
+            if (line.reaction.exchangeData instanceof PhraseData)
+                sb.append(Exchangeable.PHRASE.start);
+            else if (line.reaction.exchangeData instanceof IntentsData)
+                sb.append(Exchangeable.INTENT_LIST.start);
             sb.append(line.reaction.exchangeData.toString() + "\n");
         }
         return sb.toString();

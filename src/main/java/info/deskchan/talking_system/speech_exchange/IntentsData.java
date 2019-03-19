@@ -2,10 +2,12 @@ package info.deskchan.talking_system.speech_exchange;
 
 import info.deskchan.talking_system.IntentList;
 
+import java.util.List;
+
 public class IntentsData extends IntentList implements IExchangeable {
 
-    public IntentsData(String text){      super(text);  }
-    public IntentsData(IntentList list){  super(list);  }
+    public IntentsData(String text){   super(text);  }
+    public IntentsData(List list){     super(list);  }
 
     @Override
     public double checkCompatibility(ICompatible other) {

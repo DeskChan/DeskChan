@@ -6,13 +6,12 @@ import info.deskchan.MessageData.GUI.InlineControls;
 import info.deskchan.MessageData.GUI.SetPanel;
 import info.deskchan.core.MessageDataMap;
 import info.deskchan.core.MessageListener;
+import info.deskchan.core.Path;
 import info.deskchan.core.PluginProxyInterface;
 import info.deskchan.core_utils.TextOperations;
 import info.deskchan.talking_system.speech_exchange.*;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DialogHandler {
 
@@ -23,18 +22,19 @@ public class DialogHandler {
     static PluginProxyInterface pluginProxy;
 
     private static IntentList allIntents;
-
-    private static CharacterRange lastRange;
-    private static IntentList lastIntents;
+    private static List<String> emotionsList = null;
 
     private static String inputPhraseText = "";
-    private static String inputIntents = "";
+    private static String inputIntentsText = "";
+    private static String inputEmotionText = null;
     private static String inputIntentSelected = "";
-    private static String output = "";
+
+    private static String outputText = "";
+    private static String outputEmotionText = null;
     private static String outputIntentSelected = "";
-    private static String inputEmotion = null;
-    private static String outputEmotion = null;
-    private static List<String> emotionsList = null;
+    private static boolean outputIntentsType = true;
+
+    private static CharacterRange lastRange;
     private static DialogLine lastRequest = null;
     private static DialogLine lastResponse = null;
     
@@ -47,6 +47,11 @@ public class DialogHandler {
         updateDialogModules();
         speechExchanger = new SpeechExchanger(Main.getCurrentCharacter().character);
         speechExchanger.loadLogs(Main.getDialogLogsDirPath());
+        try {
+            speechExchanger.loadLog(new Path(DialogHandler.class.getResource("TestDialog.log").toURI()));
+        } catch (Exception e){
+            Main.log(e);
+        }
         Main.log("Intent exchanger loading completed");
 
         pluginProxy.setAlternative("DeskChan:user-said", "talk:classify-text", 50000);
@@ -56,7 +61,6 @@ public class DialogHandler {
             MessageDataMap map = new MessageDataMap("value", data);
             IntentList intents = intentClassifier.classify(map.getString("value"));
             lastRange = characterClassifier.getCharacterForPhrase(map.getString("value"));
-            lastIntents = new IntentList(intents);
             map.put("intent", intents);
             map.put("character", lastRange.toMap());
 
@@ -72,10 +76,16 @@ public class DialogHandler {
             MessageDataMap map = new MessageDataMap(data);
 
             inputPhraseText = TextOperations.prettifyText(map.getString("value"));
+            IntentsData inputIntents;
             if (!map.containsKey("intent")) {
-                lastIntents = new IntentList(intentClassifier.classify(map.getString("value")));
+                inputIntents = new IntentsData(intentClassifier.classify(map.getString("value")));
             } else {
-                lastIntents = new IntentList((List<String>) map.get("intent"));
+                inputIntents = new IntentsData((List<String>) map.get("intent"));
+            }
+            inputIntentsText = inputIntents.toString();
+            IExchangeable input = inputIntents;
+            if (inputIntents.size() == 0) {
+                input = new IntentsData(inputPhraseText);
             }
 
             if (!map.containsKey("character")) {
@@ -83,32 +93,28 @@ public class DialogHandler {
             } else {
                 lastRange = new CharacterRange((Map) map.get("character"));
             }
+            inputEmotionText = null;
 
-            inputIntents = lastIntents.toString();
-            if (lastIntents.size() > 0){
-                lastRequest = new DialogLine(
-                        new Reaction(lastIntents, inputEmotion),
-                        lastRange.toCentersArray(),
-                        DialogLine.Author.USER
-                );
-            } else {
-                lastRequest = new DialogLine(
-                        new Reaction(inputPhraseText, inputEmotion),
-                        lastRange.toCentersArray(),
-                        DialogLine.Author.USER
-                );
-            }
+            lastRequest = new DialogLine(
+                    new Reaction(input, inputEmotionText),
+                    lastRange.toCentersArray(),
+                    DialogLine.Author.USER
+            );
 
             DialogLine answer = speechExchanger.next(lastRequest);
+            outputText = answer.getReaction().getExchangeData().toString();
+            outputEmotionText = answer.getReaction().getEmotion();
+            if (outputEmotionText != null)
+                Main.getCurrentCharacter().emotionState.raiseEmotion(outputEmotionText);
 
-            outputEmotion = answer.getReaction().getEmotion();
-            if (outputEmotion != null)
-                Main.getCurrentCharacter().emotionState.raiseEmotion(outputEmotion);
 
             if (answer.getReaction().getExchangeData() instanceof PhraseData){
+
                 PhraseData phrase = (PhraseData) answer.getReaction().getExchangeData();
-                output = phrase.toString();
+                Main.sendPhrase(new Phrase(phrase.toString()), null);
+
             } else if (answer.getReaction().getExchangeData() instanceof IntentsData){
+
                 IntentList list = (IntentList) answer.getReaction().getExchangeData();
                 list.removeAll(bannedIntents);
                 if (list.size() == 0){
@@ -116,13 +122,12 @@ public class DialogHandler {
                 }
                 for (String intent : list)
                     Main.phraseRequest(intent);
-                output = list.toString();
+
             } else {
                 throw new RuntimeException("There is a bug in dialog handler.");
             }
 
             lastResponse = answer;
-            inputEmotion = null;
 
             setInputInForm();
             setOutputInForm();
@@ -140,7 +145,7 @@ public class DialogHandler {
         }
 
         pluginProxy.addMessageListener("dialog-debug:input-exchangeData-changed", (sender, tag, data) -> {
-            inputIntents = (String) data;
+            inputIntentsText = (String) data;
         });
 
         pluginProxy.addMessageListener("dialog-debug:input-exchangeData-selected", (sender, tag, data) -> {
@@ -148,39 +153,42 @@ public class DialogHandler {
         });
 
         pluginProxy.addMessageListener("dialog-debug:input-exchangeData-clicked", (sender, tag, data) -> {
-            IntentList in = new IntentList(inputIntents);
+            IntentList in = new IntentList(inputIntentsText);
             in.add(inputIntentSelected);
-            inputIntents = in.toString();
+            inputIntentsText = in.toString();
             setInputInForm();
         });
 
         pluginProxy.addMessageListener("dialog-debug:save-input", (sender, tag, data) -> {
-            if (inputIntents.trim().length() > 0){
-                Phrase newPhrase = new Phrase(inputPhraseText);
-                newPhrase.character = lastRange;
-                newPhrase.setIntents(new IntentList(inputIntents));
+            IntentsData intents = new IntentsData(inputIntentsText);
 
-                lastRequest.setReaction(new Reaction(
-                        newPhrase.intentType,
-                        inputEmotion
-                ));
+            IExchangeable input = intents;
+
+            Phrase newPhrase = new Phrase(inputPhraseText);
+            newPhrase.character = lastRange;
+
+            if (intents.size() == 0) {
+                input = new PhraseData(inputPhraseText);
+            } else {
+                newPhrase.setIntents(intents);
 
                 PhrasesPack pack = Main.getCurrentCharacter().phrases.getUserDatabasePack();
                 pack.add(newPhrase);
                 pack.save();
 
                 intentClassifier.add(newPhrase);
-                characterClassifier.add(newPhrase);
-            } else {
-                lastRequest.setReaction(new Reaction(
-                        inputPhraseText,
-                        inputEmotion
-                ));
             }
+            characterClassifier.add(newPhrase);
+
+            lastRequest.setReaction(new Reaction(
+                    input,
+                    inputEmotionText
+            ));
+            lastRequest.setCharacter(lastRange.toCentersArray());
         });
 
         pluginProxy.addMessageListener("dialog-debug:output-exchangeData-changed", (sender, tag, data) -> {
-            output = (String) data;
+            outputText = (String) data;
         });
 
         pluginProxy.addMessageListener("dialog-debug:output-exchangeData-selected", (sender, tag, data) -> {
@@ -188,22 +196,28 @@ public class DialogHandler {
         });
 
         pluginProxy.addMessageListener("dialog-debug:output-exchangeData-clicked", (sender, tag, data) -> {
-            IntentList in = new IntentList(output);
+            IntentList in = new IntentList(outputText);
             in.add(outputIntentSelected);
-            output = in.toString();
+            outputText = in.toString();
             setOutputInForm();
         });
 
         pluginProxy.addMessageListener("dialog-debug:input-emotion-changed", (sender, tag, data) -> {
-            inputEmotion = (String) data;
+            inputEmotionText = (String) data;
+            if (inputEmotionText.length() == 0) inputEmotionText = null;
         });
 
         pluginProxy.addMessageListener("dialog-debug:output-emotion-changed", (sender, tag, data) -> {
-            outputEmotion = (String) data;
+            outputEmotionText = (String) data;
+            if (outputEmotionText.length() == 0) outputEmotionText = null;
+        });
+
+        pluginProxy.addMessageListener("dialog-debug:apply-input-emotion", (sender, tag, data) -> {
+            lastRequest.setReaction(new Reaction(lastRequest.getReaction().getExchangeData(), inputEmotionText));
         });
 
         pluginProxy.addMessageListener("dialog-debug:apply-output-emotion", (sender, tag, data) -> {
-            lastResponse.setReaction(new Reaction(lastResponse.getReaction().getExchangeData(), outputEmotion));
+            lastResponse.setReaction(new Reaction(lastResponse.getReaction().getExchangeData(), outputEmotionText));
         });
 
         pluginProxy.addMessageListener("dialog-debug:show-history", (sender, tag, data) -> {
@@ -217,7 +231,7 @@ public class DialogHandler {
         });
 
         pluginProxy.addMessageListener("dialog-debug:output-type-changed", (sender, tag, data) -> {
-            boolean disabled = !data.equals("intents");
+            outputIntentsType = data.equals("intents");
             pluginProxy.sendMessage(new SetPanel(
                     "dialog-debug",
                     SetPanel.PanelType.PANEL,
@@ -225,29 +239,48 @@ public class DialogHandler {
                     new Control(
                             Control.ControlType.ComboBox,
                             "output-intent-list", null,
-                            "disabled", disabled
+                            "disabled", !outputIntentsType
                     ),
                     new Control(
                             Control.ControlType.Button,
                             "output-intent-add-button", null,
-                            "disabled", disabled
+                            "disabled", !outputIntentsType
                     )
             ));
         });
 
 
         pluginProxy.addMessageListener("dialog-debug:save-output", (sender, tag, data) -> {
-            IntentList output = new IntentList(DialogHandler.output);
-            speechExchanger.deleteUntil(lastResponse, new Reaction(output, outputEmotion));
+
+            IntentsData intents = new IntentsData(outputText);
+
+            IExchangeable output = intents;
+
+            if (!outputIntentsType || intents.size() == 0) {
+                output = new PhraseData(outputText);
+            }
+
+            speechExchanger.deleteUntil(lastResponse, new Reaction(output, outputEmotionText));
 
             Main.phraseRequest("CORRECTED");
 
-            for (String intent : output)
-                Main.phraseRequest(intent);
+            if (outputIntentsType && intents.size() > 0) {
+                for (String intent : intents)
+                    Main.phraseRequest(intent);
+            } else {
+                Main.sendPhrase(new Phrase(outputText), null);
+            }
         });
 
         pluginProxy.addMessageListener("dialog-debug:save-dialog-log", (sender, tag, data) -> {
+            if (!Main.getDialogLogsDirPath().exists())
+                Main.getDialogLogsDirPath().mkdir();
+
             speechExchanger.saveCurrentDialog(Main.getDialogLogsDirPath().resolve("log-" + new Date().getTime() + ".txt"));
+        });
+
+        pluginProxy.addMessageListener("dialog-debug:reset-dialog", (sender, tag, data) -> {
+            speechExchanger.setNewDialog();
         });
 
     }
@@ -267,7 +300,12 @@ public class DialogHandler {
         }
     };
     public static void resetPanel(){
-        emotionsList = Main.getCurrentCharacter().emotionState.getEmotionsList(); emotionsList.add(0, "");
+        emotionsList = Main.getCurrentCharacter().emotionState.getEmotionsList();
+        List<String> emotionsNamesList = new LinkedList<>();
+        for (String value : emotionsList)
+            emotionsNamesList.add(Main.getString("emotion." + value));
+        emotionsList.add(0, "");
+        emotionsNamesList.add(0, "");
 
         List<Control> controls = new LinkedList<>();
         controls.addAll(Arrays.asList(
@@ -398,6 +436,7 @@ public class DialogHandler {
                                 "input-emotion-trigger",
                                 null,
                                 "values", emotionsList,
+                                "valuesNames", emotionsNamesList,
                                 "msgTag", "dialog-debug:input-emotion-changed"
                         ),
                         new Control(
@@ -415,6 +454,7 @@ public class DialogHandler {
                                 "output-emotion-trigger",
                                 null,
                                 "values", emotionsList,
+                                "valuesNames", emotionsNamesList,
                                 "msgTag", "dialog-debug:output-emotion-changed"
                         ),
                         new Control(
@@ -424,11 +464,17 @@ public class DialogHandler {
                         )
                 ),
                 new Control(Control.ControlType.Separator),
-                new Control(
-                        Control.ControlType.Button,
-                        null,
-                        Main.getString("dialog-debug.save-dialog"),
-                        "msgTag", "dialog-debug:save-dialog-log"
+                new InlineControls(
+                        new Control(
+                                Control.ControlType.Button, null,
+                                Main.getString("dialog-debug.save-dialog"),
+                                "msgTag", "dialog-debug:save-dialog-log"
+                        ),
+                        new Control(
+                                Control.ControlType.Button, null,
+                                Main.getString("dialog-debug.reset-dialog"),
+                                "msgTag", "dialog-debug:reset-dialog"
+                        )
                 )
         ));
         pluginProxy.sendMessage(new SetPanel(
@@ -449,7 +495,7 @@ public class DialogHandler {
                 SetPanel.ActionType.UPDATE,
 
                 new Control(Control.ControlType.TextField, "phraseText", inputPhraseText),
-                new Control(Control.ControlType.TextField, "input-exchangeData-text", inputIntents)
+                new Control(Control.ControlType.TextField, "input-exchangeData-text", inputIntentsText)
         );
         for (int i = 0; i < CharacterFeatures.getFeatureCount(); i++) {
             String feature = CharacterFeatures.getFeatureName(i);
@@ -474,8 +520,8 @@ public class DialogHandler {
                 SetPanel.ActionType.UPDATE,
 
                 new Control(Control.ControlType.ComboBox, "input-emotion-trigger",
-                        outputEmotion != null ? emotionsList.indexOf(outputEmotion) : 0),
-                new Control(Control.ControlType.TextField, "output-exchangeData-text", output)
+                        outputEmotionText != null ? emotionsList.indexOf(outputEmotionText) : 0),
+                new Control(Control.ControlType.TextField, "output-exchangeData-text", outputText)
         );
         pluginProxy.sendMessage(update);
     }
