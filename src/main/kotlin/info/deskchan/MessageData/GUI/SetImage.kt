@@ -5,7 +5,7 @@ import info.deskchan.core.MessageData
 /**
  * Set current sprite name to show on screen. Message will not be skipped.
  *
- * @property name Text of menu item
+ * @property name Name of character image
  **/
 @MessageData.Tag("gui:set-image")
 class SetImage (val name: String) : MessageData
