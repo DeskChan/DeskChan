@@ -17,7 +17,7 @@ import info.deskchan.core.Path
  * @property rotation Rotation of sprite
  * @property draggable Can be dragged, True by default
  **/
-@MessageData.Tag("gui:add-character-animation")
+@MessageData.Tag("gui:set-sprite")
 class SetSprite : MessageData {
 
     enum class SpriteActionType {
