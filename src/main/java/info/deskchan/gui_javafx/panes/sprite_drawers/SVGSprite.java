@@ -87,7 +87,7 @@ public class SVGSprite extends Sprite {
 
     public void setFitHeight(double height){
         for (SVGPath path : svgParts)
-            path.setScaleY(height / originWidth);
+            path.setScaleY(height / originHeight);
     }
 
     public String getSpritePath(){ return path; }
