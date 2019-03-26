@@ -2,6 +2,8 @@ package info.deskchan.gui_javafx.skins;
 
 import info.deskchan.core.Path;
 import info.deskchan.gui_javafx.Main;
+import info.deskchan.gui_javafx.panes.sprite_drawers.SVGSprite;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
 import javafx.geometry.Point2D;
 
 import java.io.File;
@@ -21,7 +23,7 @@ class ImageSetSkin implements Skin {
 			{"waiting", "normal"},
 			{"mad", "grin", "rage", "scared"}
 	};
-	private final Path path;
+	protected final Path path;
 	private final String skinName;
 	private final Map<String, List<File>> images = new HashMap<>();
 	private final Path propertiesPath;
@@ -77,7 +79,7 @@ class ImageSetSkin implements Skin {
 	}
 	
 	@Override
-	public File getImage(String name) {
+	public Sprite getImage(String name) {
 		List<File> l = getImageArray(name);
 		if (l.size() == 0) {
 			for (String[] aReplacing : replacing) {
@@ -89,7 +91,7 @@ class ImageSetSkin implements Skin {
 							}
 							l = getImageArray(aReplacing[k]);
 							if (l.size() != 0) {
-								return l.get(ThreadLocalRandom.current().nextInt(0, l.size()));
+								return getFromFiles(l);
 							}
 						}
 					}
@@ -101,8 +103,18 @@ class ImageSetSkin implements Skin {
 				return getImage("normal");
 			}
 		}
-		int i = ThreadLocalRandom.current().nextInt(0, l.size());
-		return l.get(i);
+		return getFromFiles(l);
+	}
+
+	protected Sprite getFromFiles(List<File> list){
+		int i = ThreadLocalRandom.current().nextInt(0, list.size());
+		File image = list.get(i);
+		try {
+			return Sprite.getSpriteFromFile(image);
+		} catch (Exception e){
+			Main.log(e);
+			return null;
+		}
 	}
 	
 	@Override

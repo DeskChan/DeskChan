@@ -3,10 +3,9 @@ package info.deskchan.gui_javafx.skins;
 import info.deskchan.core.Path;
 import info.deskchan.core.PluginManager;
 import info.deskchan.gui_javafx.Main;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
 import javafx.geometry.Point2D;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,12 +13,12 @@ import java.util.List;
 public interface Skin {
 
 	static final List<SkinLoader> skinLoaders = Arrays.asList(
-			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader()
+			new SingleImageSkin.Loader(), new ImageSetSkin.Loader(), new DaytimeDependentSkin.Loader(), new ImageStackSetSkin.Loader()
 	);
 	
 	String getName();
 	
-	File getImage(String name);
+	Sprite getImage(String name);
 	
 	Point2D getPreferredBalloonPosition(String imageName);
 	

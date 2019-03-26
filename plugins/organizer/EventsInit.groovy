@@ -9,7 +9,7 @@ public class EventsInit {
                 ruleInfo: proxy.getString("add-shedule-rule-info")
         ])
 
-        proxy.addMessageListener("core:update-links:organizer:add-shedule", {sender, tag, data ->
+        proxy.addMessageListener("core-events:update-links:organizer:add-shedule", {sender, tag, data ->
             updateCommandsList((List) data)
         })
     }

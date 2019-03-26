@@ -40,7 +40,7 @@ public class Main implements Plugin {
         }});
 
         // Transforming rules to Command every time commands list updates
-        pluginProxy.addMessageListener("core:update-links:speech:get", (sender, tag, data) -> {
+        pluginProxy.addMessageListener("core-events:update-links:speech:get", (sender, tag, data) -> {
             updateCommandsList((List) data);
         });
 
