@@ -208,6 +208,7 @@ public class Character extends MovablePane {
         Point2D oldPosition = getPosition();
         double deltaX = -(newWidth - oldSize.getX()) / 2;
         double deltaY = -(newHeight - oldSize.getY()) / 2;
+
         Point2D newPosition = new Point2D(oldPosition.getX() + deltaX, oldPosition.getY() + deltaY);
         setPosition(newPosition);
 	}
