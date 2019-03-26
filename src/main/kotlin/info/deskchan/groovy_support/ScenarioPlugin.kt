@@ -107,6 +107,7 @@ class ScenarioPlugin : Plugin {
             stopScenario()
         })
 
+        pluginProxy.log("Sending alternative")
         pluginProxy.setAlternative("DeskChan:user-said", "scenario:deny-interruption", 500)
 
         pluginProxy.addMessageListener("scenario:deny-interruption", MessageListener { sender, tag, dat ->
@@ -119,10 +120,12 @@ class ScenarioPlugin : Plugin {
             }
         })
 
-        if (CoreInfo.getCoreProperties().getInteger("start.run_first", 0) < 2){
-            currentScenario = createScenario("core", "start_scenario.txt", null)
-            runScenario()
-        }
+        pluginProxy.addMessageListener("core-events:loading-complete", MessageListener { sender, tag, dat ->
+            if (CoreInfo.getCoreProperties().getInteger("start.run_first", 0) < 2){
+                currentScenario = createScenario("core", "start_scenario.txt", null)
+                runScenario()
+            }
+        })
 
         return true
     }
@@ -135,9 +138,13 @@ class ScenarioPlugin : Plugin {
             scenarioThread = object : Thread() {
                 override fun run() {
                     try {
+                        pluginProxy.log("running 1")
                         currentScenario!!.run()
+
                     } catch (e: InterruptedScenarioException){
+                        pluginProxy.log("exception 1")
                     } catch (e: Throwable){
+                        pluginProxy.log("exception 2")
                         pluginProxy.log(e)
                     }
                     scenarioThread = null

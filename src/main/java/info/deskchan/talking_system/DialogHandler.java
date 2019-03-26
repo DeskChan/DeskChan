@@ -85,7 +85,7 @@ public class DialogHandler {
             inputIntentsText = inputIntents.toString();
             IExchangeable input = inputIntents;
             if (inputIntents.size() == 0) {
-                input = new IntentsData(inputPhraseText);
+                input = new PhraseData(inputPhraseText);
             }
 
             if (!map.containsKey("character")) {
