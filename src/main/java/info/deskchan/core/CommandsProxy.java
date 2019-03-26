@@ -304,14 +304,14 @@ public class CommandsProxy {
 
     /** Notify about links list update. **/
     private static void sendNotify(){
-        proxy.sendMessage("core:update-links", null);
+        proxy.sendMessage("core-events:update-links", null);
     }
 
     /** Send updated list of commands subscribed to event to plugin.
      * @param eventName Event name
      */
     private static void sendUpdateByEvent(String eventName){
-        proxy.sendMessage("core:update-links:"+eventName, getCommandsMatch(eventName));
+        proxy.sendMessage("core-events:update-links:"+eventName, getCommandsMatch(eventName));
     }
 
     /** Send updated list of commands subscribed to event to plugin.
@@ -324,7 +324,7 @@ public class CommandsProxy {
                 toUpdate.add((String) entry.key1);
         }
         for(String event : toUpdate){
-            proxy.sendMessage("core:update-links:"+event, getCommandsMatch(event));
+            proxy.sendMessage("core-events:update-links:"+event, getCommandsMatch(event));
         }
     }
 

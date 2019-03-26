@@ -22,6 +22,9 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
 
    private var ping = 200L
 
+   private var messagesToWrite = mutableListOf<MessageWrapper.Message>()
+   private var messagesLock = Any()
+
    override fun initialize(pluginProxy: PluginProxyInterface):Boolean {
       this.pluginProxy = pluginProxy
       //println("type: "+pluginProxy.getConfigField("type"))
@@ -53,7 +56,7 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
                   if (deps.isEmpty()) return@forEach
                }
                if (deps.isNotEmpty()){
-                  pluginProxy.log(Exception("Python dependencies not satisfied: " + deps.toString() + " not installed by pip. Remove 'python-dependencies' inside plugin manifest to disgard this exception."))
+                  pluginProxy.log(Exception("Python dependencies not satisfied: " + deps.toString() + " not installed by pip. Remove 'python-dependencies' inside plugin manifest to discard this exception."))
                   return false
                }
             }
@@ -120,8 +123,19 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
                  pluginProxy.log(Exception("Process stopped working by unknown reason"))
                  return
              }
-             Thread.sleep(ping)
-             continue
+             if (messagesToWrite.size == 0) {
+                Thread.sleep(ping)
+                continue
+             }
+         }
+
+         if (messagesToWrite.size > 0) {
+            synchronized(messagesLock) {
+               stream.write(messagesToWrite[0], wrapper)
+               messagesToWrite.removeAt(0)
+            }
+            Thread.sleep(ping)
+            continue
          }
 
          var message : MessageWrapper.Message
@@ -312,36 +326,31 @@ class ExternalPlugin(private val pluginFile: File) : Plugin {
       protected val seq:String
 
       constructor(seq:String, add:Boolean = true) {
-         this.seq = seq
-         if (add)
+           this.seq = seq
+           if (add)
             listeners[seq] = this
       }
 
       override fun handle(sender:String, data: Any?){
-         //println("-- handling1 " + seq + " " + sender + " " + data)
-          try {
-             val message = MessageWrapper.Message(
-                     "call",
-                     mutableListOf(seq, sender, data)
-             )
-             stream.write(message, wrapper)
-          } catch (e: Exception){
-             pluginProxy.log(e)
-          }
+         val message = MessageWrapper.Message(
+               "call",
+                mutableListOf(seq, sender, data)
+         )
+         synchronized(messagesLock) {
+            messagesToWrite.add(message)
+         }
+
       }
 
       override fun handleMessage(sender: String?, tag: String?, data: Any?) {
-         //println("-- handling2 " + seq.toString() + " " + sender + " " + tag + " " + data)
-          try {
-             val message = MessageWrapper.Message(
-                     "call",
-                     mutableListOf(seq, sender, data),
-                     mutableMapOf("tag" to tag)
-             )
-             stream.write(message, wrapper)
-          } catch (e: Exception){
-             pluginProxy.log(e)
-          }
+         val message = MessageWrapper.Message(
+                 "call",
+                 mutableListOf(seq, sender, data),
+                 mutableMapOf("tag" to tag)
+         )
+         synchronized(messagesLock) {
+            messagesToWrite.add(message)
+         }
       }
    }
 

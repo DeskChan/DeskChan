@@ -53,6 +53,8 @@ public abstract class Sprite extends MovablePane {
         }
     }
 
+    public Node getSpriteNode(){ return sprite; }
+
     public static Sprite getSpriteFromFile(File path) throws Exception {
         if (!path.exists()) throw new FileNotFoundException("Not found: "+path);
         Sprite sprite;

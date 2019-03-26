@@ -3,6 +3,7 @@ package info.deskchan.gui_javafx.panes;
 import info.deskchan.gui_javafx.*;
 import info.deskchan.gui_javafx.panes.sprite_drawers.AnimatedSprite;
 import info.deskchan.gui_javafx.panes.sprite_drawers.ImageSprite;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
 import info.deskchan.gui_javafx.skins.Skin;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
@@ -157,10 +158,6 @@ public class Character extends MovablePane {
 		updateImage();
 	}
 
-	private File getImage() {
-		return (skin != null) ? skin.getImage(imageName) : null;
-	}
-
 	@Override
 	public void setDefaultPosition() {
 		Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
@@ -168,7 +165,7 @@ public class Character extends MovablePane {
 				screenBounds.getMaxY() - getHeight()));
 	}
 
-	private AnimatedSprite.AnimationData newAnimationData(ImageSprite newSprite){
+	private AnimatedSprite.AnimationData newAnimationData(Sprite newSprite){
         AnimatedSprite.AnimationData data = new AnimatedSprite.AnimationData();
         data.nextSprite = newSprite;
         data.setSmooth(true);
@@ -177,25 +174,20 @@ public class Character extends MovablePane {
 	private void updateImage(boolean reloadImage) {
 
 		Point2D oldSize = sprite.getCurrentSprite() != null ? new Point2D(sprite.getFitWidth(), sprite.getFitHeight()) : null;
-		ImageSprite sp = null;
-		Image image = null;
+		Sprite sp;
 		try {
-			sp = ImageSprite.create(getImage());
-			image = sp.toImageView().getImage();
+			sp = skin.getImage(imageName);
 			if (reloadImage) {
 				sprite.dropAnimation();
 				sprite.addAnimation(newAnimationData(sp));
 			}
 		} catch (Exception e){
 			Main.log(e);
-			return;
-		}
-		if(image == null){
 			setSkin(null);
 			return;
 		}
-		double newWidth = image.getWidth() * scaleFactor;
-		double newHeight = image.getHeight() * scaleFactor;
+		double newWidth = sp.getOriginWidth() * scaleFactor;
+		double newHeight = sp.getOriginHeight() * scaleFactor;
 		sprite.setFitWidth(newWidth);
 		sprite.setFitHeight(newHeight);
 		resize(newWidth, newHeight);

@@ -52,6 +52,7 @@ abstract class MessageWrapper {
             is JSONObject -> dataToJSON(data)
             is MessageWrapper.Message -> wrap(data)
             is Nullable -> "null"
+            is Number -> data
             else -> data.toString().replace("\n", "\t")
         }
     }
@@ -77,8 +78,10 @@ abstract class MessageWrapper {
                 return rdata.toLong()
         } catch (e:Exception){ }
         try {
-            if (rdata.toLowerCase() == "true")  return true
-            if (rdata.toLowerCase() == "false") return false
+            val rldata = rdata.toLowerCase()
+            if (rldata == "true")  return true
+            if (rldata == "false") return false
+            if (rldata == "null") return null
         } catch (e:Exception){ }
         return rdata
     }

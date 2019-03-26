@@ -211,6 +211,20 @@ public class App extends Application {
 			});
 		});
 
+		/* Unregistering single action from click menu.
+		* Recommended not to use this message but register event link to gui:menu-action
+        * Public message
+        * Params: Map
+        *           name: String? - text of menu item
+        * Returns: None */
+		pluginProxy.addMessageListener("gui:unregister-simple-action", (sender, tag, data) -> {
+			Main.runLater(() -> {
+				MessageDataMap m = new MessageDataMap(data);
+				m.assertForTag(sender, pluginProxy.getId(), tag, "msgTag");
+				Menu.getInstance().remove(sender, m.getString("name", sender));
+			});
+		});
+
 		/* Request to say something on behalf of DeskChan
         * Public message
         * Params: text: String! - message text

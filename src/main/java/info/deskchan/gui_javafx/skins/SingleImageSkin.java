@@ -2,7 +2,11 @@ package info.deskchan.gui_javafx.skins;
 
 import info.deskchan.core.Path;
 import info.deskchan.gui_javafx.Main;
+import info.deskchan.gui_javafx.panes.sprite_drawers.ImageSprite;
+import info.deskchan.gui_javafx.panes.sprite_drawers.SVGSprite;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
 import javafx.geometry.Point2D;
+import javafx.scene.image.Image;
 
 import java.io.File;
 import java.util.Properties;
@@ -12,6 +16,7 @@ class SingleImageSkin implements Skin {
 	private final Path path;
 	private final Path propertiesPath;
 	private final Properties properties = new Properties();
+	private final Sprite sprite;
 	
 	SingleImageSkin(Path path) {
 		this.path = path;
@@ -27,6 +32,15 @@ class SingleImageSkin implements Skin {
 				// Do nothing
 			}
 		}
+
+		Sprite ts = null;
+		try {
+			ts = Sprite.getSpriteFromFile(path);
+		} catch (Exception e){
+			Main.log(e);
+			ts = null;
+		}
+		sprite = ts;
 	}
 	
 	@Override
@@ -35,8 +49,8 @@ class SingleImageSkin implements Skin {
 	}
 	
 	@Override
-	public File getImage(String name) {
-		return path;
+	public Sprite getImage(String name) {
+		return sprite;
 	}
 	
 	@Override

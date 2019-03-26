@@ -78,6 +78,13 @@ class OptionsDialog extends TemplateBox {
 				EditCommandDialog.reloadInfo();
 			});
 		});
+
+		Main.getPluginProxy().addMessageListener("core-events:update-links", (sender, tag, data) -> {
+			Platform.runLater(() -> {
+				if (instance == null) return;
+				EditCommandDialog.reloadInfo();
+			});
+		});
 	}
 
 	OptionsDialog() {

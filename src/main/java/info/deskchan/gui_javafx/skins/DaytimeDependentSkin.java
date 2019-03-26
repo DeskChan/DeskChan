@@ -2,6 +2,7 @@ package info.deskchan.gui_javafx.skins;
 
 import info.deskchan.core.Path;
 import info.deskchan.gui_javafx.Main;
+import info.deskchan.gui_javafx.panes.sprite_drawers.Sprite;
 import javafx.geometry.Point2D;
 import org.apache.commons.io.FilenameUtils;
 
@@ -89,7 +90,7 @@ class DaytimeDependentSkin implements Skin {
     }
 
     @Override
-    public File getImage(String name) {
+    public Sprite getImage(String name) {
         return skin.getImage(name);
     }
 

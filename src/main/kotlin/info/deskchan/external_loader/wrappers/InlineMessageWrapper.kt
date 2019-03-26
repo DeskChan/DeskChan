@@ -12,9 +12,12 @@ class InlineMessageWrapper : MessageWrapper() {
         }
         s.append("\n")
         message.additionalArguments.forEach { t, u ->
-            s.append(t); s.append(" "); s.append(serialize(u)); s.append("\n")
+            s.append(t)
+            s.append(" ")
+            s.append(serialize(u))
+            s.append("\n")
         }
-        return s
+        return s.toString()
     }
 
     override fun unwrap(text: String): MessageWrapper.Message {
@@ -26,7 +29,7 @@ class InlineMessageWrapper : MessageWrapper() {
         val type = data[0].trim()
         val argsCount = messageArgsCount[type]
         if (argsCount == null)
-            throw InvalidKeyException("Type of received message not correct.")
+            throw InvalidKeyException("Type of received message not correct. Type=" + type)
 
         val message = Message(type)
 
