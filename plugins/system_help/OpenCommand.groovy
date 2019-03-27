@@ -74,6 +74,26 @@ class OpenCommand{
         }
     }
 
+    static HashMap scan_dir(File dir, int depth) {
+        HashMap<String, File> files = new HashMap<>()
+        if (depth == 100) {
+            return
+        }
+        try {
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) files.putAll(add(file, depth++))
+                    files.put(file.getName(), new File (file.getCanonicalPath()))
+            }
+        } catch (Exception e) {
+            data.instance.log(e)
+        }
+        return files;
+    }
+
+    static HashMap scan_dir(File dir) {
+        return add(dir, 1)
+    }
+    
     static void save() {
         def file = new File(filename)
 
@@ -134,6 +154,11 @@ class OpenCommand{
                 tag: pluginName + ':run-with-report',
                 info: instance.getString('run-with-report-link-info'),
                 msgInfo: instance.getString('run-msg-info')
+        ])
+        instance.sendMessage("core:add-command", [
+            tag: pluginName + ':scan-directory',
+            info: instance.getString('scan-directory-info')
+            msgInfo: instance.getString('scan-directory-msg-info')
         ])
 
         instance.addMessageListener(pluginName + ':open-link', { sender, tag, d ->
@@ -199,6 +224,15 @@ class OpenCommand{
             HashSet<String> set = new HashSet<>()
             for (LinkEntry s : entries) for (String w : s.keywords) set.add(w)
             instance.sendMessage(sender, set)
+        })
+
+        instance.addMessageListener(pluginName+':scan-directory', {sender, tag, dat ->
+            if (dat==null) return
+            String path = ((Map)dat).get("msgData").toString()
+            File dir = new File(path)
+            HashMap<String, File> files = new HashMap<>()
+            files = scan_directory(dir)
+            instance.sendMessage(sender, files)
         })
     }
     static void createDefault(){
