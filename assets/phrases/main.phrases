@@ -534,7 +534,7 @@
             </range>
         </phrase>
         <phrase>
-            <text>Скажи "ok, google". Ха-ха, шутка!</text>
+            <text>Любовь любовью, а обед по расписанию.</text>
             <intent>JOKE</intent>
             <sprite>GRIN</sprite>
             <interests>"it"</interests>

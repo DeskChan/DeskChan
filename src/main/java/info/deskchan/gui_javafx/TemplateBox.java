@@ -1,10 +1,10 @@
 package info.deskchan.gui_javafx;
 
-import com.sun.javafx.css.Declaration;
-import com.sun.javafx.css.Rule;
-import com.sun.javafx.css.Selector;
-import com.sun.javafx.css.Stylesheet;
-import com.sun.javafx.css.parser.CSSParser;
+import javafx.css.Declaration;
+import javafx.css.Rule;
+import javafx.css.Selector;
+import javafx.css.Stylesheet;
+import javafx.css.CssParser;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
@@ -120,7 +120,7 @@ class TemplateBox extends Dialog<Void> {
 	}
 
 	protected void setStyling(String style){
-		CSSParser parser = new CSSParser();
+		CssParser parser = new CssParser();
 		try {
 			String set = null;
 			Selector selected = null;

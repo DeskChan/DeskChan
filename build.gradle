@@ -1,5 +1,5 @@
 buildscript {
-	ext.kotlin_version = '1.2.30'
+	ext.kotlin_version = '1.4.20'
 	repositories {
 		jcenter()
 		mavenCentral()
@@ -8,28 +8,38 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
-		classpath group: 'edu.sc.seis.gradle', name: 'launch4j', version: '2.4.1+'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
 		classpath group: 'gradle.plugin.de.fuerstenau', name: 'BuildConfigPlugin', version: '1.1.8'
 		classpath group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin', version: kotlin_version
 	}
 }
+
+plugins {
+	id 'org.openjfx.javafxplugin' version '0.0.9'
+	id 'java-library'
+	id 'com.github.johnrengelman.shadow' version '5.2.0'
+	id 'edu.sc.seis.launch4j' version '2.4.9'
+}
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'groovy'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'de.fuerstenau.buildconfig'
+
 
 repositories {
 	jcenter()
 	mavenCentral()
 }
 
-apply plugin: 'java'
-apply plugin: 'kotlin'
-apply plugin: 'groovy'
-apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'edu.sc.seis.launch4j'
-apply plugin: 'de.fuerstenau.buildconfig'
+javafx {
+	version = "11"
+	modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.media', 'javafx.graphics']
+}
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 compileJava.options.encoding = 'UTF-8'
 
@@ -70,12 +80,15 @@ dependencies {
 	compile group: 'org.apache.ivy', name: 'ivy', version: '2.4.0'
 	compile group: 'com.dorkbox', name: 'SystemTray', version: '3.10'
 	compile group: 'org.javassist', name: 'javassist', version: '3.22+'
-	compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12+'
+	//compile group: 'org.controlsfx', name: 'controlsfx', version: '8.40.12+'
+	compile group: 'org.controlsfx', name: 'controlsfx', version: '11.0.3'
+
 	compile group: 'com.1stleg', name: 'jnativehook', version: '2.0.2'
-	compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jre8', version: kotlin_version
+	compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
 	compile group: 'net.objecthunter', name: 'exp4j', version:'0.4.8'
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
+
 
 ext.appName = 'DeskChan'
 project.version = '0.3.5'
