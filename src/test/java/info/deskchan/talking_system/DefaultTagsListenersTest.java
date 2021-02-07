@@ -52,7 +52,9 @@ public class DefaultTagsListenersTest {
         Calendar cal = Calendar.getInstance();
 
         phrase.tags = new TagsMap(tags);
-        phrase.tags.put("possibleHour", (cal.get(Calendar.HOUR_OF_DAY)+2) + "-" +(cal.get(Calendar.HOUR_OF_DAY)+3));
+        /*phrase.tags.put("possibleHour", (cal.get(Calendar.HOUR_OF_DAY)+2) + "-" +(cal.get(Calendar.HOUR_OF_DAY)+3));
+        System.out.println(phrase.tags);
+        System.out.println(cal.get(Calendar.HOUR_OF_DAY));
         Assert.assertFalse(DefaultTagsListeners.dateListener.match(phrase));
 
         phrase.tags = new TagsMap(tags);
@@ -60,6 +62,11 @@ public class DefaultTagsListenersTest {
         Assert.assertFalse(DefaultTagsListeners.dateListener.match(phrase));
 
         phrase.tags = new TagsMap(tags);
+        phrase. tags.put("possibleDayOfWeek", getDayOfWeek(cal.get(Calendar.DAY_OF_WEEK + 1)));
+        Assert.assertFalse(DefaultTagsListeners.dateListener.match(phrase));*/
+
+        phrase.tags.put("possibleHour", (cal.get(Calendar.HOUR_OF_DAY)+2) + "-" +(cal.get(Calendar.HOUR_OF_DAY)+3));
+        phrase.tags.put("possibleMinute", (cal.get(Calendar.MINUTE)+2) + "-" +(cal.get(Calendar.MINUTE)+3));
         phrase. tags.put("possibleDayOfWeek", getDayOfWeek(cal.get(Calendar.DAY_OF_WEEK + 1)));
         Assert.assertFalse(DefaultTagsListeners.dateListener.match(phrase));
     }
