@@ -2,11 +2,18 @@ language: java
 matrix:
   include:
   - os: linux
-    jdk: oraclejdk8
+    jdk: 
+    - oraclejdk8
+    - oraclejdk10
+    - oraclejdk11
+    - openjdk10
+    - openjdk11
   - os: osx
     osx_image: xcode9.3
     jdk: oraclejdk8
 sudo: false
+install:
+  - ./gradlew assemble
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
