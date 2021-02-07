@@ -3,7 +3,7 @@
 ![](https://img.shields.io/badge/Gradle-6.8-brightgreen.svg)
 ![](https://img.shields.io/badge/waifu-inside-blue.svg)
 [![Build Status](https://travis-ci.org/DeskChan/DeskChan.svg?branch=master)](https://travis-ci.org/DeskChan/DeskChan)
-https://img.shields.io/github/languages/code-size/DeskChan/DeskChan
+![](https://img.shields.io/github/languages/code-size/DeskChan/DeskChan)
 
 ### [DeskChan](https://deskchan.info/) – твой персональный компьютерный ассистент будущего
  
