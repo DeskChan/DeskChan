@@ -4,6 +4,8 @@
 ![](https://img.shields.io/badge/waifu-inside-blue.svg)
 [![Build Status](https://travis-ci.org/DeskChan/DeskChan.svg?branch=master)](https://travis-ci.org/DeskChan/DeskChan)
 ![](https://img.shields.io/github/languages/code-size/DeskChan/DeskChan)
+------
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/DeskChan/DeskChan.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DeskChan/DeskChan/alerts/)
 
 ### [DeskChan](https://deskchan.info/) – твой персональный компьютерный ассистент будущего
  
