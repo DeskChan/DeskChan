@@ -6,6 +6,8 @@
 ![](https://img.shields.io/github/languages/code-size/DeskChan/DeskChan)
 ------
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/DeskChan/DeskChan.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DeskChan/DeskChan/alerts/)
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/DeskChan/DeskChan.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DeskChan/DeskChan/context:java)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/DeskChan/DeskChan.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DeskChan/DeskChan/context:python)
 
 ### [DeskChan](https://deskchan.info/) – твой персональный компьютерный ассистент будущего
  
